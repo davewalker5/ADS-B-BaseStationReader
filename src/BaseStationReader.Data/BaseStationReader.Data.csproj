@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BaseStationReader.Data</PackageId>
-    <PackageVersion>1.8.0.0</PackageVersion>
+    <PackageVersion>1.9.0.0</PackageVersion>
     <Authors>Dave Walker</Authors>
     <Copyright>Copyright (c) Dave Walker 2023</Copyright>
     <Owners>Dave Walker</Owners>
@@ -14,10 +14,10 @@
     <Title>Base Station Reader EF Core Database Layer</Title>
     <Description>Base Station Reader EF Core Database Layer</Description>
     <PackOnBuild>true</PackOnBuild>
-    <PackageProjectUrl>https://github.com/davewalker5/BaseStationReader</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/davewalker5/ADS-B-BaseStationReader</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <ReleaseVersion>1.8.0.0</ReleaseVersion>
+    <ReleaseVersion>1.9.0.0</ReleaseVersion>
   </PropertyGroup>
 
   <ItemGroup>
