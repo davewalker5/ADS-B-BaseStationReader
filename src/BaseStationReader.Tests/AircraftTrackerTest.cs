@@ -52,7 +52,6 @@ namespace BaseStationReader.Tests
             tracker.Start();
             while (stopwatch.ElapsedMilliseconds < MaximumTestRunTimeMs)
             {
-                Thread.Sleep(10);
             }
 
             // Stop the tracker

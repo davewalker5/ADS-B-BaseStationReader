@@ -90,7 +90,9 @@ namespace BaseStationReader.Tests
 
         private async Task ConfirmAircraftProperties(DateTime expectedLastSeen, bool checkUpdatedProperties, bool expectedLocked)
         {
+#pragma warning disable CS8602
             var aircraft = await _manager.ListAsync(x => x.Address == x.Address);
+#pragma warning restore CS8602
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(1, aircraft.Count);
             Assert.AreEqual(Address, aircraft.First().Address);
