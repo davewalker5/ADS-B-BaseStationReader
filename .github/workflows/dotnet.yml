@@ -34,8 +34,8 @@ jobs:
         dotnet-sonarscanner begin /k:"davewalker5_ADS-B-BaseStationReader" /o:"davewalker5" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
         dotnet build --configuration Release src/BaseStationReader.sln
         dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-    # - name: Run unit tests and generate code coverage
-    #   run: dotnet test src/BaseStationReader.sln /p:CollectCoverage=true /p:CoverletOutput=coverage/ /p:CoverletOutputFormat=lcov
+    - name: Run unit tests and generate code coverage
+      run: dotnet test src/BaseStationReader.sln /p:CollectCoverage=true /p:CoverletOutput=coverage/ /p:CoverletOutputFormat=lcov
     # - name: Generage Coveralls code coverage
     #   uses: coverallsapp/github-action@master
     #   with:
