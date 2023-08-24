@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>BaseStationReader.Logic</PackageId>
+    <PackageVersion>1.8.0.0</PackageVersion>
+    <Authors>Dave Walker</Authors>
+    <Copyright>Copyright (c) Dave Walker 2023</Copyright>
+    <Owners>Dave Walker</Owners>
+    <Summary>Base Station Reader Business Logic</Summary>
+    <PackageTags>BaseStationReader logic</PackageTags>
+    <Title>Base Station Reader Business Logic</Title>
+    <Description>Base Station Reader Business Logic</Description>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageProjectUrl>https://github.com/davewalker5/BaseStationReader</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <ReleaseVersion>1.8.0.0</ReleaseVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
+  </ItemGroup>
+
+</Project>
