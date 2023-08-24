@@ -34,7 +34,7 @@ namespace BaseStationReader.Logic
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        string? message = await reader.ReadLineAsync();
+                        string? message = await reader.ReadLineAsync(token);
                         if (message != null)
                         {
                             MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });

@@ -11,7 +11,7 @@ namespace BaseStationReader.Logic
         private readonly IMessageReader _reader;
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
         private System.Timers.Timer? _timer;
-        private Dictionary<string, Aircraft> _aircraft = new();
+        private readonly Dictionary<string, Aircraft> _aircraft = new();
         private CancellationTokenSource? _cancellationTokenSource = null;
         private readonly int _recentMs;
         private readonly int _staleMs;
@@ -49,7 +49,7 @@ namespace BaseStationReader.Logic
             _reader.Start(_cancellationTokenSource.Token);
 
             // Set a timer to migrate aircraft from New -> Recent -> Stale -> Removed
-            _timer = new(interval: _recentMs / 2.0);
+            _timer = new(interval: _recentMs / 10.0);
             _timer.Elapsed += (sender, e) => OnTimer();
             _timer.AutoReset = true;
             _timer.Enabled = true;
@@ -75,23 +75,19 @@ namespace BaseStationReader.Logic
         {
             // Split the message into individual fields and check we have a valid message type
             var fields = e.Message.Split(",");
-            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType))
+            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser parser))
             {
-                // Check we have a parser for this message type
-                if (_parsers.ContainsKey(messageType))
+                // Parse the message and check the aircraft identifier is valid
+                Message msg = parser.Parse(fields);
+                if (msg.Address.Length > 0)
                 {
-                    // Parse the message and check the aircraft identifier is valid
-                    Message msg = _parsers[messageType].Parse(fields);
-                    if (msg.Address.Length > 0)
+                    if (_aircraft.ContainsKey(msg.Address))
                     {
-                        if (_aircraft.ContainsKey(msg.Address))
-                        {
-                            UpdateExistingAircraft(msg);
-                        }
-                        else
-                        {
-                            AddNewAircraft(msg);
-                        }
+                        UpdateExistingAircraft(msg);
+                    }
+                    else
+                    {
+                        AddNewAircraft(msg);
                     }
                 }
             }
@@ -177,7 +173,7 @@ namespace BaseStationReader.Logic
                 {
                     // Determine how long it is since this aircraft updated
                     var aircraft = entry.Value;
-                    var lastSeenSeconds = (decimal)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
+                    var lastSeenSeconds = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
 
                     // If it's now stale, remove it. Otherwise, set the staleness level and send an update
                     if (lastSeenSeconds >= _removedMs)
