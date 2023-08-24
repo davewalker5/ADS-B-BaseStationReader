@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
         private QueuedWriter? _writer = null;
-        private AircraftManager _manager = null;
+        private AircraftManager? _manager = null;
         private bool _queueProcessed = false;
 
         [TestMethod]

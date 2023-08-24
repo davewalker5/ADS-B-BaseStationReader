@@ -91,7 +91,7 @@ namespace BaseStationReader.Logic
             var valueString = GetStringValue(fields, fieldIndex);
             if (valueString?.Length > 0)
             {
-                bool.TryParse(valueString, out value);
+                _ = bool.TryParse(valueString, out value);
             }
 
             return value;
