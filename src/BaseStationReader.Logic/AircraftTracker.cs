@@ -75,7 +75,7 @@ namespace BaseStationReader.Logic
         {
             // Split the message into individual fields and check we have a valid message type
             var fields = e.Message.Split(",");
-            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser parser))
+            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser? parser))
             {
                 // Parse the message and check the aircraft identifier is valid
                 Message msg = parser.Parse(fields);
@@ -145,7 +145,7 @@ namespace BaseStationReader.Logic
 
             foreach (var aircraftProperty in _aircraftProperties)
             {
-                var messageProperty = _messageProperties.Where(x => x.Name == aircraftProperty.Name).FirstOrDefault();
+                var messageProperty = _messageProperties.FirstOrDefault(x => x.Name == aircraftProperty.Name);
                 if (messageProperty != null)
                 {
                     var original = aircraftProperty.GetValue(aircraft);

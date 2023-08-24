@@ -37,7 +37,6 @@ namespace BaseStationReader.Tests
             // Wait until all the messages have been sent or it's clear there's a problem
             while ((_received.Count < messages.Length) && (stopwatch.ElapsedMilliseconds <= 1000))
             {
-                Thread.Sleep(10);
             }
 
             // Stop the reader and the stopwatch

@@ -61,7 +61,7 @@ namespace BaseStationReader.Tests
             var aircraft = await _manager.ListAsync(x => x.Address == Address);
 
             Assert.IsNotNull(aircraft);
-            Assert.AreEqual(aircraft.Count, 1);
+            Assert.AreEqual(1, aircraft.Count);
             Assert.AreEqual(_aircraft.Id, aircraft.First().Id);
             Assert.AreEqual(Address, aircraft.First().Address);
             Assert.AreEqual(FirstSeen, aircraft.First().FirstSeen);

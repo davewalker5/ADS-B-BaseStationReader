@@ -11,7 +11,6 @@ namespace BaseStationReader.Logic
         private readonly IAircraftManager _manager;
         private readonly ConcurrentQueue<Aircraft> _queue = new ConcurrentQueue<Aircraft>();
         private System.Timers.Timer? _timer;
-        private readonly object _lock = new();
         private readonly int _interval = 0;
         private readonly int _batchSize = 0;
 
