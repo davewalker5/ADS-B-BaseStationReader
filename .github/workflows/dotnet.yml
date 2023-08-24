@@ -36,8 +36,8 @@ jobs:
         dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
     - name: Run unit tests and generate code coverage
       run: dotnet test src/BaseStationReader.sln /p:CollectCoverage=true /p:CoverletOutput=coverage/ /p:CoverletOutputFormat=lcov
-    # - name: Generage Coveralls code coverage
-    #   uses: coverallsapp/github-action@master
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     path-to-lcov: src/BaseStationReader.Tests/coverage/coverage.info
+    - name: Generage Coveralls code coverage
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: src/BaseStationReader.Tests/coverage/coverage.info
