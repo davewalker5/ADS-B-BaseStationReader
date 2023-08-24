@@ -23,6 +23,8 @@
 - On a timed interval, the QueuedWriter processes pending writes from the the queue
 
 ## The Console Application
+
+### Overview
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
 
 ![Console Application](Diagrams/screenshot.png)
@@ -31,6 +33,21 @@
 - As an aircraft's details are updated on receipt of a new messages, it's details are immediately updated in the live view
 - As it moves through the tracking states (see below), it will be highlighted in yellow, when it reaches the "Recent" state, and red, when it reaches the "Stale" state
 - When it is removed from the tracker's tracking list, it is also removed from the live table
+
+### Configuration File
+- The appsettings.json file in the console application project contains the following keys for controlling the application:
+
+| Section | Key | Purpose |
+| --- | --- | --- |
+| ApplicationSettings | Host | Host the reader connects to for reading messages |
+| ApplicationSettings | Port | Port the reader connects to for reading messages |
+| ApplicationSettings | TimeToRecent | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
+| ApplicationSettings | TimeToStale | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
+| ApplicationSettings | TimeToRemoval | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
+| ApplicationSettings | LogFile | Path and name of the log file |
+| ApplicationSettings | WriterInterval | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
+| ApplicationSettings | WriterBatchSize | Maximum number of changes to consider on each WriterInterval |
+| ConnectionStrings | BaseStationReaderDB | SQLite connection string for the database |
 
 ## Aircraft Tracking
 
