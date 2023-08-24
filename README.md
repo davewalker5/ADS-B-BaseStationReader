@@ -135,6 +135,18 @@ dotnet ef database update -s ../BaseStationReader.Manager/BaseStationReader.Mana
 - Asynchronous, queued writing to the tracking database is required to avoid these conflicts and this is what the FIFO queue and the QueuedWriter implement
 - This architecture has the further advantage that database updates are separated from the subscribing application
 
+### Querying the Database
+- To avoid conflicts between readers and writers that may cause a "database is locked" error and halt the application, [WAL journal mode](https://www.sqlite.org/wal.html) should be used when querying the database if the application is running
+- The following is an example query that uses a PRAGMA to enable WAL mode then lists all aircraft in the database matching the specified [ICAO 24-bit address](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes):
+
+```sql
+PRAGMA journal_mode=WAL;
+
+SELECT *
+FROM AIRCRAFT
+WHERE Address = '3949F8';
+``` 
+
 ## Authors
 
 - **Dave Walker** - *Initial work* - [LinkedIn](https://www.linkedin.com/in/davewalker5/)
