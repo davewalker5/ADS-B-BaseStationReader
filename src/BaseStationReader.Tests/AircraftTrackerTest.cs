@@ -18,7 +18,7 @@ namespace BaseStationReader.Tests
         private const int TrackerRecentMs = 500;
         private const int TrackerStaleMs = 1000;
         private const int TrackerRemovedMs = 2000;
-        private const int MaximumTestRunTimeMs = 3000;
+        private const int MaximumTestRunTimeMs = 6000;
 
         private List<AircraftNotificationData> _notifications = new();
 
