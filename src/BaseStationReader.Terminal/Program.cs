@@ -85,12 +85,16 @@ namespace BaseStationReader.Terminal
             {
                 { MessageType.MSG, new MsgMessageParser() }
             };
-            var tracker = new AircraftTracker(reader, parsers, settings.TimeToRecent, settings.TimeToStale, settings.TimeToRemoval);
+
+            // Set up the aircraft tracker
+            var trackerTimer = new TrackerTimer(settings.TimeToRecent / 10.0);
+            var tracker = new AircraftTracker(reader, parsers, trackerTimer, settings.TimeToRecent, settings.TimeToStale, settings.TimeToRemoval);
 
             // Set up the queued database writer
             BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
             var manager = new AircraftManager(context);
-            _writer = new QueuedWriter(manager, settings.WriterInterval, settings.WriterBatchSize);
+            var writerTimer = new TrackerTimer(settings.WriterInterval);
+            _writer = new QueuedWriter(manager, writerTimer, settings.WriterBatchSize);
 
             // Wire up the aircraft tracking events
             tracker.AircraftAdded += OnAircraftAdded;

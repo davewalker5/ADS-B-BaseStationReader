@@ -2,6 +2,7 @@
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
+using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -40,7 +41,8 @@ namespace BaseStationReader.Tests
             _manager = new AircraftManager(context);
 
             // Create a queued writer, wire up the event handlers and start it
-            _writer = new QueuedWriter(_manager, WriterInterval, WriterBatchSize);
+            var writerTimer = new MockTrackerTimer(WriterInterval);
+            _writer = new QueuedWriter(_manager, writerTimer, WriterBatchSize);
             _writer.BatchWritten += OnBatchWritten;
             _writer.Start();
 
