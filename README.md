@@ -89,7 +89,7 @@
 ## SQLite Database
 
 ### Database Schema
-- Tracking records are written to a single table, called AIRCRAFT, summarising the detail from the messages received for a given aircraft:
+- Tracking records are written to a single table, called AIRCRAFT, with each row summarising the detail from the messages received for a given aircraft:
 
 ![Tracking Table](Diagrams/database.png)
 
@@ -107,7 +107,7 @@ dotnet tool install --global dotnet-ef
 - Run the following command, making sure to use the path separator appropriate for your OS:
 
 ```bash
-dotnet ef database update -s ../BaseStationReader.Manager/BaseStationReader.Manager.csproj
+dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Terminal.csproj
 ```
 
 - If the database doesn't exist, it will create it
