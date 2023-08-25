@@ -1,8 +1,10 @@
 ﻿using BaseStationReader.Entities.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 using System.Timers;
 
 namespace BaseStationReader.Logic
 {
+    [ExcludeFromCodeCoverage]
     public class TrackerTimer : ITrackerTimer
     {
         private System.Timers.Timer? _timer = null;
