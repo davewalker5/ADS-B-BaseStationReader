@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Data.Migrations
 {
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public partial class AircraftRecordLock : Migration
     {
         /// <inheritdoc />

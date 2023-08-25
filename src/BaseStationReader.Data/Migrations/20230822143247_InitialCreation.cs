@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BaseStationReader.Data.Migrations
 {
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public partial class InitialCreation : Migration
     {
         /// <inheritdoc />
