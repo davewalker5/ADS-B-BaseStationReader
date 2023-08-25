@@ -38,7 +38,8 @@ namespace BaseStationReader.Tests
             };
 
             // Create an aircraft tracker and wire up the event handlers
-            var tracker = new AircraftTracker(reader, parsers, TrackerRecentMs, TrackerStaleMs, TrackerRemovedMs);
+            var timer = new MockTrackerTimer(TrackerRecentMs / 10.0);
+            var tracker = new AircraftTracker(reader, parsers, timer, TrackerRecentMs, TrackerStaleMs, TrackerRemovedMs);
             tracker.AircraftAdded += OnAircraftNotification;
             tracker.AircraftUpdated += OnAircraftNotification;
             tracker.AircraftRemoved += OnAircraftNotification;
@@ -87,27 +88,21 @@ namespace BaseStationReader.Tests
                 _notifications.Remove(notification);
             }
 
-            // The test will *run* on any OS but the output isn't reliable unless it's run locally because it
-            // necessarily has a timing component to aircraft moving through the RAG statuses
-            var os = Environment.OSVersion;
-            if (os.Platform == PlatformID.Win32NT)
+            // The actual notifications list should now be equal to the length of the expected list
+            Assert.AreEqual(expected.Count, _notifications.Count);
+
+            // Now confirm the notifications we do have arrived in the right order with the correct aircraft data
+            for (int i = 0; i < expected.Count; i++)
             {
-                // The actual notifications list should now be equal to the length of the expected list
-                Assert.AreEqual(expected.Count, _notifications.Count);
+                // Confirm the notification type is correct
+                Assert.AreEqual(expected[i], _notifications[i].NotificationType);
 
-                // Now confirm the notifications we do have arrived in the right order with the correct aircraft data
-                for (int i = 0; i < expected.Count; i++)
-                {
-                    // Confirm the notification type is correct
-                    Assert.AreEqual(expected[i], _notifications[i].NotificationType);
-
-                    // Confirm the aircraft details are correct. The first copy won't have a squawk code,
-                    // the remainder will
-                    var expectedSquawk = (expected[i] == AircraftNotificationType.Added) ? null : "6303";
+                // Confirm the aircraft details are correct. The first copy won't have a squawk code,
+                // the remainder will
+                var expectedSquawk = (expected[i] == AircraftNotificationType.Added) ? null : "6303";
 #pragma warning disable CS8604
-                    ConfirmAircraftProperties(_notifications[i].Aircraft, expectedSquawk);
+                ConfirmAircraftProperties(_notifications[i].Aircraft, expectedSquawk);
 #pragma warning restore CS8604
-                }
             }
         }
 

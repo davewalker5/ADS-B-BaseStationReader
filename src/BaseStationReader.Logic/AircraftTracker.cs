@@ -10,7 +10,7 @@ namespace BaseStationReader.Logic
     {
         private readonly IMessageReader _reader;
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
-        private System.Timers.Timer? _timer;
+        private readonly ITrackerTimer _timer;
         private readonly Dictionary<string, Aircraft> _aircraft = new();
         private CancellationTokenSource? _cancellationTokenSource = null;
         private readonly int _recentMs;
@@ -27,12 +27,15 @@ namespace BaseStationReader.Logic
         public AircraftTracker(
             IMessageReader reader,
             Dictionary<MessageType, IMessageParser> parsers,
+            ITrackerTimer timer,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
         {
             _reader = reader;
             _parsers = parsers;
+            _timer = timer;
+            _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
             _staleMs = staleMilliseconds;
             _removedMs = removedMilliseconds;
@@ -49,10 +52,6 @@ namespace BaseStationReader.Logic
             _reader.Start(_cancellationTokenSource.Token);
 
             // Set a timer to migrate aircraft from New -> Recent -> Stale -> Removed
-            _timer = new(interval: _recentMs / 10.0);
-            _timer.Elapsed += (sender, e) => OnTimer();
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
             _timer?.Start();
         }
 
@@ -62,8 +61,7 @@ namespace BaseStationReader.Logic
         public void Stop()
         {
             _cancellationTokenSource?.Cancel();
-            _timer?.Stop();
-            _timer?.Dispose();
+            _timer.Stop();
         }
 
         /// <summary>
@@ -165,7 +163,9 @@ namespace BaseStationReader.Logic
         /// <summary>
         /// When the timer fires, remove stale aircraft from the monitored collection
         /// </summary>
-        private void OnTimer()
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnTimer(object? sender, EventArgs e)
         {
             lock (_aircraft)
             {

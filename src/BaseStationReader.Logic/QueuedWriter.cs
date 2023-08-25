@@ -10,16 +10,16 @@ namespace BaseStationReader.Logic
     {
         private readonly IAircraftManager _manager;
         private readonly ConcurrentQueue<Aircraft> _queue = new ConcurrentQueue<Aircraft>();
-        private System.Timers.Timer? _timer;
-        private readonly int _interval = 0;
+        private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
 
         public event EventHandler<BatchWrittenEventArgs>? BatchWritten;
 
-        public QueuedWriter(IAircraftManager manager, int interval, int batchSize)
+        public QueuedWriter(IAircraftManager manager, ITrackerTimer timer, int batchSize)
         {
             _manager = manager;
-            _interval = interval;
+            _timer = timer;
+            _timer.Tick += OnTimer;
             _batchSize = batchSize;
         }
 
@@ -52,11 +52,7 @@ namespace BaseStationReader.Logic
             }
 
             // Now start the timer
-            _timer = new(interval: _interval);
-            _timer.Elapsed += (sender, e) => OnTimer();
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
-            _timer?.Start();
+            _timer.Start();
         }
 
         /// <summary>
@@ -64,19 +60,18 @@ namespace BaseStationReader.Logic
         /// </summary>
         public void Stop()
         {
-            _timer?.Stop();
-            _timer?.Dispose();
+            _timer.Stop();
             _queue.Clear();
         }
 
         /// <summary>
         /// When the timer fires, write the next batch of records to the database
         /// </summary>
-        private async void OnTimer()
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OnTimer(object? sender, EventArgs e)
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             _timer.Stop();
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
             // Time how long the update takes
             Stopwatch stopwatch = Stopwatch.StartNew();

@@ -55,10 +55,10 @@ namespace BaseStationReader.Tests.Mocks
                 // If the message queue's been emptied, send empty messages at the defined interval. This is
                 // needed because in the context of the tests the aircraft tracker test exits prematurely if
                 // the reader stops sending messages
-                while (_sendEmptyMessages && !token.IsCancellationRequested)
-                {
-                    MessageRead?.Invoke(this, new MessageReadEventArgs { Message = "" });
-                }
+                //while (_sendEmptyMessages && !token.IsCancellationRequested)
+                //{
+                //    MessageRead?.Invoke(this, new MessageReadEventArgs { Message = "" });
+                //}
 
             }, token);
         }
