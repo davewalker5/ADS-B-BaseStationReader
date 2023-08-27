@@ -37,18 +37,20 @@
 ### Configuration File
 - The appsettings.json file in the console application project contains the following keys for controlling the application:
 
-| Section | Key | Purpose |
-| --- | --- | --- |
-| ApplicationSettings | Host | Host the reader connects to for reading messages |
-| ApplicationSettings | Port | Port the reader connects to for reading messages |
-| ApplicationSettings | TimeToRecent | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
-| ApplicationSettings | TimeToStale | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
-| ApplicationSettings | TimeToRemoval | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
-| ApplicationSettings | LogFile | Path and name of the log file |
-| ApplicationSettings | EnableSqlWriter | Set to true to enable the SQL writer or false to disable it |
-| ApplicationSettings | WriterInterval | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
-| ApplicationSettings | WriterBatchSize | Maximum number of changes to consider on each WriterInterval |
-| ConnectionStrings | BaseStationReaderDB | SQLite connection string for the database |
+| Section | Key | Command Line | Short Name | Purpose |
+| --- | --- | --- | --- | --- |
+| ApplicationSettings | Host | --host | -h | Host the reader connects to for reading messages |
+| ApplicationSettings | Port | --port | -p | Port the reader connects to for reading messages |
+| ApplicationSettings | TimeToRecent | --recent | -r | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
+| ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
+| ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
+| ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file |
+| ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
+| ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
+| ApplicationSettings | WriterBatchSize | --writer-batch-size | -b | Maximum number of changes to consider on each WriterInterval |
+| ConnectionStrings | BaseStationReaderDB | -  | - | SQLite connection string for the database |
+
+- Values may also be passed using the indicated command line arguments, in which case the values are first read from the configuration file and then any values specified on the command line are then applied
 
 ## Aircraft Tracking
 
