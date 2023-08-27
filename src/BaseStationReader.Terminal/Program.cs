@@ -84,20 +84,23 @@ namespace BaseStationReader.Terminal
             var trackerTimer = new TrackerTimer(settings.TimeToRecent / 10.0);
             var tracker = new AircraftTracker(reader, parsers, trackerTimer, settings.TimeToRecent, settings.TimeToStale, settings.TimeToRemoval);
 
-            // Set up the queued database writer
-            BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-            var manager = new AircraftManager(context);
-            var writerTimer = new TrackerTimer(settings.WriterInterval);
-            _writer = new QueuedWriter(manager, writerTimer, settings.WriterBatchSize);
-
             // Wire up the aircraft tracking events
             tracker.AircraftAdded += OnAircraftAdded;
             tracker.AircraftUpdated += OnAircraftUpdated;
             tracker.AircraftRemoved += OnAircraftRemoved;
-            _writer.BatchWritten += OnBatchWritten;
+
+            // Set up the queued database writer
+            if (settings.EnableSqlWriter)
+            {
+                BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
+                var manager = new AircraftManager(context);
+                var writerTimer = new TrackerTimer(settings.WriterInterval);
+                _writer = new QueuedWriter(manager, writerTimer, settings.WriterBatchSize);
+                _writer.BatchWritten += OnBatchWritten;
+                _writer.Start();
+            }
 
             // Continously update the table
-            _writer.Start();
             tracker.Start();
             while (true)
             {
