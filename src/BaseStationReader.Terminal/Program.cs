@@ -8,10 +8,12 @@ using BaseStationReader.Logic;
 using Serilog;
 using Spectre.Console;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BaseStationReader.Terminal
 {
+    [ExcludeFromCodeCoverage]
     public class Program
     {
         private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
@@ -21,7 +23,7 @@ namespace BaseStationReader.Terminal
         public static async Task Main(string[] args)
         {
             // Read the application config
-            ApplicationSettings? settings = new ConfigReader().Read("appsettings.json");
+            ApplicationSettings? settings = BuildSettings(args);
 
             // Configure the log file
 #pragma warning disable CS8602
@@ -63,6 +65,60 @@ namespace BaseStationReader.Terminal
                 {
                     await ShowTrackingTable(ctx, settings);
                 });
+        }
+
+        /// <summary>
+        /// Construct the application settings from the configuration file and any command line arguments
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private static ApplicationSettings? BuildSettings(IEnumerable<string> args)
+        {
+            // Read the config file to provide default settings
+            var settings = new ConfigReader().Read("appsettings.json");
+
+            // Parse the command line
+            var parser = new CommandLineParser();
+            parser.Add(CommandLineOptionType.Host, false, "--host", "-h", "Host to connect to for data stream", 1, 1);
+            parser.Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
+            parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
+            parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
+            parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
+            parser.Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
+            parser.Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
+            parser.Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
+            parser.Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-b", "SQL write batch size", 1, 1);
+            parser.Parse(args);
+
+            // Apply the command line values over the defaults
+            var values = parser.GetValues(CommandLineOptionType.Host);
+            if (values != null) settings!.Host = values.First();
+
+            values = parser.GetValues(CommandLineOptionType.Port);
+            if (values != null) settings!.Port = int.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.TimeToRecent);
+            if (values != null) settings!.TimeToRecent = int.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.TimeToStale);
+            if (values != null) settings!.TimeToStale = int.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.TimeToRemoval);
+            if (values != null) settings!.TimeToRemoval = int.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.LogFile);
+            if (values != null) settings!.LogFile = values.First();
+
+            values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
+            if (values != null) settings!.EnableSqlWriter = bool.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.WriterInterval);
+            if (values != null) settings!.WriterInterval = int.Parse(values.First());
+
+            values = parser.GetValues(CommandLineOptionType.WriterBatchSize);
+            if (values != null) settings!.WriterBatchSize = int.Parse(values.First());
+
+            return settings;
         }
 
         /// <summary>
