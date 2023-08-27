@@ -1,13 +1,12 @@
 ﻿using BaseStationReader.Data;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
-using Microsoft.Extensions.Configuration;
 using Serilog;
 using Spectre.Console;
-using System;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -21,13 +20,8 @@ namespace BaseStationReader.Terminal
 
         public static async Task Main(string[] args)
         {
-            // Load the application settings
-            IConfiguration configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .Build();
-
-            IConfigurationSection section = configuration.GetSection("ApplicationSettings");
-            var settings = section.Get<ApplicationSettings>();
+            // Read the application config
+            ApplicationSettings? settings = new ConfigReader().Read("appsettings.json");
 
             // Configure the log file
 #pragma warning disable CS8602

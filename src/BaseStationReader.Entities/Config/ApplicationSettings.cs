@@ -1,6 +1,6 @@
-﻿namespace BaseStationReader.Terminal
+﻿namespace BaseStationReader.Entities.Config
 {
-    internal class ApplicationSettings
+    public class ApplicationSettings
     {
         public string Host { get; set; } = "";
         public int Port { get; set; }
