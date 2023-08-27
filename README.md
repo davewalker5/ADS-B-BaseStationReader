@@ -41,6 +41,7 @@
 | --- | --- | --- | --- | --- |
 | ApplicationSettings | Host | --host | -h | Host the reader connects to for reading messages |
 | ApplicationSettings | Port | --port | -p | Port the reader connects to for reading messages |
+| ApplicationSettings | SocketReadTimeout | --read-timout | -t | Timeout, in ms, for read operations on the message stream |
 | ApplicationSettings | TimeToRecent | --recent | -r | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
 | ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
