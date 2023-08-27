@@ -107,7 +107,7 @@ namespace BaseStationReader.Terminal
             if (values != null) settings!.TimeToRemoval = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
-            if (values != null) settings!.LogFile = values.First();
+            if (values != null) settings!.LogFile = values[0];
 
             values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
             if (values != null) settings!.EnableSqlWriter = bool.Parse(values[0]);
