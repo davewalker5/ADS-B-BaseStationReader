@@ -14,12 +14,13 @@ using System.Reflection;
 namespace BaseStationReader.Terminal
 {
     [ExcludeFromCodeCoverage]
-    public class Program
+    public static class Program
     {
         private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
         private readonly static Dictionary<string, int> _rowIndex = new();
         private static IQueuedWriter? _writer = null;
         private static ApplicationSettings? _settings = null;
+        private static DateTime _lastUpdate = DateTime.Now;
 
         public static async Task Main(string[] args)
         {
@@ -27,7 +28,7 @@ namespace BaseStationReader.Terminal
             _settings = BuildSettings(args);
 
             // Configure the log file
-#pragma warning disable CS8602
+#pragma warning disable CS8602, S4792
             Log.Logger = new LoggerConfiguration()
                 .WriteTo
                 .File(
@@ -35,7 +36,7 @@ namespace BaseStationReader.Terminal
                     rollingInterval: RollingInterval.Day,
                     rollOnFileSizeLimit: true)
                 .CreateLogger();
-#pragma warning restore CS8602
+#pragma warning restore CS8602, S4792
 
             // Get the assembly information, construct the table title and log the start-up message
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -83,6 +84,7 @@ namespace BaseStationReader.Terminal
             parser.Add(CommandLineOptionType.Host, false, "--host", "-h", "Host to connect to for data stream", 1, 1);
             parser.Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
             parser.Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
+            parser.Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
@@ -101,6 +103,9 @@ namespace BaseStationReader.Terminal
 
             values = parser.GetValues(CommandLineOptionType.SocketReadTimeout);
             if (values != null) settings!.SocketReadTimeout = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.ApplicationTimeout);
+            if (values != null) settings!.ApplicationTimeout = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToRecent);
             if (values != null) settings!.TimeToRecent = int.Parse(values[0]);
@@ -161,12 +166,18 @@ namespace BaseStationReader.Terminal
             }
 
             // Continously update the table
+            int elapsed = 0;
             tracker.Start();
-            while (true)
+            while (elapsed <= _settings.ApplicationTimeout)
             {
                 // Refresh and wait for a while
                 ctx.Refresh();
                 await Task.Delay(100);
+
+                // Check we've not exceeded the application timeout
+#pragma warning disable S6561
+                elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
+#pragma warning restore S6561
             }
         }
 
@@ -216,6 +227,10 @@ namespace BaseStationReader.Terminal
         {
             lock (_rowIndex)
             {
+                // Update the timestamp used to implement the application timeout
+                _lastUpdate = DateTime.Now;
+
+                // Push the change to the SQL writer, if enabled
                 if (_settings!.EnableSqlWriter)
                 {
 #pragma warning disable CS8602
@@ -223,6 +238,7 @@ namespace BaseStationReader.Terminal
 #pragma warning restore CS8602
                 }
 
+                // Add the aircraft to the table
                 var rowIndex = _table.Rows.Count;
                 var rowData = GetAircraftRowData(e.Aircraft);
                 _table.AddRow(rowData);
@@ -238,6 +254,10 @@ namespace BaseStationReader.Terminal
         /// <param name="e"></param>
         private static void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
         {
+            // Update the timestamp used to implement the application timeout
+            _lastUpdate = DateTime.Now;
+
+            // Push the change to the SQL writer, if enabled
             if (_settings!.EnableSqlWriter)
             {
 #pragma warning disable CS8602
@@ -245,6 +265,7 @@ namespace BaseStationReader.Terminal
 #pragma warning restore CS8602
             }
 
+            // Update the row
             var rowIndex = _rowIndex[e.Aircraft.Address];
             var rowData = GetAircraftRowData(e.Aircraft);
             _table.RemoveRow(rowIndex);
@@ -260,6 +281,9 @@ namespace BaseStationReader.Terminal
         {
             lock (_rowIndex)
             {
+                // Update the timestamp used to implement the application timeout
+                _lastUpdate = DateTime.Now;
+
                 // Lock the aircraft record - if we see it again, a new record will be created
                 e.Aircraft.Locked = true;
                 if (_settings!.EnableSqlWriter)
