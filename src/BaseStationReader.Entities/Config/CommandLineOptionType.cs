@@ -5,6 +5,7 @@
         Host,
         Port,
         SocketReadTimeout,
+        ApplicationTimeout,
         TimeToRecent,
         TimeToStale,
         TimeToRemoval,

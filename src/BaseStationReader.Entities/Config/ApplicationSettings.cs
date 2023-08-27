@@ -8,6 +8,7 @@ namespace BaseStationReader.Entities.Config
         public string Host { get; set; } = "";
         public int Port { get; set; }
         public int SocketReadTimeout { get; set; }
+        public int ApplicationTimeout { get; set; }
         public int TimeToRecent { get; set; }
         public int TimeToStale { get; set; }
         public int TimeToRemoval { get; set; }

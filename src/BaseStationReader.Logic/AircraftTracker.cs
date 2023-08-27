@@ -143,7 +143,7 @@ namespace BaseStationReader.Logic
 
             foreach (var aircraftProperty in _aircraftProperties)
             {
-                var messageProperty = _messageProperties.FirstOrDefault(x => x.Name == aircraftProperty.Name);
+                var messageProperty = Array.Find(_messageProperties, x => x.Name == aircraftProperty.Name);
                 if (messageProperty != null)
                 {
                     var original = aircraftProperty.GetValue(aircraft);
@@ -173,7 +173,9 @@ namespace BaseStationReader.Logic
                 {
                     // Determine how long it is since this aircraft updated
                     var aircraft = entry.Value;
+#pragma warning disable S6561
                     var lastSeenSeconds = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
+#pragma warning restore S6561
 
                     // If it's now stale, remove it. Otherwise, set the staleness level and send an update
                     if (lastSeenSeconds >= _removedMs)
