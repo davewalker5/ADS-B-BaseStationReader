@@ -104,10 +104,18 @@ namespace BaseStationReader.Logic
                 bool changed = UpdateAircraftProperties(aircraft, msg);
                 if (changed)
                 {
-                    AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs {
-                        Aircraft = aircraft,
-                        NotificationType = AircraftNotificationType.Updated
-                    });
+                    try
+                    {
+                        AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs {
+                            Aircraft = aircraft,
+                            NotificationType = AircraftNotificationType.Updated
+                        });
+                    }
+                    catch (Exception)
+                    {
+                        // Sink the exception. The tracker has to be protected from errors in the
+                        // subscriber callbacks or the application will stop updating
+                    }
                 }
             }
         }
@@ -126,10 +134,19 @@ namespace BaseStationReader.Logic
                 _aircraft.Add(msg.Address, aircraft);
             }
 
-            AircraftAdded?.Invoke(this, new AircraftNotificationEventArgs {
-                Aircraft = aircraft,
-                NotificationType = AircraftNotificationType.Added
-            });
+            try
+            {
+                AircraftAdded?.Invoke(this, new AircraftNotificationEventArgs
+                {
+                    Aircraft = aircraft,
+                    NotificationType = AircraftNotificationType.Added
+                });
+            }
+            catch (Exception)
+            {
+                // Sink the exception. The tracker has to be protected from errors in the
+                // subscriber callbacks or the application will stop updating
+            }
         }
 
         /// <summary>
@@ -177,30 +194,41 @@ namespace BaseStationReader.Logic
                     var lastSeenSeconds = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
 #pragma warning restore S6561
 
-                    // If it's now stale, remove it. Otherwise, set the staleness level and send an update
-                    if (lastSeenSeconds >= _removedMs)
+                    try
                     {
-                        _aircraft.Remove(entry.Key);
-                        AircraftRemoved?.Invoke(this, new AircraftNotificationEventArgs {
-                            Aircraft = aircraft,
-                            NotificationType = AircraftNotificationType.Removed
-                        });
+                        // If it's now stale, remove it. Otherwise, set the staleness level and send an update
+                        if (lastSeenSeconds >= _removedMs)
+                        {
+                            _aircraft.Remove(entry.Key);
+                            AircraftRemoved?.Invoke(this, new AircraftNotificationEventArgs
+                            {
+                                Aircraft = aircraft,
+                                NotificationType = AircraftNotificationType.Removed
+                            });
+                        }
+                        else if (lastSeenSeconds >= _staleMs)
+                        {
+                            aircraft.Staleness = Staleness.Stale;
+                            AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
+                            {
+                                Aircraft = aircraft,
+                                NotificationType = AircraftNotificationType.Stale
+                            });
+                        }
+                        else if (lastSeenSeconds >= _recentMs)
+                        {
+                            aircraft.Staleness = Staleness.Recent;
+                            AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
+                            {
+                                Aircraft = aircraft,
+                                NotificationType = AircraftNotificationType.Recent
+                            });
+                        }
                     }
-                    else if (lastSeenSeconds >= _staleMs)
+                    catch (Exception)
                     {
-                        aircraft.Staleness = Staleness.Stale;
-                        AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs {
-                            Aircraft = aircraft,
-                            NotificationType = AircraftNotificationType.Stale
-                        });
-                    }
-                    else if (lastSeenSeconds >= _recentMs)
-                    {
-                        aircraft.Staleness = Staleness.Recent;
-                        AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs {
-                            Aircraft = aircraft,
-                            NotificationType = AircraftNotificationType.Recent
-                        });
+                        // Sink the exception. The tracker has to be protected from errors in the
+                        // subscriber callbacks or the application will stop updating
                     }
                 }
             }

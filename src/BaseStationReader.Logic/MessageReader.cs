@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Threading;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace BaseStationReader.Logic
 {
@@ -53,7 +54,15 @@ namespace BaseStationReader.Logic
                                 string? message = await reader.ReadLineAsync(token);
                                 if (!string.IsNullOrEmpty(message))
                                 {
-                                    MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
+                                    try
+                                    {
+                                        MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Sink the exception. The reader has to be protected from errors in the
+                                        // subscriber callbacks or the application will stop updating
+                                    }
                                 }
                             }
                             catch (IOException)
