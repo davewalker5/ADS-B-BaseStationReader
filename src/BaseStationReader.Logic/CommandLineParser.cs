@@ -124,7 +124,7 @@ namespace BaseStationReader.Logic
                         // Add the value to the list of all values
                         _values.Add(current.Option.OptionType, current);
                     }
-                    else if (arg.StartsWith("-"))
+                    else if (arg.StartsWith('-'))
                     {
                         // Starts with "-" so this is the short name of an option. Create a new value
                         current = new CommandLineOptionValue

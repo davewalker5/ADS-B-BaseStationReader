@@ -75,7 +75,7 @@ namespace BaseStationReader.Terminal
         private static ApplicationSettings? BuildSettings(IEnumerable<string> args)
         {
             // Read the config file to provide default settings
-            var settings = new ConfigReader().Read("appsettings.json");
+            var settings = ConfigReader.Read("appsettings.json");
 
             // Parse the command line
             var parser = new CommandLineParser();
@@ -95,28 +95,28 @@ namespace BaseStationReader.Terminal
             if (values != null) settings!.Host = values.First();
 
             values = parser.GetValues(CommandLineOptionType.Port);
-            if (values != null) settings!.Port = int.Parse(values.First());
+            if (values != null) settings!.Port = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToRecent);
-            if (values != null) settings!.TimeToRecent = int.Parse(values.First());
+            if (values != null) settings!.TimeToRecent = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToStale);
-            if (values != null) settings!.TimeToStale = int.Parse(values.First());
+            if (values != null) settings!.TimeToStale = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToRemoval);
-            if (values != null) settings!.TimeToRemoval = int.Parse(values.First());
+            if (values != null) settings!.TimeToRemoval = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
             if (values != null) settings!.LogFile = values.First();
 
             values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
-            if (values != null) settings!.EnableSqlWriter = bool.Parse(values.First());
+            if (values != null) settings!.EnableSqlWriter = bool.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.WriterInterval);
-            if (values != null) settings!.WriterInterval = int.Parse(values.First());
+            if (values != null) settings!.WriterInterval = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.WriterBatchSize);
-            if (values != null) settings!.WriterBatchSize = int.Parse(values.First());
+            if (values != null) settings!.WriterBatchSize = int.Parse(values[0]);
 
             return settings;
         }
