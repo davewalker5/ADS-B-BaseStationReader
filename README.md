@@ -45,6 +45,7 @@
 | ApplicationSettings | TimeToStale | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
 | ApplicationSettings | LogFile | Path and name of the log file |
+| ApplicationSettings | EnableSqlWriter | Set to true to enable the SQL writer or false to disable it |
 | ApplicationSettings | WriterInterval | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
 | ApplicationSettings | WriterBatchSize | Maximum number of changes to consider on each WriterInterval |
 | ConnectionStrings | BaseStationReaderDB | SQLite connection string for the database |
