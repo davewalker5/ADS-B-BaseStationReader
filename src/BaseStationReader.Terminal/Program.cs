@@ -82,6 +82,7 @@ namespace BaseStationReader.Terminal
             var parser = new CommandLineParser();
             parser.Add(CommandLineOptionType.Host, false, "--host", "-h", "Host to connect to for data stream", 1, 1);
             parser.Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
+            parser.Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
@@ -97,6 +98,9 @@ namespace BaseStationReader.Terminal
 
             values = parser.GetValues(CommandLineOptionType.Port);
             if (values != null) settings!.Port = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.SocketReadTimeout);
+            if (values != null) settings!.SocketReadTimeout = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToRecent);
             if (values != null) settings!.TimeToRecent = int.Parse(values[0]);
@@ -130,7 +134,7 @@ namespace BaseStationReader.Terminal
         private static async Task ShowTrackingTable(LiveDisplayContext ctx)
         {
             // Set up the message reader and parser and the aircraft tracker
-            var reader = new MessageReader(_settings!.Host, _settings.Port);
+            var reader = new MessageReader(_settings!.Host, _settings.Port, _settings.SocketReadTimeout);
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
