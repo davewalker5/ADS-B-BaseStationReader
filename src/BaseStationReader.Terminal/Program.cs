@@ -19,18 +19,19 @@ namespace BaseStationReader.Terminal
         private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
         private readonly static Dictionary<string, int> _rowIndex = new();
         private static IQueuedWriter? _writer = null;
+        private static ApplicationSettings? _settings = null;
 
         public static async Task Main(string[] args)
         {
             // Read the application config
-            ApplicationSettings? settings = BuildSettings(args);
+            _settings = BuildSettings(args);
 
             // Configure the log file
 #pragma warning disable CS8602
             Log.Logger = new LoggerConfiguration()
                 .WriteTo
                 .File(
-                    settings.LogFile,
+                    _settings.LogFile,
                     rollingInterval: RollingInterval.Day,
                     rollOnFileSizeLimit: true)
                 .CreateLogger();
@@ -39,7 +40,7 @@ namespace BaseStationReader.Terminal
             // Get the assembly information, construct the table title and log the start-up message
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-            var title = $"Aircraft Tracker v{info.FileVersion}: {settings.Host}:{settings.Port}";
+            var title = $"Aircraft Tracker v{info.FileVersion}: {_settings.Host}:{_settings.Port}";
             _table.Title(title);
             Log.Information(new string('=', 80));
             Log.Information(title);
@@ -63,7 +64,7 @@ namespace BaseStationReader.Terminal
                 .Cropping(VerticalOverflowCropping.Bottom)
                 .StartAsync(async ctx =>
                 {
-                    await ShowTrackingTable(ctx, settings);
+                    await ShowTrackingTable(ctx);
                 });
         }
 
@@ -92,7 +93,7 @@ namespace BaseStationReader.Terminal
 
             // Apply the command line values over the defaults
             var values = parser.GetValues(CommandLineOptionType.Host);
-            if (values != null) settings!.Host = values.First();
+            if (values != null) settings!.Host = values[0];
 
             values = parser.GetValues(CommandLineOptionType.Port);
             if (values != null) settings!.Port = int.Parse(values[0]);
@@ -125,20 +126,19 @@ namespace BaseStationReader.Terminal
         /// Display and continuously update the tracking table
         /// </summary>
         /// <param name="ctx"></param>
-        /// <param name="settings"></param>
         /// <returns></returns>
-        private static async Task ShowTrackingTable(LiveDisplayContext ctx, ApplicationSettings settings)
+        private static async Task ShowTrackingTable(LiveDisplayContext ctx)
         {
             // Set up the message reader and parser and the aircraft tracker
-            var reader = new MessageReader(settings.Host, settings.Port);
+            var reader = new MessageReader(_settings!.Host, _settings.Port);
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
             };
 
             // Set up the aircraft tracker
-            var trackerTimer = new TrackerTimer(settings.TimeToRecent / 10.0);
-            var tracker = new AircraftTracker(reader, parsers, trackerTimer, settings.TimeToRecent, settings.TimeToStale, settings.TimeToRemoval);
+            var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
+            var tracker = new AircraftTracker(reader, parsers, trackerTimer, _settings.TimeToRecent, _settings.TimeToStale, _settings.TimeToRemoval);
 
             // Wire up the aircraft tracking events
             tracker.AircraftAdded += OnAircraftAdded;
@@ -146,12 +146,12 @@ namespace BaseStationReader.Terminal
             tracker.AircraftRemoved += OnAircraftRemoved;
 
             // Set up the queued database writer
-            if (settings.EnableSqlWriter)
+            if (_settings.EnableSqlWriter)
             {
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
                 var manager = new AircraftManager(context);
-                var writerTimer = new TrackerTimer(settings.WriterInterval);
-                _writer = new QueuedWriter(manager, writerTimer, settings.WriterBatchSize);
+                var writerTimer = new TrackerTimer(_settings.WriterInterval);
+                _writer = new QueuedWriter(manager, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
                 _writer.Start();
             }
@@ -212,9 +212,13 @@ namespace BaseStationReader.Terminal
         {
             lock (_rowIndex)
             {
+                if (_settings!.EnableSqlWriter)
+                {
 #pragma warning disable CS8602
-                _writer.Push(e.Aircraft);
+                    _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
+                }
+
                 var rowIndex = _table.Rows.Count;
                 var rowData = GetAircraftRowData(e.Aircraft);
                 _table.AddRow(rowData);
@@ -230,9 +234,13 @@ namespace BaseStationReader.Terminal
         /// <param name="e"></param>
         private static void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
         {
+            if (_settings!.EnableSqlWriter)
+            {
 #pragma warning disable CS8602
-            _writer.Push(e.Aircraft);
+                _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
+            }
+
             var rowIndex = _rowIndex[e.Aircraft.Address];
             var rowData = GetAircraftRowData(e.Aircraft);
             _table.RemoveRow(rowIndex);
@@ -250,9 +258,12 @@ namespace BaseStationReader.Terminal
             {
                 // Lock the aircraft record - if we see it again, a new record will be created
                 e.Aircraft.Locked = true;
+                if (_settings!.EnableSqlWriter)
+                {
 #pragma warning disable CS8602
-                _writer.Push(e.Aircraft);
+                    _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
+                }
 
                 // Locate the entry in the table and remove it
                 var row = _rowIndex[e.Aircraft.Address];
