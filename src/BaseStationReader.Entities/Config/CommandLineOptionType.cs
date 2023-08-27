@@ -4,6 +4,7 @@
     {
         Host,
         Port,
+        SocketReadTimeout,
         TimeToRecent,
         TimeToStale,
         TimeToRemoval,
