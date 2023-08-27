@@ -8,10 +8,12 @@ using BaseStationReader.Logic;
 using Serilog;
 using Spectre.Console;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BaseStationReader.Terminal
 {
+    [ExcludeFromCodeCoverage]
     public class Program
     {
         private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
