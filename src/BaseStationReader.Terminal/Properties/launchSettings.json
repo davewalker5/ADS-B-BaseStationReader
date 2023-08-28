@@ -1,8 +1,7 @@
 {
   "profiles": {
     "BaseStationReader.Terminal": {
-      "commandName": "Project",
-      "commandLineArgs": "-w false"
+      "commandName": "Project"
     }
   }
 }

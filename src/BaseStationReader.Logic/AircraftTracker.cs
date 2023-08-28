@@ -1,8 +1,8 @@
+using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Messages;
-using BaseStationReader.Entities.Events;
-using System.Reflection;
 using BaseStationReader.Entities.Tracking;
+using System.Reflection;
 
 namespace BaseStationReader.Logic
 {
@@ -10,6 +10,7 @@ namespace BaseStationReader.Logic
     {
         private readonly IMessageReader _reader;
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
+        private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly Dictionary<string, Aircraft> _aircraft = new();
         private CancellationTokenSource? _cancellationTokenSource = null;
@@ -27,6 +28,7 @@ namespace BaseStationReader.Logic
         public AircraftTracker(
             IMessageReader reader,
             Dictionary<MessageType, IMessageParser> parsers,
+            ITrackerLogger logger,
             ITrackerTimer timer,
             int recentMilliseconds,
             int staleMilliseconds,
@@ -34,6 +36,7 @@ namespace BaseStationReader.Logic
         {
             _reader = reader;
             _parsers = parsers;
+            _logger = logger;
             _timer = timer;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
@@ -111,10 +114,11 @@ namespace BaseStationReader.Logic
                             NotificationType = AircraftNotificationType.Updated
                         });
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        // Sink the exception. The tracker has to be protected from errors in the
+                        // Log and sink the exception. The tracker has to be protected from errors in the
                         // subscriber callbacks or the application will stop updating
+                        _logger.LogException(ex);
                     }
                 }
             }
@@ -142,10 +146,11 @@ namespace BaseStationReader.Logic
                     NotificationType = AircraftNotificationType.Added
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Sink the exception. The tracker has to be protected from errors in the
+                // Log and sink the exception. The tracker has to be protected from errors in the
                 // subscriber callbacks or the application will stop updating
+                _logger.LogException(ex);
             }
         }
 
@@ -225,10 +230,11 @@ namespace BaseStationReader.Logic
                             });
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        // Sink the exception. The tracker has to be protected from errors in the
+                        // Log and sink the exception. The tracker has to be protected from errors in the
                         // subscriber callbacks or the application will stop updating
+                        _logger.LogException(ex);
                     }
                 }
             }

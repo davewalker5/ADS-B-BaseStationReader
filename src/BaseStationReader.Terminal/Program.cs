@@ -2,6 +2,7 @@
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
@@ -19,34 +20,41 @@ namespace BaseStationReader.Terminal
         private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
         private readonly static Dictionary<string, int> _rowIndex = new();
         private static IQueuedWriter? _writer = null;
+        private static ITrackerLogger? _logger = null;
         private static ApplicationSettings? _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
         public static async Task Main(string[] args)
         {
-            // Read the application config
+            // Read the application config file
             _settings = BuildSettings(args);
 
             // Configure the log file
-#pragma warning disable CS8602, S4792
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo
-                .File(
-                    _settings.LogFile,
-                    rollingInterval: RollingInterval.Day,
-                    rollOnFileSizeLimit: true)
-                .CreateLogger();
-#pragma warning restore CS8602, S4792
+            _logger = new FileLogger();
+            _logger.Initialise(_settings!.LogFile);
 
-            // Get the assembly information, construct the table title and log the start-up message
+            // Get the version number and application title
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-            var title = $"Aircraft Tracker v{info.FileVersion}: {_settings.Host}:{_settings.Port}";
-            _table.Title(title);
-            Log.Information(new string('=', 80));
-            Log.Information(title);
+            var title = $"Aircraft Tracker v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
 
-            // Configure the table columns
+            // Log the startup messages, including the settings
+            _logger.LogMessage(Severity.Info, new string('=', 80));
+            _logger.LogMessage(Severity.Info, title);
+            _logger.LogMessage(Severity.Debug, $"Host = {_settings?.Host}");
+            _logger.LogMessage(Severity.Debug, $"Port = {_settings?.Port}");
+            _logger.LogMessage(Severity.Debug, $"SocketReadTimeout = {_settings?.SocketReadTimeout}");
+            _logger.LogMessage(Severity.Debug, $"ApplicationTimeout = {_settings?.ApplicationTimeout}");
+            _logger.LogMessage(Severity.Debug, $"TimeToRecent = {_settings?.TimeToRecent}");
+            _logger.LogMessage(Severity.Debug, $"TimeToStale = {_settings?.TimeToStale}");
+            _logger.LogMessage(Severity.Debug, $"TimeToRemoval = {_settings?.TimeToRemoval}");
+            _logger.LogMessage(Severity.Debug, $"LogFile = {_settings?.LogFile}");
+            _logger.LogMessage(Severity.Debug, $"EnableSqlWriter = {_settings?.EnableSqlWriter}");
+            _logger.LogMessage(Severity.Debug, $"WriterInterval = {_settings?.WriterInterval}");
+            _logger.LogMessage(Severity.Debug, $"WriterBatchSize = {_settings?.WriterBatchSize}");
+
+            // Configure the table title and columns
+            _table.Title(title);
             _table.AddColumn("[yellow]ID[/]");
             _table.AddColumn("[yellow]Callsign[/]");
             _table.AddColumn("[yellow]Squawk[/]");
@@ -139,7 +147,7 @@ namespace BaseStationReader.Terminal
         private static async Task ShowTrackingTable(LiveDisplayContext ctx)
         {
             // Set up the message reader and parser and the aircraft tracker
-            var reader = new MessageReader(_settings!.Host, _settings.Port, _settings.SocketReadTimeout);
+            var reader = new MessageReader(_logger!, _settings!.Host, _settings.Port, _settings.SocketReadTimeout);
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
@@ -147,7 +155,7 @@ namespace BaseStationReader.Terminal
 
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
-            var tracker = new AircraftTracker(reader, parsers, trackerTimer, _settings.TimeToRecent, _settings.TimeToStale, _settings.TimeToRemoval);
+            var tracker = new AircraftTracker(reader, parsers, _logger!, trackerTimer, _settings.TimeToRecent, _settings.TimeToStale, _settings.TimeToRemoval);
 
             // Wire up the aircraft tracking events
             tracker.AircraftAdded += OnAircraftAdded;
@@ -160,7 +168,7 @@ namespace BaseStationReader.Terminal
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
                 var manager = new AircraftManager(context);
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
-                _writer = new QueuedWriter(manager, writerTimer, _settings.WriterBatchSize);
+                _writer = new QueuedWriter(manager, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
                 _writer.Start();
             }
@@ -243,7 +251,7 @@ namespace BaseStationReader.Terminal
                 var rowData = GetAircraftRowData(e.Aircraft);
                 _table.AddRow(rowData);
                 _rowIndex.Add(e.Aircraft.Address, rowIndex);
-                Log.Information($"Added new aircraft {e.Aircraft.Address} at row {rowIndex}");
+                _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowIndex}");
             }
         }
 
@@ -308,7 +316,7 @@ namespace BaseStationReader.Terminal
 
                 // Remove the record from the index
                 _rowIndex.Remove(e.Aircraft.Address);
-                Log.Information($"Removed aircraft {e.Aircraft.Address} at row {row}");
+                _logger!.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {row}");
             }
         }
 
@@ -319,7 +327,7 @@ namespace BaseStationReader.Terminal
         /// <param name="e"></param>
         private static void OnBatchWritten(object? sender, BatchWrittenEventArgs e)
         {
-            Log.Information($"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
+            _logger!.LogMessage(Severity.Info, $"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
         }
     }
 }
