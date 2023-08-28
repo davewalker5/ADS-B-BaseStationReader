@@ -10,14 +10,16 @@ namespace BaseStationReader.Logic
     {
         private readonly IAircraftManager _manager;
         private readonly ConcurrentQueue<Aircraft> _queue = new ConcurrentQueue<Aircraft>();
+        private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
 
         public event EventHandler<BatchWrittenEventArgs>? BatchWritten;
 
-        public QueuedWriter(IAircraftManager manager, ITrackerTimer timer, int batchSize)
+        public QueuedWriter(IAircraftManager manager, ITrackerLogger logger, ITrackerTimer timer, int batchSize)
         {
             _manager = manager;
+            _logger = logger;
             _timer = timer;
             _timer.Tick += OnTimer;
             _batchSize = batchSize;
@@ -94,16 +96,35 @@ namespace BaseStationReader.Logic
                 }
 
                 // Write the data to the database
-                await _manager.WriteAsync(queued);
+                try
+                {
+                    await _manager.WriteAsync(queued);
+                }
+                catch (Exception ex)
+                {
+                    // Log and sink the exception. The writer needs to continue or the application will
+                    // stop writing to the database
+                    _logger.LogException(ex);
+                }
             }
             stopwatch.Stop();
             var finalQueueSize = _queue.Count;
-         
-            BatchWritten?.Invoke(this, new BatchWrittenEventArgs{
-                InitialQueueSize = initialQueueSize,
-                FinalQueueSize = finalQueueSize,
-                Duration = stopwatch.ElapsedMilliseconds
-            });
+
+            try
+            {
+                BatchWritten?.Invoke(this, new BatchWrittenEventArgs
+                {
+                    InitialQueueSize = initialQueueSize,
+                    FinalQueueSize = finalQueueSize,
+                    Duration = stopwatch.ElapsedMilliseconds
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log and sink the exception. The writer has to be protected from errors in the
+                // subscriber callbacks or the application will stop updating
+                _logger.LogException(ex);
+            }
 
             _timer.Start();
         }

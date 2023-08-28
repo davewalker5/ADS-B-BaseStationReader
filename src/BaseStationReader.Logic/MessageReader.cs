@@ -1,23 +1,23 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Sockets;
-using System.Threading;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
-using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Sockets;
 
 namespace BaseStationReader.Logic
 {
     [ExcludeFromCodeCoverage]
     public class MessageReader : IMessageReader
     {
+        private readonly ITrackerLogger _logger;
         private readonly string _server;
         private readonly int _port;
         private readonly int _readTimeout;
 
         public event EventHandler<MessageReadEventArgs>? MessageRead;
 
-        public MessageReader(string server, int port, int readTimeout)
+        public MessageReader(ITrackerLogger logger, string server, int port, int readTimeout)
         {
+            _logger = logger;
             _server = server;
             _port = port;
             _readTimeout = readTimeout;
@@ -58,10 +58,11 @@ namespace BaseStationReader.Logic
                                     {
                                         MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
                                     }
-                                    catch (Exception)
+                                    catch (Exception ex)
                                     {
-                                        // Sink the exception. The reader has to be protected from errors in the
+                                        // Log and sink the exception. The reader has to be protected from errors in the
                                         // subscriber callbacks or the application will stop updating
+                                        _logger.LogException(ex);
                                     }
                                 }
                             }
