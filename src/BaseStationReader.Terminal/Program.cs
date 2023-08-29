@@ -6,11 +6,12 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
-using Serilog;
+using Microsoft.VisualBasic;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Terminal
 {
@@ -28,6 +29,14 @@ namespace BaseStationReader.Terminal
         {
             // Read the application config file
             _settings = BuildSettings(args);
+
+            // Add to the column definitions the property info objects that will be used to retrieve property
+            // values from individual aircraft tracking objects
+            var allProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            foreach (var column in _settings!.Columns)
+            {
+                column.Info = allProperties.FirstOrDefault(x => x.Name == column.Property);
+            }
 
             // Configure the log file
             _logger = new FileLogger();
@@ -55,16 +64,10 @@ namespace BaseStationReader.Terminal
 
             // Configure the table title and columns
             _table.Title(title);
-            _table.AddColumn("[yellow]ID[/]");
-            _table.AddColumn("[yellow]Callsign[/]");
-            _table.AddColumn("[yellow]Squawk[/]");
-            _table.AddColumn("[yellow]Altitude[/]");
-            _table.AddColumn("[yellow]Speed[/]");
-            _table.AddColumn("[yellow]Track[/]");
-            _table.AddColumn("[yellow]Latitude[/]");
-            _table.AddColumn("[yellow]Longitude[/]");
-            _table.AddColumn("[yellow]First Seen[/]");
-            _table.AddColumn("[yellow]Last Seen[/]");
+            foreach (var label in _settings!.Columns.Select(x => x.Label))
+            {
+                _table.AddColumn($"[yellow]{label}[/]");
+            }
 
             // Construct the live view
             await AnsiConsole.Live(_table)
@@ -210,20 +213,36 @@ namespace BaseStationReader.Terminal
                 endColour = "[/]";
             }
 
-            // Construct and return the markup
-            return new string[]
+            // Construct the row data
+            var data = new List<string>();
+            foreach (var column in _settings!.Columns)
             {
-                $"{startColour}{aircraft.Address}{endColour}",
-                $"{startColour}{aircraft.Callsign ?? ""}{endColour}",
-                $"{startColour}{aircraft.Squawk ?? ""}{endColour}",
-                $"{startColour}{aircraft.Altitude.ToString() ?? ""}{endColour}",
-                $"{startColour}{aircraft.GroundSpeed.ToString() ?? ""}{endColour}",
-                $"{startColour}{aircraft.Track.ToString() ?? ""}{endColour}",
-                $"{startColour}{aircraft.Latitude.ToString() ?? ""}{endColour}",
-                $"{startColour}{aircraft.Longitude.ToString() ?? ""}{endColour}",
-                $"{startColour}{aircraft.FirstSeen.ToString("HH:mm:ss.fff") ?? ""}{endColour}",
-                $"{startColour}{aircraft.LastSeen.ToString("HH:mm:ss.fff") ?? ""}{endColour}",
-            };
+                var valueString = "";
+
+                if (column.Info!.PropertyType.Name.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal? value = (decimal?)column.Info!.GetValue(aircraft);
+                    valueString = value?.ToString(column.Format) ?? "";
+
+                } else if (column.Info!.PropertyType.Name.Equals("bool", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool value = (bool?)column.Info!.GetValue(aircraft) ?? false;
+                    valueString = value ? "Yes" : "No";
+                }
+                else if (column.Info!.PropertyType.Name.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
+                {
+                    DateTime? value = (DateTime?)column.Info!.GetValue(aircraft);
+                    valueString = value?.ToString(column.Format) ?? "";
+                }
+                else
+                {
+                    valueString = column.Info!.GetValue(aircraft)?.ToString() ?? "";
+                }
+
+                data.Add($"{startColour}{valueString}{endColour}");
+            }
+
+            return data.ToArray();
         }
 
         /// <summary>

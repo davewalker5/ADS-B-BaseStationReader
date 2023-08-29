@@ -35,6 +35,9 @@
 - When it is removed from the tracker's tracking list, it is also removed from the live table
 
 ### Configuration File
+
+### General Settings and Database Connection String
+
 - The appsettings.json file in the console application project contains the following keys for controlling the application:
 
 | Section | Key | Command Line | Short Name | Purpose |
@@ -42,6 +45,7 @@
 | ApplicationSettings | Host | --host | -h | Host the reader connects to for reading messages |
 | ApplicationSettings | Port | --port | -p | Port the reader connects to for reading messages |
 | ApplicationSettings | SocketReadTimeout | --read-timout | -t | Timeout, in ms, for read operations on the message stream |
+| ApplicationSettings | ApplicationTimeout | --app-timeout | -a | Timeout (ms) after which the application will quit of no messages are recieved |
 | ApplicationSettings | TimeToRecent | --recent | -r | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
 | ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
@@ -49,9 +53,44 @@
 | ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
 | ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
 | ApplicationSettings | WriterBatchSize | --writer-batch-size | -b | Maximum number of changes to consider on each WriterInterval |
+| ApplicationSettings | Columns | - | - | Set of column definitions for columns to be included in the output |
 | ConnectionStrings | BaseStationReaderDB | -  | - | SQLite connection string for the database |
 
 - Values may also be passed using the indicated command line arguments, in which case the values are first read from the configuration file and then any values specified on the command line are then applied
+
+#### Column Definitions
+
+- The Columns property in the ApplicationSettings section of the file contains a list of column definitions:
+
+```json
+[
+      {
+        "Property": "Address",
+        "Label": "ID",
+        "Format": ""
+      },
+      {
+        "Property": "Callsign",
+        "Label": "Callsign",
+        "Format": ""
+      },
+      {
+        "Property": "Latitude",
+        "Label": "Latitude",
+        "Format": "N5"
+      },
+]
+```
+
+- Each column definition contains the following items:
+
+| Item | Comments | 
+| --- | --- |
+| Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column |
+| Label | Column title |
+| Format | The C# format string used to render the property (for Decimal and DateTime types) or blank |
+
+- The application will show only the columns listed in this section of the configuration file, showing them in the order in which they appear here and formatted according to the format specifier
 
 ## Aircraft Tracking
 
