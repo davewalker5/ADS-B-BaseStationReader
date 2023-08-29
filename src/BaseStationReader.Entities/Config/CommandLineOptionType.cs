@@ -12,6 +12,7 @@
         LogFile,
         EnableSqlWriter,
         WriterInterval,
-        WriterBatchSize
+        WriterBatchSize,
+        MaximumRows
     }
 }

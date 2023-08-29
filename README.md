@@ -53,6 +53,7 @@
 | ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
 | ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
 | ApplicationSettings | WriterBatchSize | --writer-batch-size | -b | Maximum number of changes to consider on each WriterInterval |
+| ApplicationSettings | MaximumRows | --max-rows | -m | Maximum rows in the live table view at any one time or 0 for unlimited rows |
 | ApplicationSettings | Columns | - | - | Set of column definitions for columns to be included in the output |
 | ConnectionStrings | BaseStationReaderDB | -  | - | SQLite connection string for the database |
 
