@@ -10,6 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.msbuild" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -27,6 +37,7 @@
     <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
     <ProjectReference Include="..\BaseStationReader.Logic\BaseStationReader.Logic.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Terminal\BaseStationReader.Terminal.csproj" />
   </ItemGroup>
 
 </Project>

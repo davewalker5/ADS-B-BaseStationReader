@@ -1,12 +1,10 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Logic;
 using BaseStationReader.Terminal.Interfaces;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
 {
-    [ExcludeFromCodeCoverage]
-    internal class TrackerSettingsBuilder : ITrackerSettingsBuilder
+    public class TrackerSettingsBuilder : ITrackerSettingsBuilder
     {
         /// <summary>
         /// Construct the application settings from the configuration file and any command line arguments
