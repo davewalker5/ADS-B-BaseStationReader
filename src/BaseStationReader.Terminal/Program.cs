@@ -59,7 +59,7 @@ namespace BaseStationReader.Terminal
 
             // Construct the live view
             await AnsiConsole.Live(_tableManager.Table!)
-                .AutoClear(false)
+                .AutoClear(true)
                 .Overflow(VerticalOverflow.Ellipsis)
                 .Cropping(VerticalOverflowCropping.Bottom)
                 .StartAsync(async ctx =>

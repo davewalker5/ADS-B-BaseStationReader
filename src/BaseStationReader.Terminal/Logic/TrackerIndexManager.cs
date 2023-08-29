@@ -3,8 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
 {
-    [ExcludeFromCodeCoverage]
-    internal class TrackerIndexManager : ITrackerIndexManager
+    public class TrackerIndexManager : ITrackerIndexManager
     {
         private readonly Dictionary<string, int> _rowIndex = new();
 
@@ -17,8 +16,11 @@ namespace BaseStationReader.Terminal.Logic
         {
             lock (_rowIndex)
             {
-                Shuffle(rowNumber, 1);
-                _rowIndex.Add(address, rowNumber);
+                if (!_rowIndex.ContainsKey(address))
+                {
+                    Shuffle(rowNumber, 1);
+                    _rowIndex.Add(address, rowNumber);
+                }
             }
         }
 

@@ -3,7 +3,6 @@ using BaseStationReader.Entities.Tracking;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime;
 
 namespace BaseStationReader.Logic
 {
