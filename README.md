@@ -93,6 +93,12 @@
 
 - The application will show only the columns listed in this section of the configuration file, showing them in the order in which they appear here and formatted according to the format specifier
 
+#### Row Limits and Column Control
+- The maximum row limit and custom column control are intended to support running the application on small screens
+- The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
+
+![Raspberry Pi](Diagrams/RaspberryPi.jpg)
+
 ## Aircraft Tracking
 
 ### Adding and Updating Tracking Objects
