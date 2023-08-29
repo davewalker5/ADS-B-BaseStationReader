@@ -16,6 +16,7 @@ namespace BaseStationReader.Entities.Config
         public bool EnableSqlWriter { get; set; }
         public int WriterInterval { get; set; }
         public int WriterBatchSize { get; set; }
+        public int MaximumRows { get; set; }
         public List<TrackerColumn> Columns { get; set; } = new List<TrackerColumn>();
     }
 }

@@ -4,22 +4,20 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
-using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
-using Microsoft.VisualBasic;
+using BaseStationReader.Terminal.Interfaces;
+using BaseStationReader.Terminal.Logic;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace BaseStationReader.Terminal
 {
     [ExcludeFromCodeCoverage]
     public static class Program
     {
-        private readonly static Table _table = new Table().Expand().BorderColor(Spectre.Console.Color.Grey);
-        private readonly static Dictionary<string, int> _rowIndex = new();
+        private static ITrackerTableManager? _tableManager = null;
         private static IQueuedWriter? _writer = null;
         private static ITrackerLogger? _logger = null;
         private static ApplicationSettings? _settings = null;
@@ -28,15 +26,7 @@ namespace BaseStationReader.Terminal
         public static async Task Main(string[] args)
         {
             // Read the application config file
-            _settings = BuildSettings(args);
-
-            // Add to the column definitions the property info objects that will be used to retrieve property
-            // values from individual aircraft tracking objects
-            var allProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var column in _settings!.Columns)
-            {
-                column.Info = allProperties.FirstOrDefault(x => x.Name == column.Property);
-            }
+            _settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
 
             // Configure the log file
             _logger = new FileLogger();
@@ -62,15 +52,13 @@ namespace BaseStationReader.Terminal
             _logger.LogMessage(Severity.Debug, $"WriterInterval = {_settings?.WriterInterval}");
             _logger.LogMessage(Severity.Debug, $"WriterBatchSize = {_settings?.WriterBatchSize}");
 
-            // Configure the table title and columns
-            _table.Title(title);
-            foreach (var label in _settings!.Columns.Select(x => x.Label))
-            {
-                _table.AddColumn($"[yellow]{label}[/]");
-            }
+            // Configure the table
+            var trackerIndexManager = new TrackerIndexManager();
+            _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
+            _tableManager.CreateTable(title);
 
             // Construct the live view
-            await AnsiConsole.Live(_table)
+            await AnsiConsole.Live(_tableManager.Table!)
                 .AutoClear(false)
                 .Overflow(VerticalOverflow.Ellipsis)
                 .Cropping(VerticalOverflowCropping.Bottom)
@@ -78,68 +66,6 @@ namespace BaseStationReader.Terminal
                 {
                     await ShowTrackingTable(ctx);
                 });
-        }
-
-        /// <summary>
-        /// Construct the application settings from the configuration file and any command line arguments
-        /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        private static ApplicationSettings? BuildSettings(IEnumerable<string> args)
-        {
-            // Read the config file to provide default settings
-            var settings = ConfigReader.Read("appsettings.json");
-
-            // Parse the command line
-            var parser = new CommandLineParser();
-            parser.Add(CommandLineOptionType.Host, false, "--host", "-h", "Host to connect to for data stream", 1, 1);
-            parser.Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
-            parser.Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
-            parser.Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
-            parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
-            parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
-            parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
-            parser.Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
-            parser.Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
-            parser.Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
-            parser.Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-b", "SQL write batch size", 1, 1);
-            parser.Parse(args);
-
-            // Apply the command line values over the defaults
-            var values = parser.GetValues(CommandLineOptionType.Host);
-            if (values != null) settings!.Host = values[0];
-
-            values = parser.GetValues(CommandLineOptionType.Port);
-            if (values != null) settings!.Port = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.SocketReadTimeout);
-            if (values != null) settings!.SocketReadTimeout = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.ApplicationTimeout);
-            if (values != null) settings!.ApplicationTimeout = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.TimeToRecent);
-            if (values != null) settings!.TimeToRecent = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.TimeToStale);
-            if (values != null) settings!.TimeToStale = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.TimeToRemoval);
-            if (values != null) settings!.TimeToRemoval = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.LogFile);
-            if (values != null) settings!.LogFile = values[0];
-
-            values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
-            if (values != null) settings!.EnableSqlWriter = bool.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.WriterInterval);
-            if (values != null) settings!.WriterInterval = int.Parse(values[0]);
-
-            values = parser.GetValues(CommandLineOptionType.WriterBatchSize);
-            if (values != null) settings!.WriterBatchSize = int.Parse(values[0]);
-
-            return settings;
         }
 
         /// <summary>
@@ -193,84 +119,28 @@ namespace BaseStationReader.Terminal
         }
 
         /// <summary>
-        /// Construct and return a row of data for the specified aircraft
-        /// </summary>
-        /// <param name="aircraft"></param>
-        /// <returns></returns>
-        private static string[] GetAircraftRowData(Aircraft aircraft)
-        {
-            // Use the aircraft's staleness to set the row colour
-            var startColour = "";
-            var endColour = "";
-            if (aircraft.Staleness == Staleness.Stale)
-            {
-                startColour = "[red]";
-                endColour = "[/]";
-            }
-            else if (aircraft.Staleness == Staleness.Recent)
-            {
-                startColour = "[yellow]";
-                endColour = "[/]";
-            }
-
-            // Construct the row data
-            var data = new List<string>();
-            foreach (var column in _settings!.Columns)
-            {
-                var valueString = "";
-
-                if (column.Info!.PropertyType.Name.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
-                {
-                    decimal? value = (decimal?)column.Info!.GetValue(aircraft);
-                    valueString = value?.ToString(column.Format) ?? "";
-
-                } else if (column.Info!.PropertyType.Name.Equals("bool", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool value = (bool?)column.Info!.GetValue(aircraft) ?? false;
-                    valueString = value ? "Yes" : "No";
-                }
-                else if (column.Info!.PropertyType.Name.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
-                {
-                    DateTime? value = (DateTime?)column.Info!.GetValue(aircraft);
-                    valueString = value?.ToString(column.Format) ?? "";
-                }
-                else
-                {
-                    valueString = column.Info!.GetValue(aircraft)?.ToString() ?? "";
-                }
-
-                data.Add($"{startColour}{valueString}{endColour}");
-            }
-
-            return data.ToArray();
-        }
-
-        /// <summary>
         /// Handle the event raised when a new aircraft is detected
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private static void OnAircraftAdded(object? sender, AircraftNotificationEventArgs e)
         {
-            lock (_rowIndex)
+            // Update the timestamp used to implement the application timeout
+            _lastUpdate = DateTime.Now;
+
+            // Push the change to the SQL writer, if enabled
+            if (_settings!.EnableSqlWriter)
             {
-                // Update the timestamp used to implement the application timeout
-                _lastUpdate = DateTime.Now;
-
-                // Push the change to the SQL writer, if enabled
-                if (_settings!.EnableSqlWriter)
-                {
 #pragma warning disable CS8602
-                    _writer.Push(e.Aircraft);
+                _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
-                }
+            }
 
-                // Add the aircraft to the table
-                var rowIndex = _table.Rows.Count;
-                var rowData = GetAircraftRowData(e.Aircraft);
-                _table.AddRow(rowData);
-                _rowIndex.Add(e.Aircraft.Address, rowIndex);
-                _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowIndex}");
+            // Add the aircraft to the bottom of the table
+            var rowNumber = _tableManager!.AddAircraft(e.Aircraft);
+            if (rowNumber != -1)
+            {
+                _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowNumber}");
             }
         }
 
@@ -293,10 +163,7 @@ namespace BaseStationReader.Terminal
             }
 
             // Update the row
-            var rowIndex = _rowIndex[e.Aircraft.Address];
-            var rowData = GetAircraftRowData(e.Aircraft);
-            _table.RemoveRow(rowIndex);
-            _table.InsertRow(rowIndex, rowData);
+            _tableManager!.UpdateAircraft(e.Aircraft);
         }
 
         /// <summary>
@@ -306,37 +173,21 @@ namespace BaseStationReader.Terminal
         /// <param name="e"></param>
         private static void OnAircraftRemoved(object? sender, AircraftNotificationEventArgs e)
         {
-            lock (_rowIndex)
+            // Update the timestamp used to implement the application timeout
+            _lastUpdate = DateTime.Now;
+
+            // Lock the aircraft record - if we see it again, a new record will be created
+            e.Aircraft.Locked = true;
+            if (_settings!.EnableSqlWriter)
             {
-                // Update the timestamp used to implement the application timeout
-                _lastUpdate = DateTime.Now;
-
-                // Lock the aircraft record - if we see it again, a new record will be created
-                e.Aircraft.Locked = true;
-                if (_settings!.EnableSqlWriter)
-                {
 #pragma warning disable CS8602
-                    _writer.Push(e.Aircraft);
+                _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
-                }
-
-                // Locate the entry in the table and remove it
-                var row = _rowIndex[e.Aircraft.Address];
-                _table.RemoveRow(row);
-
-                // Shuffle the index for subsequent rows
-                foreach (var entry in _rowIndex)
-                {
-                    if (entry.Value > row)
-                    {
-                        _rowIndex[entry.Key] -= 1;
-                    }
-                }
-
-                // Remove the record from the index
-                _rowIndex.Remove(e.Aircraft.Address);
-                _logger!.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {row}");
             }
+
+            // Remove the aircraft from the index
+            var rowNumber = _tableManager!.RemoveAircraft(e.Aircraft);
+            _logger!.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
         }
 
         /// <summary>
