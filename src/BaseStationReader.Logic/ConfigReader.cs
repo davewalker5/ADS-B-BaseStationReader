@@ -1,12 +1,10 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.Extensions.Configuration;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BaseStationReader.Logic
 {
-    [ExcludeFromCodeCoverage]
     public static class ConfigReader
     {
         /// <summary>
