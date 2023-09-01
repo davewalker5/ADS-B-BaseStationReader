@@ -126,7 +126,7 @@ namespace BaseStationReader.Logic
         /// Receive a de-queued object, determine its type and use the appropriate writer to write it
         /// </summary>
         /// <param name="queued"></param>
-        private async void WriteDequeuedObject(object queued)
+        private async Task WriteDequeuedObject(object queued)
         {
             // If it's an aircraft and it's an existing record that hasn't been locked, get the ID for update
             Aircraft? aircraft = queued as Aircraft;

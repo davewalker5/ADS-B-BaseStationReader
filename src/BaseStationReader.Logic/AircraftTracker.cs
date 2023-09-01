@@ -175,7 +175,7 @@ namespace BaseStationReader.Logic
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private AircraftPosition? CreateAircraftPosition(Aircraft aircraft)
+        private static AircraftPosition? CreateAircraftPosition(Aircraft aircraft)
         {
             AircraftPosition? position = null;
 

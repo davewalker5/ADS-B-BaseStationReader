@@ -130,7 +130,7 @@ namespace BaseStationReader.Tests
             WaitForQueueToEmpty();
 
             // Check the state of the database
-            var positions = await _positionWriter.ListAsync(x => true);
+            var positions = await _positionWriter!.ListAsync(x => true);
             Assert.IsNotNull(positions);
             Assert.AreEqual(1, positions.Count);
             Assert.AreEqual(Altitude, positions.First().Altitude);
