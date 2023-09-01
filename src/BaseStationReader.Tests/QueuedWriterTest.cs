@@ -13,7 +13,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class QueuedWriterTest
     {
-        private const int WriterInterval = 500;
+        private const int WriterInterval = 10;
         private const int WriterBatchSize = 100;
         private const int MaximumWriterWaitTimeMs = 1200;
 
@@ -130,7 +130,7 @@ namespace BaseStationReader.Tests
             WaitForQueueToEmpty();
 
             // Check the state of the database
-            var positions = await _positionWriter!.ListAsync(x => true);
+            var positions = await _positionWriter.ListAsync(x => true);
             Assert.IsNotNull(positions);
             Assert.AreEqual(1, positions.Count);
             Assert.AreEqual(Altitude, positions.First().Altitude);
