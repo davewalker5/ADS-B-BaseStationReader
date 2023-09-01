@@ -13,7 +13,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class QueuedWriterTest
     {
-        private const int WriterInterval = 500;
+        private const int WriterInterval = 10;
         private const int WriterBatchSize = 100;
         private const int MaximumWriterWaitTimeMs = 1200;
 
@@ -29,37 +29,47 @@ namespace BaseStationReader.Tests
         private readonly DateTime FirstSeen = DateTime.ParseExact("2023-08-22 17:51:59.551", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
+        private BaseStationReaderDbContext? _context = null;
+        private AircraftWriter? _aircraftWriter = null;
+        private PositionWriter? _positionWriter = null;
         private QueuedWriter? _writer = null;
-        private AircraftManager? _manager = null;
         private bool _queueProcessed = false;
 
-        [TestMethod]
-        public async Task TestQueuedWriter()
+        [TestInitialize]
+        public void TestInitialise()
         {
-            // Create an in-memory database context and an aircraft manager
-            BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _manager = new AircraftManager(context);
+            // Create an in-memory database context and the two writers
+            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _aircraftWriter = new AircraftWriter(_context);
+            _positionWriter = new PositionWriter(_context);
 
             // Create a queued writer, wire up the event handlers and start it
             var logger = new MockFileLogger();
             var writerTimer = new MockTrackerTimer(WriterInterval);
-            _writer = new QueuedWriter(_manager, logger, writerTimer, WriterBatchSize);
+            _writer = new QueuedWriter(_aircraftWriter, _positionWriter, logger, writerTimer, WriterBatchSize);
             _writer.BatchWritten += OnBatchWritten;
-            _writer.Start();
+        }
 
-            // Push an update into the queue and wait until it's been processed
-            PushAndWait(new Aircraft
+        [TestMethod]
+        public async Task TestAircraftWriter()
+        {
+            // Start the writer
+            _writer!.Start();
+
+            // Push an aircraft update into the queue
+            Push(new Aircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = FirstSeen
             });
 
-            // Check the state of the database
+            // Wait for the queue to be processed then check the state of the database
+            WaitForQueueToEmpty();
             await ConfirmAircraftProperties(FirstSeen, false, false);
 
-            // Push a second update into the queue and wait until that's been processed, too
-            PushAndWait(new Aircraft
+            // Push a second update into the queue
+            Push(new Aircraft
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -74,15 +84,16 @@ namespace BaseStationReader.Tests
                 LastSeen = LastSeen
             });
 
+            // Wait for the queue to be processed then check the state of the database
+            WaitForQueueToEmpty();
+            await ConfirmAircraftProperties(LastSeen, true, false);
+
             // Stop the writer
             _writer.Stop();
 
-            // Check the state of the database
-            await ConfirmAircraftProperties(LastSeen, true, false);
-
             // Restart the writer and wait for the queue (that it creates on start) to be processed
             _writer.Start();
-            PushAndWait(null);
+            WaitForQueueToEmpty();
 
             // Check the state of the database
             await ConfirmAircraftProperties(LastSeen, true, true);
@@ -91,10 +102,57 @@ namespace BaseStationReader.Tests
             _writer.Stop();
         }
 
+        [TestMethod]
+        public async Task TestPositionWriter()
+        {
+            // Start the writer
+            _writer!.Start();
+
+            // Push an aircraft update into the queue
+            Push(new Aircraft
+            {
+                Address = Address,
+                FirstSeen = FirstSeen,
+                LastSeen = FirstSeen
+            });
+
+            // Push a position update into the queue
+            Push(new AircraftPosition
+            {
+                Address = Address,
+                Altitude = Altitude,
+                Latitude = Latitude,
+                Longitude = Longitude,
+                Timestamp = DateTime.Now
+            });
+
+            // Wait for the queue to empty
+            WaitForQueueToEmpty();
+
+            // Check the state of the database
+            var positions = await _positionWriter!.ListAsync(x => true);
+            Assert.IsNotNull(positions);
+            Assert.AreEqual(1, positions.Count);
+            Assert.AreEqual(Altitude, positions.First().Altitude);
+            Assert.AreEqual(Latitude, positions.First().Latitude);
+            Assert.AreEqual(Longitude, positions.First().Longitude);
+
+            // Stop the writer
+            _writer.Stop();
+        }
+
+
+        /// <summary>
+        /// Confirm the properties of the aircraft are as expected
+        /// </summary>
+        /// <param name="expectedLastSeen"></param>
+        /// <param name="checkUpdatedProperties"></param>
+        /// <param name="expectedLocked"></param>
+        /// <returns></returns>
         private async Task ConfirmAircraftProperties(DateTime expectedLastSeen, bool checkUpdatedProperties, bool expectedLocked)
         {
 #pragma warning disable CS8602
-            var aircraft = await _manager.ListAsync(x => x.Address == x.Address);
+            var aircraft = await _aircraftWriter.ListAsync(x => true);
 #pragma warning restore CS8602
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(1, aircraft.Count);
@@ -123,22 +181,27 @@ namespace BaseStationReader.Tests
             }
         }
 
-
         /// <summary>
-        /// Push an aircraft update to the writer queue and wait for it to be written
+        /// Push an arcraft update or position to the writer queue
         /// </summary>
-        /// <param name="aircraft"></param>
-        private void PushAndWait(Aircraft? aircraft)
+        /// <param name="entity"></param>
+        private void Push(object entity)
         {
             // Reset the processing flag
             _queueProcessed = false;
 
             // If the supplied aircraft isn't null, push it into the queu
-            if (aircraft != null)
+            if (entity != null)
             {
-                _writer?.Push(aircraft);
+                _writer!.Push(entity);
             }
+        }
 
+        /// <summary>
+        /// Wait for the queued writer to process the pending writes
+        /// </summary>
+        private void WaitForQueueToEmpty()
+        {
             // Start a stopwatch to end the test in case something goes awry
             var stopwatch = new Stopwatch();
             stopwatch.Start();

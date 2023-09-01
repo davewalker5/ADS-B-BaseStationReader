@@ -8,6 +8,7 @@ namespace BaseStationReader.Data
     public partial class BaseStationReaderDbContext : DbContext
     {
         public virtual DbSet<Aircraft> Aircraft { get; set; }
+        public virtual DbSet<AircraftPosition> AircraftPositions { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -48,6 +49,34 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.LastSeen)
                     .IsRequired()
                     .HasColumnName("LastSeen")
+                    .HasColumnType("DATETIME");
+            });
+
+            modelBuilder.Entity<AircraftPosition>(entity =>
+            {
+                modelBuilder.Entity<AircraftPosition>().Ignore(e => e.Address);
+
+                entity.ToTable("AIRCRAFT_POSITION");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("Id")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.AircraftId)
+                    .IsRequired()
+                    .HasColumnName("AircraftId");
+
+                entity.Property(e => e.Latitude)
+                    .IsRequired()
+                    .HasColumnName("Latitude");
+
+                entity.Property(e => e.Longitude)
+                    .IsRequired()
+                    .HasColumnName("Longitude");
+
+                entity.Property(e => e.Timestamp)
+                    .IsRequired()
+                    .HasColumnName("Timestamp")
                     .HasColumnType("DATETIME");
             });
         }

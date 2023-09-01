@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Terminal.Logic;
+﻿using BaseStationReader.Entities.Logging;
+using BaseStationReader.Terminal.Logic;
 
 namespace BaseStationReader.Tests
 {
@@ -18,6 +19,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);
             Assert.AreEqual("AircraftTracker.log", settings?.LogFile);
+            Assert.AreEqual(Severity.Info, settings?.MinimumLogLevel);
             Assert.IsFalse(settings?.EnableSqlWriter);
             Assert.AreEqual(30000, settings?.WriterInterval);
             Assert.AreEqual(20000, settings?.WriterBatchSize);
@@ -92,6 +94,14 @@ namespace BaseStationReader.Tests
             var args = new string[] { "--log-file", "MyLog.log" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
             Assert.AreEqual("MyLog.log", settings?.LogFile);
+        }
+
+        [TestMethod]
+        public void OverrideMinimumLogLevelTest()
+        {
+            var args = new string[] { "--log-level", "Debug" };
+            var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
+            Assert.AreEqual(Severity.Debug, settings?.MinimumLogLevel);
         }
 
         [TestMethod]

@@ -23,7 +23,7 @@ namespace BaseStationReader.Tests
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
 #pragma warning disable CS8618
-        private AircraftManager _manager;
+        private AircraftWriter _manager;
         private Aircraft _aircraft;
 #pragma warning restore CS8618
 
@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests
         public async Task TestInitialize()
         {
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _manager = new AircraftManager(context);
+            _manager = new AircraftWriter(context);
 
             var aircraft = new Aircraft
             {

@@ -9,6 +9,7 @@ namespace BaseStationReader.Entities.Events
 #pragma warning disable CS8618
         public Aircraft Aircraft { get; set; }
 #pragma warning restore CS8618
+        public AircraftPosition? Position { get; set; }
         public AircraftNotificationType NotificationType { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 {
     public enum CommandLineOptionType
     {
+        MinimumLogLevel,
         Host,
         Port,
         SocketReadTimeout,
@@ -13,6 +14,7 @@
         EnableSqlWriter,
         WriterInterval,
         WriterBatchSize,
+        PositionInterval,
         MaximumRows
     }
 }

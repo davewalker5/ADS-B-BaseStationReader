@@ -82,6 +82,7 @@ namespace BaseStationReader.Logic
                 Message msg = parser.Parse(fields);
                 if (msg.Address.Length > 0)
                 {
+                    // See if this is an existing aircraft or not and either update it or add it to the tracking collection
                     if (_aircraft.ContainsKey(msg.Address))
                     {
                         UpdateExistingAircraft(msg);
@@ -100,17 +101,31 @@ namespace BaseStationReader.Logic
         /// <param name="msg"></param>
         private void UpdateExistingAircraft(Message msg)
         {
-            // Existing aircraft, so update its properties from the message and notify subscribers
+            // Retrieve the existing aircraft
             var aircraft = _aircraft[msg.Address];
             lock (aircraft)
             {
+                // Capture the previous position
+                var lastLatitude = aircraft.Latitude;
+                var lastLongitude = aircraft.Longitude;
+
+                // Determine if it's changed and update its properties
                 bool changed = UpdateAircraftProperties(aircraft, msg);
                 if (changed)
                 {
                     try
                     {
+                        // If the position's changed, construct a position instance to add to the notification event arguments
+                        AircraftPosition? position = null;
+                        if ((aircraft.Latitude != lastLatitude) || (aircraft.Longitude != lastLongitude))
+                        {
+                            position = CreateAircraftPosition(aircraft);
+                        }
+
+                        // Notify subscribers
                         AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs {
                             Aircraft = aircraft,
+                            Position = position,
                             NotificationType = AircraftNotificationType.Updated
                         });
                     }
@@ -143,6 +158,7 @@ namespace BaseStationReader.Logic
                 AircraftAdded?.Invoke(this, new AircraftNotificationEventArgs
                 {
                     Aircraft = aircraft,
+                    Position = CreateAircraftPosition(aircraft),
                     NotificationType = AircraftNotificationType.Added
                 });
             }
@@ -152,6 +168,35 @@ namespace BaseStationReader.Logic
                 // subscriber callbacks or the application will stop updating
                 _logger.LogException(ex);
             }
+        }
+
+        /// <summary>
+        /// Create and return aircraft position if the specified aircraft has valid latitude and longitude
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        private static AircraftPosition? CreateAircraftPosition(Aircraft aircraft)
+        {
+            AircraftPosition? position = null;
+
+            if ((aircraft.Altitude != null) && (aircraft.Latitude != null) && (aircraft.Longitude != null))
+            {
+                // Note that both the address and ID of the aircraft are added to the position. The address
+                // isn't persisted, but is used to map a position to an existing aircraft in cases where a
+                // new aircraft is detected and its position is pushed to the queue in the same batch as the
+                // aircraft itself
+                position = new AircraftPosition
+                {
+                    Id = aircraft.Id,
+                    Address = aircraft.Address,
+                    Altitude = aircraft.Altitude ?? 0M,
+                    Latitude = aircraft.Latitude ?? 0M,
+                    Longitude = aircraft.Longitude ?? 0M,
+                    Timestamp = aircraft.LastSeen
+                };
+            }
+
+            return position;
         }
 
         /// <summary>
@@ -196,13 +241,13 @@ namespace BaseStationReader.Logic
                     // Determine how long it is since this aircraft updated
                     var aircraft = entry.Value;
 #pragma warning disable S6561
-                    var lastSeenSeconds = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
+                    var elapsed = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
 #pragma warning restore S6561
 
                     try
                     {
                         // If it's now stale, remove it. Otherwise, set the staleness level and send an update
-                        if (lastSeenSeconds >= _removedMs)
+                        if (elapsed >= _removedMs)
                         {
                             _aircraft.Remove(entry.Key);
                             AircraftRemoved?.Invoke(this, new AircraftNotificationEventArgs
@@ -211,7 +256,7 @@ namespace BaseStationReader.Logic
                                 NotificationType = AircraftNotificationType.Removed
                             });
                         }
-                        else if (lastSeenSeconds >= _staleMs)
+                        else if (elapsed >= _staleMs)
                         {
                             aircraft.Staleness = Staleness.Stale;
                             AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
@@ -220,7 +265,7 @@ namespace BaseStationReader.Logic
                                 NotificationType = AircraftNotificationType.Stale
                             });
                         }
-                        else if (lastSeenSeconds >= _recentMs)
+                        else if (elapsed >= _recentMs)
                         {
                             aircraft.Staleness = Staleness.Recent;
                             AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs

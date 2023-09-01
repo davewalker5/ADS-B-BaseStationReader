@@ -10,6 +10,6 @@ namespace BaseStationReader.Terminal.Interfaces
         int AddAircraft(Aircraft aircraft);
         void CreateTable(string title);
         int RemoveAircraft(Aircraft aircraft);
-        void UpdateAircraft(Aircraft aircraft);
+        int UpdateAircraft(Aircraft aircraft);
     }
 }

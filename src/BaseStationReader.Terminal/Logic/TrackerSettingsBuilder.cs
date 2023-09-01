@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic;
 using BaseStationReader.Terminal.Interfaces;
 
@@ -27,9 +28,11 @@ namespace BaseStationReader.Terminal.Logic
             parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
             parser.Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
+            parser.Add(CommandLineOptionType.MinimumLogLevel, false, "--log-level", "-ll", "Minimum logging level (Debug, Info, Warning or Error)", 1, 1);
             parser.Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
             parser.Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
             parser.Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-b", "SQL write batch size", 1, 1);
+            parser.Add(CommandLineOptionType.PositionInterval, false, "--position-interval", "-pi", "Interval (ms) at which position records are written", 1, 1);
             parser.Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
             parser.Parse(args);
 
@@ -57,6 +60,12 @@ namespace BaseStationReader.Terminal.Logic
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
             if (values != null) settings!.LogFile = values[0];
+
+            values = parser.GetValues(CommandLineOptionType.MinimumLogLevel);
+            if (values != null && Enum.TryParse<Severity>(values[0], out Severity minimumLogLevel))
+            {
+                settings!.MinimumLogLevel = minimumLogLevel;
+            }
 
             values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
             if (values != null) settings!.EnableSqlWriter = bool.Parse(values[0]);
