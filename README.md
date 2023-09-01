@@ -50,6 +50,7 @@
 | ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
 | ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file |
+| ApplicationSettings | MinimumLogLevel | --log-level | -ll | Minimum message severity to log (Debug, Info, Warning or Error) |
 | ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
 | ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
 | ApplicationSettings | WriterBatchSize | --writer-batch-size | -b | Maximum number of changes to consider on each WriterInterval |
@@ -139,9 +140,14 @@
 ## SQLite Database
 
 ### Database Schema
-- Tracking records are written to a single table, called AIRCRAFT, with each row summarising the detail from the messages received for a given aircraft:
+- Each aircraft tracked in a given session has a record in the AIRCRAFT table that is created when the aircraft is first seen and updated as further messages are received from that aircraft:
 
-![Tracking Table](Diagrams/database.png)
+![Tracking Table](Diagrams/aircraft_table.png)
+
+- The altitude, latitude and longitude of an aircraft are recorded in the AIRCRAFT_POSITION table as changes are reported
+- The AIRCRAFT_POSITION table has a foreign key back to the related record in the AIRCRAFT table:
+ 
+![Tracking Table](Diagrams/position_table.png)
 
 ### Database Management
 - The application uses Entity Framework Core and initial creation and management of the database is achieved using EF Core database migrations

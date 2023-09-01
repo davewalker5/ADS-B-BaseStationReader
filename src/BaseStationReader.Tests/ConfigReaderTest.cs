@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Logic;
+﻿using BaseStationReader.Entities.Logging;
+using BaseStationReader.Logic;
 
 namespace BaseStationReader.Tests
 {
@@ -18,6 +19,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);
             Assert.AreEqual("AircraftTracker.log", settings?.LogFile);
+            Assert.AreEqual(Severity.Info, settings?.MinimumLogLevel);
             Assert.IsFalse(settings?.EnableSqlWriter);
             Assert.AreEqual(30000, settings?.WriterInterval);
             Assert.AreEqual(20000, settings?.WriterBatchSize);

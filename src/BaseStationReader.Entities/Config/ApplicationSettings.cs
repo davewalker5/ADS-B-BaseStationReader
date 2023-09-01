@@ -1,10 +1,12 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using BaseStationReader.Entities.Logging;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Config
 {
     [ExcludeFromCodeCoverage]
     public class ApplicationSettings
     {
+        public Severity MinimumLogLevel { get; set; }
         public string Host { get; set; } = "";
         public int Port { get; set; }
         public int SocketReadTimeout { get; set; }

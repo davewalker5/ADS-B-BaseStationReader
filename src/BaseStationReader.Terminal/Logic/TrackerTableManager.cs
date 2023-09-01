@@ -67,18 +67,20 @@ namespace BaseStationReader.Terminal.Logic
         /// Update an aircraft's entry in the table
         /// </summary>
         /// <param name="aircraft"></param>
-        public void UpdateAircraft(Aircraft aircraft)
+        public int UpdateAircraft(Aircraft aircraft)
         {
+            var rowNumber = -1;
+
             lock (_lock)
             {
                 // Find the row number for the aircraft's ICAO address
-                var rowIndex = _indexManager.FindAircraft(aircraft.Address);
-                if ((rowIndex >= 0) && (rowIndex < Table!.Rows.Count))
+                rowNumber = _indexManager.FindAircraft(aircraft.Address);
+                if ((rowNumber >= 0) && (rowNumber < Table!.Rows.Count))
                 {
                     // Found, so a new row with updated row data, remove the old row and insert the new one
                     var rowData = GetAircraftRowData(aircraft);
-                    Table.RemoveRow(rowIndex);
-                    Table.InsertRow(rowIndex, rowData);
+                    Table.RemoveRow(rowNumber);
+                    Table.InsertRow(rowNumber, rowData);
                 }
                 else
                 {
@@ -87,6 +89,8 @@ namespace BaseStationReader.Terminal.Logic
                     AddTableRow(aircraft);
                 }
             }
+
+            return rowNumber;
         }
 
         /// <summary>

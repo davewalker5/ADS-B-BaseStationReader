@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
 using BaseStationReader.Terminal.Interfaces;
 using BaseStationReader.Terminal.Logic;
@@ -30,7 +31,7 @@ namespace BaseStationReader.Terminal
 
             // Configure the log file
             _logger = new FileLogger();
-            _logger.Initialise(_settings!.LogFile);
+            _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
 
             // Get the version number and application title
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -84,7 +85,13 @@ namespace BaseStationReader.Terminal
 
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
-            var tracker = new AircraftTracker(reader, parsers, _logger!, trackerTimer, _settings.TimeToRecent, _settings.TimeToStale, _settings.TimeToRemoval);
+            var tracker = new AircraftTracker(reader,
+                parsers,
+                _logger!,
+                trackerTimer,
+                _settings.TimeToRecent,
+                _settings.TimeToStale,
+                _settings.TimeToRemoval);
 
             // Wire up the aircraft tracking events
             tracker.AircraftAdded += OnAircraftAdded;
@@ -95,9 +102,10 @@ namespace BaseStationReader.Terminal
             if (_settings.EnableSqlWriter)
             {
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var manager = new AircraftManager(context);
+                var aircraftWriter = new AircraftWriter(context);
+                var positionWriter = new PositionWriter(context);
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
-                _writer = new QueuedWriter(manager, _logger!, writerTimer, _settings.WriterBatchSize);
+                _writer = new QueuedWriter(aircraftWriter, positionWriter, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
                 _writer.Start();
             }
@@ -131,9 +139,15 @@ namespace BaseStationReader.Terminal
             // Push the change to the SQL writer, if enabled
             if (_settings!.EnableSqlWriter)
             {
+                _logger!.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
 #pragma warning disable CS8602
                 _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
+                if (e.Position != null)
+                {
+                    _logger!.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
+                    _writer.Push(e.Position);
+                }
             }
 
             // Add the aircraft to the bottom of the table
@@ -157,13 +171,20 @@ namespace BaseStationReader.Terminal
             // Push the change to the SQL writer, if enabled
             if (_settings!.EnableSqlWriter)
             {
+                _logger!.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
 #pragma warning disable CS8602
                 _writer.Push(e.Aircraft);
 #pragma warning restore CS8602
+                if (e.Position != null)
+                {
+                    _logger!.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
+                    _writer.Push(e.Position);
+                }
             }
 
             // Update the row
-            _tableManager!.UpdateAircraft(e.Aircraft);
+            var rowNumber = _tableManager!.UpdateAircraft(e.Aircraft);
+            _logger!.LogMessage(Severity.Debug, $"Updated aircraft {e.Aircraft.Address} at row {rowNumber}");
         }
 
         /// <summary>

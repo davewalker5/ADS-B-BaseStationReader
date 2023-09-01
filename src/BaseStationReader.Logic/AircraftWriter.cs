@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace BaseStationReader.Logic
 {
-    public class AircraftManager : IAircraftManager
+    public class AircraftWriter : IAircraftWriter
     {
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft)
@@ -15,7 +15,7 @@ namespace BaseStationReader.Logic
             .Where(x => x.Name != "Id")
             .ToArray();
 
-        public AircraftManager(BaseStationReaderDbContext context)
+        public AircraftWriter(BaseStationReaderDbContext context)
         {
             _context = context;
         }
@@ -33,7 +33,6 @@ namespace BaseStationReader.Logic
 #pragma warning restore CS8603
         }
 
-
         /// <summary>
         /// List all aircraft matching the specified criteria
         /// </summary>
@@ -41,7 +40,6 @@ namespace BaseStationReader.Logic
         /// <returns></returns>
         public async Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate)
             => await _context.Aircraft.Where(predicate).ToListAsync();
-
 
         /// <summary>
         /// Write an aircraft to the database, either creating a new record or updating an existing one
