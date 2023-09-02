@@ -49,6 +49,7 @@
 | ApplicationSettings | TimeToRecent | --recent | -r | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
 | ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
+| ApplicationSettings | TimeToLock | --lock | -k | Threshold, in ms, after which an active aircraft record is locked, having received no updates |
 | ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file |
 | ApplicationSettings | MinimumLogLevel | --log-level | -ll | Minimum message severity to log (Debug, Info, Warning or Error) |
 | ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
@@ -121,6 +122,7 @@
     - Recent
     - Stale
     - Removed
+    - Locked
 - The states have the following meanings:
 
 | State | Meaning |
@@ -129,6 +131,7 @@
 | Recent | Messages are not being received from the aircraft but they have been received recently |
 | Stale | Messages have not been received from the aircraft for some time and it will shortly be removed from the tracking list |
 | Removed | The aircraft has been removed from the tracking list |
+| Locked | The aircraft's database record has been locked against further updates. New sightings result in a new record |
 
 - Changes in state are communicated to AircraftTracker subscribers via the "aircraft updated" event (see above), with the state as a property of the tracking object
 
@@ -179,7 +182,9 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 - The record for a given address should only be updated while the aircraft in question remains in range
 - Once it passes out of range, or when a new tracking session is started, if the address is seen again it should result in a new tracking record
 - This is achieved using the "Locked" flag on tracking records (see the screenshot, above):
-    - When an aircraft moves out of range and is removed from the tracking collection, its associated record is marked as "Locked"
+    - When an aircraft moves out of range and is removed from the tracking collection, a notional "lock timer" starts
+    - If it's seen again within the timout, the record remains unlocked to avoid duplication of aircraft records for the same flight
+    - Once the timeout is reached, the record is locked and any further updates for that ICAO address result in a new record
     - When the QueuedWriter starts, it immediately queues updates to mark all records that are not currently locked as locked, before accepting any other updates into the queue
 - Records marked as "Locked" are not considered candidates for further updates
 

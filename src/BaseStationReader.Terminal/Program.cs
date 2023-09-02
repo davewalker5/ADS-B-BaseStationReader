@@ -104,8 +104,9 @@ namespace BaseStationReader.Terminal
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
                 var aircraftWriter = new AircraftWriter(context);
                 var positionWriter = new PositionWriter(context);
+                var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
-                _writer = new QueuedWriter(aircraftWriter, positionWriter, _logger!, writerTimer, _settings.WriterBatchSize);
+                _writer = new QueuedWriter(aircraftWriter, positionWriter, aircraftLocker, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
                 _writer.Start();
             }
@@ -196,15 +197,6 @@ namespace BaseStationReader.Terminal
         {
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
-
-            // Lock the aircraft record - if we see it again, a new record will be created
-            e.Aircraft.Locked = true;
-            if (_settings!.EnableSqlWriter)
-            {
-#pragma warning disable CS8602
-                _writer.Push(e.Aircraft);
-#pragma warning restore CS8602
-            }
 
             // Remove the aircraft from the index
             var rowNumber = _tableManager!.RemoveAircraft(e.Aircraft);

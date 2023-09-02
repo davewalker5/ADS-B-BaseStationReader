@@ -10,6 +10,7 @@
         TimeToRecent,
         TimeToStale,
         TimeToRemoval,
+        TimeToLock,
         LogFile,
         EnableSqlWriter,
         WriterInterval,

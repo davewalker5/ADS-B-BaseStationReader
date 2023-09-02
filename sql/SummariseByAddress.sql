@@ -1,0 +1,6 @@
+PRAGMA journal_mode=WAL;
+
+SELECT Address, COUNT(1) AS 'Number'
+FROM AIRCRAFT
+GROUP BY Address
+ORDER BY COUNT(1) DESC;

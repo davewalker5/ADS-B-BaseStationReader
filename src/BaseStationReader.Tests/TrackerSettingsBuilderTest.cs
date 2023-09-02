@@ -18,6 +18,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(60000, settings?.TimeToRecent);
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);
+            Assert.AreEqual(900000, settings?.TimeToLock);
             Assert.AreEqual("AircraftTracker.log", settings?.LogFile);
             Assert.AreEqual(Severity.Info, settings?.MinimumLogLevel);
             Assert.IsFalse(settings?.EnableSqlWriter);
@@ -86,6 +87,14 @@ namespace BaseStationReader.Tests
             var args = new string[] { "--remove", "39000" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
             Assert.AreEqual(39000, settings?.TimeToRemoval);
+        }
+
+        [TestMethod]
+        public void OverrideTimeToLockTest()
+        {
+            var args = new string[] { "--lock", "501896" };
+            var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
+            Assert.AreEqual(501896, settings?.TimeToLock);
         }
 
         [TestMethod]
