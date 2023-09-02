@@ -11,6 +11,7 @@ namespace BaseStationReader.Logic
     {
         private readonly IAircraftWriter _aircraftWriter;
         private readonly IPositionWriter _positionWriter;
+        private readonly IAircraftLockManager _locker;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
@@ -21,12 +22,14 @@ namespace BaseStationReader.Logic
         public QueuedWriter(
             IAircraftWriter aircraftWriter,
             IPositionWriter positionWriter,
+            IAircraftLockManager locker,
             ITrackerLogger logger,
             ITrackerTimer timer,
             int batchSize)
         {
             _aircraftWriter = aircraftWriter;
             _positionWriter = positionWriter;
+            _locker = locker;
             _logger = logger;
             _timer = timer;
             _timer.Tick += OnTimer;
@@ -133,8 +136,12 @@ namespace BaseStationReader.Logic
             AircraftPosition? position = null;
             if (aircraft != null)
             {
-                // See if this is an existing aircraft for which the record hasn't been locked, to get the ID for update
-                aircraft.Id = await MatchAircraftAddress(aircraft.Address, false);
+                // Get the active aircraft with the specified address, if there is one, so it can be updated
+                var activeAircraft = await _locker.GetActiveAircraft(aircraft.Address);
+                if (activeAircraft != null)
+                {
+                    aircraft.Id = activeAircraft.Id;
+                }
             }
             else
             {
@@ -144,7 +151,11 @@ namespace BaseStationReader.Logic
                 position = queued as AircraftPosition;
                 if (position != null)
                 {
-                    position.AircraftId = await MatchAircraftAddress(position.Address, true);
+                    var activeAircraft = await _locker.GetActiveAircraft(position.Address);
+                    if (activeAircraft != null)
+                    {
+                        position.AircraftId = activeAircraft.Id;
+                    }
                 }
             }
 
@@ -168,28 +179,6 @@ namespace BaseStationReader.Logic
                 // stop writing to the database
                 _logger.LogException(ex);
             }
-        }
-
-        /// <summary>
-        /// Find an existing aircraft with the specified address and return it's Id, if found, or 0 if not found
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="matchLockedAircraft"></param>
-        /// <returns></returns>
-        private async Task<int> MatchAircraftAddress(string address, bool matchLockedAircraft)
-        {
-            int matchingId = 0;
-
-            if (!string.IsNullOrEmpty(address))
-            {
-                var existing = await _aircraftWriter.GetAsync(x => (x.Address == address) && (matchLockedAircraft || !x.Locked));
-                if (existing != null)
-                {
-                    matchingId = existing.Id;
-                }
-            }
-
-            return matchingId;
         }
     }
 }

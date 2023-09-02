@@ -18,6 +18,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(60000, settings?.TimeToRecent);
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);
+            Assert.AreEqual(900000, settings?.TimeToLock);
             Assert.AreEqual("AircraftTracker.log", settings?.LogFile);
             Assert.AreEqual(Severity.Info, settings?.MinimumLogLevel);
             Assert.IsFalse(settings?.EnableSqlWriter);

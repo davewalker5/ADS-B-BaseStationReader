@@ -21,7 +21,7 @@ namespace BaseStationReader.Logic
         }
 
         /// <summary>
-        /// Get the first aircraft matching the specified criteria
+        /// Get the most recent aircraft matching the specified criteria
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
@@ -34,12 +34,12 @@ namespace BaseStationReader.Logic
         }
 
         /// <summary>
-        /// List all aircraft matching the specified criteria
+        /// List all aircraft matching the specified criteria, most recent first
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
         public async Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate)
-            => await _context.Aircraft.Where(predicate).ToListAsync();
+            => await _context.Aircraft.Where(predicate).OrderByDescending(x => x.LastSeen).ToListAsync();
 
         /// <summary>
         /// Write an aircraft to the database, either creating a new record or updating an existing one

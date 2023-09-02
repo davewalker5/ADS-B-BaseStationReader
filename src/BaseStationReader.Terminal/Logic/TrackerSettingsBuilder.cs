@@ -26,7 +26,8 @@ namespace BaseStationReader.Terminal.Logic
             parser.Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
-            parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) removal of stale records", 1, 1);
+            parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) to removal of stale records", 1, 1);
+            parser.Add(CommandLineOptionType.TimeToLock, false, "--lock", "-k", "Time (ms) to locking of active database records", 1, 1);
             parser.Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
             parser.Add(CommandLineOptionType.MinimumLogLevel, false, "--log-level", "-ll", "Minimum logging level (Debug, Info, Warning or Error)", 1, 1);
             parser.Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
@@ -57,6 +58,9 @@ namespace BaseStationReader.Terminal.Logic
 
             values = parser.GetValues(CommandLineOptionType.TimeToRemoval);
             if (values != null) settings!.TimeToRemoval = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.TimeToLock);
+            if (values != null) settings!.TimeToLock = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
             if (values != null) settings!.LogFile = values[0];

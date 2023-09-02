@@ -72,6 +72,33 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
+        public async Task ListOrderingTest()
+        {
+            var first = await _writer!.WriteAsync(new Aircraft
+            {
+                Address = Address,
+                FirstSeen = FirstSeen,
+                LastSeen = LastSeen
+            });
+
+            var second = await _writer!.WriteAsync(new Aircraft
+            {
+                Address = Address,
+                FirstSeen = FirstSeen,
+                LastSeen = LastSeen.AddMinutes(10)
+            });
+
+            Assert.AreNotEqual(first.Id, second.Id);
+
+            var aircraft = await _writer.ListAsync(x => true);
+            Assert.IsNotNull(aircraft);
+            Assert.AreEqual(2, aircraft.Count);
+            Assert.AreEqual(second.Id, aircraft[0].Id);
+            Assert.AreEqual(first.Id, aircraft[1].Id);
+        }
+
+
+        [TestMethod]
         public async Task UpdateTest()
         {
             var initial = await _writer!.WriteAsync(new Aircraft
