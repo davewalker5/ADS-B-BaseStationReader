@@ -145,9 +145,7 @@ namespace BaseStationReader.Logic
             }
             else
             {
-                // Not an aircraft so it must be a position. If the aircraft Id isn't specified, try to find a match
-                // for the address. Note that we allow matches to locked aircraft as the final position update may
-                // come after the aircraft record has been locked
+                // Not an aircraft so it must be a position - match this to an active aircraft
                 position = queued as AircraftPosition;
                 if (position != null)
                 {
