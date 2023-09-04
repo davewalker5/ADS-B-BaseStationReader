@@ -50,7 +50,7 @@
 | ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
 | ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
 | ApplicationSettings | TimeToLock | --lock | -k | Threshold, in ms, after which an active aircraft record is locked, having received no updates |
-| ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file |
+| ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file. If this is blank, no log file is created |
 | ApplicationSettings | MinimumLogLevel | --log-level | -ll | Minimum message severity to log (Debug, Info, Warning or Error) |
 | ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
 | ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |

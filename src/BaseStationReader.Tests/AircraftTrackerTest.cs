@@ -2,7 +2,8 @@
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic;
+using BaseStationReader.Logic.Messages;
+using BaseStationReader.Logic.Tracking;
 using BaseStationReader.Tests.Entities;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;

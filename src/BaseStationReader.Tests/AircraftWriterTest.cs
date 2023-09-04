@@ -1,7 +1,7 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic;
+using BaseStationReader.Logic.Database;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 

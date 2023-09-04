@@ -1,5 +1,4 @@
 ﻿using BaseStationReader.Terminal.Interfaces;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
 {

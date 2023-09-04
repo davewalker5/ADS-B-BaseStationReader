@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Logging;
-using BaseStationReader.Terminal.Logic;
+using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
 {

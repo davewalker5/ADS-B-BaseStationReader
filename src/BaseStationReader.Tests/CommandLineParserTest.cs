@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Exceptions;
-using BaseStationReader.Logic;
+using BaseStationReader.Logic.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests

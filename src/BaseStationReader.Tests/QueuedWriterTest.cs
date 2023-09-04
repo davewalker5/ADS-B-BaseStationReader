@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic;
+using BaseStationReader.Logic.Database;
 using BaseStationReader.Tests.Mocks;
 using Spectre.Console;
 using System.Diagnostics;

@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Logic", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Data", "BaseStationReader.Data\BaseStationReader.Data.csproj", "{F05C2B61-1577-4108-A8E4-F9CA82F5C369}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaseStationReader.Tests", "BaseStationReader.Tests\BaseStationReader.Tests.csproj", "{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Tests", "BaseStationReader.Tests\BaseStationReader.Tests.csproj", "{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
