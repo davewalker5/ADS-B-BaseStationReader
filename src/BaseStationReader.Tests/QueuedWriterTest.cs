@@ -63,7 +63,7 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task AddNewAircraftTest()
+        public void AddNewAircraftTest()
         {
             Push(new Aircraft
             {
@@ -74,20 +74,20 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var aircraft = await _aircraftWriter!.GetAsync(x => x.Address == Address);
+            var aircraft = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(Address, aircraft.Address);
         }
 
         [TestMethod]
-        public async Task UpdateExistingAircraftTest()
+        public void UpdateExistingAircraftTest()
         {
-            var added = await _aircraftWriter!.WriteAsync(new Aircraft
+            var added =  Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
-            });
+            })).Result;
 
             Push(new Aircraft
             {
@@ -106,7 +106,7 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var aircraft = await _aircraftWriter.ListAsync(x => x.Address == Address);
+            var aircraft = Task.Run(() => _aircraftWriter!.ListAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(1, aircraft.Count);
             Assert.AreEqual(added.Id, aircraft[0].Id);
@@ -123,14 +123,14 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task AddActivePositionTest()
+        public void AddActivePositionTest()
         {
-            var aircraft = await _aircraftWriter!.WriteAsync(new Aircraft
+            var aircraft = Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
-            });
+            })).Result;
 
             Push(new AircraftPosition
             {
@@ -143,7 +143,7 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var position = await _positionWriter!.GetAsync(x => x.AircraftId == aircraft.Id);
+            var position = Task.Run(() => _positionWriter!.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
             Assert.IsNotNull(position);
             Assert.IsTrue(position.Id > 0);
             Assert.AreEqual(aircraft.Id, position.AircraftId);
@@ -153,16 +153,16 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task StaleRecordIsLockedOnUpdateTest()
+        public void StaleRecordIsLockedOnUpdateTest()
         {
-            await _aircraftWriter!.WriteAsync(new Aircraft
+            Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
                 LastSeen = DateTime.Now.AddMinutes(-15)
-            });
+            })).Wait();
 
-            var added = await _aircraftWriter.GetAsync(x => x.Address == Address);
+            var added = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(added);
             Assert.IsTrue(added.Id > 0);
             Assert.IsFalse(added.Locked);
@@ -184,7 +184,7 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var aircraft = await _aircraftWriter.ListAsync(x => true);
+            var aircraft = Task.Run(() => _aircraftWriter!.ListAsync(x => true)).Result;
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(2, aircraft.Count);
             Assert.IsTrue(aircraft[0].Id > 0);
@@ -193,16 +193,16 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task NewSessionLocksAllTest()
+        public void NewSessionLocksAllTest()
         {
-            await _aircraftWriter!.WriteAsync(new Aircraft
+            Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
-            });
+            })).Wait();
 
-            var aircraft = await _aircraftWriter.GetAsync(x => x.Address == Address);
+            var aircraft = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
             Assert.IsTrue(aircraft.Id > 0);
             Assert.IsFalse(aircraft.Locked);
@@ -211,7 +211,7 @@ namespace BaseStationReader.Tests
             _writer.Start();
             WaitForQueueToEmpty();
 
-            var locked = await _aircraftWriter.GetAsync(x => x.Address == Address);
+            var locked = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(locked);
             Assert.AreEqual(aircraft.Id, locked.Id);
             Assert.IsTrue(locked.Locked);
@@ -245,6 +245,8 @@ namespace BaseStationReader.Tests
             {
             }
             stopwatch.Stop();
+
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds <= MaximumWriterWaitTimeMs);
         }
 
         /// <summary>
