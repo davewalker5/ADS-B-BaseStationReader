@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using Spectre.Console;

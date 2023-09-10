@@ -24,6 +24,7 @@ namespace BaseStationReader.Tests
             Assert.IsFalse(settings?.EnableSqlWriter);
             Assert.AreEqual(30000, settings?.WriterInterval);
             Assert.AreEqual(20000, settings?.WriterBatchSize);
+            Assert.AreEqual(10000, settings?.RefreshInterval);
             Assert.AreEqual(20, settings?.MaximumRows);
 
             Assert.IsNotNull(settings?.Columns);

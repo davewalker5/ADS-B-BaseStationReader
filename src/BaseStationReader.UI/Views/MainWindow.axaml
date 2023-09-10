@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:BaseStationReader.UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BaseStationReader.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="BaseStationReader.UI"
+        Loaded="OnLoaded">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Window.Styles>
+    <StyleInclude Source="/Styles.axaml" />
+  </Window.Styles>
+
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="Start" Click="OnStartTracking"/>
+        <MenuItem Header="Stop" Click="OnStopTracking"/>
+        <Separator />
+        <MenuItem Header="E_xit" Click="OnExit"/>
+      </MenuItem>
+    </Menu>
+    <DataGrid
+      DockPanel.Dock="Bottom"
+      Name="TrackedAircraftGrid"
+      ItemsSource="{Binding TrackedAircraft}"
+      AutoGenerateColumns="False"
+      CanUserSortColumns="False"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      GridLinesVisibility="All"
+      LoadingRow="OnLoadingRow">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
+        <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
+        <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
+        <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
+        <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
+        <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
+        <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
+        <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
+        <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+        <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
+        <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+        <DataGridTextColumn Header="Staleness" CanUserSort="False" Binding="{Binding Staleness}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</Window>
