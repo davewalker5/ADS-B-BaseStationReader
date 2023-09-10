@@ -26,6 +26,7 @@ namespace BaseStationReader.Logic.Tracking
         public event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
 
         public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
+        public bool IsTracking { get { return (_tracker != null) ? _tracker.IsTracking : false; } }
 
         public TrackerWrapper(ITrackerLogger logger, ApplicationSettings settings)
         {

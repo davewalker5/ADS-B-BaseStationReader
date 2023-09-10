@@ -18,6 +18,7 @@ namespace BaseStationReader.UI.ViewModels
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
         public ObservableCollection<string> Statuses { get; private set; } = new();
+        public bool IsTracking { get { return (_wrapper != null) ? _wrapper.IsTracking : false; } }
 
         public MainWindowViewModel()
         {

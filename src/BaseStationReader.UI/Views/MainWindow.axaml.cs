@@ -101,34 +101,26 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnStartTracking(object source, RoutedEventArgs e)
+        private void OnStartStopTracking(object source, RoutedEventArgs e)
         {
             // Get the view model from the data context
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
-                // Start tracking and perform an initial refresh
-                model.Start();
-                _timer.Start();
-            }
-        }
-
-        /// <summary>
-        /// Handler called to stop tracking aircraft
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="e"></param>
-        private void OnStopTracking(object source, RoutedEventArgs e)
-        {
-            // Stop the timer
-            _timer.Stop();
-
-            // Get the view model from the data context
-            var model = DataContext as MainWindowViewModel;
-            if (model != null)
-            {
-                // Stop the tracker
-                model.Stop();
+                if (model.IsTracking)
+                {
+                    // Stop the timer and the tracker
+                    _timer.Stop();
+                    model.Stop();
+                    StartStop.Content = "Start";
+                }
+                else
+                {
+                    // Start tracking and perform an initial refresh
+                    StartStop.Content = "Stop";
+                    model.Start();
+                    _timer.Start();
+                }
             }
         }
 

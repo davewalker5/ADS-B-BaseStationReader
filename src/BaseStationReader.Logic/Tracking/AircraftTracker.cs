@@ -25,6 +25,8 @@ namespace BaseStationReader.Logic.Tracking
         public event EventHandler<AircraftNotificationEventArgs>? AircraftUpdated;
         public event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
 
+        public bool IsTracking { get; private set; } = false;
+
         public AircraftTracker(
             IMessageReader reader,
             Dictionary<MessageType, IMessageParser> parsers,
@@ -49,6 +51,9 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         public void Start()
         {
+            // Set the tracking flag
+            IsTracking = true;
+
             // Start the message reader
             _cancellationTokenSource = new CancellationTokenSource();
             _reader.MessageRead += OnNewMessage;
@@ -65,6 +70,7 @@ namespace BaseStationReader.Logic.Tracking
         {
             _cancellationTokenSource?.Cancel();
             _timer.Stop();
+            IsTracking = false;
         }
 
         /// <summary>
