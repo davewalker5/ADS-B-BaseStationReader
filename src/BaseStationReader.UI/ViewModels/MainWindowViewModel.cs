@@ -1,8 +1,12 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Events;
+using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Tracking;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -13,6 +17,15 @@ namespace BaseStationReader.UI.ViewModels
         private static ITrackerWrapper? _wrapper = null;
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
+        public ObservableCollection<string> Statuses { get; private set; } = new();
+
+        public MainWindowViewModel()
+        {
+            Statuses.Add("All");
+            Statuses.Add(TrackingStatus.Active.ToString());
+            Statuses.Add(TrackingStatus.Inactive.ToString());
+            Statuses.Add(TrackingStatus.Stale.ToString());
+        }
 
         /// <summary>
         /// Initialise the tracker
@@ -40,9 +53,31 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Refresh the tracked aircraft collection
         /// </summary>
-        public void Refresh()
+        /// <param name="status"></param>
+        public void Refresh(string? status)
         {
-            var aircraft = _wrapper!.TrackedAircraft.Values.ToList();
+            List<Aircraft> aircraft;
+
+            // Build the filtering expression, if needed
+            var builder = new ExpressionBuilder<Aircraft>();
+            if ((status != null) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
+            {
+                builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
+            }
+
+            // Build the filter expression. If there is one, use it to filter the collection of aircraft used
+            // to refresh the grid. Otherwise, just use all the current tracked aircraft
+            var filter = builder.Build();
+            if (filter != null)
+            {
+                aircraft = _wrapper!.TrackedAircraft.Values.AsQueryable().Where(filter).ToList();
+            }
+            else
+            {
+                aircraft = _wrapper!.TrackedAircraft.Values.ToList();
+            }
+
+            // Update the observable collection from the filtered aircraft list
             TrackedAircraft = new ObservableCollection<Aircraft>(aircraft);
         }
     }

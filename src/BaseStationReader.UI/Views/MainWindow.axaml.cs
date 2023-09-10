@@ -63,13 +63,9 @@ namespace BaseStationReader.UI.Views
             _timer.Interval = new TimeSpan(0, 0, 0, 0, _settings.RefreshInterval);
             _timer.Tick += OnTimerTick;
 
-            // Get the view model from the data context
+            // Get the view model from the data context and initialise the tracker
             var model = (MainWindowViewModel)DataContext!;
-            if (model != null)
-            {
-                // Initialise the tracker
-                model.Initialise(_logger!, _settings!);
-            }
+            model?.Initialise(_logger!, _settings!);
         }
 
         /// <summary>
@@ -149,12 +145,34 @@ namespace BaseStationReader.UI.Views
             }
         }
 
+        /// <summary>
+        /// Handler to refresh the display when the timer fires
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
         private void OnTimerTick(object? source, EventArgs e)
+        {
+            RefreshTrackedAircraftGrid();
+        }
+
+        /// <summary>
+        /// Handler to refresh the display when the status filter changes
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnStatusFilterChanged(object? source, SelectionChangedEventArgs e)
+        {
+            RefreshTrackedAircraftGrid();
+        }
+
+        private void RefreshTrackedAircraftGrid()
         {
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
-                model.Refresh();
+                var status = StatusFilter.SelectedValue as string;
+                Debug.Print(status);
+                model.Refresh(status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
             }
         }

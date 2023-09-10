@@ -28,30 +28,36 @@
         <MenuItem Header="E_xit" Click="OnExit"/>
       </MenuItem>
     </Menu>
-    <DataGrid
-      DockPanel.Dock="Bottom"
-      Name="TrackedAircraftGrid"
-      ItemsSource="{Binding TrackedAircraft}"
-      AutoGenerateColumns="False"
-      CanUserSortColumns="False"
-      HorizontalAlignment="Stretch"
-      VerticalAlignment="Stretch"
-      GridLinesVisibility="All"
-      LoadingRow="OnLoadingRow">
-      <DataGrid.Columns>
-        <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
-        <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
-        <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
-        <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
-        <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
-        <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
-        <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
-        <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
-        <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
-        <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
-        <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
-        <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
-      </DataGrid.Columns>
-    </DataGrid>
+    <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Status" Margin="10 0 0 0"/>
+        <ComboBox Name="StatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
+      </StackPanel>
+      <DataGrid
+        DockPanel.Dock="Bottom"
+        Name="TrackedAircraftGrid"
+        ItemsSource="{Binding TrackedAircraft}"
+        AutoGenerateColumns="False"
+        CanUserSortColumns="False"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        GridLinesVisibility="All"
+        LoadingRow="OnLoadingRow">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
+          <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
+          <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
+          <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
+          <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
+          <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
+          <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
+          <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
+          <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+          <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
+          <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+          <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </StackPanel>
   </DockPanel>
 </Window>
