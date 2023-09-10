@@ -165,11 +165,17 @@ namespace BaseStationReader.UI.Views
             RefreshTrackedAircraftGrid();
         }
 
+        /// <summary>
+        /// Refresh the aircraft tracking grid using the current filters
+        /// </summary>
         private void RefreshTrackedAircraftGrid()
         {
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
+                // Get the aircraft address filter
+                var address = AddressFilter.Text;
+
                 // Get the aircraft status filter
                 var status = StatusFilter.SelectedValue as string;
                 if ((status != null) && status.Equals("All", StringComparison.OrdinalIgnoreCase))
@@ -178,7 +184,7 @@ namespace BaseStationReader.UI.Views
                 }
 
                 // Refresh, filtering by the specified status
-                model.Refresh(status);
+                model.Refresh(address, status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
             }
         }

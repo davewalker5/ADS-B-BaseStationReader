@@ -30,6 +30,8 @@
     </Menu>
     <DockPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+        <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
+        <TextBox Name="AddressFilter" Margin="10 0 0 0"/>
         <TextBlock Text="Status" Margin="10 0 0 0"/>
         <ComboBox Name="StatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
       </StackPanel>

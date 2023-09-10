@@ -5,7 +5,6 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Tracking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -55,12 +54,18 @@ namespace BaseStationReader.UI.ViewModels
         /// Refresh the tracked aircraft collection
         /// </summary>
         /// <param name="status"></param>
-        public void Refresh(string? status)
+        public void Refresh(string? address, string? status)
         {
             List<Aircraft> aircraft;
 
             // Build the filtering expression, if needed
             var builder = new ExpressionBuilder<Aircraft>();
+            if (!string.IsNullOrEmpty(address))
+            {
+                Debug.Print($"Look for address {address.ToUpper()}");
+                builder.Add("Address", TrackerFilterOperator.Equals, address.ToUpper());
+            }
+
             if (!string.IsNullOrEmpty(status) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
             {
                 builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
