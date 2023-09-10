@@ -29,7 +29,7 @@ namespace BaseStationReader.Logic.Database
             if (aircraft != null && (DateTime.Now - aircraft.LastSeen).TotalMilliseconds >= _timeToLock)
             {
                 // Timeout has been exceeded, so lock the record and return null
-                aircraft.Locked = true;
+                aircraft.Status = TrackingStatus.Locked;
                 await _writer.WriteAsync(aircraft);
                 aircraft = null;
             }

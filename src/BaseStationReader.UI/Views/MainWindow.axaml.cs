@@ -82,13 +82,13 @@ namespace BaseStationReader.UI.Views
             var aircraft = e.Row.DataContext as Aircraft;
             if (aircraft != null)
             {
-                switch (aircraft.Staleness)
+                switch (aircraft.Status)
                 {
-                    case Staleness.Stale:
+                    case TrackingStatus.Stale:
                         e.Row.Background = Brushes.Red;
                         e.Row.Foreground = Brushes.White;
                         break;
-                    case Staleness.Recent:
+                    case TrackingStatus.Inactive:
                         e.Row.Background = Brushes.Yellow;
                         e.Row.Foreground = Brushes.Black;
                         break;

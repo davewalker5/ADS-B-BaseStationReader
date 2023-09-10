@@ -66,7 +66,7 @@ namespace BaseStationReader.Tests
             });
 
             Assert.IsTrue(aircraft.Id > 0);
-            Assert.IsFalse(aircraft.Locked);
+            Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             var active = await _aircraftLocker!.GetActiveAircraft(Address);
             Assert.IsNull(active);
@@ -74,7 +74,7 @@ namespace BaseStationReader.Tests
             var retrieved = await _aircraftWriter.GetAsync(x => x.Address == Address);
             Assert.IsNotNull(retrieved);
             Assert.AreEqual(aircraft.Id, retrieved.Id);
-            Assert.IsTrue(aircraft.Locked);
+            Assert.AreEqual(TrackingStatus.Locked, aircraft.Status);
         }
 
         [TestMethod]

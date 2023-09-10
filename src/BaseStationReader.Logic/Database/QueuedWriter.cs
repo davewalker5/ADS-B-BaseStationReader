@@ -57,10 +57,10 @@ namespace BaseStationReader.Logic.Database
         {
             // Set the locked flag on all unlocked records. This prevents confusing tracking of the same aircraft
             // on different flights
-            List<Aircraft> unlocked = await _aircraftWriter.ListAsync(x => !x.Locked);
+            List<Aircraft> unlocked = await _aircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
             foreach (var aircraft in unlocked)
             {
-                aircraft.Locked = true;
+                aircraft.Status = TrackingStatus.Locked;
                 _queue.Enqueue(aircraft);
             }
 

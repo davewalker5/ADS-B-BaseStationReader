@@ -20,8 +20,6 @@ namespace BaseStationReader.Data
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Aircraft>().Ignore(e => e.Staleness);
-
             modelBuilder.Entity<Aircraft>(entity =>
             {
                 entity.ToTable("AIRCRAFT");
@@ -39,7 +37,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Longitude).HasColumnName("Longitude");
                 entity.Property(e => e.VerticalRate).HasColumnName("VerticalRate");
                 entity.Property(e => e.Squawk).HasColumnName("Squawk");
-                entity.Property(e => e.Locked).HasColumnName("Locked");
+                entity.Property(e => e.Status).HasColumnName("Status");
 
                 entity.Property(e => e.FirstSeen)
                     .IsRequired()

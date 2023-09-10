@@ -219,7 +219,7 @@ namespace BaseStationReader.Logic.Tracking
                     if (updated != null && original != updated)
                     {
                         aircraftProperty.SetValue(aircraft, updated);
-                        aircraft.Staleness = Staleness.New;
+                        aircraft.Status = TrackingStatus.Active;
                         changed = true;
                     }
                 }
@@ -259,7 +259,7 @@ namespace BaseStationReader.Logic.Tracking
                         }
                         else if (elapsed >= _staleMs)
                         {
-                            aircraft.Staleness = Staleness.Stale;
+                            aircraft.Status = TrackingStatus.Stale;
                             AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
                             {
                                 Aircraft = aircraft,
@@ -268,7 +268,7 @@ namespace BaseStationReader.Logic.Tracking
                         }
                         else if (elapsed >= _recentMs)
                         {
-                            aircraft.Staleness = Staleness.Recent;
+                            aircraft.Status = TrackingStatus.Inactive;
                             AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
                             {
                                 Aircraft = aircraft,
