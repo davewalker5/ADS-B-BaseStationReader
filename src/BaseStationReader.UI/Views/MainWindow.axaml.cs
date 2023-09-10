@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -63,6 +64,10 @@ namespace BaseStationReader.UI.Views
             _timer.Interval = new TimeSpan(0, 0, 0, 0, _settings.RefreshInterval);
             _timer.Tick += OnTimerTick;
 
+            // Set the interval text
+            var refreshIntervalSeconds = (int)(_settings.RefreshInterval / 1000);
+            RefreshInterval.Text = refreshIntervalSeconds.ToString();
+
             // Get the view model from the data context and initialise the tracker
             var model = (MainWindowViewModel)DataContext!;
             model?.Initialise(_logger!, _settings!);
@@ -81,23 +86,20 @@ namespace BaseStationReader.UI.Views
                 switch (aircraft.Status)
                 {
                     case TrackingStatus.Stale:
-                        e.Row.Background = Brushes.Red;
-                        e.Row.Foreground = Brushes.White;
+                        e.Row.Foreground = Brushes.Red;
                         break;
                     case TrackingStatus.Inactive:
-                        e.Row.Background = Brushes.Yellow;
-                        e.Row.Foreground = Brushes.Black;
+                        e.Row.Foreground = Brushes.Yellow;
                         break;
                     default:
-                        e.Row.Background = Brushes.White;
-                        e.Row.Foreground = Brushes.Black;
+                        e.Row.Foreground = Brushes.White;
                         break;
                 }
             }
         }
 
         /// <summary>
-        /// Handler called to begin tracking aircraft
+        /// Handler called to start/stop tracking aircraft
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
@@ -148,13 +150,30 @@ namespace BaseStationReader.UI.Views
         }
 
         /// <summary>
-        /// Handler to refresh the display when the status filter changes
+        /// Handler to set the refresh interval when the interval text is updated
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnStatusFilterChanged(object? source, SelectionChangedEventArgs e)
+        private void OnRefreshIntervalChanged(object? source, TextChangedEventArgs e)
         {
-            RefreshTrackedAircraftGrid();
+            // Get an integer interval, in seconds, from the refresh interval text box. If successful, and
+            // the interval is valid, set the timer interval
+            if (int.TryParse(RefreshInterval.Text, out int interval) && (interval > 0))
+            {
+                _timer.Interval = new TimeSpan(0, 0, interval);
+            }
+        }
+
+        /// <summary>
+        /// Handler to clear the current filters, resetting them to their defaults
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnClearFilters(object source, RoutedEventArgs e)
+        {
+            AddressFilter.Text = "";
+            CallsignFilter.Text = "";
+            StatusFilter.SelectedIndex = 0;
         }
 
         /// <summary>
@@ -162,11 +181,17 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         private void RefreshTrackedAircraftGrid()
         {
+            // Get the model from the data context
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
-                // Get the aircraft address filter
+                // Set a busy cursor
+                var original = Cursor;
+                Cursor = new Cursor(StandardCursorType.Wait);
+
+                // Get the aircraft address and callsign filters
                 var address = AddressFilter.Text;
+                var callsign = CallsignFilter.Text;
 
                 // Get the aircraft status filter
                 var status = StatusFilter.SelectedValue as string;
@@ -176,8 +201,11 @@ namespace BaseStationReader.UI.Views
                 }
 
                 // Refresh, filtering by the specified status
-                model.Refresh(address, status);
+                model.Refresh(address, callsign, status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
+
+                // Restore the cursor
+                Cursor = original;
             }
         }
     }

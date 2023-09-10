@@ -8,9 +8,18 @@
 
   <Style Selector="DataGrid">
     <Setter Property="Margin" Value="10" />
+    <Setter Property="Background" Value="Black" />
+    <Setter Property="GridLinesVisibility" Value="All" />
+    <Setter Property="RowHeight" Value="15"/>
+  </Style>
+
+  <Style Selector="DataGridColumnHeader">
+    <Setter Property="Background" Value="Black" />
+    <Setter Property="Foreground" Value="Yellow" />
   </Style>
 
   <Style Selector="DataGridCell">
+    <Setter Property="Background" Value="Black" />
     <Setter Property="IsEnabled" Value="False" />
   </Style>
 

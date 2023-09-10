@@ -54,8 +54,10 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Refresh the tracked aircraft collection
         /// </summary>
+        /// <param name="address"></param>
+        /// <param name="callsign"></param>
         /// <param name="status"></param>
-        public void Refresh(string? address, string? status)
+        public void Refresh(string? address, string? callsign, string? status)
         {
             List<Aircraft> aircraft;
 
@@ -63,8 +65,12 @@ namespace BaseStationReader.UI.ViewModels
             var builder = new ExpressionBuilder<Aircraft>();
             if (!string.IsNullOrEmpty(address))
             {
-                Debug.Print($"Look for address {address.ToUpper()}");
                 builder.Add("Address", TrackerFilterOperator.Equals, address.ToUpper());
+            }
+
+            if (!string.IsNullOrEmpty(callsign))
+            {
+                builder.Add("Callsign", TrackerFilterOperator.Equals, callsign.ToUpper());
             }
 
             if (!string.IsNullOrEmpty(status) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
