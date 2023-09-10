@@ -28,8 +28,8 @@
         <MenuItem Header="E_xit" Click="OnExit"/>
       </MenuItem>
     </Menu>
-    <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
-      <StackPanel Orientation="Horizontal">
+    <DockPanel>
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
         <TextBlock Text="Status" Margin="10 0 0 0"/>
         <ComboBox Name="StatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
       </StackPanel>
@@ -58,6 +58,6 @@
           <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
         </DataGrid.Columns>
       </DataGrid>
-    </StackPanel>
+    </DockPanel>
   </DockPanel>
 </Window>

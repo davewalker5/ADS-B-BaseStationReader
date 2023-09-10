@@ -170,8 +170,14 @@ namespace BaseStationReader.UI.Views
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
+                // Get the aircraft status filter
                 var status = StatusFilter.SelectedValue as string;
-                Debug.Print(status);
+                if ((status != null) && status.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
+                    status = null;
+                }
+
+                // Refresh, filtering by the specified status
                 model.Refresh(status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
             }

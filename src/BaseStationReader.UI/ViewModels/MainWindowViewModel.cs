@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 
 namespace BaseStationReader.UI.ViewModels
@@ -60,7 +61,7 @@ namespace BaseStationReader.UI.ViewModels
 
             // Build the filtering expression, if needed
             var builder = new ExpressionBuilder<Aircraft>();
-            if ((status != null) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
             {
                 builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
             }
