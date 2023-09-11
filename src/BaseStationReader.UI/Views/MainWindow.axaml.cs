@@ -185,10 +185,6 @@ namespace BaseStationReader.UI.Views
             var model = DataContext as MainWindowViewModel;
             if (model != null)
             {
-                // Set a busy cursor
-                var original = Cursor;
-                Cursor = new Cursor(StandardCursorType.Wait);
-
                 // Get the aircraft address and callsign filters
                 var address = AddressFilter.Text;
                 var callsign = CallsignFilter.Text;
@@ -203,9 +199,6 @@ namespace BaseStationReader.UI.Views
                 // Refresh, filtering by the specified status
                 model.Refresh(address, callsign, status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
-
-                // Restore the cursor
-                Cursor = original;
             }
         }
     }
