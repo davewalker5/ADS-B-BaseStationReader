@@ -12,6 +12,7 @@ namespace BaseStationReader.Logic.Configuration
         /// <param name="args"></param>
         /// <param name="configJsonPath"></param>
         /// <returns></returns>
+# pragma warning disable S3776
         public ApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath)
         {
             // Read the config file to provide default settings
@@ -87,5 +88,6 @@ namespace BaseStationReader.Logic.Configuration
 
             return settings;
         }
+# pragma warning restore S3776
     }
 }
