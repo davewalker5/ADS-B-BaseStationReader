@@ -7,7 +7,7 @@ namespace BaseStationReader.Logic.DataExchange
     {
         protected Dictionary<string, PropertyInfo> Properties { get; private set; } = new();
 
-        public ExporterBase()
+        protected ExporterBase()
         {
             // Get a list of aircraft properties marked as exportable, ordering by the column
             // order defined on the export attribute

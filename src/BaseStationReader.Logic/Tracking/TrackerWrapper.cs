@@ -7,7 +7,6 @@ using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Messages;
-using DocumentFormat.OpenXml.Office.CoverPageProps;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
@@ -26,7 +25,7 @@ namespace BaseStationReader.Logic.Tracking
         public event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
 
         public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
-        public bool IsTracking { get { return (_tracker != null) ? _tracker.IsTracking : false; } }
+        public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
         public TrackerWrapper(ITrackerLogger logger, ApplicationSettings settings)
         {
@@ -112,13 +111,12 @@ namespace BaseStationReader.Logic.Tracking
             // Add the aircraft to the collection
             TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
 
-            // Push the change to the SQL writer, if enabled
+            // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
-#pragma warning disable CS8602
                 _writer.Push(e.Aircraft);
-#pragma warning restore CS8602
+
                 if (e.Position != null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
@@ -140,13 +138,12 @@ namespace BaseStationReader.Logic.Tracking
             // Update the aircraft in the collection
             TrackedAircraft[e.Aircraft.Address] = e.Aircraft;
 
-            // Push the change to the SQL writer, if enabled
+            // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
-#pragma warning disable CS8602
                 _writer.Push(e.Aircraft);
-#pragma warning restore CS8602
+
                 if (e.Position != null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
