@@ -15,7 +15,7 @@
         EnableSqlWriter,
         WriterInterval,
         WriterBatchSize,
-        PositionInterval,
+        RefreshInterval,
         MaximumRows
     }
 }

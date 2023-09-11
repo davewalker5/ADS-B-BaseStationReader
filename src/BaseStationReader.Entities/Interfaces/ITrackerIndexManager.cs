@@ -1,6 +1,6 @@
-﻿namespace BaseStationReader.Terminal.Interfaces
+﻿namespace BaseStationReader.Entities.Interfaces
 {
-    internal interface ITrackerIndexManager
+    public interface ITrackerIndexManager
     {
         void AddAircraft(string address, int rowNumber);
         int FindAircraft(string address);

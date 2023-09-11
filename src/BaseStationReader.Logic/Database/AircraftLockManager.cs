@@ -26,10 +26,12 @@ namespace BaseStationReader.Logic.Database
             Aircraft? aircraft = await _writer.GetAsync(x => x.Address == address);
 
             // If the last seen date has exceeded the time to lock timeout, this record should no longer be active
+#pragma warning disable S6561
             if (aircraft != null && (DateTime.Now - aircraft.LastSeen).TotalMilliseconds >= _timeToLock)
+#pragma warning restore S6561
             {
                 // Timeout has been exceeded, so lock the record and return null
-                aircraft.Locked = true;
+                aircraft.Status = TrackingStatus.Locked;
                 await _writer.WriteAsync(aircraft);
                 aircraft = null;
             }

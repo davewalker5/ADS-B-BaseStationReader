@@ -46,8 +46,8 @@ namespace BaseStationReader.Entities.Tracking
         [Required]
         public DateTime LastSeen { get; set; }
 
-        public bool Locked { get; set; }
-        public Staleness Staleness { get; set; }
+        [Required]
+        public TrackingStatus Status { get; set; }
 
         public object Clone()
         {

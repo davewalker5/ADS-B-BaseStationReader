@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using Spectre.Console;
@@ -149,12 +150,12 @@ namespace BaseStationReader.Terminal.Logic
             // Use the aircraft's staleness to set the row colour
             var startColour = "";
             var endColour = "";
-            if (aircraft.Staleness == Staleness.Stale)
+            if (aircraft.Status == TrackingStatus.Stale)
             {
                 startColour = "[red]";
                 endColour = "[/]";
             }
-            else if (aircraft.Staleness == Staleness.Recent)
+            else if (aircraft.Status == TrackingStatus.Inactive)
             {
                 startColour = "[yellow]";
                 endColour = "[/]";

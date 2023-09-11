@@ -12,6 +12,7 @@ namespace BaseStationReader.Logic.Configuration
         /// <param name="args"></param>
         /// <param name="configJsonPath"></param>
         /// <returns></returns>
+# pragma warning disable S3776
         public ApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath)
         {
             // Read the config file to provide default settings
@@ -32,7 +33,7 @@ namespace BaseStationReader.Logic.Configuration
             parser.Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
             parser.Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
             parser.Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-b", "SQL write batch size", 1, 1);
-            parser.Add(CommandLineOptionType.PositionInterval, false, "--position-interval", "-pi", "Interval (ms) at which position records are written", 1, 1);
+            parser.Add(CommandLineOptionType.RefreshInterval, false, "--ui-interval", "-ui", "Interval (ms) at which live UI's should update", 1, 1);
             parser.Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
             parser.Parse(args);
 
@@ -79,10 +80,14 @@ namespace BaseStationReader.Logic.Configuration
             values = parser.GetValues(CommandLineOptionType.WriterBatchSize);
             if (values != null) settings!.WriterBatchSize = int.Parse(values[0]);
 
+            values = parser.GetValues(CommandLineOptionType.RefreshInterval);
+            if (values != null) settings!.RefreshInterval = int.Parse(values[0]);
+
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
             if (values != null) settings!.MaximumRows = int.Parse(values[0]);
 
             return settings;
         }
+# pragma warning restore S3776
     }
 }

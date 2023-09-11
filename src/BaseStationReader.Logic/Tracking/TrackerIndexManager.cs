@@ -1,6 +1,6 @@
-﻿using BaseStationReader.Terminal.Interfaces;
+﻿using BaseStationReader.Entities.Interfaces;
 
-namespace BaseStationReader.Terminal.Logic
+namespace BaseStationReader.Logic.Tracking
 {
     public class TrackerIndexManager : ITrackerIndexManager
     {

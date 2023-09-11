@@ -165,7 +165,7 @@ namespace BaseStationReader.Tests
             var added = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(added);
             Assert.IsTrue(added.Id > 0);
-            Assert.IsFalse(added.Locked);
+            Assert.AreNotEqual(TrackingStatus.Locked, added.Status);
 
             Push(new Aircraft
             {
@@ -205,7 +205,7 @@ namespace BaseStationReader.Tests
             var aircraft = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
             Assert.IsTrue(aircraft.Id > 0);
-            Assert.IsFalse(aircraft.Locked);
+            Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer!.Stop();
             _writer.Start();
@@ -214,7 +214,7 @@ namespace BaseStationReader.Tests
             var locked = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(locked);
             Assert.AreEqual(aircraft.Id, locked.Id);
-            Assert.IsTrue(locked.Locked);
+            Assert.AreEqual(TrackingStatus.Locked, aircraft.Status);
         }
 
         /// <summary>

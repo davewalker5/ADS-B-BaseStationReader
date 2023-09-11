@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Terminal.Logic;
+﻿using BaseStationReader.Logic.Tracking;
 
 namespace BaseStationReader.Tests
 {

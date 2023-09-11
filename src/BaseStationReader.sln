@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Data", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Tests", "BaseStationReader.Tests\BaseStationReader.Tests.csproj", "{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.UI", "BaseStationReader.UI\BaseStationReader.UI.csproj", "{FED8D850-E4F9-41A0-8A84-DFCFD242DA8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FED8D850-E4F9-41A0-8A84-DFCFD242DA8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FED8D850-E4F9-41A0-8A84-DFCFD242DA8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FED8D850-E4F9-41A0-8A84-DFCFD242DA8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FED8D850-E4F9-41A0-8A84-DFCFD242DA8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -25,6 +25,7 @@
 ## The Console Application
 
 ### Overview
+
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
 
 ![Console Application](Diagrams/screenshot.png)
@@ -40,24 +41,25 @@
 
 - The appsettings.json file in the console application project contains the following keys for controlling the application:
 
-| Section | Key | Command Line | Short Name | Purpose |
-| --- | --- | --- | --- | --- |
-| ApplicationSettings | Host | --host | -h | Host the reader connects to for reading messages |
-| ApplicationSettings | Port | --port | -p | Port the reader connects to for reading messages |
-| ApplicationSettings | SocketReadTimeout | --read-timout | -t | Timeout, in ms, for read operations on the message stream |
-| ApplicationSettings | ApplicationTimeout | --app-timeout | -a | Timeout (ms) after which the application will quit of no messages are recieved |
-| ApplicationSettings | TimeToRecent | --recent | -r | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below) |
-| ApplicationSettings | TimeToStale | --stale | -s | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below) |
-| ApplicationSettings | TimeToRemoval | --remove | -x | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
-| ApplicationSettings | TimeToLock | --lock | -k | Threshold, in ms, after which an active aircraft record is locked, having received no updates |
-| ApplicationSettings | LogFile | --log-file | -l | Path and name of the log file. If this is blank, no log file is created |
-| ApplicationSettings | MinimumLogLevel | --log-level | -ll | Minimum message severity to log (Debug, Info, Warning or Error) |
-| ApplicationSettings | EnableSqlWriter | --enable-sql-writer | -w | Set to true to enable the SQL writer or false to disable it |
-| ApplicationSettings | WriterInterval | --writer-interval | -i | Interval, in ms, at which the writer writes batches of changes from the queue to the database |
-| ApplicationSettings | WriterBatchSize | --writer-batch-size | -b | Maximum number of changes to consider on each WriterInterval |
-| ApplicationSettings | MaximumRows | --max-rows | -m | Maximum rows in the live table view at any one time or 0 for unlimited rows |
-| ApplicationSettings | Columns | - | - | Set of column definitions for columns to be included in the output |
-| ConnectionStrings | BaseStationReaderDB | -  | - | SQLite connection string for the database |
+| Section             | Key                 | Command Line        | Short Name | Purpose                                                                                                           |
+| ------------------- | ------------------- | ------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| ApplicationSettings | Host                | --host              | -h         | Host the reader connects to for reading messages                                                                  |
+| ApplicationSettings | Port                | --port              | -p         | Port the reader connects to for reading messages                                                                  |
+| ApplicationSettings | SocketReadTimeout   | --read-timout       | -t         | Timeout, in ms, for read operations on the message stream                                                         |
+| ApplicationSettings | ApplicationTimeout  | --app-timeout       | -a         | Timeout (ms) after which the terminal application will quit if no messages are recieved                           |
+| ApplicationSettings | TimeToRecent        | --recent            | -r         | Threshold, in ms, after the most recent message at which an aircraft is considered "recent" (see states, below)   |
+| ApplicationSettings | TimeToStale         | --stale             | -s         | Threshold, in ms, after the most recent message at which an aircraft is considered "stale" (see states, below)    |
+| ApplicationSettings | TimeToRemoval       | --remove            | -x         | Threshold, in ms, after the most recent message at which an aircraft is removed from tracking (see states, below) |
+| ApplicationSettings | TimeToLock          | --lock              | -k         | Threshold, in ms, after which an active aircraft record is locked, having received no updates                     |
+| ApplicationSettings | LogFile             | --log-file          | -l         | Path and name of the log file. If this is blank, no log file is created                                           |
+| ApplicationSettings | MinimumLogLevel     | --log-level         | -ll        | Minimum message severity to log (Debug, Info, Warning or Error)                                                   |
+| ApplicationSettings | EnableSqlWriter     | --enable-sql-writer | -w         | Set to true to enable the SQL writer or false to disable it                                                       |
+| ApplicationSettings | WriterInterval      | --writer-interval   | -i         | Interval, in ms, at which the writer writes batches of changes from the queue to the database                     |
+| ApplicationSettings | WriterBatchSize     | --writer-batch-size | -b         | Maximum number of changes to consider on each WriterInterval                                                      |
+| ApplicationSettings | RefreshInterval     | --ui-interval       | -b         | GUI live view refresh interval (ms)                                                                               |
+| ApplicationSettings | MaximumRows         | --max-rows          | -m         | Maximum rows in the live table view at any one time or 0 for unlimited rows                                       |
+| ApplicationSettings | Columns             | -                   | -          | Set of column definitions for columns to be included in the output                                                |
+| ConnectionStrings   | BaseStationReaderDB | -                   | -          | SQLite connection string for the database                                                                         |
 
 - Values may also be passed using the indicated command line arguments, in which case the values are first read from the configuration file and then any values specified on the command line are then applied
 
@@ -67,35 +69,36 @@
 
 ```json
 [
-      {
-        "Property": "Address",
-        "Label": "ID",
-        "Format": ""
-      },
-      {
-        "Property": "Callsign",
-        "Label": "Callsign",
-        "Format": ""
-      },
-      {
-        "Property": "Latitude",
-        "Label": "Latitude",
-        "Format": "N5"
-      },
+  {
+    "Property": "Address",
+    "Label": "ID",
+    "Format": ""
+  },
+  {
+    "Property": "Callsign",
+    "Label": "Callsign",
+    "Format": ""
+  },
+  {
+    "Property": "Latitude",
+    "Label": "Latitude",
+    "Format": "N5"
+  }
 ]
 ```
 
 - Each column definition contains the following items:
 
-| Item | Comments | 
-| --- | --- |
-| Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column |
-| Label | Column title |
-| Format | The C# format string used to render the property (for Decimal and DateTime types) or blank |
+| Item     | Comments                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------ |
+| Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column   |
+| Label    | Column title                                                                               |
+| Format   | The C# format string used to render the property (for Decimal and DateTime types) or blank |
 
 - The application will show only the columns listed in this section of the configuration file, showing them in the order in which they appear here and formatted according to the format specifier
 
 #### Row Limits and Column Control
+
 - The maximum row limit and custom column control are intended to support running the application on small screens
 - The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
 
@@ -104,38 +107,35 @@
 ## Aircraft Tracking
 
 ### Adding and Updating Tracking Objects
+
 - Aircraft are identified by their [ICAO 24-bit address](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes)
 - When a new aircraft is seen for the first time in a session, it is added to the collection of tracked aircraft
 - In the first instance, the tracking object is populated with data from the initial message that caused it to be added to the tracking collection
 - As new messages come in for that aircraft, the existing tracking object is updated with new/updated information from each new message
 
 ### Event Model
+
 - The AircraftTracker exposes the following events that subscribers can subscribe to to receive updates on tracked aircraft:
-    - Aircraft added
-    - Aircraft updated
-    - Aircraft removed
+  - Aircraft added
+  - Aircraft updated
+  - Aircraft removed
 - The event notification for each event includes the current tracking object for the aircraft
 
-### Tracked Aircraft States
-- Tracked aircraft pass through the following set of states from the point where they are added:
-    - New
-    - Recent
-    - Stale
-    - Removed
-    - Locked
-- The states have the following meanings:
+### Tracked Aircraft Statuses
 
-| State | Meaning |
-| --- | --- |
-| New | The aircraft has just been added and ongoing messages are being received from it |
-| Recent | Messages are not being received from the aircraft but they have been received recently |
-| Stale | Messages have not been received from the aircraft for some time and it will shortly be removed from the tracking list |
-| Removed | The aircraft has been removed from the tracking list |
-| Locked | The aircraft's database record has been locked against further updates. New sightings result in a new record |
+- Tracked aircraft pass through the following set of statuses from the point where they are added:
 
-- Changes in state are communicated to AircraftTracker subscribers via the "aircraft updated" event (see above), with the state as a property of the tracking object
+| Status   | Value | Meaning                                                                   |
+| -------- | ----- | ------------------------------------------------------------------------- |
+| Active   | 0     | The aircraft has just been added and ongoing messages are being received  |
+| Inactive | 1     | Messages have been received recently but are not currently being received |
+| Stale    | 2     | Messages have not been received for a while - scheduled for removal       |
+| Locked   | 3     | Aircraft's database record has been locked against further updates        |
+
+- Changes in status are communicated to AircraftTracker subscribers via the "aircraft updated" event (see above), with the status as a property of the tracking object
 
 ## Message Parsing
+
 - The AircraftTracker is supplied with a dictionary of message parsers, each associated with a [Basestation message type](http://woodair.net/sbs/article/barebones42_socket_data.htm)
 - As messages are received, the tracker selects the appropriate parser based on the message type
 - Currently, the only parser that has been implemented is for the MSG message type
@@ -143,16 +143,18 @@
 ## SQLite Database
 
 ### Database Schema
+
 - Each aircraft tracked in a given session has a record in the AIRCRAFT table that is created when the aircraft is first seen and updated as further messages are received from that aircraft:
 
 ![Tracking Table](Diagrams/aircraft_table.png)
 
 - The altitude, latitude and longitude of an aircraft are recorded in the AIRCRAFT_POSITION table as changes are reported
 - The AIRCRAFT_POSITION table has a foreign key back to the related record in the AIRCRAFT table:
- 
+
 ![Tracking Table](Diagrams/position_table.png)
 
 ### Database Management
+
 - The application uses Entity Framework Core and initial creation and management of the database is achieved using EF Core database migrations
 - To create the database for the first time, first install the .NET Core SDK and then install the "dotnet ef" tool:
 
@@ -173,6 +175,7 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 - It will then bring the database up to date by applying all pending migrations
 
 ### Record Locking
+
 - As stated above, the [ICAO 24-bit address](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes) is used as the unique identifier for an aircraft when writing updates to the database
 - Consequently, if an aircraft goes out of range then comes back into range, the original record would be picked up again on the second pass, though that pass may represent a different flight on a different date
 - Further, from [this article](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes):
@@ -182,13 +185,14 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 - The record for a given address should only be updated while the aircraft in question remains in range
 - Once it passes out of range, or when a new tracking session is started, if the address is seen again it should result in a new tracking record
 - This is achieved using the "Locked" flag on tracking records (see the screenshot, above):
-    - When an aircraft moves out of range and is removed from the tracking collection, a notional "lock timer" starts
-    - If it's seen again within the timout, the record remains unlocked to avoid duplication of aircraft records for the same flight
-    - Once the timeout is reached, the record is locked and any further updates for that ICAO address result in a new record
-    - When the QueuedWriter starts, it immediately queues updates to mark all records that are not currently locked as locked, before accepting any other updates into the queue
+  - When an aircraft moves out of range and is removed from the tracking collection, a notional "lock timer" starts
+  - If it's seen again within the timout, the record remains unlocked to avoid duplication of aircraft records for the same flight
+  - Once the timeout is reached, the record is locked and any further updates for that ICAO address result in a new record
+  - When the QueuedWriter starts, it immediately queues updates to mark all records that are not currently locked as locked, before accepting any other updates into the queue
 - Records marked as "Locked" are not considered candidates for further updates
 
 ### Queued Writing
+
 - [SQLite](https://sqlite.org/index.html) has been chosen as an appropriate DBMS for storing the data
 - It allows multiple readers but, at any one time, there can only be a single writer
 - As indicated above, the AircraftTracker exposes multiple events that require updates to be written to the database
@@ -197,6 +201,7 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 - This architecture has the further advantage that database updates are separated from the subscribing application
 
 ### Querying the Database
+
 - To avoid conflicts between readers and writers that may cause a "database is locked" error and halt the application, [WAL journal mode](https://www.sqlite.org/wal.html) should be used when querying the database if the application is running
 - The following is an example query that uses a PRAGMA to enable WAL mode then lists all aircraft in the database matching the specified [ICAO 24-bit address](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes):
 
@@ -206,11 +211,11 @@ PRAGMA journal_mode=WAL;
 SELECT *
 FROM AIRCRAFT
 WHERE Address = '3949F8';
-``` 
+```
 
 ## Authors
 
-- **Dave Walker** - *Initial work* - [LinkedIn](https://www.linkedin.com/in/davewalker5/)
+- **Dave Walker** - _Initial work_ - [LinkedIn](https://www.linkedin.com/in/davewalker5/)
 
 ## Feedback
 

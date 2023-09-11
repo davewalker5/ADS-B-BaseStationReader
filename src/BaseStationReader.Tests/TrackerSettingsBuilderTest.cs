@@ -24,6 +24,7 @@ namespace BaseStationReader.Tests
             Assert.IsFalse(settings?.EnableSqlWriter);
             Assert.AreEqual(30000, settings?.WriterInterval);
             Assert.AreEqual(20000, settings?.WriterBatchSize);
+            Assert.AreEqual(10000, settings?.RefreshInterval);
             Assert.AreEqual(20, settings?.MaximumRows);
 
             Assert.IsNotNull(settings?.Columns);
@@ -135,6 +136,14 @@ namespace BaseStationReader.Tests
             var args = new string[] { "--writer-batch-size", "5000" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
             Assert.AreEqual(5000, settings?.WriterBatchSize);
+        }
+
+        [TestMethod]
+        public void OverrideWriterRefreshIntervalTest()
+        {
+            var args = new string[] { "--ui-interval", "45000" };
+            var settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
+            Assert.AreEqual(45000, settings?.RefreshInterval);
         }
 
         [TestMethod]

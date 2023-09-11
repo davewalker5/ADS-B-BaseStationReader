@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:BaseStationReader.UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BaseStationReader.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/aircraft.png"
+        Title="BaseStationReader.UI"
+        Loaded="OnLoaded">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Window.Styles>
+    <StyleInclude Source="/Styles.axaml" />
+  </Window.Styles>
+
+  <DockPanel>
+    <TabControl>
+      <TabItem Header="Live View">
+        <DockPanel>
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+            <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
+            <TextBox Name="AddressFilter" Margin="10 0 0 0"/>
+            <TextBlock Text="Callsign" Margin="10 0 0 0" />
+            <TextBox Name="CallsignFilter" Margin="10 0 0 0"/>
+            <TextBlock Text="Status" Margin="10 0 0 0"/>
+            <ComboBox Name="StatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
+            <TextBlock Margin="10 0 0 0">Refresh interval (s):</TextBlock>
+            <TextBox Name="RefreshInterval" AcceptsReturn="False" TextChanged="OnRefreshIntervalChanged" Margin="10 0 0 0"/>
+            <Button Name="StartStop" Click="OnStartStopTracking" Margin="10 0 0 0">Start</Button>
+            <Button Name="ClearFilters" Click="OnClearFilters" Margin="10 0 0 0">Clear Filters</Button>
+          </StackPanel>
+          <DataGrid
+            DockPanel.Dock="Bottom"
+            Name="TrackedAircraftGrid"
+            ItemsSource="{Binding TrackedAircraft}"
+            AutoGenerateColumns="False"
+            CanUserSortColumns="False"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            LoadingRow="OnLoadingRow">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
+              <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
+              <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
+              <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
+              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
+              <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
+              <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
+              <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
+              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
+              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </TabItem>
+      <TabItem Header="Map View">
+      </TabItem>
+      <TabItem Header="Database Search">
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>
