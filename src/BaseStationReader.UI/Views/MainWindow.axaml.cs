@@ -49,7 +49,7 @@ namespace BaseStationReader.UI.Views
             // Configure the column titles and visibility
             foreach (var column in TrackedAircraftGrid.Columns)
             {
-                var definition = _settings!.Columns.FirstOrDefault(x => x.Property == column.Header.ToString());
+                var definition = _settings!.Columns.Find(x => x.Property == column.Header.ToString());
                 if (definition != null)
                 {
                     column.Header = definition.Label;
@@ -65,7 +65,7 @@ namespace BaseStationReader.UI.Views
             _timer.Tick += OnTimerTick;
 
             // Set the interval text
-            var refreshIntervalSeconds = (int)(_settings.RefreshInterval / 1000);
+            int refreshIntervalSeconds = _settings.RefreshInterval / 1000;
             RefreshInterval.Text = refreshIntervalSeconds.ToString();
 
             // Get the view model from the data context and initialise the tracker

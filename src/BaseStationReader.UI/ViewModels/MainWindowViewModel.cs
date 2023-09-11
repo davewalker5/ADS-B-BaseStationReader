@@ -7,18 +7,17 @@ using BaseStationReader.Logic.Tracking;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 
 namespace BaseStationReader.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private static ITrackerWrapper? _wrapper = null;
+        private ITrackerWrapper? _wrapper = null;
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
         public ObservableCollection<string> Statuses { get; private set; } = new();
-        public bool IsTracking { get { return (_wrapper != null) ? _wrapper.IsTracking : false; } }
+        public bool IsTracking { get { return (_wrapper != null) && _wrapper.IsTracking; } }
 
         public MainWindowViewModel()
         {
