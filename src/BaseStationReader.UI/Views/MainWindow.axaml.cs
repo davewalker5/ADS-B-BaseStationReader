@@ -13,7 +13,6 @@ using BaseStationReader.Logic.Logging;
 using BaseStationReader.UI.ViewModels;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 
 namespace BaseStationReader.UI.Views
@@ -47,18 +46,8 @@ namespace BaseStationReader.UI.Views
             _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
 
             // Configure the column titles and visibility
-            foreach (var column in TrackedAircraftGrid.Columns)
-            {
-                var definition = _settings!.Columns.Find(x => x.Property == column.Header.ToString());
-                if (definition != null)
-                {
-                    column.Header = definition.Label;
-                }
-                else
-                {
-                    column.IsVisible = false;
-                }
-            }
+            ConfigureColumns(TrackedAircraftGrid);
+            ConfigureColumns(DatabaseGrid);
 
             // Initialise the timer
             _timer.Interval = new TimeSpan(0, 0, 0, 0, _settings.RefreshInterval);
@@ -70,7 +59,31 @@ namespace BaseStationReader.UI.Views
 
             // Get the view model from the data context and initialise the tracker
             var model = (MainWindowViewModel)DataContext!;
-            model?.Initialise(_logger!, _settings!);
+            model?.InitialiseTracker(_logger!, _settings!);
+        }
+
+        /// <summary>
+        /// Configure column visibility on a data grid
+        /// </summary>
+        /// <param name="grid"></param>
+        private void ConfigureColumns(DataGrid grid)
+        {
+            // Iterate over all the columns
+            foreach (var column in grid.Columns)
+            {
+                // Find the corresponding column definition in the settings
+                var definition = _settings!.Columns.Find(x => x.Property == column.Header.ToString());
+                if (definition != null)
+                {
+                    // Found it, so apply the label
+                    column.Header = definition.Label;
+                }
+                else
+                {
+                    // Not found, so hide the columns
+                    column.IsVisible = false;
+                }
+            }
         }
 
         /// <summary>
@@ -113,14 +126,14 @@ namespace BaseStationReader.UI.Views
                 {
                     // Stop the timer and the tracker
                     _timer.Stop();
-                    model.Stop();
+                    model.StopTracking();
                     StartStop.Content = "Start";
                 }
                 else
                 {
                     // Start tracking and perform an initial refresh
                     StartStop.Content = "Stop";
-                    model.Start();
+                    model.StartTracking();
                     _timer.Start();
                 }
             }
@@ -165,15 +178,41 @@ namespace BaseStationReader.UI.Views
         }
 
         /// <summary>
-        /// Handler to clear the current filters, resetting them to their defaults
+        /// Handler to clear the live view filters, resetting them to their defaults
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnClearFilters(object source, RoutedEventArgs e)
+        private void OnClearLiveFilters(object source, RoutedEventArgs e)
         {
-            AddressFilter.Text = "";
-            CallsignFilter.Text = "";
-            StatusFilter.SelectedIndex = 0;
+            LiveAddressFilter.Text = "";
+            LiveCallsignFilter.Text = "";
+            LiveStatusFilter.SelectedIndex = 0;
+            RefreshTrackedAircraftGrid();
+        }
+
+        /// <summary>
+        /// Handler to clear the database search filters, resetting them to their defaults
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnClearDbFilters(object source, RoutedEventArgs e)
+        {
+            DbAddressFilter.Text = "";
+            DbCallsignFilter.Text = "";
+            DbStatusFilter.SelectedIndex = 0;
+            DbFromDate.SelectedDate = null;
+            DbToDate.SelectedDate = null;
+            RefreshDatabaseGrid();
+        }
+
+        /// <summary>
+        /// Handler to search the database using current filtering criteria
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnSearchDatabase(object source, RoutedEventArgs e)
+        {
+            RefreshDatabaseGrid();
         }
 
         /// <summary>
@@ -186,20 +225,77 @@ namespace BaseStationReader.UI.Views
             if (model != null)
             {
                 // Get the aircraft address and callsign filters
-                var address = AddressFilter.Text;
-                var callsign = CallsignFilter.Text;
+                var address = LiveAddressFilter.Text;
+                var callsign = LiveCallsignFilter.Text;
 
                 // Get the aircraft status filter
-                var status = StatusFilter.SelectedValue as string;
+                var status = LiveStatusFilter.SelectedValue as string;
                 if ((status != null) && status.Equals("All", StringComparison.OrdinalIgnoreCase))
                 {
                     status = null;
                 }
 
                 // Refresh, filtering by the specified status
-                model.Refresh(address, callsign, status);
+                model.RefreshTrackedAircraft(address, callsign, status);
                 TrackedAircraftGrid.ItemsSource = model.TrackedAircraft;
             }
+        }
+
+        /// <summary>
+        /// Refresh the database search grid using the current filters
+        /// </summary>
+        private void RefreshDatabaseGrid()
+        {
+            // Get the model from the data context
+            var model = DataContext as MainWindowViewModel;
+            if (model != null)
+            {
+                // Set a busy cursor
+                var originalCursor = Cursor;
+                Cursor = new Cursor(StandardCursorType.Wait);
+
+                // Get the aircraft status filter
+                var status = DbStatusFilter.SelectedValue as string;
+                if ((status != null) && status.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
+                    status = null;
+                }
+
+                // Get the from and to dates
+                var from = GetDateFromDatePicker(DbFromDate);
+                var to = GetDateFromDatePicker(DbToDate);
+
+                // Perform the search and refresh the grid
+                model.Search(DbAddressFilter.Text, DbCallsignFilter.Text, status, from, to);
+                DatabaseGrid.ItemsSource = model.SearchResults;
+
+                // Restore the cursor
+                Cursor = originalCursor;
+            }
+        }
+
+        /// <summary>
+        /// Extract a date from a datepicker, ignoring time and timezone
+        /// </summary>
+        /// <param name="picker"></param>
+        /// <returns></returns>
+        private DateTime? GetDateFromDatePicker(DatePicker picker)
+        {
+            DateTime? date = null;
+
+            // Check the picker has a selected date that has a value
+            if ((picker.SelectedDate != null) && picker.SelectedDate.HasValue)
+            {
+                // Extract the year, month and day
+                var year = picker.SelectedDate.Value.Year;
+                var month = picker.SelectedDate.Value.Month;
+                var day = picker.SelectedDate.Value.Day;
+
+                // Create a new date from the extracted values
+                date = new DateTime(year, month, day);
+            }
+
+            return date;
         }
     }
 }

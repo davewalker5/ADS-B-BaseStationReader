@@ -8,7 +8,9 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/aircraft.png"
         Title="BaseStationReader.UI"
-        Loaded="OnLoaded">
+        Loaded="OnLoaded"
+        WindowStartupLocation="CenterScreen"
+        SizeToContent="Width">
   <Design.DataContext>
     <!-- This only sets the DataContext for the previewer in an IDE,
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
@@ -25,15 +27,15 @@
         <DockPanel>
           <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
             <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
-            <TextBox Name="AddressFilter" Margin="10 0 0 0"/>
+            <TextBox Name="LiveAddressFilter" Margin="10 0 0 0"/>
             <TextBlock Text="Callsign" Margin="10 0 0 0" />
-            <TextBox Name="CallsignFilter" Margin="10 0 0 0"/>
+            <TextBox Name="LiveCallsignFilter" Margin="10 0 0 0"/>
             <TextBlock Text="Status" Margin="10 0 0 0"/>
-            <ComboBox Name="StatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
+            <ComboBox Name="LiveStatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
+            <Button Click="OnClearLiveFilters" Margin="10 0 0 0">Clear Filters</Button>
             <TextBlock Margin="10 0 0 0">Refresh interval (s):</TextBlock>
             <TextBox Name="RefreshInterval" AcceptsReturn="False" TextChanged="OnRefreshIntervalChanged" Margin="10 0 0 0"/>
-            <Button Name="StartStop" Click="OnStartStopTracking" Margin="10 0 0 0">Start</Button>
-            <Button Name="ClearFilters" Click="OnClearFilters" Margin="10 0 0 0">Clear Filters</Button>
+            <Button Name="StartStop" Click="OnStartStopTracking" Margin="10 0 0 0" IsDefault="True">Start</Button>
           </StackPanel>
           <DataGrid
             DockPanel.Dock="Bottom"
@@ -64,6 +66,46 @@
       <TabItem Header="Map View">
       </TabItem>
       <TabItem Header="Database Search">
+        <DockPanel>
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+            <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
+            <TextBox Name="DbAddressFilter" Margin="10 0 0 0"/>
+            <TextBlock Text="Callsign" Margin="10 0 0 0" />
+            <TextBox Name="DbCallsignFilter" Margin="10 0 0 0"/>
+            <TextBlock Text="Status" Margin="10 0 0 0"/>
+            <ComboBox Name="DbStatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
+            <TextBlock Text="From" Margin="10 0 0 0"/>
+            <DatePicker Name="DbFromDate" Margin="10 0 0 0"/>
+            <TextBlock Text="To" Margin="10 0 0 0"/>
+            <DatePicker Name="DbToDate"  Margin="10 0 0 0"/>
+            <Button Click="OnClearDbFilters" Margin="10 0 0 0">Clear Filters</Button>
+            <Button Click="OnSearchDatabase" Margin="10 0 0 0" IsDefault="True">Search</Button>
+          </StackPanel>
+          <DataGrid
+            DockPanel.Dock="Bottom"
+            Name="DatabaseGrid"
+            ItemsSource="{Binding SearchResults}"
+            AutoGenerateColumns="False"
+            CanUserSortColumns="False"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            LoadingRow="OnLoadingRow">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
+              <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
+              <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
+              <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
+              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
+              <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
+              <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
+              <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
+              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
+              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
       </TabItem>
     </TabControl>
   </DockPanel>
