@@ -7,7 +7,7 @@
     </Design.PreviewWith>
 
   <Style Selector="DataGrid">
-    <Setter Property="Margin" Value="10" />
+    <Setter Property="Margin" Value="0 10 0 10" />
     <Setter Property="Background" Value="Black" />
     <Setter Property="GridLinesVisibility" Value="All" />
     <Setter Property="RowHeight" Value="15"/>
@@ -38,6 +38,8 @@
  
   <Style Selector="DatePicker">
     <Setter Property="FontSize" Value="12" />
+    <Setter Property="DayFormat" Value="dd" />
+    <Setter Property="MonthFormat" Value="MMM" />
   </Style>
 
   <Style Selector="CheckBox">

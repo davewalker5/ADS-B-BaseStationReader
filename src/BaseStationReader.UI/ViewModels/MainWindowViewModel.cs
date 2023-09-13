@@ -1,23 +1,21 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Database;
-using BaseStationReader.Logic.Tracking;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace BaseStationReader.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private ITrackerWrapper? _wrapper = null;
+        private LiveViewViewModel _liveView = new LiveViewViewModel();
+        private DatabaseSearchViewModel _databaseSearch = new DatabaseSearchViewModel();
 
-        public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
         public ObservableCollection<string> Statuses { get; private set; } = new();
-        public bool IsTracking { get { return (_wrapper != null) && _wrapper.IsTracking; } }
+        public ObservableCollection<Aircraft> TrackedAircraft { get {  return _liveView.TrackedAircraft; } }
+        public bool IsTracking { get { return _liveView.IsTracking; } }
+
+        public ObservableCollection<Aircraft> SearchResults { get {  return _databaseSearch.SearchResults; } }
 
         public MainWindowViewModel()
         {
@@ -32,23 +30,20 @@ namespace BaseStationReader.UI.ViewModels
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="settings"></param>
-        public void Initialise(ITrackerLogger logger, ApplicationSettings settings)
-        {
-            _wrapper = new TrackerWrapper(logger, settings);
-            _wrapper.Initialise();
-        }
+        public void InitialiseTracker(ITrackerLogger logger, ApplicationSettings settings)
+            => _liveView.Initialise(logger, settings);
 
         /// <summary>
         /// Start the tracker
         /// </summary>
-        public void Start()
-            => _wrapper!.Start();
+        public void StartTracking()
+            => _liveView.Start();
 
         /// <summary>
         /// Stop the tracker
         /// </summary>
-        public void Stop()
-            => _wrapper!.Stop();
+        public void StopTracking()
+            => _liveView.Stop();
 
         /// <summary>
         /// Refresh the tracked aircraft collection
@@ -56,41 +51,19 @@ namespace BaseStationReader.UI.ViewModels
         /// <param name="address"></param>
         /// <param name="callsign"></param>
         /// <param name="status"></param>
-        public void Refresh(string? address, string? callsign, string? status)
-        {
-            List<Aircraft> aircraft;
+        public void RefreshTrackedAircraft(string? address, string? callsign, string? status)
+            => _liveView.Refresh(address, callsign, status);
 
-            // Build the filtering expression, if needed
-            var builder = new ExpressionBuilder<Aircraft>();
-            if (!string.IsNullOrEmpty(address))
-            {
-                builder.Add("Address", TrackerFilterOperator.Equals, address.ToUpper());
-            }
 
-            if (!string.IsNullOrEmpty(callsign))
-            {
-                builder.Add("Callsign", TrackerFilterOperator.Equals, callsign.ToUpper());
-            }
-
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
-            {
-                builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
-            }
-
-            // Build the filter expression. If there is one, use it to filter the collection of aircraft used
-            // to refresh the grid. Otherwise, just use all the current tracked aircraft
-            var filter = builder.Build();
-            if (filter != null)
-            {
-                aircraft = _wrapper!.TrackedAircraft.Values.AsQueryable().Where(filter).ToList();
-            }
-            else
-            {
-                aircraft = _wrapper!.TrackedAircraft.Values.ToList();
-            }
-
-            // Update the observable collection from the filtered aircraft list
-            TrackedAircraft = new ObservableCollection<Aircraft>(aircraft);
-        }
+        /// <summary>
+        /// Search the database for records matching the specified filtering criteria
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="callsign"></param>
+        /// <param name="status"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        public void Search(string? address, string? callsign, string? status, DateTime? from, DateTime? to)
+            => _databaseSearch.Search(address, callsign, status, from, to);
     }
 }
