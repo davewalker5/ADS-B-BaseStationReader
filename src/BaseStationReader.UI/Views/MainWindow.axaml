@@ -22,21 +22,30 @@
   </Window.Styles>
 
   <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="File">
+        <MenuItem Header="Exit" Click="OnExit"/>
+      </MenuItem>
+      <MenuItem Header="Tracking">
+        <MenuItem Name="StartTrackingMenuItem" Header="Start live tracking" Click="OnStartTracking"/>
+        <MenuItem IsEnabled="False" Name="StopTrackingMenuItem" Header="Stop live tracking" Click="OnStopTracking"/>
+        <Separator/>
+        <MenuItem IsEnabled="False" Name="FilterLiveViewMenuItem" Header="Filter ..." Command="{Binding ShowTrackingFiltersCommand}"/>
+        <MenuItem IsEnabled="False" Name="ClearLiveViewFiltersMenuItem" Header="Clear filters" Click="OnClearFilters"/>
+        <Separator/>
+        <MenuItem Header="Options ..."/>
+      </MenuItem>
+      <MenuItem Header="Database">
+        <MenuItem Header="Search ..."/>
+        <MenuItem Header="Export ..."/>
+      </MenuItem>
+      <MenuItem Header="Help">
+        <MenuItem Header="About ..."/>
+      </MenuItem>
+    </Menu>
     <TabControl>
       <TabItem Header="Live View">
         <DockPanel>
-          <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-            <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
-            <TextBox Name="LiveAddressFilter" Margin="10 0 0 0"/>
-            <TextBlock Text="Callsign" Margin="10 0 0 0" />
-            <TextBox Name="LiveCallsignFilter" Margin="10 0 0 0"/>
-            <TextBlock Text="Status" Margin="10 0 0 0"/>
-            <ComboBox Name="LiveStatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
-            <Button Click="OnClearLiveFilters" Margin="10 0 0 0">Clear Filters</Button>
-            <TextBlock Margin="10 0 0 0">Refresh interval (s):</TextBlock>
-            <TextBox Name="RefreshInterval" AcceptsReturn="False" TextChanged="OnRefreshIntervalChanged" Margin="10 0 0 0"/>
-            <Button Name="StartStop" Click="OnStartStopTracking" Margin="10 0 0 0" IsDefault="True">Start</Button>
-          </StackPanel>
           <DataGrid
             DockPanel.Dock="Bottom"
             Name="TrackedAircraftGrid"
@@ -67,20 +76,6 @@
       </TabItem>
       <TabItem Header="Database Search">
         <DockPanel>
-          <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-            <TextBlock Text="ICAO Address" Margin="10 0 0 0" />
-            <TextBox Name="DbAddressFilter" Margin="10 0 0 0"/>
-            <TextBlock Text="Callsign" Margin="10 0 0 0" />
-            <TextBox Name="DbCallsignFilter" Margin="10 0 0 0"/>
-            <TextBlock Text="Status" Margin="10 0 0 0"/>
-            <ComboBox Name="DbStatusFilter" Margin="10 0 0 0" ItemsSource="{Binding Statuses}" />
-            <TextBlock Text="From" Margin="10 0 0 0"/>
-            <DatePicker Name="DbFromDate" Margin="10 0 0 0"/>
-            <TextBlock Text="To" Margin="10 0 0 0"/>
-            <DatePicker Name="DbToDate"  Margin="10 0 0 0"/>
-            <Button Click="OnClearDbFilters" Margin="10 0 0 0">Clear Filters</Button>
-            <Button Click="OnSearchDatabase" Margin="10 0 0 0" IsDefault="True">Search</Button>
-          </StackPanel>
           <DataGrid
             DockPanel.Dock="Bottom"
             Name="DatabaseGrid"
