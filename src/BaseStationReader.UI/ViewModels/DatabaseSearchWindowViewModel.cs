@@ -6,14 +6,14 @@ using System.Reactive;
 
 namespace BaseStationReader.UI.ViewModels
 {
-    public class FiltersWindowViewModel : BaseFilters
+    public class DatabaseSearchWindowViewModel : DatabaseSearchCriteria
     {
         public ObservableCollection<string> Statuses { get; private set; } = new();
 
-        public ReactiveCommand<Unit, BaseFilters?> SelectFiltersCommand { get; private set; }
-        public ReactiveCommand<Unit, BaseFilters?> CancelFiltersCommand { get; private set; }
+        public ReactiveCommand<Unit, DatabaseSearchCriteria?> SearchCommand { get; private set; }
+        public ReactiveCommand<Unit, DatabaseSearchCriteria?> CancelCommand { get; private set; }
 
-        public FiltersWindowViewModel(BaseFilters? initialValues)
+        public DatabaseSearchWindowViewModel(DatabaseSearchCriteria? initialValues)
         {
             // Populate the list of available statuses
             Statuses.Add("All");
@@ -25,18 +25,20 @@ namespace BaseStationReader.UI.ViewModels
             Address = initialValues?.Address ?? "";
             Callsign = initialValues?.Callsign ?? "";
             Status = initialValues?.Status ?? "";
+            From = initialValues?.From;
+            To = initialValues?.To;
 
             // Create a command that can be bound to the OK button on the dialog, that returns the selected
             // filter settings
 #pragma warning disable CS8619
-            SelectFiltersCommand = ReactiveCommand.Create(() =>
+            SearchCommand = ReactiveCommand.Create(() =>
             {
-                return this as BaseFilters;
+                return this as DatabaseSearchCriteria;
             });
 #pragma warning restore CS8619
 
             // Create a command that can be bound to the Cancel button on the dialog, that returns null
-            CancelFiltersCommand = ReactiveCommand.Create(() => { return (BaseFilters?)null; });
+            CancelCommand = ReactiveCommand.Create(() => { return (DatabaseSearchCriteria?)null; });
         }
     }
 }

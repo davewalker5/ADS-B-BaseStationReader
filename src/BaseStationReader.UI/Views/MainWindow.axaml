@@ -26,7 +26,7 @@
       <MenuItem Header="File">
         <MenuItem Header="Exit" Click="OnExit"/>
       </MenuItem>
-      <MenuItem Header="Tracking">
+      <MenuItem Name="TrackingMenu" Header="Tracking">
         <MenuItem Name="StartTrackingMenuItem" Header="Start live tracking" Click="OnStartTracking"/>
         <MenuItem IsEnabled="False" Name="StopTrackingMenuItem" Header="Stop live tracking" Click="OnStopTracking"/>
         <Separator/>
@@ -35,15 +35,15 @@
         <Separator/>
         <MenuItem Header="Options ..."/>
       </MenuItem>
-      <MenuItem Header="Database">
-        <MenuItem Header="Search ..."/>
-        <MenuItem Header="Export ..."/>
+      <MenuItem Name="DatabaseMenu" IsEnabled="False" Header="Database">
+        <MenuItem Header="Search ..."  Command="{Binding ShowDatabaseSearchCommand}"/>
+        <MenuItem Name="ExportMenuItem" IsEnabled="False" Header="Export ..." Click="OnExport"/>
       </MenuItem>
       <MenuItem Header="Help">
         <MenuItem Header="About ..."/>
       </MenuItem>
     </Menu>
-    <TabControl>
+    <TabControl Name="Tabs" SelectionChanged="OnTabChanged">
       <TabItem Header="Live View">
         <DockPanel>
           <DataGrid

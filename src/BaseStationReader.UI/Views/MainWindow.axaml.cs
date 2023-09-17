@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using BaseStationReader.Entities.Config;
@@ -14,6 +16,7 @@ using BaseStationReader.UI.Models;
 using BaseStationReader.UI.ViewModels;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -32,6 +35,7 @@ namespace BaseStationReader.UI.Views
 
             // Register the handlers for the dialogs
             this.WhenActivated(d => d(ViewModel!.ShowFiltersDialog.RegisterHandler(DoShowTrackingFiltersAsync)));
+            this.WhenActivated(d => d(ViewModel!.ShowDatabaseSearchDialog.RegisterHandler(DoShowDatabaseSearchAsync)));
         }
 
         /// <summary>
@@ -124,6 +128,30 @@ namespace BaseStationReader.UI.Views
         }
 
         /// <summary>
+        /// Handler to set menu item availability when the selected tab changes
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnTabChanged(object source, SelectionChangedEventArgs e)
+        {
+            var selectedTab = Tabs?.SelectedIndex;
+            switch (selectedTab)
+            {
+                case 0:
+                case 1:
+                    TrackingMenu.IsEnabled = true;
+                    DatabaseMenu.IsEnabled = false;
+                    break;
+                case 2:
+                    TrackingMenu.IsEnabled = false;
+                    DatabaseMenu.IsEnabled = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Handler called to quit the application
         /// </summary>
         /// <param name="source"></param>
@@ -188,14 +216,14 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowTrackingFiltersAsync(InteractionContext<FiltersWindowViewModel, SelectedFilters?> interaction)
+        private async Task DoShowTrackingFiltersAsync(InteractionContext<FiltersWindowViewModel, BaseFilters?> interaction)
         {
             // Create the dialog
-            var dialog = new TrackingFiltersWindow();
+            var dialog = new FiltersWindow();
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<SelectedFilters?>(this);
+            var result = await dialog.ShowDialog<BaseFilters?>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604
@@ -223,6 +251,93 @@ namespace BaseStationReader.UI.Views
         {
             ViewModel!.RefreshTrackedAircraft();
             TrackedAircraftGrid.ItemsSource = ViewModel.TrackedAircraft;
+        }
+
+        /// <summary>
+        /// Handler to show the database search dialog
+        /// </summary>
+        /// <param name="interaction"></param>
+        /// <returns></returns>
+        private async Task DoShowDatabaseSearchAsync(InteractionContext<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> interaction)
+        {
+            // Create the dialog
+            var dialog = new DatabaseSearchWindow();
+            dialog.DataContext = interaction.Input;
+
+            // Show the dialog and capture the results
+            var result = await dialog.ShowDialog<DatabaseSearchCriteria?>(this);
+#pragma warning disable CS8604
+            interaction.SetOutput(result);
+#pragma warning restore CS8604
+
+            // Capture the search critera and perform the search
+            ViewModel!.DatabaseSearchCriteria = result;
+            RefreshDatabaseGrid();
+        }
+
+        /// <summary>
+        /// Refresh the database search grid using the current filters
+        /// </summary>
+        private void RefreshDatabaseGrid()
+        {
+            // Set a busy cursor
+            var originalCursor = Cursor;
+            Cursor = new Cursor(StandardCursorType.Wait);
+
+            // Perform the search and refresh the grid
+            ViewModel!.Search();
+            DatabaseGrid.ItemsSource = ViewModel.SearchResults;
+
+            // Enable/disable the export menu item based on whether there's any data to export
+            ExportMenuItem.IsEnabled = ViewModel.SearchResults.Count > 0;
+
+            // Restore the cursor
+            Cursor = originalCursor;
+        }
+
+        /// <summary>
+        /// Handler to export database search results
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void OnExport(object sender, RoutedEventArgs args)
+        {
+            // Set up the file types
+            var xlsxFileType = new FilePickerFileType("Excel Workbook")
+            {
+                Patterns = new List<string> { "*.xlsx" }
+            };
+
+            var csvFileType = new FilePickerFileType("Comma-separated values (CSV)")
+            {
+                Patterns = new List<string> { "*.csv" }
+            };
+
+            // Open the file selection dialog
+            var file = Task.Run(() => StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Database Search Results",
+                FileTypeChoices = new List<FilePickerFileType>
+                {
+                    xlsxFileType,
+                    csvFileType
+                }
+
+            })).Result;
+
+            // Check the dialog wasn't cancelled
+            if (file != null)
+            {
+                // Set a busy cursor
+                var originalCursor = Cursor;
+                Cursor = new Cursor(StandardCursorType.Wait);
+
+                // Export the current results to the specified file
+                ViewModel!.Export(file.Path.LocalPath);
+
+                // Restore the original cursor
+                Cursor = originalCursor;
+            }
         }
     }
 }

@@ -18,7 +18,7 @@ namespace BaseStationReader.UI.Models
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return _wrapper != null && _wrapper.IsTracking; } }
-        public SelectedFilters? Filters { get; set; }
+        public BaseFilters? Filters { get; set; }
 
         /// <summary>
         /// Initialise the tracker

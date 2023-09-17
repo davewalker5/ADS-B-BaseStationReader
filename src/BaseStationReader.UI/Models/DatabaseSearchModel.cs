@@ -2,9 +2,11 @@
 using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Database;
+using BaseStationReader.Logic.DataExchange;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace BaseStationReader.UI.Models
@@ -12,43 +14,39 @@ namespace BaseStationReader.UI.Models
     public class DatabaseSearchModel
     {
         public ObservableCollection<Aircraft> SearchResults { get; private set; } = new();
+        public DatabaseSearchCriteria? SearchCriteria { get; set; }
 
         /// <summary>
-        /// Search the database for records matching the specified filtering criteria
+        /// Search the database for records matching the current filtering criteria
         /// </summary>
-        /// <param name="address"></param>
-        /// <param name="callsign"></param>
-        /// <param name="status"></param>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        public void Search(string? address, string? callsign, string? status, DateTime? from, DateTime? to)
+        public void Search()
         {
             // Create an expression builder and add an expression for each non-null/blak filtering criterion
             ExpressionBuilder<Aircraft> builder = new ExpressionBuilder<Aircraft>();
 
-            if (!string.IsNullOrEmpty(address))
+            if (!string.IsNullOrEmpty(SearchCriteria?.Address))
             {
-                builder.Add("Address", TrackerFilterOperator.Equals, address);
+                builder.Add("Address", TrackerFilterOperator.Equals, SearchCriteria.Address);
             }
 
-            if (!string.IsNullOrEmpty(callsign))
+            if (!string.IsNullOrEmpty(SearchCriteria?.Callsign))
             {
-                builder.Add("Callsign", TrackerFilterOperator.Equals, callsign);
+                builder.Add("Callsign", TrackerFilterOperator.Equals, SearchCriteria.Callsign);
             }
 
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse(status, out TrackingStatus statusEnumValue))
+            if (!string.IsNullOrEmpty(SearchCriteria?.Status) && Enum.TryParse(SearchCriteria.Status, out TrackingStatus statusEnumValue))
             {
                 builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
             }
 
-            if (from != null)
+            if (SearchCriteria?.From != null)
             {
-                builder.Add("LastSeen", TrackerFilterOperator.GreaterThanOrEqual, from);
+                builder.Add("LastSeen", TrackerFilterOperator.GreaterThanOrEqual, SearchCriteria.From);
             }
 
-            if (to != null)
+            if (SearchCriteria?.To != null)
             {
-                builder.Add("LastSeen", TrackerFilterOperator.LessThanOrEqual, to);
+                builder.Add("LastSeen", TrackerFilterOperator.LessThanOrEqual, SearchCriteria?.To);
             }
 
             // Create a database context and an instance of the (reader) writer
@@ -70,6 +68,33 @@ namespace BaseStationReader.UI.Models
 
             // Update the observable collection from the filtered aircraft list
             SearchResults = new ObservableCollection<Aircraft>(aircraft);
+        }
+
+        /// <summary>
+        /// Export the current search results to the specified file
+        /// </summary>
+        /// <param name="filePath"></param>
+        public void Export(string? filePath)
+        {
+            // Check we have a valid file path
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                // Use the extension to decide which exporter to use
+                var extension = Path.GetExtension(filePath);
+                switch (extension)
+                {
+                    case ".xlsx":
+                        var xlsxExporter = new XlsxExporter<Aircraft>();
+                        xlsxExporter.Export(SearchResults, filePath, "Aircraft");
+                        break;
+                    case ".csv":
+                        var csvExporter = new CsvExporter<Aircraft>();
+                        csvExporter.Export(SearchResults, filePath, ',');
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 }

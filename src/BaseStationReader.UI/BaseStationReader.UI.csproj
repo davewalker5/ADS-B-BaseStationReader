@@ -50,6 +50,9 @@
 
 
   <ItemGroup>
+    <Compile Update="Views\DatabaseSearchWindow.axaml.cs">
+      <DependentUpon>DatabaseSearchWindow.axaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\FiltersWindow.axaml.cs">
       <DependentUpon>FiltersWindow.axaml</DependentUpon>
     </Compile>

@@ -8,15 +8,15 @@ using System;
 
 namespace BaseStationReader.UI.Views
 {
-    public partial class FiltersWindow : ReactiveWindow<FiltersWindowViewModel>
+    public partial class DatabaseSearchWindow : ReactiveWindow<DatabaseSearchWindowViewModel>
     {
-        public FiltersWindow()
+        public DatabaseSearchWindow()
         {
             InitializeComponent();
 
             // Register the dialog button handlers
-            this.WhenActivated(a => a(ViewModel!.SelectFiltersCommand.Subscribe(Close)));
-            this.WhenActivated(a => a(ViewModel!.CancelFiltersCommand.Subscribe(Close)));
+            this.WhenActivated(a => a(ViewModel!.SearchCommand.Subscribe(Close)));
+            this.WhenActivated(a => a(ViewModel!.CancelCommand.Subscribe(Close)));
         }
 
         /// <summary>
@@ -29,6 +29,7 @@ namespace BaseStationReader.UI.Views
             Address.Text = ViewModel?.Address ?? "";
             Callsign.Text = ViewModel?.Callsign ?? "";
             StatusFilter.SelectedValue = ViewModel?.Status ?? "";
+            // TODO : Dates
         }
 
         /// <summary>
