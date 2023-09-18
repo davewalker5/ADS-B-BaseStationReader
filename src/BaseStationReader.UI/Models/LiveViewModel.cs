@@ -10,14 +10,15 @@ using System.Collections.ObjectModel;
 using System.Linq;
 
 
-namespace BaseStationReader.UI.ViewModels
+namespace BaseStationReader.UI.Models
 {
-    internal class LiveViewViewModel
+    public class LiveViewModel
     {
         private ITrackerWrapper? _wrapper = null;
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
-        public bool IsTracking { get { return (_wrapper != null) && _wrapper.IsTracking; } }
+        public bool IsTracking { get { return _wrapper != null && _wrapper.IsTracking; } }
+        public BaseFilters? Filters { get; set; }
 
         /// <summary>
         /// Initialise the tracker
@@ -48,21 +49,21 @@ namespace BaseStationReader.UI.ViewModels
         /// <param name="address"></param>
         /// <param name="callsign"></param>
         /// <param name="status"></param>
-        public void Refresh(string? address, string? callsign, string? status)
+        public void Refresh()
         {
             // Build the filtering expression, if needed
             var builder = new ExpressionBuilder<Aircraft>();
-            if (!string.IsNullOrEmpty(address))
+            if (!string.IsNullOrEmpty(Filters?.Address))
             {
-                builder.Add("Address", TrackerFilterOperator.Equals, address.ToUpper());
+                builder.Add("Address", TrackerFilterOperator.Equals, Filters.Address.ToUpper());
             }
 
-            if (!string.IsNullOrEmpty(callsign))
+            if (!string.IsNullOrEmpty(Filters?.Callsign))
             {
-                builder.Add("Callsign", TrackerFilterOperator.Equals, callsign.ToUpper());
+                builder.Add("Callsign", TrackerFilterOperator.Equals, Filters.Callsign.ToUpper());
             }
 
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<TrackingStatus>(status, out TrackingStatus statusEnumValue))
+            if (!string.IsNullOrEmpty(Filters?.Status) && Enum.TryParse(Filters.Status, out TrackingStatus statusEnumValue))
             {
                 builder.Add("Status", TrackerFilterOperator.Equals, statusEnumValue);
             }
