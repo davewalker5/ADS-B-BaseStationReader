@@ -29,11 +29,16 @@ namespace BaseStationReader.UI.ViewModels
             set { _databaseSearch.SearchCriteria = value; }
         }
 
+        public ApplicationSettings? Settings { get; set; }
+
         public ICommand ShowTrackingFiltersCommand { get; private set; }
         public Interaction<FiltersWindowViewModel,BaseFilters?> ShowFiltersDialog { get; private set; }
 
         public ICommand ShowDatabaseSearchCommand { get; private set; }
         public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> ShowDatabaseSearchDialog { get; private set; }
+
+        public ICommand ShowTrackingOptionsCommand { get; private set; }
+        public Interaction<TrackingOptionsWindowViewModel, ApplicationSettings?> ShowTrackingOptionsDialog { get; private set; }
 
         public MainWindowViewModel()
         {
@@ -43,6 +48,14 @@ namespace BaseStationReader.UI.ViewModels
             {
                 var dialogViewModel = new FiltersWindowViewModel(LiveViewFilters);
                 var result = await ShowFiltersDialog.Handle(dialogViewModel);
+            });
+
+            // Wire up the tracking options dialog
+            ShowTrackingOptionsDialog = new Interaction<TrackingOptionsWindowViewModel, ApplicationSettings?>();
+            ShowTrackingOptionsCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                var dialogViewModel = new TrackingOptionsWindowViewModel(Settings);
+                var result = await ShowTrackingOptionsDialog.Handle(dialogViewModel);
             });
 
             // Wire up the database search dialog

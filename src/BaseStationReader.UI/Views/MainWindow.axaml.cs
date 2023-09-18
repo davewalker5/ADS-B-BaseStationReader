@@ -27,7 +27,6 @@ namespace BaseStationReader.UI.Views
     {
         private DispatcherTimer _timer = new DispatcherTimer();
         private ITrackerLogger? _logger = null;
-        private ApplicationSettings? _settings = null;
 
         public MainWindow()
         {
@@ -35,6 +34,7 @@ namespace BaseStationReader.UI.Views
 
             // Register the handlers for the dialogs
             this.WhenActivated(d => d(ViewModel!.ShowFiltersDialog.RegisterHandler(DoShowTrackingFiltersAsync)));
+            this.WhenActivated(d => d(ViewModel!.ShowTrackingOptionsDialog.RegisterHandler(DoShowTrackingOptionsAsync)));
             this.WhenActivated(d => d(ViewModel!.ShowDatabaseSearchDialog.RegisterHandler(DoShowDatabaseSearchAsync)));
         }
 
@@ -51,21 +51,13 @@ namespace BaseStationReader.UI.Views
             Title = $"Aircraft Database Viewer {info.FileVersion}";
 
             // Load the settings and configure the logger
-            _settings = ConfigReader.Read("appsettings.json");
+            ViewModel!.Settings = ConfigReader.Read("appsettings.json");
             _logger = new FileLogger();
-            _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
+            _logger.Initialise(ViewModel!.Settings!.LogFile, ViewModel!.Settings.MinimumLogLevel);
 
             // Configure the column titles and visibility
             ConfigureColumns(TrackedAircraftGrid);
             ConfigureColumns(DatabaseGrid);
-
-            // Initialise the timer
-            _timer.Interval = new TimeSpan(0, 0, 0, 0, _settings.RefreshInterval);
-            _timer.Tick += OnTimerTick;
-
-            // Get the view model from the data context and initialise the tracker
-            var model = (MainWindowViewModel)DataContext!;
-            model?.InitialiseTracker(_logger!, _settings!);
         }
 
         /// <summary>
@@ -78,7 +70,7 @@ namespace BaseStationReader.UI.Views
             foreach (var column in grid.Columns)
             {
                 // Find the corresponding column definition in the settings
-                var definition = _settings!.Columns.Find(x => x.Property == column.Header.ToString());
+                var definition = ViewModel!.Settings!.Columns.Find(x => x.Property == column.Header.ToString());
                 if (definition != null)
                 {
                     // Found it, so apply the label
@@ -174,10 +166,15 @@ namespace BaseStationReader.UI.Views
             // Check we're not already tracking
             if (!ViewModel!.IsTracking)
             {
+                // Initialise the timer
+                _timer.Interval = new TimeSpan(0, 0, 0, 0, ViewModel!.Settings!.RefreshInterval);
+                _timer.Tick += OnTimerTick;
+
                 // Clear the current filters
                 ViewModel!.LiveViewFilters = null;
 
                 // Start tracking and perform an initial refresh
+                ViewModel!.InitialiseTracker(_logger!, ViewModel.Settings);
                 ViewModel.StartTracking();
                 _timer.Start();
 
@@ -186,6 +183,7 @@ namespace BaseStationReader.UI.Views
                 StopTrackingMenuItem.IsEnabled = true;
                 FilterLiveViewMenuItem.IsEnabled = true;
                 ClearLiveViewFiltersMenuItem.IsEnabled = true;
+                TrackingOptionsMenuItem.IsEnabled = false;
             }
         }
 
@@ -208,6 +206,7 @@ namespace BaseStationReader.UI.Views
                 StopTrackingMenuItem.IsEnabled = false;
                 FilterLiveViewMenuItem.IsEnabled = false;
                 ClearLiveViewFiltersMenuItem.IsEnabled = false;
+                TrackingOptionsMenuItem.IsEnabled = true;
             }
         }
 
@@ -255,6 +254,29 @@ namespace BaseStationReader.UI.Views
         {
             ViewModel!.RefreshTrackedAircraft();
             TrackedAircraftGrid.ItemsSource = ViewModel.TrackedAircraft;
+        }
+        /// <summary>
+        /// Handler to show the tracking options dialog
+        /// </summary>
+        /// <param name="interaction"></param>
+        /// <returns></returns>
+        private async Task DoShowTrackingOptionsAsync(InteractionContext<TrackingOptionsWindowViewModel, ApplicationSettings?> interaction)
+        {
+            // Create the dialog
+            var dialog = new TrackingOptionsWindow();
+            dialog.DataContext = interaction.Input;
+
+            // Show the dialog and capture the results
+            var result = await dialog.ShowDialog<ApplicationSettings?>(this);
+#pragma warning disable CS8604
+            interaction.SetOutput(result);
+#pragma warning restore CS8604
+
+            // Check we have a dialog result i.e. user didn't cancel
+            if (result != null)
+            {
+                // TODO : Reconfigure the tracker
+            }
         }
 
         /// <summary>
