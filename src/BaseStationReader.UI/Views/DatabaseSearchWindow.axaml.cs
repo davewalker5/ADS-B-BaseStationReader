@@ -5,6 +5,7 @@ using Avalonia.ReactiveUI;
 using BaseStationReader.UI.ViewModels;
 using ReactiveUI;
 using System;
+using System.Diagnostics;
 
 namespace BaseStationReader.UI.Views
 {
@@ -29,7 +30,8 @@ namespace BaseStationReader.UI.Views
             Address.Text = ViewModel?.Address ?? "";
             Callsign.Text = ViewModel?.Callsign ?? "";
             StatusFilter.SelectedValue = ViewModel?.Status ?? "";
-            // TODO : Dates
+            FromDate.SelectedDate = ViewModel?.From;
+            ToDate.SelectedDate = ViewModel?.To;
         }
 
         /// <summary>
@@ -37,7 +39,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void OnAddressKeyUp(object sender, KeyEventArgs e)
+        private void OnAddressKeyUp(object sender, KeyEventArgs e)
         {
             ViewModel!.Address = Address.Text ?? "";
         }
@@ -47,7 +49,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void OnCallsignKeyUp(object sender, KeyEventArgs e)
+        private void OnCallsignKeyUp(object sender, KeyEventArgs e)
         {
             ViewModel!.Callsign = Callsign.Text ?? "";
         }
@@ -57,10 +59,56 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void OnStatusChanged(object sender, SelectionChangedEventArgs e)
+        private void OnStatusChanged(object sender, SelectionChangedEventArgs e)
         {
             var status = StatusFilter.SelectedValue as string;
             ViewModel!.Status = status ?? "";
+        }
+
+        /// <summary>
+        /// Handler to capture the date from the "from" date picker
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnFromDateChanged(object sender, DatePickerSelectedValueChangedEventArgs e)
+        {
+            ViewModel!.From = GetDateFromOffset(e.NewDate);
+            Debug.Print(ViewModel.From.ToString() ?? "");
+        }
+
+        /// <summary>
+        /// Handler to capture the date from the "to" date picker
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnToDateChanged(object sender, DatePickerSelectedValueChangedEventArgs e)
+        {
+            ViewModel!.From = GetDateFromOffset(e.NewDate);
+            Debug.Print(ViewModel.From.ToString() ?? "");
+        }
+
+        /// <summary>
+        /// Extract a date from a date time offser, ignoring time and timezone
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        private DateTime? GetDateFromOffset(DateTimeOffset? offset)
+        {
+            DateTime? date = null;
+
+            // Check the picker has a selected date that has a value
+            if ((offset != null) && offset.HasValue)
+            {
+                // Extract the year, month and day
+                var year = offset.Value.Year;
+                var month = offset.Value.Month;
+                var day = offset.Value.Day;
+
+                // Create a new date from the extracted values
+                date = new DateTime(year, month, day);
+            }
+
+            return date;
         }
     }
 }

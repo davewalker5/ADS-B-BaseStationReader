@@ -23,11 +23,10 @@
       <ComboBox Grid.Row="2" Grid.Column="1" Name="StatusFilter" Margin="0 0 10 10" ItemsSource="{Binding Statuses}" SelectionChanged="OnStatusChanged"/>
 
       <Label Grid.Row="3" Grid.Column="0" Margin="0 0 10 10">From:</Label>
-      <DatePicker Grid.Row="3" Grid.Column="1" Name="FromDate" Margin="0 0 10 10" />
+      <DatePicker Grid.Row="3" Grid.Column="1" Name="FromDate" Margin="0 0 10 10" SelectedDateChanged="OnFromDateChanged"/>
 
       <Label Grid.Row="4" Grid.Column="0" Margin="0 0 10 10" >To:</Label>
-      <DatePicker Grid.Row="4" Grid.Column="1" Name="ToDate" Margin="0 0 10 10"/>
-
+      <DatePicker Grid.Row="4" Grid.Column="1" Name="ToDate" Margin="0 0 10 10" SelectedDateChanged="OnToDateChanged"/>
       <StackPanel Orientation="Horizontal" Grid.Row="6" Grid.Column="1" Margin="0 10 0 0">
         <Button Command="{Binding SearchCommand}">OK</Button>
         <Button Command="{Binding CancelCommand}" Margin="10 0 0 0">Cancel</Button>
