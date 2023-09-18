@@ -228,9 +228,13 @@ namespace BaseStationReader.UI.Views
             interaction.SetOutput(result);
 #pragma warning restore CS8604
 
-            // Capture the filters and refresh the tracked aircraft grid
-            ViewModel!.LiveViewFilters = result;
-            RefreshTrackedAircraftGrid();
+            // Check we have a dialog result i.e. user didn't cancel
+            if (result != null)
+            {
+                // Capture the filters and refresh the tracked aircraft grid
+                ViewModel!.LiveViewFilters = result;
+                RefreshTrackedAircraftGrid();
+            }
         }
 
         /// <summary>
@@ -270,9 +274,13 @@ namespace BaseStationReader.UI.Views
             interaction.SetOutput(result);
 #pragma warning restore CS8604
 
-            // Capture the search critera and perform the search
-            ViewModel!.DatabaseSearchCriteria = result;
-            RefreshDatabaseGrid();
+            // Check we have a dialog result i.e. user didn't cancel
+            if (result != null)
+            {
+                // Capture the search critera and perform the search
+                ViewModel!.DatabaseSearchCriteria = result;
+                RefreshDatabaseGrid();
+            }
         }
 
         /// <summary>
