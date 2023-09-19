@@ -13,10 +13,10 @@ namespace BaseStationReader.Logic.Configuration
         /// <param name="configJsonPath"></param>
         /// <returns></returns>
 # pragma warning disable S3776
-        public ApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath)
+        public TrackerApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath)
         {
             // Read the config file to provide default settings
-            var settings = ConfigReader.Read(configJsonPath);
+            var settings = new TrackerConfigReader().Read(configJsonPath);
 
             // Parse the command line
             var parser = new CommandLineParser();

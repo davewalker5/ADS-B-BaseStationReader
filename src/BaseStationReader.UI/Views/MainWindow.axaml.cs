@@ -51,7 +51,7 @@ namespace BaseStationReader.UI.Views
             Title = $"Aircraft Database Viewer {info.FileVersion}";
 
             // Load the settings and configure the logger
-            ViewModel!.Settings = ConfigReader.Read("appsettings.json");
+            ViewModel!.Settings = new TrackerConfigReader().Read("appsettings.json");
             _logger = new FileLogger();
             _logger.Initialise(ViewModel!.Settings!.LogFile, ViewModel!.Settings.MinimumLogLevel);
 
@@ -260,14 +260,14 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowTrackingOptionsAsync(InteractionContext<TrackingOptionsWindowViewModel, ApplicationSettings?> interaction)
+        private async Task DoShowTrackingOptionsAsync(InteractionContext<TrackingOptionsWindowViewModel, TrackerApplicationSettings?> interaction)
         {
             // Create the dialog
             var dialog = new TrackingOptionsWindow();
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<ApplicationSettings?>(this);
+            var result = await dialog.ShowDialog<TrackerApplicationSettings?>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604

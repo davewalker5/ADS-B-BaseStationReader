@@ -25,7 +25,7 @@ namespace BaseStationReader.UI.Models
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="settings"></param>
-        public void Initialise(ITrackerLogger logger, ApplicationSettings settings)
+        public void Initialise(ITrackerLogger logger, TrackerApplicationSettings settings)
         {
             _wrapper = new TrackerWrapper(logger, settings);
             _wrapper.Initialise();

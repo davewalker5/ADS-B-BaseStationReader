@@ -20,7 +20,7 @@ namespace BaseStationReader.Terminal
         private static ITrackerTableManager? _tableManager = null;
         private static ITrackerLogger? _logger = null;
         private static ITrackerWrapper? _wrapper = null;
-        private static ApplicationSettings? _settings = null;
+        private static TrackerApplicationSettings? _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
         public static async Task Main(string[] args)

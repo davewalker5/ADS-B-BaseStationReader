@@ -4,6 +4,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface ITrackerSettingsBuilder
     {
-        ApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath);
+        TrackerApplicationSettings? BuildSettings(IEnumerable<string> args, string configJsonPath);
     }
 }

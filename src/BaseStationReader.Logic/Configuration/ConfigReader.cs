@@ -1,17 +1,15 @@
-﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Tracking;
+﻿using BaseStationReader.Entities.Interfaces;
 using Microsoft.Extensions.Configuration;
-using System.Reflection;
 
 namespace BaseStationReader.Logic.Configuration
 {
-    public static class ConfigReader
+    public class ConfigReader<T> : IConfigReader<T> where T : class
     {
         /// <summary>
         /// Load and return the application settings from the named JSON-format application settings file
         /// </summary>
         /// <returns></returns>
-        public static ApplicationSettings? Read(string jsonFileName)
+        public virtual T? Read(string jsonFileName)
         {
             // Set up the configuration reader
             IConfiguration configuration = new ConfigurationBuilder()
@@ -20,18 +18,7 @@ namespace BaseStationReader.Logic.Configuration
 
             // Read the application settings section
             IConfigurationSection section = configuration.GetSection("ApplicationSettings");
-            var settings = section.Get<ApplicationSettings>();
-
-            // Remove columns for which the property isn't set
-            settings!.Columns.RemoveAll(x => string.IsNullOrEmpty(x.Property));
-
-            // Add to the column definitions the property info objects associated with the associated property
-            // of the Aircraft object
-            var allProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var column in settings!.Columns)
-            {
-                column.Info = Array.Find(allProperties, x => x.Name == column.Property);
-            }
+            var settings = section.Get<T>();
 
             return settings;
         }
