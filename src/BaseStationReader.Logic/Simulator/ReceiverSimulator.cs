@@ -1,26 +1,31 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Logic.Simulator
 {
+    [ExcludeFromCodeCoverage]
     public class ReceiverSimulator : IReceiverSimulator
     {
         private readonly Random _random = new();
         private readonly List<Aircraft> _aircraft = new();
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
+        private readonly IMessageGenerator _generator;
+
         private readonly int _port;
         private readonly int _lifespan;
         private readonly int _numberOfAircraft;
 
-        public ReceiverSimulator(ITrackerLogger logger, ITrackerTimer timer, int port, int lifespan, int numberOfAircraft)
+        public ReceiverSimulator(ITrackerLogger logger, ITrackerTimer timer, IMessageGenerator generator, int port, int lifespan, int numberOfAircraft)
         {
             _logger = logger;
+            _timer = timer;
+            _generator = generator;
             _port = port;
             _lifespan = lifespan;
             _numberOfAircraft = numberOfAircraft;
-            _timer = timer;
             _timer.Tick += OnTimer;
         }
 
@@ -123,7 +128,12 @@ namespace BaseStationReader.Logic.Simulator
             // Top the aircraft list up to the required number
             TopUpAircraft();
 
-            // TODO : Send the next message
+            // Generate the next message, from a randomly selected aircraft
+            var index = _random.Next(0, _aircraft.Count);
+            var aircraft = _aircraft[index];
+            var message = _generator.Generate(aircraft.Address, aircraft.Callsign);
+
+            // TODO : Send the message
 
             _timer.Start();
         }
