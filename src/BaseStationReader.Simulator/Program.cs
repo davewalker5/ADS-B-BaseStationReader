@@ -34,9 +34,31 @@ namespace BaseStationReader.Simulator
             Console.WriteLine(title);
             Console.WriteLine($"Output will be logged to {settings.LogFile}");
 
-            // Configure a timer and a simulator
+            // Configure the aircraft and message generators
+            IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger);
+            var generators = new List<IMessageGenerator>
+            {
+                new IdentificationMessageGenerator(logger),
+                new SurfacePositionMessageGenerator(logger),
+                new AirbornePositionMessageGenerator(logger),
+                new AirborneVelocityMessageGenerator(logger),
+                new SurveillanceAltMessageGenerator(logger),
+                new SurveillanceIdMessageGenerator(logger),
+                new AirToAirMessageGenerator(logger),
+                new AllCallReplyMessageGenerator(logger)
+            };
+            IMessageGenerator messageGenerator = new MsgMessageGenerator(generators);
+
+            // Configure a timer, aircraft and message generatorand the simulator
             ITrackerTimer timer = new TrackerTimer(settings.SendInterval);
-            IReceiverSimulator simulator = new ReceiverSimulator(logger, timer, settings.Port, settings.AircraftLifespan, settings.NumberOfAircraft);
+            IReceiverSimulator simulator = new ReceiverSimulator(
+                logger,
+                timer,
+                aircraftGenerator,
+                messageGenerator,
+                settings.Port,
+                settings.AircraftLifespan,
+                settings.NumberOfAircraft);
 
             // Run the simulator
             simulator.Start();
