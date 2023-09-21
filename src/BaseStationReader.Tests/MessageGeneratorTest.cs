@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests
                 new AirToAirMessageGenerator(_logger),
                 new AllCallReplyMessageGenerator(_logger)
             };
-            var message = new MsgMessageGenerator(generators).Generate(Address, Callsign, Squawk);
+            var message = new MessageGenerator(generators).Generate(Address, Callsign, Squawk);
 
             Assert.AreEqual(MessageType.MSG, message.MessageType);
             Assert.AreEqual(Address, message.Address);

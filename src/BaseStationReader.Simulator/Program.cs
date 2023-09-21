@@ -47,7 +47,7 @@ namespace BaseStationReader.Simulator
                 new AirToAirMessageGenerator(logger),
                 new AllCallReplyMessageGenerator(logger)
             };
-            IMessageGenerator messageGenerator = new MsgMessageGenerator(generators);
+            IMessageGenerator messageGenerator = new MessageGenerator(generators);
 
             // Configure a timer, aircraft and message generatorand the simulator
             ITrackerTimer timer = new TrackerTimer(settings.SendInterval);

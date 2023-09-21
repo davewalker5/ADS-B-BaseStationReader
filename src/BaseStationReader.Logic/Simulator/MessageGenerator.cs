@@ -3,12 +3,12 @@ using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Logic.Simulator
 {
-    public class MsgMessageGenerator : IMessageGenerator
+    public class MessageGenerator : IMessageGenerator
     {
         private readonly Random _random = new();
         private readonly IList<IMessageGenerator> _generators;
 
-        public MsgMessageGenerator(IList<IMessageGenerator> generators)
+        public MessageGenerator(IList<IMessageGenerator> generators)
         {
             _generators = generators;
         }

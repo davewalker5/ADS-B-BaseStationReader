@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Logic.Simulator
 {
-    public class AirbornePositionMessageGenerator : MessageGeneratorBase, IMessageGenerator
+    public class AirbornePositionMessageGenerator : MsgMessageGeneratorBase, IMessageGenerator
     {
         public AirbornePositionMessageGenerator(ITrackerLogger logger) : base(logger)
         {

@@ -4,12 +4,12 @@ using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Logic.Simulator
 {
-    public abstract class MessageGeneratorBase
+    public abstract class MsgMessageGeneratorBase
     {
         protected readonly Random _random = new();
         private readonly ITrackerLogger _logger;
 
-        public MessageGeneratorBase(ITrackerLogger logger)
+        public MsgMessageGeneratorBase(ITrackerLogger logger)
         {
             _logger = logger;
         }

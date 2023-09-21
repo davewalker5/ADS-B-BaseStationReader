@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Logic.Simulator
 {
-    public class SurfacePositionMessageGenerator : MessageGeneratorBase, IMessageGenerator
+    public class SurfacePositionMessageGenerator : MsgMessageGeneratorBase, IMessageGenerator
     {
         public SurfacePositionMessageGenerator(ITrackerLogger logger) : base(logger)
         {

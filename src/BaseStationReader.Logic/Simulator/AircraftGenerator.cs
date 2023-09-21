@@ -19,7 +19,7 @@ namespace BaseStationReader.Logic.Simulator
         /// </summary>
         /// <param name="existingAddresses"></param>
         /// <returns></returns>
-        public Aircraft Generate(IEnumerable<string> existingAddresses)
+        public Aircraft Generate(IEnumerable<string>? existingAddresses)
         {
             Aircraft? aircraft = null;
             string address;
@@ -28,7 +28,8 @@ namespace BaseStationReader.Logic.Simulator
             {
                 // Create a new random address and make sure it's not already in the list
                 address = _random.Next(0, 16777215).ToString("X6");
-                if (!existingAddresses.Contains(address))
+                var existing = (existingAddresses != null) && existingAddresses.Contains(address);
+                if (!existing)
                 {
                     // Not in the list so create a new aircraft using the address
                     aircraft = new Aircraft

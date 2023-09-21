@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Logic.Simulator
 {
-    public class SurveillanceAltMessageGenerator : MessageGeneratorBase, IMessageGenerator
+    public class SurveillanceAltMessageGenerator : MsgMessageGeneratorBase, IMessageGenerator
     {
         public SurveillanceAltMessageGenerator(ITrackerLogger logger) : base(logger)
         {
