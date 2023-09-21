@@ -2,7 +2,7 @@
 {
     public interface IReceiverSimulator
     {
-        void Start();
+        Task Start();
         void Stop();
     }
 }

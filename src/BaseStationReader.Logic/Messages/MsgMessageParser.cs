@@ -27,6 +27,7 @@ namespace BaseStationReader.Logic.Messages
             msg.Squawk = GetStringValue(fields, MessageField.Squawk);
             msg.Alert = GetBooleanValue(fields, MessageField.Alert);
             msg.Emergency = GetBooleanValue(fields, MessageField.Emergency);
+            msg.SPI = GetBooleanValue(fields, MessageField.SPI);
             msg.IsOnGround = GetBooleanValue(fields, MessageField.IsOnGround);
 
             return msg;

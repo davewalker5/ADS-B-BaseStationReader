@@ -2,22 +2,31 @@
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 namespace BaseStationReader.Logic.Simulator
 {
     [ExcludeFromCodeCoverage]
-    public class ReceiverSimulator : IReceiverSimulator
+    public class ReceiverSimulator : IReceiverSimulator, IDisposable
     {
+        private readonly object _lock = new();
+
+        private readonly TcpListener _listener;
+        private readonly List<TcpClient> _clients = new();
+
         private readonly Random _random = new();
         private readonly List<Aircraft> _aircraft = new();
+
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly IAircraftGenerator _aircraftGenerator;
         private readonly IMessageGenerator _messageGenerator;
 
-        private readonly int _port;
         private readonly int _lifespan;
         private readonly int _numberOfAircraft;
+        private bool _listening = false;
 
         public ReceiverSimulator(
             ITrackerLogger logger,
@@ -28,11 +37,11 @@ namespace BaseStationReader.Logic.Simulator
             int lifespan,
             int numberOfAircraft)
         {
+            _listener = new TcpListener(IPAddress.Loopback, port);
             _logger = logger;
             _timer = timer;
             _aircraftGenerator = aircraftGenerator;
             _messageGenerator = generator;
-            _port = port;
             _lifespan = lifespan;
             _numberOfAircraft = numberOfAircraft;
             _timer.Tick += OnTimer;
@@ -41,15 +50,32 @@ namespace BaseStationReader.Logic.Simulator
         /// <summary>
         /// Start the simulator
         /// </summary>
-        public void Start()
+        public async Task Start()
         {
-            _logger.LogMessage(Severity.Info, "Starting simulator");
+            // Check the listener isn't running
+            if (!_listening)
+            {
+                _logger.LogMessage(Severity.Info, "Starting listener");
 
-            // Top up the aircraft list to the required number
-            TopUpAircraft();
+                // Start the timer
+                _timer.Start();
 
-            // Start the timer
-            _timer.Start();
+                // Start the listener and listen for incoming connections until the listener is stopped
+                _listening = true;
+                _listener.Start();
+                while (_listening)
+                {
+                    // Listen for the next connection and add the client to the collection
+                    var client = await _listener.AcceptTcpClientAsync();
+                    lock (_lock)
+                    {
+                        _logger.LogMessage(Severity.Info, "New client connected");
+                        _clients.Add(client);
+                    }
+                }
+
+                _logger.LogMessage(Severity.Info, "Exited listener connection loop");
+            }
         }
 
         /// <summary>
@@ -57,8 +83,28 @@ namespace BaseStationReader.Logic.Simulator
         /// </summary>
         public void Stop()
         {
-            _logger.LogMessage(Severity.Info, "Stopping simulator");
-            _timer.Stop();
+            // Check the listener is running
+            if (_listening)
+            {
+                // Stop the timer
+                _timer.Stop();
+
+                // Stop the listener
+                _logger.LogMessage(Severity.Info, "Stopping listener");
+                _listening = false;
+                _listener.Stop();
+
+                // Close and dispose the clients
+                _logger.LogMessage(Severity.Info, "Disposing connected clients");
+                foreach (var client in _clients)
+                {
+                    client.Close();
+                    client.Dispose();
+                }
+
+                // Clear the client list
+                _clients.Clear();
+            }
         }
 
         /// <summary>
@@ -109,20 +155,50 @@ namespace BaseStationReader.Logic.Simulator
         {
             _timer.Stop();
 
-            // Remove expired aircraft
-            RemoveExpiredAircraft();
+            lock (_lock)
+            {
+                // Remove expired aircraft
+                RemoveExpiredAircraft();
 
-            // Top the aircraft list up to the required number
-            TopUpAircraft();
+                // Top the aircraft list up to the required number
+                TopUpAircraft();
 
-            // Generate the next message, from a randomly selected aircraft
-            var index = _random.Next(0, _aircraft.Count);
-            var aircraft = _aircraft[index];
-            var message = _messageGenerator.Generate(aircraft.Address, aircraft.Callsign, aircraft.Squawk);
+                // Generate the next message, from a randomly selected aircraft
+                var index = _random.Next(0, _aircraft.Count);
+                var aircraft = _aircraft[index];
+                var message = _messageGenerator.Generate(aircraft.Address, aircraft.Callsign, aircraft.Squawk);
 
-            // TODO : Send the message
+                // Generate a byte array representing the message
+                var messageBytes = Encoding.UTF8.GetBytes($"{message.ToBaseStation()}\r\n");
+
+                // Send the message to each client
+                foreach (var client in _clients)
+                {
+                    client.GetStream().Write(messageBytes);
+                }
+            }
 
             _timer.Start();
+        }
+
+        /// <summary>
+        /// IDisposable implementation
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// IDisposable implementation
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Stop();
+            }
         }
     }
 }

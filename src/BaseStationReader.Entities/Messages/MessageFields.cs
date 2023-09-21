@@ -24,6 +24,7 @@ namespace BaseStationReader.Entities.Messages
         Squawk = 17,
         Alert = 18,
         Emergency = 19,
-        IsOnGround = 20
+        SPI = 20,
+        IsOnGround = 21
     }
 }

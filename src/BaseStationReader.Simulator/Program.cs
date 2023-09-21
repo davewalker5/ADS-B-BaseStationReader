@@ -61,7 +61,7 @@ namespace BaseStationReader.Simulator
                 settings.NumberOfAircraft);
 
             // Run the simulator
-            simulator.Start();
+            Task.Run(() => simulator.Start());
             while (true)
             {
                 Thread.Sleep(100);
