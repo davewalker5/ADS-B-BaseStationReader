@@ -11,7 +11,7 @@ namespace BaseStationReader.Tests
         {
             var logger = new MockFileLogger();
             var generator = new AircraftGenerator(logger);
-            var aircraft = generator.Generate(null);
+            var aircraft = generator.Generate(new List<string>());
 
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(6, aircraft.Address.Length);
