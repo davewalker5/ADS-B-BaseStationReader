@@ -137,7 +137,7 @@ namespace BaseStationReader.Logic.Simulator
 
             // Compile a list of aircraft to be removed
             var expired = _aircraft.Where(x => x.FirstSeen < cutoff).Select(x => x.Address);
-            if (expired.Count() > 0)
+            if (expired.Any())
             {
                 // Log the removal and remove them
                 var addresses = string.Join(',', expired);
