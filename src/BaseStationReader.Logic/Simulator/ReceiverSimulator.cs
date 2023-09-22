@@ -163,22 +163,64 @@ namespace BaseStationReader.Logic.Simulator
                 // Top the aircraft list up to the required number
                 TopUpAircraft();
 
-                // Generate the next message, from a randomly selected aircraft
-                var index = _random.Next(0, _aircraft.Count);
-                var aircraft = _aircraft[index];
-                var message = _messageGenerator.Generate(aircraft.Address, aircraft.Callsign, aircraft.Squawk);
-
-                // Generate a byte array representing the message
-                var messageBytes = Encoding.UTF8.GetBytes($"{message.ToBaseStation()}\r\n");
+                // Generate the message
+                var message = GenerateMessage();
 
                 // Send the message to each client
-                foreach (var client in _clients)
-                {
-                    client.GetStream().Write(messageBytes);
-                }
+                BroadcastMessage(message);
             }
 
             _timer.Start();
+        }
+
+        /// <summary>
+        /// Generate the next message, from a randomly selected aircraft
+        /// </summary>
+        /// <returns></returns>
+        private byte[] GenerateMessage()
+        {
+            // Select the aircraft
+            var index = _random.Next(0, _aircraft.Count);
+            var aircraft = _aircraft[index];
+
+            /// Create the message instance
+            var message = _messageGenerator.Generate(aircraft.Address, aircraft.Callsign, aircraft.Squawk);
+
+            // Log it in Base Station format
+            var basestation = message.ToBaseStation();
+            _logger.LogMessage(Severity.Info, basestation);
+
+            // Generate a byte array representing the message in BaseStation format
+            var messageBytes = Encoding.UTF8.GetBytes($"{basestation}\r\n");
+
+            return messageBytes;
+        }
+
+        /// <summary>
+        /// Send the specified message to all clients
+        /// </summary>
+        /// <param name="message"></param>
+        private void BroadcastMessage(byte[] message)
+        {
+            // Create a list to capture clients where sending the message causes an exception
+            var errored = new List<TcpClient>();
+
+            // Iterate over each client, sending the message to each one in turn
+            foreach (var client in _clients)
+            {
+                try
+                {
+                    client.GetStream().Write(message);
+                }
+                catch
+                {
+                    // Got an error sending to the client, so add it to the erroring list for removal
+                    errored.Add(client);
+                }
+            }
+
+            // Remove any clients that caused an error in the send attempt
+            _clients.RemoveAll(x => errored.Contains(x));
         }
 
         /// <summary>

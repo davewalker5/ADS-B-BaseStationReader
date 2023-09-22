@@ -33,6 +33,7 @@ namespace BaseStationReader.Simulator
 
             Console.WriteLine(title);
             Console.WriteLine($"Output will be logged to {settings.LogFile}");
+            Console.WriteLine("Press ESC to stop the simulator");
 
             // Configure the aircraft and message generators
             IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger);
@@ -51,20 +52,20 @@ namespace BaseStationReader.Simulator
 
             // Configure a timer, aircraft and message generatorand the simulator
             ITrackerTimer timer = new TrackerTimer(settings.SendInterval);
-            IReceiverSimulator simulator = new ReceiverSimulator(
-                logger,
-                timer,
-                aircraftGenerator,
-                messageGenerator,
-                settings.Port,
-                settings.AircraftLifespan,
-                settings.NumberOfAircraft);
-
-            // Run the simulator
-            Task.Run(() => simulator.Start());
-            while (true)
+            using (var simulator = new ReceiverSimulator(logger, timer, aircraftGenerator, messageGenerator, settings.Port, settings.AircraftLifespan, settings.NumberOfAircraft))
             {
-                Thread.Sleep(100);
+                // Run the simulator
+                Task.Run(() => simulator.Start());
+
+                // Continue until the user hits ESC to stop the simulator
+                do
+                {
+                    while (!Console.KeyAvailable)
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
+                while (Console.ReadKey().Key != ConsoleKey.Escape);
             }
         }
     }
