@@ -9,7 +9,7 @@ namespace BaseStationReader.Logic.Simulator
         protected readonly Random _random = new();
         private readonly ITrackerLogger _logger;
 
-        public MsgMessageGeneratorBase(ITrackerLogger logger)
+        protected MsgMessageGeneratorBase(ITrackerLogger logger)
         {
             _logger = logger;
         }
@@ -30,7 +30,7 @@ namespace BaseStationReader.Logic.Simulator
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        protected Message ConstructMessage(TransmissionType type, string address)
+        protected static Message ConstructMessage(TransmissionType type, string address)
         {
             Message message = new()
             {
@@ -54,7 +54,7 @@ namespace BaseStationReader.Logic.Simulator
         protected void LogGeneratedMessage(Message message)
         {
             _logger.LogMessage(
-                Severity.Info,
+                Severity.Debug,
                 $"Generated MSG {(int)message.TransmissionType} ({message.TransmissionType.ToString()}) message");
         }
     }

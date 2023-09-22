@@ -137,7 +137,7 @@ namespace BaseStationReader.Logic.Simulator
 
             // Compile a list of aircraft to be removed
             var expired = _aircraft.Where(x => x.FirstSeen < cutoff).Select(x => x.Address);
-            if (expired.Count() > 0)
+            if (expired.Any())
             {
                 // Log the removal and remove them
                 var addresses = string.Join(',', expired);
@@ -188,7 +188,7 @@ namespace BaseStationReader.Logic.Simulator
 
             // Log it in Base Station format
             var basestation = message.ToBaseStation();
-            _logger.LogMessage(Severity.Info, basestation);
+            _logger.LogMessage(Severity.Debug, basestation);
 
             // Generate a byte array representing the message in BaseStation format
             var messageBytes = Encoding.UTF8.GetBytes($"{basestation}\r\n");
