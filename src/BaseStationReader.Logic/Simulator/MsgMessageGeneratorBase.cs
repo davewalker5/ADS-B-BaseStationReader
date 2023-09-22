@@ -54,7 +54,7 @@ namespace BaseStationReader.Logic.Simulator
         protected void LogGeneratedMessage(Message message)
         {
             _logger.LogMessage(
-                Severity.Info,
+                Severity.Debug,
                 $"Generated MSG {(int)message.TransmissionType} ({message.TransmissionType.ToString()}) message");
         }
     }

@@ -188,7 +188,7 @@ namespace BaseStationReader.Logic.Simulator
 
             // Log it in Base Station format
             var basestation = message.ToBaseStation();
-            _logger.LogMessage(Severity.Info, basestation);
+            _logger.LogMessage(Severity.Debug, basestation);
 
             // Generate a byte array representing the message in BaseStation format
             var messageBytes = Encoding.UTF8.GetBytes($"{basestation}\r\n");
