@@ -29,7 +29,7 @@ namespace BaseStationReader.UI.ViewModels
             set { _databaseSearch.SearchCriteria = value; }
         }
 
-        public ApplicationSettings? Settings { get; set; }
+        public TrackerApplicationSettings? Settings { get; set; }
 
         public ICommand ShowTrackingFiltersCommand { get; private set; }
         public Interaction<FiltersWindowViewModel,BaseFilters?> ShowFiltersDialog { get; private set; }
@@ -38,7 +38,7 @@ namespace BaseStationReader.UI.ViewModels
         public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> ShowDatabaseSearchDialog { get; private set; }
 
         public ICommand ShowTrackingOptionsCommand { get; private set; }
-        public Interaction<TrackingOptionsWindowViewModel, ApplicationSettings?> ShowTrackingOptionsDialog { get; private set; }
+        public Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings?> ShowTrackingOptionsDialog { get; private set; }
 
         public MainWindowViewModel()
         {
@@ -51,10 +51,10 @@ namespace BaseStationReader.UI.ViewModels
             });
 
             // Wire up the tracking options dialog
-            ShowTrackingOptionsDialog = new Interaction<TrackingOptionsWindowViewModel, ApplicationSettings?>();
+            ShowTrackingOptionsDialog = new Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings?>();
             ShowTrackingOptionsCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var dialogViewModel = new TrackingOptionsWindowViewModel(Settings);
+                var dialogViewModel = new TrackingOptionsWindowViewModel(Settings!);
                 var result = await ShowTrackingOptionsDialog.Handle(dialogViewModel);
             });
 
@@ -72,7 +72,7 @@ namespace BaseStationReader.UI.ViewModels
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="settings"></param>
-        public void InitialiseTracker(ITrackerLogger logger, ApplicationSettings settings)
+        public void InitialiseTracker(ITrackerLogger logger, TrackerApplicationSettings settings)
             => _liveView.Initialise(logger, settings);
 
         /// <summary>

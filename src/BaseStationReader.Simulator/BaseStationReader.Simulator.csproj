@@ -11,38 +11,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="appsettings.desktop.json" />
     <None Remove="appsettings.json" />
-    <None Remove="appsettings.pi.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.desktop.json">
-      <Generator></Generator>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.10">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Spectre.Console" Version="0.47.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
     <ProjectReference Include="..\BaseStationReader.Logic\BaseStationReader.Logic.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="appsettings.pi.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

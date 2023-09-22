@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
@@ -9,7 +10,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void ReadAppSettingsTest()
         {
-            var settings = ConfigReader.Read("appsettings.json");
+            var settings = new TrackerConfigReader().Read("trackersettings.json");
 
             Assert.AreEqual("192.168.0.98", settings?.Host);
             Assert.AreEqual(30003, settings?.Port);

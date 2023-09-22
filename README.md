@@ -184,7 +184,7 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 
 - The record for a given address should only be updated while the aircraft in question remains in range
 - Once it passes out of range, or when a new tracking session is started, if the address is seen again it should result in a new tracking record
-- This is achieved using the "Locked" flag on tracking records (see the screenshot, above):
+- This is achieved using the "Locked" status on tracking records (see the screenshot, above):
   - When an aircraft moves out of range and is removed from the tracking collection, a notional "lock timer" starts
   - If it's seen again within the timout, the record remains unlocked to avoid duplication of aircraft records for the same flight
   - Once the timeout is reached, the record is locked and any further updates for that ICAO address result in a new record
@@ -212,6 +212,24 @@ SELECT *
 FROM AIRCRAFT
 WHERE Address = '3949F8';
 ```
+
+## Simulator
+
+- The project includes a simulator that broadcasts messages in BaseStation format on the local machine
+- A set of simulated aircraft, with random ICAO addresses and callsigns, are created
+- At specified intervals, an MSG message with a random transmission type and a randomly selected aircraft is generated and sent to all connected clients
+- Simulated aircraft have a configurable lifespan after which no further messages are sent from them, to simulate real behaviour and exercise the tracking lifecycle (see above)
+- The simulator is intended for development use when no ADS-B receiver is available to provide a real message stream
+- The simulator is controlled via an "appsettings.json" configuration file, supporting the following keys:
+
+| Section             | Key              | Command Line    | Short Name | Purpose                                                                 |
+| ------------------- | ---------------- | --------------- | ---------- | ----------------------------------------------------------------------- |
+| ApplicationSettings | Port             | --port          | -p         | Port the simlator broadcasts on                                         |
+| ApplicationSettings | SendInterval     | --send-interval | -s         | Interval at which messages are sent (ms)                                |
+| ApplicationSettings | NumberOfAircraft | --number        | -n         | Number of active simulated aircraft                                     |
+| ApplicationSettings | AircraftLifespan | --lifespan      | -ls        | Aircraft lifespan (ms)                                                  |
+| ApplicationSettings | LogFile          | --log-file      | -l         | Path and name of the log file. If this is blank, no log file is created |
+| ApplicationSettings | MinimumLogLevel  | --log-level     | -ll        | Minimum message severity to log (Debug, Info, Warning or Error)         |
 
 ## Authors
 

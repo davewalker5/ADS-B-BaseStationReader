@@ -17,7 +17,7 @@ namespace BaseStationReader.Logic.Tracking
     {
         private readonly ITrackerLogger _logger;
         private IAircraftTracker? _tracker = null;
-        private readonly ApplicationSettings _settings;
+        private readonly TrackerApplicationSettings _settings;
         private IQueuedWriter? _writer = null;
 
         public event EventHandler<AircraftNotificationEventArgs>? AircraftAdded;
@@ -27,7 +27,7 @@ namespace BaseStationReader.Logic.Tracking
         public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
-        public TrackerWrapper(ITrackerLogger logger, ApplicationSettings settings)
+        public TrackerWrapper(ITrackerLogger logger, TrackerApplicationSettings settings)
         {
             _logger = logger;
             _settings = settings;

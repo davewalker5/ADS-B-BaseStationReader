@@ -16,6 +16,9 @@
         WriterInterval,
         WriterBatchSize,
         RefreshInterval,
-        MaximumRows
+        MaximumRows,
+        SendInterval,
+        NumberOfAircraft,
+        Lifespan
     }
 }

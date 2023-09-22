@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Config
 {
     [ExcludeFromCodeCoverage]
-    public class ApplicationSettings
+    public class TrackerApplicationSettings
     {
         public Severity MinimumLogLevel { get; set; }
         public string Host { get; set; } = "";
