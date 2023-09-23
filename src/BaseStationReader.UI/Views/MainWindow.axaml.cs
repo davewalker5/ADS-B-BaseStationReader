@@ -275,7 +275,16 @@ namespace BaseStationReader.UI.Views
             // Check we have a dialog result i.e. user didn't cancel
             if (result != null)
             {
-                // TODO : Reconfigure the tracker
+                // Apply the settings
+                ViewModel!.Settings!.Host = result.Host;
+                ViewModel.Settings.Port = result.Port;
+                ViewModel.Settings.SocketReadTimeout = result.SocketReadTimeout;
+                ViewModel.Settings.TimeToRecent = result.TimeToRecent;
+                ViewModel.Settings.TimeToStale = result.TimeToStale;
+                ViewModel.Settings.TimeToRemoval = result.TimeToRemoval;
+                ViewModel.Settings.TimeToLock = result.TimeToLock;
+                ViewModel.Settings.RefreshInterval = result.RefreshInterval;
+                _timer.Interval = new TimeSpan(0, 0, 0, 0, result.RefreshInterval);
             }
         }
 

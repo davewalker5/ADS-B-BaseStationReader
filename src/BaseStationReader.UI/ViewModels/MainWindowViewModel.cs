@@ -48,6 +48,7 @@ namespace BaseStationReader.UI.ViewModels
             {
                 var dialogViewModel = new FiltersWindowViewModel(LiveViewFilters);
                 var result = await ShowFiltersDialog.Handle(dialogViewModel);
+                return result;
             });
 
             // Wire up the tracking options dialog
@@ -56,6 +57,7 @@ namespace BaseStationReader.UI.ViewModels
             {
                 var dialogViewModel = new TrackingOptionsWindowViewModel(Settings!);
                 var result = await ShowTrackingOptionsDialog.Handle(dialogViewModel);
+                return result;
             });
 
             // Wire up the database search dialog
@@ -64,6 +66,7 @@ namespace BaseStationReader.UI.ViewModels
             {
                 var dialogViewModel = new DatabaseSearchWindowViewModel(DatabaseSearchCriteria);
                 var result = await ShowDatabaseSearchDialog.Handle(dialogViewModel);
+                return result;
             });
         }
 

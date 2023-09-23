@@ -49,6 +49,9 @@ namespace BaseStationReader.Entities.Tracking
         [Required]
         public TrackingStatus Status { get; set; }
 
+        [Export("Messages", 12)]
+        public int Messages { get; set; }
+
         public object Clone()
         {
             return MemberwiseClone();

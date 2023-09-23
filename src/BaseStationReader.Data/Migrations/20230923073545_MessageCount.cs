@@ -7,24 +7,25 @@ namespace BaseStationReader.Data.Migrations
 {
     /// <inheritdoc />
     [ExcludeFromCodeCoverage]
-    public partial class AircraftStatus : Migration
+    public partial class MessageCount : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Locked",
+            migrationBuilder.AddColumn<int>(
+                name: "Messages",
                 table: "AIRCRAFT",
-                newName: "Status");
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Status",
-                table: "AIRCRAFT",
-                newName: "Locked");
+            migrationBuilder.DropColumn(
+                name: "Messages",
+                table: "AIRCRAFT");
         }
     }
 }
