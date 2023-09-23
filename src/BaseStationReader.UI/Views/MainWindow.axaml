@@ -67,12 +67,15 @@
               <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
               <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
               <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />
               <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
       </TabItem>
       <TabItem Header="Map View">
+        <DockPanel>
+        </DockPanel>
       </TabItem>
       <TabItem Header="Database Search">
         <DockPanel>
@@ -97,6 +100,7 @@
               <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
               <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
               <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />
               <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
             </DataGrid.Columns>
           </DataGrid>

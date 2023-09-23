@@ -3,9 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
-    <ReleaseVersion>1.24.0.0</ReleaseVersion>
-    <FileVersion>1.24.0.0</FileVersion>
-    <ProductVersion>1.24.0</ProductVersion>
+    <ReleaseVersion>1.25.0.0</ReleaseVersion>
+    <FileVersion>1.25.0.0</FileVersion>
+    <ProductVersion>1.25.0</ProductVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

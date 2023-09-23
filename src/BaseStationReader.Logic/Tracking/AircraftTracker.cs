@@ -115,33 +115,30 @@ namespace BaseStationReader.Logic.Tracking
                 var lastLatitude = aircraft.Latitude;
                 var lastLongitude = aircraft.Longitude;
 
-                // Determine if it's changed and update its properties
-                bool changed = UpdateAircraftProperties(aircraft, msg);
-                if (changed)
+                // Update the aircraft propertes
+                UpdateAircraftProperties(aircraft, msg);
+                try
                 {
-                    try
+                    // If the position's changed, construct a position instance to add to the notification event arguments
+                    AircraftPosition? position = null;
+                    if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
                     {
-                        // If the position's changed, construct a position instance to add to the notification event arguments
-                        AircraftPosition? position = null;
-                        if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
-                        {
-                            position = CreateAircraftPosition(aircraft);
-                        }
+                        position = CreateAircraftPosition(aircraft);
+                    }
 
-                        // Notify subscribers
-                        AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
-                        {
-                            Aircraft = aircraft,
-                            Position = position,
-                            NotificationType = AircraftNotificationType.Updated
-                        });
-                    }
-                    catch (Exception ex)
+                    // Notify subscribers
+                    AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
                     {
-                        // Log and sink the exception. The tracker has to be protected from errors in the
-                        // subscriber callbacks or the application will stop updating
-                        _logger.LogException(ex);
-                    }
+                        Aircraft = aircraft,
+                        Position = position,
+                        NotificationType = AircraftNotificationType.Updated
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Log and sink the exception. The tracker has to be protected from errors in the
+                    // subscriber callbacks or the application will stop updating
+                    _logger.LogException(ex);
                 }
             }
         }
@@ -211,27 +208,29 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="msg"></param>
-        private bool UpdateAircraftProperties(Aircraft aircraft, Message msg)
+        private void UpdateAircraftProperties(Aircraft aircraft, Message msg)
         {
-            bool changed = false;
+            // Increment the message count
+            aircraft.Messages++;
 
+            // Iterate over the aircraft propertues
             foreach (var aircraftProperty in _aircraftProperties)
             {
+                // Find the corresponding message property for the current aircraft property
                 var messageProperty = Array.Find(_messageProperties, x => x.Name == aircraftProperty.Name);
                 if (messageProperty != null)
                 {
+                    // See if the property has changed
                     var original = aircraftProperty.GetValue(aircraft);
                     var updated = messageProperty.GetValue(msg);
                     if (updated != null && original != updated)
                     {
+                        // It has, so u0date it
                         aircraftProperty.SetValue(aircraft, updated);
                         aircraft.Status = TrackingStatus.Active;
-                        changed = true;
                     }
                 }
             }
-
-            return changed;
         }
 
         /// <summary>

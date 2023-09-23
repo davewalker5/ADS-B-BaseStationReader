@@ -38,6 +38,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.VerticalRate).HasColumnName("VerticalRate");
                 entity.Property(e => e.Squawk).HasColumnName("Squawk");
                 entity.Property(e => e.Status).HasColumnName("Status");
+                entity.Property(e => e.Messages).HasColumnName("Messages");
 
                 entity.Property(e => e.FirstSeen)
                     .IsRequired()
