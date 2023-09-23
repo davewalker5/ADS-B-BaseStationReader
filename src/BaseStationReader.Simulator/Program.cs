@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace BaseStationReader.Simulator
 {
-    internal class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {

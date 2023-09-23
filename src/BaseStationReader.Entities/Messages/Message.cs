@@ -93,7 +93,7 @@ namespace BaseStationReader.Entities.Messages
         /// <param name="value"></param>
         private void AppendBooleanFiled(StringBuilder builder, bool value)
         {
-            var append = value == true ? "1" : "0";
+            var append = value ? "1" : "0";
             AppendField(builder, append);
         }
     }

@@ -84,7 +84,7 @@ namespace BaseStationReader.UI.Views
         private void OnToDateChanged(object sender, DatePickerSelectedValueChangedEventArgs e)
         {
             ViewModel!.From = GetDateFromOffset(e.NewDate);
-            Debug.Print(ViewModel.From.ToString() ?? "");
+            Debug.Print(ViewModel.To.ToString() ?? "");
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace BaseStationReader.UI.Views
                 var day = offset.Value.Day;
 
                 // Create a new date from the extracted values
-                date = new DateTime(year, month, day);
+                date = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Local);
             }
 
             return date;
