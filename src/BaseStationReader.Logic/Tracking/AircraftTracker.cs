@@ -240,7 +240,7 @@ namespace BaseStationReader.Logic.Tracking
             if ((_distanceCalculator != null) && (aircraft.Latitude != null) && (aircraft.Longitude != null))
             {
                 var metres = _distanceCalculator.CalculateDistance((double)aircraft.Latitude, (double)aircraft.Longitude);
-                aircraft.Distance = _distanceCalculator.MetresToNauticalMiles(metres);
+                aircraft.Distance = Math.Round(_distanceCalculator.MetresToNauticalMiles(metres), 0, MidpointRounding.AwayFromZero);
             }
         }
 
