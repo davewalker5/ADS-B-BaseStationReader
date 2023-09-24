@@ -10,5 +10,6 @@ namespace BaseStationReader.Entities.Config
         public string Label { get; set; } = "";
         public string Format { get; set; } = "";
         public PropertyInfo? Info { get; set; } = null;
+        public string TypeName { get; set; } = "";
     }
 }

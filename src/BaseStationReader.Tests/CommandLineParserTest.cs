@@ -100,5 +100,26 @@ namespace BaseStationReader.Tests
             string[] args = new string[] { "192.168.0.98", "-p", "30003" };
             _parser?.Parse(args);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(DuplicateOptionException))]
+        public void DuplicateOptionTypeFailsTest()
+        {
+            _parser?.Add(CommandLineOptionType.Host, true, "--other-host", "-oh", "Duplicate option type", 1, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(DuplicateOptionException))]
+        public void DuplicateOptionNameFailsTest()
+        {
+            _parser?.Add(CommandLineOptionType.ApplicationTimeout, true, "--host", "-oh", "Duplicate option name", 1, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(DuplicateOptionException))]
+        public void DuplicateOptionShortNameFailsTest()
+        {
+            _parser?.Add(CommandLineOptionType.ApplicationTimeout, true, "--other-host", "-h", "Duplicate option short name", 1, 1);
+        }
     }
 }

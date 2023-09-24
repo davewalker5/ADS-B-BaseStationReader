@@ -20,6 +20,25 @@ namespace BaseStationReader.Logic.Configuration
         /// <param name="maximumNumberOfValues"></param>
         public void Add(CommandLineOptionType optionType, bool mandatory, string name, string shortName, string description, int minimumNumberOfValues, int maximumNumberOfValues)
         {
+            // Check the option's not a duplicate
+            if (_options.Select(x => x.OptionType).Contains(optionType))
+            {
+                throw new DuplicateOptionException($"Duplicate option: {optionType.ToString()}");
+            }
+
+            // Check the option name's not a duplicate
+            if (_options.Select(x => x.Name).Contains(name))
+            {
+                throw new DuplicateOptionException($"Duplicate option name: {name}");
+            }
+
+            // Check the option short name's not a duplicate
+            if (_options.Select(x => x.ShortName).Contains(shortName))
+            {
+                throw new DuplicateOptionException($"Duplicate option short name: {shortName}");
+            }
+
+            // Add the new option
             _options.Add(new CommandLineOption
             {
                 OptionType = optionType,

@@ -33,6 +33,8 @@ public partial class TrackingOptionsWindow : ReactiveWindow<TrackingOptionsWindo
         TimeToRemoval.Text = ViewModel?.Settings?.TimeToRemoval.ToString() ?? "";
         TimeToLocked.Text = ViewModel?.Settings?.TimeToLock.ToString() ?? "";
         RefreshInterval.Text = ViewModel?.Settings?.RefreshInterval.ToString() ?? "";
+        ReceiverLatitude.Text = ViewModel?.Settings?.ReceiverLatitude?.ToString("N6") ?? "";
+        ReceiverLongitude.Text = ViewModel?.Settings?.ReceiverLongitude?.ToString("N6") ?? "";
     }
 
     /// <summary>
@@ -133,6 +135,32 @@ public partial class TrackingOptionsWindow : ReactiveWindow<TrackingOptionsWindo
         if (int.TryParse(RefreshInterval.Text, out int interval))
         {
             ViewModel!.Settings.RefreshInterval = interval;
+        }
+    }
+
+    /// <summary>
+    /// Handler to capture changes to the receiver latitude
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public void OnReceiverLatitudeKeyUp(object sender, KeyEventArgs e)
+    {
+        if (int.TryParse(ReceiverLatitude.Text, out int latitude))
+        {
+            ViewModel!.Settings.ReceiverLatitude = latitude;
+        }
+    }
+
+    /// <summary>
+    /// Handler to capture changes to the receiver longitude
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public void OnReceiverLongitudeKeyUp(object sender, KeyEventArgs e)
+    {
+        if (int.TryParse(ReceiverLongitude.Text, out int longitude))
+        {
+            ViewModel!.Settings.ReceiverLongitude = longitude;
         }
     }
 }

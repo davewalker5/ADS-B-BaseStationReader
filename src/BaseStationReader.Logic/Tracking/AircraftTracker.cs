@@ -12,6 +12,7 @@ namespace BaseStationReader.Logic.Tracking
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
+        private readonly IDistanceCalculator? _distanceCalculator;
         private readonly Dictionary<string, Aircraft> _aircraft = new();
         private CancellationTokenSource? _cancellationTokenSource = null;
         private readonly int _recentMs;
@@ -32,6 +33,7 @@ namespace BaseStationReader.Logic.Tracking
             Dictionary<MessageType, IMessageParser> parsers,
             ITrackerLogger logger,
             ITrackerTimer timer,
+            IDistanceCalculator? distanceCalculator,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -40,6 +42,7 @@ namespace BaseStationReader.Logic.Tracking
             _parsers = parsers;
             _logger = logger;
             _timer = timer;
+            _distanceCalculator = distanceCalculator;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
             _staleMs = staleMilliseconds;
@@ -230,6 +233,14 @@ namespace BaseStationReader.Logic.Tracking
                         aircraft.Status = TrackingStatus.Active;
                     }
                 }
+            }
+
+            // If a distance calculator's been provided and we have an aircraft position, calculate the distance
+            // from the reference position to the aircraft
+            if ((_distanceCalculator != null) && (aircraft.Latitude != null) && (aircraft.Longitude != null))
+            {
+                var metres = _distanceCalculator.CalculateDistance((double)aircraft.Latitude, (double)aircraft.Longitude);
+                aircraft.Distance = Math.Round(_distanceCalculator.MetresToNauticalMiles(metres), 0, MidpointRounding.AwayFromZero);
             }
         }
 

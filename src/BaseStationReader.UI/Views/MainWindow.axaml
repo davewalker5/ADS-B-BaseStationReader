@@ -65,6 +65,7 @@
               <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
               <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
               <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="Distance" CanUserSort="False" Binding="{Binding Distance}" />
               <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
               <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
               <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />
@@ -98,6 +99,7 @@
               <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
               <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
               <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="Distance" CanUserSort="False" Binding="{Binding Distance}" />
               <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
               <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
               <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />

@@ -58,6 +58,8 @@
 | ApplicationSettings | WriterBatchSize     | --writer-batch-size | -b         | Maximum number of changes to consider on each WriterInterval                                                      |
 | ApplicationSettings | RefreshInterval     | --ui-interval       | -b         | GUI live view refresh interval (ms)                                                                               |
 | ApplicationSettings | MaximumRows         | --max-rows          | -m         | Maximum rows in the live table view at any one time or 0 for unlimited rows                                       |
+| ApplicationSettings | ReceiverLatitude    | --latitude          | -la        | Receiver latitude, used in aircraft distance calculations                                                         |
+| ApplicationSettings | ReceiverLongitude   | --longitude         | -lo        | Receiver longitude, used in aircraft distance calculations                                                        |
 | ApplicationSettings | Columns             | -                   | -          | Set of column definitions for columns to be included in the output                                                |
 | ConnectionStrings   | BaseStationReaderDB | -                   | -          | SQLite connection string for the database                                                                         |
 

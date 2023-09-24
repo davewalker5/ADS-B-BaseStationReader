@@ -15,6 +15,8 @@
     "WriterBatchSize": 20000,
     "RefreshInterval": 10000,
     "MaximumRows": 20,
+    "ReceiverLatitude": 51.47138888,
+    "ReceiverLongitude": -0.45277777,
     "Columns": [
       {
         "Property": "Latitude",

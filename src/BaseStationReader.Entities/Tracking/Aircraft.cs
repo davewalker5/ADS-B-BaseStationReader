@@ -17,6 +17,9 @@ namespace BaseStationReader.Entities.Tracking
         [Export("Callsign", 2)]
         public string? Callsign { get; set; } = null;
 
+        [Export("Squawk", 3)]
+        public string? Squawk { get; set; }
+
         [Export("Altitude", 4)]
         public decimal? Altitude { get; set; }
 
@@ -32,25 +35,25 @@ namespace BaseStationReader.Entities.Tracking
         [Export("Longitude", 8)]
         public decimal? Longitude { get; set; }
 
-        [Export("Vertical Rate", 9)]
+        [Export("Distance", 9)]
+        public double? Distance { get; set;  }
+
+        [Export("Vertical Rate", 10)]
         public decimal? VerticalRate { get; set; }
 
-        [Export("Squawk", 3)]
-        public string? Squawk { get; set; }
-
-        [Export("First Seen", 10)]
+        [Export("First Seen", 11)]
         [Required]
         public DateTime FirstSeen { get; set; }
 
-        [Export("Last Seen", 11)]
+        [Export("Last Seen", 12)]
         [Required]
         public DateTime LastSeen { get; set; }
 
+        [Export("Messages", 13)]
+        public int Messages { get; set; }
+
         [Required]
         public TrackingStatus Status { get; set; }
-
-        [Export("Messages", 12)]
-        public int Messages { get; set; }
 
         public object Clone()
         {

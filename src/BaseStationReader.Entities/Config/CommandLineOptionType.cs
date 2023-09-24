@@ -17,6 +17,8 @@
         WriterBatchSize,
         RefreshInterval,
         MaximumRows,
+        ReceiverLatitude,
+        ReceiverLongitude,
         SendInterval,
         NumberOfAircraft,
         Lifespan

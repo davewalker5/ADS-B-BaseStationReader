@@ -284,6 +284,8 @@ namespace BaseStationReader.UI.Views
                 ViewModel.Settings.TimeToRemoval = result.TimeToRemoval;
                 ViewModel.Settings.TimeToLock = result.TimeToLock;
                 ViewModel.Settings.RefreshInterval = result.RefreshInterval;
+                ViewModel.Settings.ReceiverLatitude = result.ReceiverLatitude;
+                ViewModel.Settings.ReceiverLongitude = result.ReceiverLongitude;
                 _timer.Interval = new TimeSpan(0, 0, 0, 0, result.RefreshInterval);
             }
         }

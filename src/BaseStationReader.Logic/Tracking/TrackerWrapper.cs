@@ -6,6 +6,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Database;
+using BaseStationReader.Logic.Maths;
 using BaseStationReader.Logic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
@@ -59,12 +60,24 @@ namespace BaseStationReader.Logic.Tracking
                 { MessageType.MSG, new MsgMessageParser() }
             };
 
+            // Set up a distance calculator, if the receiver's latitude and longitude have been supplied
+            IDistanceCalculator? distanceCalculator = null;
+            if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
+            {
+                distanceCalculator = new HaversineCalculator
+                {
+                    ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
+                    ReferenceLongitude = _settings.ReceiverLongitude ?? 0
+                };
+            }
+
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
             _tracker = new AircraftTracker(reader,
                 parsers,
                 _logger!,
                 trackerTimer,
+                distanceCalculator,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
