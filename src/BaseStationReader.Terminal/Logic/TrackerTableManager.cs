@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using Spectre.Console;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
@@ -166,19 +167,22 @@ namespace BaseStationReader.Terminal.Logic
             foreach (var column in _columns)
             {
                 var valueString = "";
-
-                if (column.Info!.PropertyType.Name.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
+                if (column.TypeName.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
                 {
                     decimal? value = (decimal?)column.Info!.GetValue(aircraft);
                     valueString = value?.ToString(column.Format) ?? "";
-
                 }
-                else if (column.Info!.PropertyType.Name.Equals("bool", StringComparison.OrdinalIgnoreCase))
+                else if (column.TypeName.Equals("double", StringComparison.OrdinalIgnoreCase))
+                {
+                    double? value = (double?)column.Info!.GetValue(aircraft);
+                    valueString = value?.ToString(column.Format) ?? "";
+                }
+                else if (column.TypeName.Equals("bool", StringComparison.OrdinalIgnoreCase))
                 {
                     bool value = (bool?)column.Info!.GetValue(aircraft) ?? false;
                     valueString = value ? "Yes" : "No";
                 }
-                else if (column.Info!.PropertyType.Name.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
+                else if (column.TypeName.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
                 {
                     DateTime? value = (DateTime?)column.Info!.GetValue(aircraft);
                     valueString = value?.ToString(column.Format) ?? "";

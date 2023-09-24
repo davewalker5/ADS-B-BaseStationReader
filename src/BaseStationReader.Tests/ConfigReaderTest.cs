@@ -34,6 +34,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual("Latitude", settings?.Columns.First().Property);
             Assert.AreEqual("Lat", settings?.Columns.First().Label);
             Assert.AreEqual("N5", settings?.Columns.First().Format);
+            Assert.AreEqual("Decimal", settings?.Columns.First().TypeName);
         }
     }
 }
