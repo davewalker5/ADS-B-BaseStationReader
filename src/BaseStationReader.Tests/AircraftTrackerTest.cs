@@ -45,6 +45,7 @@ namespace BaseStationReader.Tests
                 parsers,
                 logger,
                 timer,
+                null,
                 TrackerRecentMs,
                 TrackerStaleMs,
                 TrackerRemovedMs);

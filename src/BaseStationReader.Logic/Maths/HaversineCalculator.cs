@@ -1,9 +1,14 @@
-﻿namespace BaseStationReader.Logic.Maths
+﻿using BaseStationReader.Entities.Interfaces;
+
+namespace BaseStationReader.Logic.Maths
 {
-    public class HaversineCalculator
+    public class HaversineCalculator : IDistanceCalculator
     {
         private const double EARTH_RADIUS = 6378000.0;
         private const double M_PER_NM = 1852.0;
+
+        public double ReferenceLatitude { get; set; }
+        public double ReferenceLongitude { get; set; }
 
         /// <summary>
         /// Use the Haversine formula to calculate the great circle distance between two points on the Earth's surface.
@@ -14,7 +19,7 @@
         /// <param name="latitude2"></param>
         /// <param name="longitude2"></param>
         /// <returns></returns>
-        public static double CalculateDistance(double latitude1, double longitude1, double latitude2, double longitude2)
+        public double CalculateDistance(double latitude1, double longitude1, double latitude2, double longitude2)
         {
             var phi1 = latitude1 * Math.PI / 180.0;
             var phi2 = latitude2 * Math.PI / 180.0;
@@ -30,11 +35,23 @@
         }
 
         /// <summary>
+        /// Use the Haversine formula to calculate the great circle distance between the location represented by
+        /// the latitude and longitude properties and the specified point
+        /// </summary>
+        /// <param name="latitude"></param>
+        /// <param name="longitude"></param>
+        /// <returns></returns>
+        public double CalculateDistance(double latitude, double longitude)
+        {
+            return CalculateDistance(ReferenceLatitude, ReferenceLongitude, latitude, longitude);
+        }
+
+        /// <summary>
         /// Convert a distance in metres to nautical miles
         /// </summary>
         /// <param name="metres"></param>
         /// <returns></returns>
-        public static double MetresToNauticalMiles(double metres)
+        public double MetresToNauticalMiles(double metres)
         {
             return metres / M_PER_NM;
         }

@@ -13,6 +13,9 @@ namespace BaseStationReader.Entities.Tracking
         [ForeignKey("Aircraft.Id")]
         public int AircraftId { get; set; }
 
+        [Export("ICAO Address", 1)]
+        public string Address { get; set; } = "";
+
         [Export("Altitude", 2)]
         public decimal Altitude { get; set; }
 
@@ -22,10 +25,10 @@ namespace BaseStationReader.Entities.Tracking
         [Export("Longitude", 4)]
         public decimal Longitude { get; set; }
 
-        [Export("Timestamp", 5)]
-        public DateTime Timestamp { get; set; }
+        [Export("Distance", 5)]
+        public double? Distance { get; set; }
 
-        [Export("ICAO Address", 1)]
-        public string Address { get; set; } = "";
+        [Export("Timestamp", 6)]
+        public DateTime Timestamp { get; set; }
     }
 }

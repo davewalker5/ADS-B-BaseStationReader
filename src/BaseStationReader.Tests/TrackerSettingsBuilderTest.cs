@@ -26,8 +26,8 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(20000, settings?.WriterBatchSize);
             Assert.AreEqual(10000, settings?.RefreshInterval);
             Assert.AreEqual(20, settings?.MaximumRows);
-            Assert.AreEqual("51.47", settings!.ReceiverLatitude.ToString("#.##"));
-            Assert.AreEqual("-.45", settings!.ReceiverLongitude.ToString("#.##"));
+            Assert.AreEqual("51.47", settings!.ReceiverLatitude?.ToString("#.##"));
+            Assert.AreEqual("-.45", settings!.ReceiverLongitude?.ToString("#.##"));
 
             Assert.IsNotNull(settings?.Columns);
             Assert.AreEqual(1, settings?.Columns.Count);
@@ -161,7 +161,7 @@ namespace BaseStationReader.Tests
         {
             var args = new string[] { "--latitude", "58.93" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
-            Assert.AreEqual(58.93, Math.Round((double)settings!.ReceiverLatitude, 2, MidpointRounding.AwayFromZero));
+            Assert.AreEqual(58.93, Math.Round((double)settings!.ReceiverLatitude!, 2, MidpointRounding.AwayFromZero));
         }
 
         [TestMethod]
@@ -169,7 +169,7 @@ namespace BaseStationReader.Tests
         {
             var args = new string[] { "--longitude", "120.56" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
-            Assert.AreEqual(120.56, Math.Round((double)settings!.ReceiverLongitude, 2, MidpointRounding.AwayFromZero));
+            Assert.AreEqual(120.56, Math.Round((double)settings!.ReceiverLongitude!, 2, MidpointRounding.AwayFromZero));
         }
     }
 }
