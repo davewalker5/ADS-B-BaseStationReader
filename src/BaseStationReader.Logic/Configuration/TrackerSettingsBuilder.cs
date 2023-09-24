@@ -35,6 +35,8 @@ namespace BaseStationReader.Logic.Configuration
             parser.Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-b", "SQL write batch size", 1, 1);
             parser.Add(CommandLineOptionType.RefreshInterval, false, "--ui-interval", "-ui", "Interval (ms) at which live UI's should update", 1, 1);
             parser.Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
+            parser.Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
+            parser.Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
             parser.Parse(args);
 
             // Apply the command line values over the defaults
@@ -85,6 +87,12 @@ namespace BaseStationReader.Logic.Configuration
 
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
             if (values != null) settings!.MaximumRows = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.ReceiverLatitude);
+            if (values != null) settings!.ReceiverLatitude = double.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.ReceiverLongitude);
+            if (values != null) settings!.ReceiverLongitude = double.Parse(values[0]);
 
             return settings;
         }

@@ -16,7 +16,7 @@
     "RefreshInterval": 10000,
     "MaximumRows": 20,
     "ReceiverLatitude": 51.47138888,
-    "ReceiverLongitudee": -0.45277777,
+    "ReceiverLongitude": -0.45277777,
     "Columns": [
       {
         "Property": "Latitude",

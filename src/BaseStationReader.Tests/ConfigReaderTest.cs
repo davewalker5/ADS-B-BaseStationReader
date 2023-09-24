@@ -1,5 +1,4 @@
-﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
@@ -27,8 +26,8 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(20000, settings?.WriterBatchSize);
             Assert.AreEqual(10000, settings?.RefreshInterval);
             Assert.AreEqual(20, settings?.MaximumRows);
-            Assert.AreEqual(51.47, Math.Round((double)settings!.ReceiverLatitude, 2, MidpointRounding.AwayFromZero));
-            Assert.AreEqual(-0.45, Math.Round((double)settings!.ReceiverLongitudee, 2, MidpointRounding.AwayFromZero));
+            Assert.AreEqual("51.47",settings!.ReceiverLatitude.ToString("#.##"));
+            Assert.AreEqual("-.45", settings!.ReceiverLongitude.ToString("#.##"));
 
             Assert.IsNotNull(settings?.Columns);
             Assert.AreEqual(1, settings?.Columns.Count);
