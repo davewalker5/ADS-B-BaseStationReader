@@ -142,7 +142,7 @@
 - To filter the live tracking view, make sure the application is currently tracking
 - Open the "Tracking Filters" dialog (Tracking > Filters)
 
-<img src="diagrams/tracking-filters.png" alt="Tracking Filters" width="200">
+<img src="Diagrams/tracking-filters.png" alt="Tracking Filters" width="200">
 
 - Enter the required filtering criteria and click "OK"
 - To clear the live tracking filters, make sure the application is currently tracking
@@ -154,14 +154,14 @@
 - Open the "Tracking Options" dialog (Tracking > Options)
 - The resulting dialog allows you to specify many of the tracking parameters described under "Configuration File", above
 
-<img src="diagrams/tracking-options.png" alt="Tracking Options" width="500">
+<img src="Diagrams/tracking-options.png" alt="Tracking Options" width="500">
 
 ### Database Menu
 
 - The database menu is only available when the "Database Search" tab is selected
 - To search the database, select the "Search" option from the "Database" menu
 
-<img src="diagrams/database-search.png" alt="Database Search" width="400">
+<img src="Diagrams/database-search.png" alt="Database Search" width="400">
 
 - Enter the search criteria then click OK
 - The database grid will be populated with any records matching the specified criteria
@@ -215,7 +215,7 @@
 - The altitude, latitude and longitude of an aircraft are recorded in the AIRCRAFT_POSITION table as changes are reported
 - The AIRCRAFT_POSITION table has a foreign key back to the related record in the AIRCRAFT table:
 
-<img src="diagrams/position_table.png" alt="Tracking Table" width="300">
+<img src="Diagrams/position_table.png" alt="Tracking Table" width="300">
 
 ### Database Management
 
