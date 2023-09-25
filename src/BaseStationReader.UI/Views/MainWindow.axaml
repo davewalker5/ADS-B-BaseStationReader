@@ -52,24 +52,23 @@
             ItemsSource="{Binding TrackedAircraft}"
             AutoGenerateColumns="False"
             CanUserSortColumns="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            LoadingRow="OnLoadingRow">
+            LoadingRow="OnLoadingRow"
+            IsReadOnly="True">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
-              <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
-              <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
-              <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
-              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
-              <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
-              <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
-              <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
-              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
-              <DataGridTextColumn Header="Distance" CanUserSort="False" Binding="{Binding Distance}" />
-              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
-              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
-              <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />
-              <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
+              <DataGridTextColumn Header="Address" CanUserSort="False" Width="*" Binding="{Binding Address}"/>
+              <DataGridTextColumn Header="Callsign" CanUserSort="False" Width="*" Binding="{Binding Callsign}" />
+              <DataGridTextColumn Header="Squawk" CanUserSort="False" Width="*" Binding="{Binding Squawk}" />
+              <DataGridTextColumn Header="Altitude" CanUserSort="False" Width="*" Binding="{Binding Altitude}" />
+              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Width="*" Binding="{Binding GroundSpeed}" />
+              <DataGridTextColumn Header="Track" CanUserSort="False" Width="*" Binding="{Binding Track}" />
+              <DataGridTextColumn Header="Latitude" CanUserSort="False" Width="*" Binding="{Binding Latitude}" />
+              <DataGridTextColumn Header="Longitude" CanUserSort="False" Width="*" Binding="{Binding Longitude}" />
+              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Width="*" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="Distance" CanUserSort="False" Width="*" Binding="{Binding Distance}" />
+              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Width="*" Binding="{Binding FirstSeen}" />
+              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Width="*" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Messages" CanUserSort="False" Width="*" Binding="{Binding Messages}" />
+              <DataGridTextColumn Header="Status" CanUserSort="False" Width="*" Binding="{Binding Status}" />
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
@@ -86,24 +85,23 @@
             ItemsSource="{Binding SearchResults}"
             AutoGenerateColumns="False"
             CanUserSortColumns="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            LoadingRow="OnLoadingRow">
+            LoadingRow="OnLoadingRow"
+            IsReadOnly="True">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
-              <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
-              <DataGridTextColumn Header="Squawk" CanUserSort="False" Binding="{Binding Squawk}" />
-              <DataGridTextColumn Header="Altitude" CanUserSort="False" Binding="{Binding Altitude}" />
-              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Binding="{Binding GroundSpeed}" />
-              <DataGridTextColumn Header="Track" CanUserSort="False" Binding="{Binding Track}" />
-              <DataGridTextColumn Header="Latitude" CanUserSort="False" Binding="{Binding Latitude}" />
-              <DataGridTextColumn Header="Longitude" CanUserSort="False" Binding="{Binding Longitude}" />
-              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Binding="{Binding VerticalRate}" />
-              <DataGridTextColumn Header="Distance" CanUserSort="False" Binding="{Binding Distance}" />
-              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Binding="{Binding FirstSeen}" />
-              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Binding="{Binding LastSeen}" />
-              <DataGridTextColumn Header="Messages" CanUserSort="False" Binding="{Binding Messages}" />
-              <DataGridTextColumn Header="Status" CanUserSort="False" Binding="{Binding Status}" />
+              <DataGridTextColumn Header="Address" CanUserSort="False" Width="*" Binding="{Binding Address}"/>
+              <DataGridTextColumn Header="Callsign" CanUserSort="False" Width="*" Binding="{Binding Callsign}" />
+              <DataGridTextColumn Header="Squawk" CanUserSort="False" Width="*" Binding="{Binding Squawk}" />
+              <DataGridTextColumn Header="Altitude" CanUserSort="False" Width="*" Binding="{Binding Altitude}" />
+              <DataGridTextColumn Header="GroundSpeed" CanUserSort="False" Width="*" Binding="{Binding GroundSpeed}" />
+              <DataGridTextColumn Header="Track" CanUserSort="False" Width="*" Binding="{Binding Track}" />
+              <DataGridTextColumn Header="Latitude" CanUserSort="False" Width="*" Binding="{Binding Latitude}" />
+              <DataGridTextColumn Header="Longitude" CanUserSort="False" Width="*" Binding="{Binding Longitude}" />
+              <DataGridTextColumn Header="VerticalRate" CanUserSort="False" Width="*" Binding="{Binding VerticalRate}" />
+              <DataGridTextColumn Header="Distance" CanUserSort="False" Width="*" Binding="{Binding Distance}" />
+              <DataGridTextColumn Header="FirstSeen" CanUserSort="False" Width="*" Binding="{Binding FirstSeen}" />
+              <DataGridTextColumn Header="LastSeen" CanUserSort="False" Width="*" Binding="{Binding LastSeen}" />
+              <DataGridTextColumn Header="Messages" CanUserSort="False" Width="*" Binding="{Binding Messages}" />
+              <DataGridTextColumn Header="Status" CanUserSort="False" Width="*" Binding="{Binding Status}" />
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>

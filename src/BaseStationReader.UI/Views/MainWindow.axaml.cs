@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Data;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
@@ -18,6 +21,7 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -66,15 +70,33 @@ namespace BaseStationReader.UI.Views
         /// <param name="grid"></param>
         private void ConfigureColumns(DataGrid grid)
         {
+            // Get a list of column definitions that apply either to the grid being configured, based on its name,
+            // or apply in all contexts
+            var definitions = ViewModel!.Settings!.Columns.Where(x => string.IsNullOrEmpty(x.Context) || (x.Context == grid.Name)).ToList();
+
             // Iterate over all the columns
             foreach (var column in grid.Columns)
             {
-                // Find the corresponding column definition in the settings
-                var definition = ViewModel!.Settings!.Columns.Find(x => x.Property == column.Header.ToString());
+                // Find the corresponding column definition
+                var definition = definitions.Find(x => x.Property == column.Header.ToString());
                 if (definition != null)
                 {
                     // Found it, so apply the label
                     column.Header = definition.Label;
+
+                    // See if there's a custom format
+                    if (!string.IsNullOrEmpty(definition.Format))
+                    {
+                        // There is, so get the binding for the column
+                        var bound = column as DataGridBoundColumn;
+                        var binding = bound!.Binding as CompiledBindingExtension;
+
+                        // Replace the format converter for the binding using the format specified in the
+                        // application settings file
+                        binding!.Mode = BindingMode.OneWay;
+                        binding.StringFormat = definition.Format;
+                        binding.Converter = new StringFormatValueConverter(binding.StringFormat, null);
+                    }
                 }
                 else
                 {
