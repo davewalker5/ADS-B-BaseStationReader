@@ -119,7 +119,7 @@
 ### Configuration File
 
 - The application configuration file is very similar to the Console Application configuration file (see above)
-- For the GUI, the format specifier given in the column definitions is a "String.Format" adhering to the guidelines in the following article:
+- For the GUI, the format specifier given in the column definitions is a "String.Format" string adhering to the guidelines in the following article:
 
 [String.Format Method](https://learn.microsoft.com/en-us/dotnet/api/system.string.format?view=net-7.0)
 
