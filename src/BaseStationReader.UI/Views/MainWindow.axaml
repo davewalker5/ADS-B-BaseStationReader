@@ -52,8 +52,6 @@
             ItemsSource="{Binding TrackedAircraft}"
             AutoGenerateColumns="False"
             CanUserSortColumns="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
             LoadingRow="OnLoadingRow"
             IsReadOnly="True">
             <DataGrid.Columns>
@@ -87,8 +85,6 @@
             ItemsSource="{Binding SearchResults}"
             AutoGenerateColumns="False"
             CanUserSortColumns="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
             LoadingRow="OnLoadingRow"
             IsReadOnly="True">
             <DataGrid.Columns>
