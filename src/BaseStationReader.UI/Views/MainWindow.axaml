@@ -54,7 +54,8 @@
             CanUserSortColumns="False"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            LoadingRow="OnLoadingRow">
+            LoadingRow="OnLoadingRow"
+            IsReadOnly="True">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
               <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />
@@ -88,7 +89,8 @@
             CanUserSortColumns="False"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            LoadingRow="OnLoadingRow">
+            LoadingRow="OnLoadingRow"
+            IsReadOnly="True">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Address" CanUserSort="False" Binding="{Binding Address}"/>
               <DataGridTextColumn Header="Callsign" CanUserSort="False" Binding="{Binding Callsign}" />

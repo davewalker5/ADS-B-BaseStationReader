@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Data;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
@@ -75,6 +78,20 @@ namespace BaseStationReader.UI.Views
                 {
                     // Found it, so apply the label
                     column.Header = definition.Label;
+
+                    // Check we have a custom format
+                    if (!string.IsNullOrEmpty(definition.Format))
+                    {
+                        // Get the binding for the column
+                        var bound = column as DataGridBoundColumn;
+                        var binding = bound!.Binding as CompiledBindingExtension;
+
+                        // Replace the format converter for the binding using the format specified in the
+                        // application settings file
+                        binding!.Mode = BindingMode.OneWay;
+                        binding.StringFormat = definition.Format;
+                        binding.Converter = new StringFormatValueConverter(binding.StringFormat, null);
+                    }
                 }
                 else
                 {
