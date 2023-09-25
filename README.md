@@ -11,7 +11,7 @@
 
 ## Overview
 
-![Application Schematic](diagrams/application-schematic.png)
+![Application Schematic](Diagrams/application-schematic.png)
 
 - An RTL2832/R820T2 USB Dongle is plugged into the Raspberry Pi
 - The Raspberry Pi is running the [dump1090-mutability](https://github.com/adsb-related-code/dump1090-mutability) service to decode the data from the dongle
@@ -28,7 +28,7 @@
 
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
 
-![Console Application](diagrams/screenshot.png)
+![Console Application](Diagrams/screenshot.png)
 
 - The application subscribes to the events exposed by the AircraftTracker (see below) to implement continuous live updates
 - As an aircraft's details are updated on receipt of a new messages, it's details are immediately updated in the live view
@@ -108,13 +108,13 @@
 - The maximum row limit and custom column control are intended to support running the application on small screens
 - The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
 
-![Raspberry Pi](diagrams/RaspberryPi.jpg)
+![Raspberry Pi](Diagrams/RaspberryPi.jpg)
 
 ## The GUI
 
 - The repository includes a console application built using [Avalonia UI](https://www.avaloniaui.net/):
 
-![UI](diagrams/ui-screenshot.png)
+![UI](Diagrams/ui-screenshot.png)
 
 ### Configuration File
 
@@ -210,7 +210,7 @@
 
 - Each aircraft tracked in a given session has a record in the AIRCRAFT table that is created when the aircraft is first seen and updated as further messages are received from that aircraft:
 
-![Tracking Table](diagrams/aircraft_table.png)
+![Tracking Table](Diagrams/aircraft_table.png)
 
 - The altitude, latitude and longitude of an aircraft are recorded in the AIRCRAFT_POSITION table as changes are reported
 - The AIRCRAFT_POSITION table has a foreign key back to the related record in the AIRCRAFT table:
