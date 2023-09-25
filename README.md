@@ -11,7 +11,7 @@
 
 ## Overview
 
-![Application Schematic](Diagrams/Application%20Schematic.png)
+![Application Schematic](diagrams/application-schematic.png)
 
 - An RTL2832/R820T2 USB Dongle is plugged into the Raspberry Pi
 - The Raspberry Pi is running the [dump1090-mutability](https://github.com/adsb-related-code/dump1090-mutability) service to decode the data from the dongle
@@ -28,7 +28,7 @@
 
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
 
-![Console Application](Diagrams/screenshot.png)
+![Console Application](diagrams/screenshot.png)
 
 - The application subscribes to the events exposed by the AircraftTracker (see below) to implement continuous live updates
 - As an aircraft's details are updated on receipt of a new messages, it's details are immediately updated in the live view
@@ -74,17 +74,20 @@
   {
     "Property": "Address",
     "Label": "ID",
-    "Format": ""
+    "Format": "",
+    "Context": ""
   },
   {
     "Property": "Callsign",
     "Label": "Callsign",
-    "Format": ""
+    "Format": "",
+    "Context": ""
   },
   {
     "Property": "Latitude",
     "Label": "Latitude",
-    "Format": "N5"
+    "Format": "N5",
+    "Context": ""
   }
 ]
 ```
@@ -96,6 +99,7 @@
 | Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column   |
 | Label    | Column title                                                                               |
 | Format   | The C# format string used to render the property (for Decimal and DateTime types) or blank |
+| Context  | Specifies the named context in which the column definition is used (GUI only, see below)   |
 
 - The application will show only the columns listed in this section of the configuration file, showing them in the order in which they appear here and formatted according to the format specifier
 
@@ -104,7 +108,65 @@
 - The maximum row limit and custom column control are intended to support running the application on small screens
 - The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
 
-![Raspberry Pi](Diagrams/RaspberryPi.jpg)
+![Raspberry Pi](diagrams/RaspberryPi.jpg)
+
+## The GUI
+
+- The repository includes a console application built using [Avalonia UI](https://www.avaloniaui.net/):
+
+![UI](diagrams/ui-screenshot.png)
+
+### Configuration File
+
+- The application configuration file is very similar to the Console Application configuration file (see above)
+- For the GUI, the format specifier given in the column definitions is a "String.Format" adhering to the guidelines in the following article:
+
+[String.Format Method](https://learn.microsoft.com/en-us/dotnet/api/system.string.format?view=net-7.0)
+
+- The Context that forms part of the column definition (see above) is also respected and may be one of the following values:
+
+| Value               | Applies To                                |
+| ------------------- | ----------------------------------------- |
+| Blank               | Live view and the database search results |
+| TrackedAircraftGrid | Live view only                            |
+| DatabaseGrid        | Database search results only              |
+
+### Tracking Menu
+
+- The tracking menu is only available when the "Live View" or "Map View" tabs are selected
+- To start live tracking, select the "Start live tracking" option on this menu
+- To stop live tracking, select the "Stop live tracking" option on this menu
+
+#### Tracking Filters
+
+- To filter the live tracking view, make sure the application is currently tracking
+- Open the "Tracking Filters" dialog (Tracking > Filters)
+
+<img src="diagrams/tracking-filters.png" alt="Tracking Filters" width="200">
+
+- Enter the required filtering criteria and click "OK"
+- To clear the live tracking filters, make sure the application is currently tracking
+- Select "Clear filters"on the Tracking Menu
+
+#### Tracking Options
+
+- To view/edit the tracking options, make sure the application is not currently tracking
+- Open the "Tracking Options" dialog (Tracking > Options)
+- The resulting dialog allows you to specify many of the tracking parameters described under "Configuration File", above
+
+<img src="diagrams/tracking-options.png" alt="Tracking Options" width="500">
+
+### Database Menu
+
+- The database menu is only available when the "Database Search" tab is selected
+- To search the database, select the "Search" option from the "Database" menu
+
+<img src="diagrams/database-search.png" alt="Database Search" width="400">
+
+- Enter the search criteria then click OK
+- The database grid will be populated with any records matching the specified criteria
+- To export the records currently shown in the database search results, select "Export" from the "Database" menu
+- A file selection dialog will be displayed allowing you to export the results in either XLSX or CSV format
 
 ## Aircraft Tracking
 
@@ -148,12 +210,12 @@
 
 - Each aircraft tracked in a given session has a record in the AIRCRAFT table that is created when the aircraft is first seen and updated as further messages are received from that aircraft:
 
-![Tracking Table](Diagrams/aircraft_table.png)
+![Tracking Table](diagrams/aircraft_table.png)
 
 - The altitude, latitude and longitude of an aircraft are recorded in the AIRCRAFT_POSITION table as changes are reported
 - The AIRCRAFT_POSITION table has a foreign key back to the related record in the AIRCRAFT table:
 
-![Tracking Table](Diagrams/position_table.png)
+<img src="diagrams/position_table.png" alt="Tracking Table" width="300">
 
 ### Database Management
 
