@@ -112,7 +112,7 @@
 
 ## The GUI
 
-- The repository includes a console application built using [Avalonia UI](https://www.avaloniaui.net/):
+- The repository includes a UI built using [Avalonia UI](https://www.avaloniaui.net/):
 
 ![UI](Diagrams/ui-screenshot.png)
 
