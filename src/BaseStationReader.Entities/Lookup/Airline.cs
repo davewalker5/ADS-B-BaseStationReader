@@ -4,19 +4,18 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Lookup
 {
     [ExcludeFromCodeCoverage]
-    public class WakeTurbulenceCategory
+    public class Airline
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        public string Category { get; set; } = "";
+        public string IATA { get; set; } = "";
 
         [Required]
-        public string Meaning { get; set; } = "";
+        public string ICAO { get; set; } = "";
 
-#pragma warning disable CS8618
-        public ICollection<AircraftModel> Models { get; set; }
-#pragma warning restore CS8618
+        [Required]
+        public string Name { get; set; } = "";
     }
 }

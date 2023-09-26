@@ -13,7 +13,7 @@ namespace BaseStationReader.Entities.Lookup
         public string Name { get; set; } = "";
 
 #pragma warning disable CS8618
-        public ICollection<AircraftModel> Models { get; set; }
+        public ICollection<Model> Models { get; set; }
 #pragma warning restore CS8618
     }
 }

@@ -17,82 +17,6 @@ namespace BaseStationReader.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.10");
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.AircraftModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("IATA")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("IATA");
-
-                    b.Property<string>("ICAO")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("ICAO");
-
-                    b.Property<int>("ManufacturerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Name");
-
-                    b.Property<int?>("WakeTurbulenceCategoryId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ManufacturerId");
-
-                    b.HasIndex("WakeTurbulenceCategoryId");
-
-                    b.ToTable("AIRCRAFT_MODEL", (string)null);
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Manufacturer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MANUFACTURER", (string)null);
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.WakeTurbulenceCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Category");
-
-                    b.Property<string>("Meaning")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Meaning");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WAKE_TURBULENCE_CATEGORY", (string)null);
-                });
-
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.Aircraft", b =>
                 {
                     b.Property<int>("Id")
@@ -194,52 +118,7 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AircraftId");
-
                     b.ToTable("AIRCRAFT_POSITION", (string)null);
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.AircraftModel", b =>
-                {
-                    b.HasOne("BaseStationReader.Entities.Lookup.Manufacturer", "Manufacturer")
-                        .WithMany("Models")
-                        .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BaseStationReader.Entities.Lookup.WakeTurbulenceCategory", "WakeTurbulenceCategory")
-                        .WithMany("Models")
-                        .HasForeignKey("WakeTurbulenceCategoryId");
-
-                    b.Navigation("Manufacturer");
-
-                    b.Navigation("WakeTurbulenceCategory");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
-                {
-                    b.HasOne("BaseStationReader.Entities.Tracking.Aircraft", "Aircraft")
-                        .WithMany("Positions")
-                        .HasForeignKey("AircraftId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Aircraft");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Manufacturer", b =>
-                {
-                    b.Navigation("Models");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.WakeTurbulenceCategory", b =>
-                {
-                    b.Navigation("Models");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.Aircraft", b =>
-                {
-                    b.Navigation("Positions");
                 });
 #pragma warning restore 612, 618
         }
