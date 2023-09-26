@@ -55,6 +55,10 @@ namespace BaseStationReader.Entities.Tracking
         [Required]
         public TrackingStatus Status { get; set; }
 
+#pragma warning disable CS8618
+        public ICollection<AircraftPosition> Positions { get; set; }
+#pragma warning restore CS8618
+
         public object Clone()
         {
             return MemberwiseClone();

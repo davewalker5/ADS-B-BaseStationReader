@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BaseStationReader.Logic</PackageId>
-    <PackageVersion>1.27.0.0</PackageVersion>
+    <PackageVersion>1.28.0.0</PackageVersion>
     <Authors>Dave Walker</Authors>
     <Copyright>Copyright (c) Dave Walker 2023</Copyright>
     <Owners>Dave Walker</Owners>
@@ -17,7 +17,7 @@
     <PackageProjectUrl>https://github.com/davewalker5/ADS-B-BaseStationReader</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <ReleaseVersion>1.27.0.0</ReleaseVersion>
+    <ReleaseVersion>1.28.0.0</ReleaseVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Tracking;
+﻿using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 
@@ -9,6 +10,9 @@ namespace BaseStationReader.Data
     {
         public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<AircraftPosition> AircraftPositions { get; set; }
+        public virtual DbSet<AircraftModel> AircraftModels { get; set; }
+        public virtual DbSet<Manufacturer> Manufacturers { get; set; }
+        public virtual DbSet<WakeTurbulenceCategory> WakeTurbulenceCategories { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -27,6 +31,10 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id)
                     .HasColumnName("Id")
                     .ValueGeneratedOnAdd();
+
+                entity.HasMany(e => e.Positions)
+                    .WithOne(e => e.Aircraft)
+                    .HasForeignKey(e => e.AircraftId);
 
                 entity.Property(e => e.Address).HasColumnName("Address");
                 entity.Property(e => e.Callsign).HasColumnName("Callsign");
@@ -80,6 +88,57 @@ namespace BaseStationReader.Data
                     .HasColumnType("DATETIME");
 
                 entity.Property(e => e.Distance).HasColumnName("Distance");
+            });
+
+            modelBuilder.Entity<WakeTurbulenceCategory>(entity =>
+            {
+                entity.ToTable("WAKE_TURBULENCE_CATEGORY");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("Id")
+                    .ValueGeneratedOnAdd();
+
+                entity.HasMany(e => e.Models)
+                    .WithOne(e => e.WakeTurbulenceCategory)
+                    .HasForeignKey(e => e.WakeTurbulenceCategoryId);
+
+                entity.Property(e => e.Category)
+                    .IsRequired()
+                    .HasColumnName("Category");
+
+                entity.Property(e => e.Meaning)
+                    .IsRequired()
+                    .HasColumnName("Meaning");
+            });
+
+            modelBuilder.Entity<Manufacturer>(entity =>
+            {
+                entity.ToTable("MANUFACTURER");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("Id")
+                    .ValueGeneratedOnAdd();
+
+                entity.HasMany(e => e.Models)
+                    .WithOne(e => e.Manufacturer)
+                    .HasForeignKey(e => e.ManufacturerId);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasColumnName("Name");
+            });
+
+            modelBuilder.Entity<AircraftModel>(entity =>
+            {
+                entity.ToTable("AIRCRAFT_MODEL");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("Id")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.IATA).HasColumnName("IATA");
+                entity.Property(e => e.ICAO).HasColumnName("ICAO");
+                entity.Property(e => e.Name).HasColumnName("Name");
             });
         }
     }
