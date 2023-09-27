@@ -6,38 +6,28 @@ using System.Text.Json.Nodes;
 namespace BaseStationReader.Logic.Api.AirLabs
 {
     [ExcludeFromCodeCoverage]
-    public class AirLabsAirlinesApi : IAirlinesApi
+    public class AirLabsAircraftApi : IAircraftApi
     {
         private readonly HttpClient _client = new();
         private readonly string _baseAddress;
 
-        public AirLabsAirlinesApi(string url, string key)
+        public AirLabsAircraftApi(string url, string key)
         {
             _baseAddress = $"{url}?api_key={key}";
         }
 
         /// <summary>
-        /// Lookup an airline using its IATA code
+        /// Lookup an aircraft's details using its ICAO 24-bit address
         /// </summary>
-        /// <param name="iata"></param>
+        /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByIATACode(string iata)
+        public async Task<Dictionary<ApiProperty, string>?> LookupAircraft(string address)
         {
-            return await MakeApiRequest($"&iata_code={iata}");
+            return await MakeApiRequest($"&hex={address}");
         }
 
         /// <summary>
-        /// Lookup an airline using it's ICAO code
-        /// </summary>
-        /// <param name="icao"></param>
-        /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByICAOCode(string icao)
-        {
-            return await MakeApiRequest($"&icao_code={icao}");
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL and return the response properties as a dictionary
+        /// Make a request to the specified URL
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
@@ -53,7 +43,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
                 {
                     try
                     {
-                        // Read the response, parse to a JSON DOM
+                        // Read the response, parse to a JSON DOM and extract the values
                         var json = await response.Content.ReadAsStringAsync();
                         var node = JsonNode.Parse(json);
                         var apiResponse = node!["response"]![0];
@@ -61,9 +51,11 @@ namespace BaseStationReader.Logic.Api.AirLabs
                         // Extract the values into a dictionary
                         properties = new()
                         {
-                            { ApiProperty.AirlineIATA, apiResponse!["iata_code"]!.GetValue<string>() },
-                            { ApiProperty.AirlineICAO, apiResponse!["icao_code"]!.GetValue<string>() },
-                            { ApiProperty.AirlineName, apiResponse!["name"]!.GetValue<string>() },
+                            { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]!.GetValue<string>() },
+                            { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]!.GetValue<string>() },
+                            { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]!.GetValue<string>() },
+                            { ApiProperty.ModelIATA, apiResponse!["iata"]!.GetValue<string>() },
+                            { ApiProperty.ModelICAO, apiResponse!["icao"]!.GetValue<string>() }
                         };
                     }
                     catch
