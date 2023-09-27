@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
@@ -35,6 +36,17 @@ namespace BaseStationReader.Tests
             Assert.AreEqual("Lat", settings?.Columns.First().Label);
             Assert.AreEqual("N5", settings?.Columns.First().Format);
             Assert.AreEqual("Decimal", settings?.Columns.First().TypeName);
+
+            Assert.IsNotNull(settings?.ApiEndpoints);
+            Assert.AreEqual(1, settings?.ApiEndpoints.Count);
+            Assert.AreEqual(ApiEndpointType.Airlines, settings?.ApiEndpoints.First().EndpointType);
+            Assert.AreEqual(ApiServiceType.AirLabs, settings?.ApiEndpoints.First().Service);
+            Assert.AreEqual("https://airlabs.co/api/v9/airlines", settings?.ApiEndpoints.First().Url);
+
+            Assert.IsNotNull(settings?.ApiServiceKeys);
+            Assert.AreEqual(1, settings?.ApiServiceKeys.Count);
+            Assert.AreEqual(ApiServiceType.AirLabs, settings?.ApiServiceKeys.First().Service);
+            Assert.AreEqual("my-key", settings?.ApiServiceKeys.First().Key);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace BaseStationReader.Logic.Database
         /// <returns></returns>
         public async Task<AircraftPosition> GetAsync(Expression<Func<AircraftPosition, bool>> predicate)
         {
-            List<AircraftPosition> aircraft = await _context.AircraftPositions.Where(predicate).ToListAsync();
+            List<AircraftPosition> aircraft = await ListAsync(predicate);
 #pragma warning disable CS8603
             return aircraft.FirstOrDefault();
 #pragma warning restore CS8603

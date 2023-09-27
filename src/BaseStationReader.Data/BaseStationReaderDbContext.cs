@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Tracking;
+﻿using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 
@@ -9,6 +10,10 @@ namespace BaseStationReader.Data
     {
         public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<AircraftPosition> AircraftPositions { get; set; }
+        public virtual DbSet<Airline> Airlines { get; set; }
+        public virtual DbSet<Manufacturer> Manufacturers { get; set; }
+        public virtual DbSet<Model> Models { get; set; }
+        public virtual DbSet<AircraftDetails> AircraftDetails { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -24,11 +29,8 @@ namespace BaseStationReader.Data
             {
                 entity.ToTable("AIRCRAFT");
 
-                entity.Property(e => e.Id)
-                    .HasColumnName("Id")
-                    .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.Address).HasColumnName("Address");
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
                 entity.Property(e => e.Callsign).HasColumnName("Callsign");
                 entity.Property(e => e.Altitude).HasColumnName("Altitude");
                 entity.Property(e => e.GroundSpeed).HasColumnName("GroundSpeed");
@@ -50,6 +52,11 @@ namespace BaseStationReader.Data
                     .IsRequired()
                     .HasColumnName("LastSeen")
                     .HasColumnType("DATETIME");
+
+                entity.HasMany(e => e.Positions)
+                    .WithOne(e => e.Aircraft)
+                    .HasForeignKey(e => e.AircraftId);
+
             });
 
             modelBuilder.Entity<AircraftPosition>(entity =>
@@ -58,28 +65,55 @@ namespace BaseStationReader.Data
 
                 entity.ToTable("AIRCRAFT_POSITION");
 
-                entity.Property(e => e.Id)
-                    .HasColumnName("Id")
-                    .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.AircraftId)
-                    .IsRequired()
-                    .HasColumnName("AircraftId");
-
-                entity.Property(e => e.Latitude)
-                    .IsRequired()
-                    .HasColumnName("Latitude");
-
-                entity.Property(e => e.Longitude)
-                    .IsRequired()
-                    .HasColumnName("Longitude");
-
-                entity.Property(e => e.Timestamp)
-                    .IsRequired()
-                    .HasColumnName("Timestamp")
-                    .HasColumnType("DATETIME");
-
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AircraftId).IsRequired().HasColumnName("AircraftId");
+                entity.Property(e => e.Latitude).IsRequired().HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude");
                 entity.Property(e => e.Distance).HasColumnName("Distance");
+                entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
+            });
+
+            modelBuilder.Entity<Manufacturer>(entity =>
+            {
+                entity.ToTable("MANUFACTURER");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+
+                entity.HasMany(e => e.Models)
+                    .WithOne(e => e.Manufacturer)
+                    .HasForeignKey(e => e.ManufacturerId);
+
+            });
+
+            modelBuilder.Entity<Airline>(entity =>
+            {
+                entity.ToTable("AIRLINE");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+            });
+
+            modelBuilder.Entity<Model>(entity =>
+            {
+                entity.ToTable("MODEL");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.IATA).HasColumnName("IATA");
+                entity.Property(e => e.ICAO).HasColumnName("ICAO");
+                entity.Property(e => e.Name).HasColumnName("Name");
+            });
+
+            modelBuilder.Entity<AircraftDetails>(entity =>
+            {
+                entity.ToTable("AIRCRAFT_DETAILS");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+                entity.Property(e => e.ModelId).HasColumnName("ModelId");
+                entity.Property(e => e.AirlineId).HasColumnName("AirlineId");
             });
         }
     }

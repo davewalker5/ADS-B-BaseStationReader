@@ -30,5 +30,9 @@ namespace BaseStationReader.Entities.Tracking
 
         [Export("Timestamp", 6)]
         public DateTime Timestamp { get; set; }
+
+#pragma warning disable CS8618
+        public Aircraft Aircraft { get; set; }
+#pragma warning restore CS8618
     }
 }

@@ -24,8 +24,6 @@
 
 ## The Console Application
 
-### Overview
-
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
 
 ![Console Application](Diagrams/screenshot.png)
@@ -35,7 +33,63 @@
 - As it moves through the tracking states (see below), it will be highlighted in yellow, when it reaches the "Recent" state, and red, when it reaches the "Stale" state
 - When it is removed from the tracker's tracking list, it is also removed from the live table
 
-### Configuration File
+## GUI
+
+- The repository includes a UI built using [Avalonia UI](https://www.avaloniaui.net/):
+
+![UI](Diagrams/ui-screenshot.png)
+
+### Tracking Menu
+
+- The tracking menu is only available when the "Live View" or "Map View" tabs are selected
+- To start live tracking, select the "Start live tracking" option on this menu
+- To stop live tracking, select the "Stop live tracking" option on this menu
+
+#### Tracking Filters
+
+- To filter the live tracking view, make sure the application is currently tracking
+- Open the "Tracking Filters" dialog (Tracking > Filters)
+
+<img src="Diagrams/tracking-filters.png" alt="Tracking Filters" width="200">
+
+- Enter the required filtering criteria and click "OK"
+- To clear the live tracking filters, make sure the application is currently tracking
+- Select "Clear filters"on the Tracking Menu
+
+#### Aircraft Details Lookup
+
+- To look-up aircraft details from the Live View or Database Search, click on the row containing the aircraft of interest
+- The aircraft lookup dialog will be displayed, pre-populated with the aircraft address, and the lookup will be completed automatically:
+
+<img src="Diagrams/aircraft-lookup.png" alt="Aircraft Lookup" width="200">
+
+- Alternatively, select the "Aircraft Lookup" option from the Tracking menu
+- The same dialog is opened, but with no details pre-populated
+- Enter the aircraft's ICAO address and click on the "Lookup" button to perform the lookup
+
+#### Tracking Options
+
+- To view/edit the tracking options, make sure the application is not currently tracking
+- Open the "Tracking Options" dialog (Tracking > Options)
+- The resulting dialog allows you to specify many of the tracking parameters described under "Configuration File", above
+
+<img src="Diagrams/tracking-options.png" alt="Tracking Options" width="500">
+
+### Database Menu
+
+- The database menu is only available when the "Database Search" tab is selected
+- To search the database, select the "Search" option from the "Database" menu
+
+<img src="Diagrams/database-search.png" alt="Database Search" width="400">
+
+- Enter the search criteria then click OK
+- The database grid will be populated with any records matching the specified criteria
+- To export the records currently shown in the database search results, select "Export" from the "Database" menu
+- A file selection dialog will be displayed allowing you to export the results in either XLSX or CSV format
+
+## Application Configuration File
+
+- The console and GUI applications use a common configuration file format, described in this section
 
 ### General Settings and Database Connection String
 
@@ -61,11 +115,13 @@
 | ApplicationSettings | ReceiverLatitude    | --latitude          | -la        | Receiver latitude, used in aircraft distance calculations                                                         |
 | ApplicationSettings | ReceiverLongitude   | --longitude         | -lo        | Receiver longitude, used in aircraft distance calculations                                                        |
 | ApplicationSettings | Columns             | -                   | -          | Set of column definitions for columns to be included in the output                                                |
+| ApplicationSettings | ApiEndpoints        | -                   | -          | Set of endpoint definitions for external APIs (GUI only)                                                          |
+| ApplicationSettings | ApiServiceKeys      | -                   | -          | Set of API key definitions for external APIs (GUI only)                                                           |
 | ConnectionStrings   | BaseStationReaderDB | -                   | -          | SQLite connection string for the database                                                                         |
 
 - Values may also be passed using the indicated command line arguments, in which case the values are first read from the configuration file and then any values specified on the command line are then applied
 
-#### Column Definitions
+### Column Definitions
 
 - The Columns property in the ApplicationSettings section of the file contains a list of column definitions:
 
@@ -94,36 +150,21 @@
 
 - Each column definition contains the following items:
 
-| Item     | Comments                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------ |
-| Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column   |
-| Label    | Column title                                                                               |
-| Format   | The C# format string used to render the property (for Decimal and DateTime types) or blank |
-| Context  | Specifies the named context in which the column definition is used (GUI only, see below)   |
+| Item     | Comments                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------- |
+| Property | Case-sensitive name of the property on the Aircraft entity to be rendered in this column |
+| Label    | Column title                                                                             |
+| Format   | The C# format string used to render the property or blank for default formatting         |
+| Context  | Specifies the named context in which the column definition is used (GUI only)            |
 
 - The application will show only the columns listed in this section of the configuration file, showing them in the order in which they appear here and formatted according to the format specifier
-
-#### Row Limits and Column Control
-
-- The maximum row limit and custom column control are intended to support running the application on small screens
-- The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
-
-![Raspberry Pi](Diagrams/RaspberryPi.jpg)
-
-## The GUI
-
-- The repository includes a UI built using [Avalonia UI](https://www.avaloniaui.net/):
-
-![UI](Diagrams/ui-screenshot.png)
-
-### Configuration File
-
-- The application configuration file is very similar to the Console Application configuration file (see above)
+- For the Console application, the format string is passed to the ".ToString()" method to format the column
 - For the GUI, the format specifier given in the column definitions is a "String.Format" string adhering to the guidelines in the following article:
 
 [String.Format Method](https://learn.microsoft.com/en-us/dotnet/api/system.string.format?view=net-7.0)
 
-- The Context that forms part of the column definition (see above) is also respected and may be one of the following values:
+- For the console application, the "Context" property is ignored
+- For the GUI, it should be one of the following values:
 
 | Value               | Applies To                                |
 | ------------------- | ----------------------------------------- |
@@ -131,42 +172,59 @@
 | TrackedAircraftGrid | Live view only                            |
 | DatabaseGrid        | Database search results only              |
 
-### Tracking Menu
+### Row Limits and Column Control
 
-- The tracking menu is only available when the "Live View" or "Map View" tabs are selected
-- To start live tracking, select the "Start live tracking" option on this menu
-- To stop live tracking, select the "Stop live tracking" option on this menu
+- The maximum row limit and custom column control are intended to support running the application on small screens
+- The following shows the console application running on a Raspberry Pi with 3.5" LCD screen:
 
-#### Tracking Filters
+![Raspberry Pi](Diagrams/RaspberryPi.jpg)
 
-- To filter the live tracking view, make sure the application is currently tracking
-- Open the "Tracking Filters" dialog (Tracking > Filters)
+### External API Configuration
 
-<img src="Diagrams/tracking-filters.png" alt="Tracking Filters" width="200">
+- The UI application includes integration with the AirLabs public APIs for aircraft details lookup:
 
-- Enter the required filtering criteria and click "OK"
-- To clear the live tracking filters, make sure the application is currently tracking
-- Select "Clear filters"on the Tracking Menu
+[AirLabs API Documentation](https://airlabs.co/docs/)
 
-#### Tracking Options
+- To use the integration, an AirLabs subscription is needed, as this includes an API key needed to acces the AirLabs APIs
+- The integration will work with the free subscription, though with restricted monthly usage
+- The integration is configured via the following keys in the configuration file:
 
-- To view/edit the tracking options, make sure the application is not currently tracking
-- Open the "Tracking Options" dialog (Tracking > Options)
-- The resulting dialog allows you to specify many of the tracking parameters described under "Configuration File", above
+| Section             | Sub-Section    | Purpose                                                                                     |
+| ------------------- | -------------- | ------------------------------------------------------------------------------------------- |
+| ApplicationSettings | ApiEndpoints   | A list of endpoint definitions, each containing the endpoint type, service and endpoint URL |
+| ApplicationSettings | ApiServiceKeys | A list of entries mapping each service to the API key needed to access that service         |
 
-<img src="Diagrams/tracking-options.png" alt="Tracking Options" width="500">
+#### ApiEndpoint Definitions
 
-### Database Menu
+- An example API endpoint definition is shown below:
 
-- The database menu is only available when the "Database Search" tab is selected
-- To search the database, select the "Search" option from the "Database" menu
+```json
+{
+  "EndpointType": "Airlines",
+  "Service": "AirLabs",
+  "Url": "https://airlabs.co/api/v9/airlines"
+}
+```
 
-<img src="Diagrams/database-search.png" alt="Database Search" width="400">
+- Possible values for the endpoint type are:
 
-- Enter the search criteria then click OK
-- The database grid will be populated with any records matching the specified criteria
-- To export the records currently shown in the database search results, select "Export" from the "Database" menu
-- A file selection dialog will be displayed allowing you to export the results in either XLSX or CSV format
+| Type     | Description                                                               |
+| -------- | ------------------------------------------------------------------------- |
+| Airlines | Endpoint used to retrieve airline details given an airline IATA/ICAO code |
+| Aircraft | Endpoint used to retrieve aircraft details given a 24-bit ICAO address    |
+
+- Currently, only the AirLabs APIs are supported
+
+#### ApiServiceKey Definitions
+
+- An example key definition for a service is shown below:
+
+```json
+{
+  "Service": "AirLabs",
+  "Key": "put-your-api-key-here"
+}
+```
 
 ## Aircraft Tracking
 
@@ -204,6 +262,15 @@
 - As messages are received, the tracker selects the appropriate parser based on the message type
 - Currently, the only parser that has been implemented is for the MSG message type
 
+## External Service Integration
+
+- The section describing the configuration file, above, describes the configuration needed to enable external API integration
+- When configured, the APIs are used to look up the following details based on the ICAO 24-bit address:
+  - Airline
+  - Model IATA and ICAO codes
+- The model IATA and ICAO codes are used to look up model and manufacturer details from the local SQLite database
+- Airline details and a record mapping the aircraft's ICAO address to the airline, manufacturer and model are stored in the local SQLite database, to improve lookup performance for that address
+
 ## SQLite Database
 
 ### Database Schema
@@ -237,6 +304,16 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 
 - If the database doesn't exist, it will create it
 - It will then bring the database up to date by applying all pending migrations
+
+### Model Lookup Data
+
+- If the intention is to use the API integration to provide aircraft details lookup, the aircraft model data should be created
+- To do this, run the following SQL scripts from the "sql\lookup" folder against the database, in the order shown:
+
+```
+PopulateManufacturers.sql
+PopulateAircraftModels.sql
+```
 
 ### Record Locking
 

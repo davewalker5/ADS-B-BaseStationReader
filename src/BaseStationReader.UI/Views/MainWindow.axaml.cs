@@ -31,6 +31,7 @@ namespace BaseStationReader.UI.Views
     {
         private DispatcherTimer _timer = new DispatcherTimer();
         private ITrackerLogger? _logger = null;
+        private bool _aircraftLookupIsEnabled = false;
 
         public MainWindow()
         {
@@ -38,6 +39,7 @@ namespace BaseStationReader.UI.Views
 
             // Register the handlers for the dialogs
             this.WhenActivated(d => d(ViewModel!.ShowFiltersDialog.RegisterHandler(DoShowTrackingFiltersAsync)));
+            this.WhenActivated(d => d(ViewModel!.ShowAircraftLookupDialog.RegisterHandler(DoShowAircraftLookupAsync)));
             this.WhenActivated(d => d(ViewModel!.ShowTrackingOptionsDialog.RegisterHandler(DoShowTrackingOptionsAsync)));
             this.WhenActivated(d => d(ViewModel!.ShowDatabaseSearchDialog.RegisterHandler(DoShowDatabaseSearchAsync)));
         }
@@ -62,6 +64,13 @@ namespace BaseStationReader.UI.Views
             // Configure the column titles and visibility
             ConfigureColumns(TrackedAircraftGrid);
             ConfigureColumns(DatabaseGrid);
+
+            // The aircraft lookup option should only be available if there's a potentially valid API
+            // key in the settings. The enabled state is stored for future use enabling/disabling the
+            // row double-click handler
+            var key = ViewModel!.Settings.ApiServiceKeys.FirstOrDefault()?.Key;
+            _aircraftLookupIsEnabled = !string.IsNullOrEmpty(key);
+            AircraftLookupMenuItem.IsEnabled = _aircraftLookupIsEnabled;
         }
 
         /// <summary>
@@ -107,12 +116,13 @@ namespace BaseStationReader.UI.Views
         }
 
         /// <summary>
-        /// Handler to set the background colour of a row based on aircraft staleness
+        /// Handler to configure row appearance and behaviour
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
         private void OnLoadingRow(object? source, DataGridRowEventArgs e)
         {
+            // Set the row colour based on the aircraft staleness
             var aircraft = e.Row.DataContext as Aircraft;
             if (aircraft != null)
             {
@@ -129,6 +139,34 @@ namespace BaseStationReader.UI.Views
                         break;
                 }
             }
+
+            // Hook up the row tap handler
+            e.Row.Tapped += OnRowTapped;
+        }
+
+        /// <summary>
+        /// Handler for double-click events on a row
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnRowTapped(object? source, TappedEventArgs e)
+        {
+            // Get the source as a grid row and check it's valid
+            var row = source as DataGridRow;
+            if (row != null)
+            {
+                // Valid row, so get the data context as an aircraft and check it's vali
+                var aircraft = row.DataContext as Aircraft;
+                if (aircraft != null)
+                {
+                    // Valid, so set the ICAO address to search for to the aircraft address and trigger
+                    // an aircraft lookup
+                    ViewModel!.AircraftLookupCriteria = new AircraftLookupCriteria { Address = aircraft.Address };
+                    ViewModel!.ShowAircraftLookupCommand?.Execute(null);
+                }
+            }
+
+            e.Handled = true;
         }
 
         /// <summary>
@@ -277,6 +315,7 @@ namespace BaseStationReader.UI.Views
             ViewModel!.RefreshTrackedAircraft();
             TrackedAircraftGrid.ItemsSource = ViewModel.TrackedAircraft;
         }
+
         /// <summary>
         /// Handler to show the tracking options dialog
         /// </summary>
@@ -310,6 +349,29 @@ namespace BaseStationReader.UI.Views
                 ViewModel.Settings.ReceiverLongitude = result.ReceiverLongitude;
                 _timer.Interval = new TimeSpan(0, 0, 0, 0, result.RefreshInterval);
             }
+        }
+
+        /// <summary>
+        /// Handler to show the aircraft lookup dialog
+        /// </summary>
+        /// <param name="interaction"></param>
+        /// <returns></returns>
+        private async Task DoShowAircraftLookupAsync(InteractionContext<AircraftLookupWindowViewModel, AircraftLookupCriteria?> interaction)
+        {
+
+            // Create the dialog
+            var dialog = new AircraftLookupWindow();
+            dialog.DataContext = interaction.Input;
+
+            // Show the dialog and capture the results
+            var result = await dialog.ShowDialog<AircraftLookupCriteria?>(this);
+#pragma warning disable CS8604
+            interaction.SetOutput(result);
+#pragma warning restore CS8604
+
+            // Clear the view model's aircraft lookup criteria - this stops it from automatically
+            // repeating the previous search when it's next opened
+            ViewModel!.AircraftLookupCriteria = null;
         }
 
         /// <summary>

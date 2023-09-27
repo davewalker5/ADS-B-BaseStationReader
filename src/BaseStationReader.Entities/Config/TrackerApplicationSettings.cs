@@ -23,6 +23,8 @@ namespace BaseStationReader.Entities.Config
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
+        public List<ApiEndpoint> ApiEndpoints { get; set; } = new List<ApiEndpoint>();
+        public List<ApiServiceKey> ApiServiceKeys { get; set; } = new List<ApiServiceKey>();
         public List<TrackerColumn> Columns { get; set; } = new List<TrackerColumn>();
     }
 }

@@ -17,6 +17,19 @@
     "MaximumRows": 20,
     "ReceiverLatitude": 51.47138888,
     "ReceiverLongitude": -0.45277777,
+    "ApiEndpoints": [
+      {
+        "EndpointType": "Airlines",
+        "Service": "AirLabs",
+        "Url": "https://airlabs.co/api/v9/airlines"
+      }
+    ],
+    "ApiServiceKeys": [
+      {
+        "Service": "AirLabs",
+        "Key": "my-key"
+      }
+    ],
     "Columns": [
       {
         "Property": "Latitude",
