@@ -51,11 +51,11 @@ namespace BaseStationReader.Logic.Api.AirLabs
                         // Extract the values into a dictionary
                         properties = new()
                         {
-                            { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]!.GetValue<string>() },
-                            { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]!.GetValue<string>() },
-                            { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]!.GetValue<string>() },
-                            { ApiProperty.ModelIATA, apiResponse!["iata"]!.GetValue<string>() },
-                            { ApiProperty.ModelICAO, apiResponse!["icao"]!.GetValue<string>() }
+                            { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string?>() ?? "" },
+                            { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string?>() ?? "" },
+                            { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]?.GetValue<string>() ?? "" },
+                            { ApiProperty.ModelIATA, apiResponse!["iata"]?.GetValue<string>() ?? "" },
+                            { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" }
                         };
                     }
                     catch

@@ -73,17 +73,19 @@ namespace BaseStationReader.Logic.Tracking
         {
             // Look for a match for both the IATA and ICAO codes
             Model? model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
-            if (model == null)
+
+            // See if there's a match? If not, use the IATA code alone. This provides more granularity
+            // than the ICAO code alone. For example, there are multiple aircraft models with ICAO
+            // designation B738, but each has a different IATA code
+            if ((model == null) && !string.IsNullOrEmpty(iata))
             {
-                // No match, so use the IATA code alone. This provides more granularity than the ICAO
-                // code alone. For example, there are multiple aircraft models with ICAO designation B738,
-                // but each has a different IATA code
                 model = await _modelManager!.GetAsync(x => x.IATA == iata);
-                if (model == null)
-                {
-                    // No match, so fallback to using the ICAO code alone
-                    model = await _modelManager!.GetAsync(x => x.ICAO == icao);
-                }
+            }
+
+            // See if there's a match? If not, fallback to using the ICAO code alone
+            if ((model == null) && !string.IsNullOrEmpty(icao))
+            {
+                model = await _modelManager!.GetAsync(x => x.ICAO == icao);
             }
 
             return model;
