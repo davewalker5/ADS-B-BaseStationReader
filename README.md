@@ -305,6 +305,16 @@ dotnet ef database update -s ../BaseStationReader.Terminal/BaseStationReader.Ter
 - If the database doesn't exist, it will create it
 - It will then bring the database up to date by applying all pending migrations
 
+### Model Lookup Data
+
+- If the intention is to use the API integration to provide aircraft details lookup, the aircraft model data should be created
+- To do this, run the following SQL scripts from the "sql\lookup" folder against the database, in the order shown:
+
+```
+PopulateManufacturers.sql
+PopulateAircraftModels.sql
+```
+
 ### Record Locking
 
 - As stated above, the [ICAO 24-bit address](https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes) is used as the unique identifier for an aircraft when writing updates to the database
