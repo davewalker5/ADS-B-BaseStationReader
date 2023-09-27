@@ -1,7 +1,9 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api
 {
+    [ExcludeFromCodeCoverage]
     public abstract class ExternalApiBase
     {
         protected readonly HttpClient _client = new();
