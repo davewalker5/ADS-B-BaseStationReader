@@ -185,7 +185,8 @@
 
 [AirLabs API Documentation](https://airlabs.co/docs/)
 
-- Various levels of subscription are provided, starting with a free offering with restricted monthly lookups
+- To use the integration, an AirLabs subscription is needed, as this includes an API key needed to acces the AirLabs APIs
+- The integration will work with the free subscription, though with restricted monthly usage
 - The integration is configured via the following keys in the configuration file:
 
 | Section             | Sub-Section    | Purpose                                                                                     |
