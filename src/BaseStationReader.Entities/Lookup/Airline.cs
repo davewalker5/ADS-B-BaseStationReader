@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Lookup
 {
-    [Serializable]
     [ExcludeFromCodeCoverage]
     public class Airline
     {

@@ -13,6 +13,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Airline> Airlines { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Model> Models { get; set; }
+        public virtual DbSet<AircraftDetails> AircraftDetails { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -29,7 +30,7 @@ namespace BaseStationReader.Data
                 entity.ToTable("AIRCRAFT");
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.Address).HasColumnName("Address");
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
                 entity.Property(e => e.Callsign).HasColumnName("Callsign");
                 entity.Property(e => e.Altitude).HasColumnName("Altitude");
                 entity.Property(e => e.GroundSpeed).HasColumnName("GroundSpeed");
@@ -103,6 +104,16 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.IATA).HasColumnName("IATA");
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.Name).HasColumnName("Name");
+            });
+
+            modelBuilder.Entity<AircraftDetails>(entity =>
+            {
+                entity.ToTable("AIRCRAFT_DETAILS");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+                entity.Property(e => e.ModelId).HasColumnName("ModelId");
+                entity.Property(e => e.AirlineId).HasColumnName("AirlineId");
             });
         }
     }
