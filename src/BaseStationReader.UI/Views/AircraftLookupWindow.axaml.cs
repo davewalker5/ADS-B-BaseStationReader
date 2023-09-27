@@ -58,11 +58,11 @@ public partial class AircraftLookupWindow : ReactiveWindow<AircraftLookupWindowV
         if (details != null)
         {
             // Result is valid, so populate the text blocks with the aircraft details
-            AirlineName.Text = details?.Airline?.Name ?? DetailsNotAvailableText;
-            ManufacturerName.Text = details?.Model?.Manufacturer.Name ?? DetailsNotAvailableText;
-            ModelName.Text = details?.Model?.Name ?? DetailsNotAvailableText;
-            ModelIATA.Text = details?.Model?.IATA ?? DetailsNotAvailableText;
-            ModelICAO.Text = details?.Model?.ICAO ?? DetailsNotAvailableText;
+            AirlineName.Text = details.Airline?.Name ?? DetailsNotAvailableText;
+            ManufacturerName.Text = details.Model?.Manufacturer.Name ?? DetailsNotAvailableText;
+            ModelName.Text = details.Model?.Name ?? DetailsNotAvailableText;
+            ModelIATA.Text = details.Model?.IATA ?? DetailsNotAvailableText;
+            ModelICAO.Text = details.Model?.ICAO ?? DetailsNotAvailableText;
         }
         else
         {

@@ -1,14 +1,12 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api.AirLabs
 {
     [ExcludeFromCodeCoverage]
-    public class AirLabsAirlinesApi : IAirlinesApi
+    public class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
     {
-        private readonly HttpClient _client = new();
         private readonly string _baseAddress;
 
         public AirLabsAirlinesApi(string url, string key)
@@ -47,29 +45,26 @@ namespace BaseStationReader.Logic.Api.AirLabs
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
-            using (var response = await _client.GetAsync(url))
-            {
-                if (response.IsSuccessStatusCode)
-                {
-                    try
-                    {
-                        // Read the response, parse to a JSON DOM
-                        var json = await response.Content.ReadAsStringAsync();
-                        var node = JsonNode.Parse(json);
-                        var apiResponse = node!["response"]![0];
+            var node = await SendRequest(url);
 
-                        // Extract the values into a dictionary
-                        properties = new()
-                        {
-                            { ApiProperty.AirlineIATA, apiResponse!["iata_code"]!.GetValue<string>() },
-                            { ApiProperty.AirlineICAO, apiResponse!["icao_code"]!.GetValue<string>() },
-                            { ApiProperty.AirlineName, apiResponse!["name"]!.GetValue<string>() },
-                        };
-                    }
-                    catch
+            if (node != null)
+            {
+                try
+                {
+                    // Extract the response element from the JSON DOM
+                    var apiResponse = node!["response"]![0];
+
+                    // Extract the values into a dictionary
+                    properties = new()
                     {
-                        properties = null;
-                    }
+                        { ApiProperty.AirlineIATA, apiResponse!["iata_code"]!.GetValue<string>() },
+                        { ApiProperty.AirlineICAO, apiResponse!["icao_code"]!.GetValue<string>() },
+                        { ApiProperty.AirlineName, apiResponse!["name"]!.GetValue<string>() },
+                    };
+                }
+                catch
+                {
+                    properties = null;
                 }
             }
 
