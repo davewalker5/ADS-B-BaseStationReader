@@ -19,7 +19,7 @@
     "ReceiverLongitude": -0.45277777,
     "ApiEndpoints": [
       {
-        "Type": "Airlines",
+        "EndpointType": "Airlines",
         "Service": "AirLabs",
         "Url": "https://airlabs.co/api/v9/airlines"
       }

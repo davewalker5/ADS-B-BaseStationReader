@@ -38,6 +38,7 @@ namespace BaseStationReader.UI.Views
 
             // Register the handlers for the dialogs
             this.WhenActivated(d => d(ViewModel!.ShowFiltersDialog.RegisterHandler(DoShowTrackingFiltersAsync)));
+            this.WhenActivated(d => d(ViewModel!.ShowAircraftLookupDialog.RegisterHandler(DoShowAircraftLookupAsync)));
             this.WhenActivated(d => d(ViewModel!.ShowTrackingOptionsDialog.RegisterHandler(DoShowTrackingOptionsAsync)));
             this.WhenActivated(d => d(ViewModel!.ShowDatabaseSearchDialog.RegisterHandler(DoShowDatabaseSearchAsync)));
         }
@@ -277,6 +278,7 @@ namespace BaseStationReader.UI.Views
             ViewModel!.RefreshTrackedAircraft();
             TrackedAircraftGrid.ItemsSource = ViewModel.TrackedAircraft;
         }
+
         /// <summary>
         /// Handler to show the tracking options dialog
         /// </summary>
@@ -309,6 +311,32 @@ namespace BaseStationReader.UI.Views
                 ViewModel.Settings.ReceiverLatitude = result.ReceiverLatitude;
                 ViewModel.Settings.ReceiverLongitude = result.ReceiverLongitude;
                 _timer.Interval = new TimeSpan(0, 0, 0, 0, result.RefreshInterval);
+            }
+        }
+
+        /// <summary>
+        /// Handler to show the aircraft lookup dialog
+        /// </summary>
+        /// <param name="interaction"></param>
+        /// <returns></returns>
+        private async Task DoShowAircraftLookupAsync(InteractionContext<AircraftLookupWindowViewModel, AircraftLookupCriteria?> interaction)
+        {
+
+            // Create the dialog
+            var dialog = new AircraftLookupWindow();
+            dialog.DataContext = interaction.Input;
+
+            // Show the dialog and capture the results
+            var result = await dialog.ShowDialog<AircraftLookupCriteria?>(this);
+#pragma warning disable CS8604
+            interaction.SetOutput(result);
+#pragma warning restore CS8604
+
+            // Check we have a dialog result i.e. user didn't cancel
+            if (result != null)
+            {
+                // Capture the lookup criteria so they're retained next time the dialog is shown
+                ViewModel!.AircraftLookupCriteria = result;
             }
         }
 

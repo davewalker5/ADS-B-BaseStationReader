@@ -119,9 +119,9 @@ namespace BaseStationReader.Logic.Tracking
                     // Lookup has worked, so cache the airline in the local database
                     var name = properties[ApiProperty.AirlineName];
                     airline = await _airlineManager.AddAsync(
-                        properties[ApiProperty.AirlineName],
+                        properties[ApiProperty.AirlineIATA],
                         properties[ApiProperty.AirlineICAO],
-                        properties[ApiProperty.AirlineIATA]);
+                        properties[ApiProperty.AirlineName]);
                 }
             }
 

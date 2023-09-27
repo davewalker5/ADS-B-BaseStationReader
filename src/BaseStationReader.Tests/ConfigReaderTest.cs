@@ -39,7 +39,7 @@ namespace BaseStationReader.Tests
 
             Assert.IsNotNull(settings?.ApiEndpoints);
             Assert.AreEqual(1, settings?.ApiEndpoints.Count);
-            Assert.AreEqual(ApiEndpointType.Airlines, settings?.ApiEndpoints.First().Type);
+            Assert.AreEqual(ApiEndpointType.Airlines, settings?.ApiEndpoints.First().EndpointType);
             Assert.AreEqual(ApiServiceType.AirLabs, settings?.ApiEndpoints.First().Service);
             Assert.AreEqual("https://airlabs.co/api/v9/airlines", settings?.ApiEndpoints.First().Url);
 

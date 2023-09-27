@@ -11,34 +11,98 @@ namespace BaseStationReader.UI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        /// <summary>
+        /// Model underlying the live view
+        /// </summary>
         private readonly LiveViewModel _liveView = new LiveViewModel();
+
+        /// <summary>
+        /// Model underlying the database search view
+        /// </summary>
         private readonly DatabaseSearchModel _databaseSearch = new DatabaseSearchModel();
 
+        /// <summary>
+        /// Application settings
+        /// </summary>
+        public TrackerApplicationSettings? Settings { get; set; }
+
+        /// <summary>
+        /// True if the tracker is actively tracking
+        /// </summary>
         public bool IsTracking { get { return _liveView.IsTracking; } }
+
+        /// <summary>
+        /// Collection of currently tracked aircraft
+        /// </summary>
         public ObservableCollection<Aircraft> TrackedAircraft { get {  return _liveView.TrackedAircraft; } }
+
+        /// <summary>
+        /// Filtering criteria for the live view
+        /// </summary>
         public BaseFilters? LiveViewFilters
         { 
             get { return _liveView.Filters; }
             set { _liveView.Filters = value; }
         }
 
+        /// <summary>
+        /// Collection of database search results
+        /// </summary>
         public ObservableCollection<Aircraft> SearchResults { get { return _databaseSearch.SearchResults; } }
+
+        /// <summary>
+        /// Database search criteria
+        /// </summary>
         public DatabaseSearchCriteria? DatabaseSearchCriteria
         {
             get { return _databaseSearch.SearchCriteria; }
             set { _databaseSearch.SearchCriteria = value; }
         }
 
-        public TrackerApplicationSettings? Settings { get; set; }
+        /// <summary>
+        /// Aircraft lookup criteria
+        /// </summary>
+        public AircraftLookupCriteria? AircraftLookupCriteria { get; set; }
 
+        /// <summary>
+        /// Command to show the live view filtering dialog
+        /// </summary>
         public ICommand ShowTrackingFiltersCommand { get; private set; }
+
+        /// <summary>
+        /// Interaction to show the live view filtering dialog
+        /// </summary>
         public Interaction<FiltersWindowViewModel,BaseFilters?> ShowFiltersDialog { get; private set; }
 
-        public ICommand ShowDatabaseSearchCommand { get; private set; }
-        public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> ShowDatabaseSearchDialog { get; private set; }
+        /// <summary>
+        /// Command to show the aircraft lookup dialog
+        /// </summary>
+        public ICommand ShowAircraftLookupCommand { get; private set; }
 
+        /// <summary>
+        /// Interaction to show the aircraft lookup dialog
+        /// </summary>
+        public Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria?> ShowAircraftLookupDialog { get; private set; }
+
+        /// <summary>
+        /// Command to show the tracking options dialog
+        /// </summary>
         public ICommand ShowTrackingOptionsCommand { get; private set; }
+
+        /// <summary>
+        /// Interaction to show the tracking options dialog
+        /// </summary>
         public Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings?> ShowTrackingOptionsDialog { get; private set; }
+
+        /// <summary>
+        /// Command to show the database search dialog
+        /// </summary>
+        public ICommand ShowDatabaseSearchCommand { get; private set; }
+
+        /// <summary>
+        /// Interaction to show the database search dialog
+        /// </summary>
+        public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> ShowDatabaseSearchDialog { get; private set; }
 
         public MainWindowViewModel()
         {
@@ -48,6 +112,15 @@ namespace BaseStationReader.UI.ViewModels
             {
                 var dialogViewModel = new FiltersWindowViewModel(LiveViewFilters);
                 var result = await ShowFiltersDialog.Handle(dialogViewModel);
+                return result;
+            });
+
+            // Wire up the aircraft lookup dialog
+            ShowAircraftLookupDialog = new Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria?>();
+            ShowAircraftLookupCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                var dialogViewModel = new AircraftLookupWindowViewModel(Settings!, AircraftLookupCriteria);
+                var result = await ShowAircraftLookupDialog.Handle(dialogViewModel);
                 return result;
             });
 
