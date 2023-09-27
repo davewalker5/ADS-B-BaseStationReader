@@ -44,18 +44,14 @@ namespace BaseStationReader.Logic.Tracking
                 if (properties != null)
                 {
                     // Retrieve the model
-                    var model = await _modelManager!
-                        .GetAsync(x => (x.IATA == properties[ApiProperty.ModelIATA]) ||
-                                       (x.ICAO == properties[ApiProperty.ModelICAO]));
+                    var model = await GetModel(properties[ApiProperty.ModelIATA], properties[ApiProperty.ModelICAO]);
 
                     // If we don't have model details, there's no point caching the aircraft details
                     // locally, so check we have a model
                     if (model != null)
                     {
                         // Get the airline details
-                        var iata = properties[ApiProperty.AirlineIATA];
-                        var icao = properties[ApiProperty.AirlineICAO];
-                        var airline = await GetAirlineFromResponse(iata, icao);
+                        var airline = await GetAirlineFromResponse(properties[ApiProperty.AirlineIATA], properties[ApiProperty.AirlineICAO]);
 
                         // Add a new aircraft details record to the local database
                         details = await _detailsManager.AddAsync(address, airline?.Id, model.Id);
@@ -65,6 +61,32 @@ namespace BaseStationReader.Logic.Tracking
             }
 
             return details;
+        }
+
+        /// <summary>
+        /// Retrieve the model given the IATA and ICAO codes
+        /// </summary>
+        /// <param name="iata"></param>
+        /// <param name="icao"></param>
+        /// <returns></returns>
+        private async Task<Model?> GetModel(string iata, string icao)
+        {
+            // Look for a match for both the IATA and ICAO codes
+            Model? model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
+            if (model == null)
+            {
+                // No match, so use the IATA code alone. This provides more granularity than the ICAO
+                // code alone. For example, there are multiple aircraft models with ICAO designation B738,
+                // but each has a different IATA code
+                model = await _modelManager!.GetAsync(x => x.IATA == iata);
+                if (model == null)
+                {
+                    // No match, so fallback to using the ICAO code alone
+                    model = await _modelManager!.GetAsync(x => x.ICAO == icao);
+                }
+            }
+
+            return model;
         }
 
         /// <summary>

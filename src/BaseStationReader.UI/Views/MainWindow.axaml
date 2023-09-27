@@ -33,6 +33,8 @@
         <MenuItem IsEnabled="False" Name="FilterLiveViewMenuItem" Header="Filter ..." Command="{Binding ShowTrackingFiltersCommand}"/>
         <MenuItem IsEnabled="False" Name="ClearLiveViewFiltersMenuItem" Header="Clear filters" Click="OnClearFilters"/>
         <Separator/>
+        <MenuItem Header="Aircraft lookup ..." Name="AircraftLookupMenuItem"/>
+        <Separator/>
         <MenuItem Header="Options ..." Name="TrackingOptionsMenuItem" Command="{Binding ShowTrackingOptionsCommand}"/>
       </MenuItem>
       <MenuItem Name="DatabaseMenu" IsEnabled="False" Header="Database">
