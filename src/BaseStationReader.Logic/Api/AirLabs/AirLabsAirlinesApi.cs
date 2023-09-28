@@ -1,5 +1,7 @@
 ﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
+using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api.AirLabs
 {
@@ -7,7 +9,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
     {
         private readonly string _baseAddress;
 
-        public AirLabsAirlinesApi(ITrackerHttpClient client, string url, string key) : base(client)
+        public AirLabsAirlinesApi(ITrackerLogger logger, ITrackerHttpClient client, string url, string key) : base(logger, client)
         {
             _baseAddress = $"{url}?api_key={key}";
         }
@@ -19,6 +21,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByIATACode(string iata)
         {
+            Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
             return await MakeApiRequest($"&iata_code={iata}");
         }
 
@@ -29,6 +32,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByICAOCode(string icao)
         {
+            Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
             return await MakeApiRequest($"&icao_code={icao}");
         }
 
@@ -55,13 +59,16 @@ namespace BaseStationReader.Logic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AirlineIATA, apiResponse!["iata_code"]!.GetValue<string>() },
-                        { ApiProperty.AirlineICAO, apiResponse!["icao_code"]!.GetValue<string>() },
-                        { ApiProperty.AirlineName, apiResponse!["name"]!.GetValue<string>() },
+                        { ApiProperty.AirlineIATA, apiResponse!["iata_code"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineICAO, apiResponse!["icao_code"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineName, apiResponse!["name"]?.GetValue<string>() ?? "" },
                     };
                 }
-                catch
+                catch (Exception ex)
                 {
+                    var message = $"Error processing response: {ex.Message}";
+                    Logger.LogMessage(Severity.Error, message);
+                    Logger.LogException(ex);
                     properties = null;
                 }
             }

@@ -47,9 +47,10 @@ namespace BaseStationReader.Tests
             _manufacturerId = Task.Run(() => manufacturerManager.AddAsync(ManufacturerName)).Result.Id;
 
             // Create the API wrappers
+            var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            var airlinesApi = new AirLabsAirlinesApi(_client, "", "");
-            var aircraftApi = new AirLabsAircraftApi(_client, "", "");
+            var airlinesApi = new AirLabsAirlinesApi(logger, _client, "", "");
+            var aircraftApi = new AirLabsAircraftApi(logger, _client, "", "");
 
             // Finally, create a lookup manager
             _manager = new AircraftLookupManager(_airlines, _details, _models, airlinesApi, aircraftApi);

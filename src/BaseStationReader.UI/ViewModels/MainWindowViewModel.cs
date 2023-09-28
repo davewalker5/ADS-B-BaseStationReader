@@ -27,6 +27,11 @@ namespace BaseStationReader.UI.ViewModels
         public TrackerApplicationSettings? Settings { get; set; }
 
         /// <summary>
+        /// Logging provider
+        /// </summary>
+        public ITrackerLogger? Logger { get; set; }
+
+        /// <summary>
         /// True if the tracker is actively tracking
         /// </summary>
         public bool IsTracking { get { return _liveView.IsTracking; } }
@@ -119,7 +124,7 @@ namespace BaseStationReader.UI.ViewModels
             ShowAircraftLookupDialog = new Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria?>();
             ShowAircraftLookupCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var dialogViewModel = new AircraftLookupWindowViewModel(Settings!, AircraftLookupCriteria);
+                var dialogViewModel = new AircraftLookupWindowViewModel(Logger!, Settings!, AircraftLookupCriteria);
                 var result = await ShowAircraftLookupDialog.Handle(dialogViewModel);
                 return result;
             });
@@ -146,10 +151,8 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Initialise the tracker
         /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="settings"></param>
-        public void InitialiseTracker(ITrackerLogger logger, TrackerApplicationSettings settings)
-            => _liveView.Initialise(logger, settings);
+        public void InitialiseTracker()
+            => _liveView.Initialise(Logger!, Settings!);
 
         /// <summary>
         /// Start the tracker

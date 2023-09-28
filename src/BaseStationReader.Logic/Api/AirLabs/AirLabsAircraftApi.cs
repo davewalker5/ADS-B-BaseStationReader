@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Logic.Api.AirLabs
@@ -7,7 +8,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
     {
         private readonly string _baseAddress;
 
-        public AirLabsAircraftApi(ITrackerHttpClient client, string url, string key) : base(client)
+        public AirLabsAircraftApi(ITrackerLogger logger, ITrackerHttpClient client, string url, string key) : base(logger, client)
         {
             _baseAddress = $"{url}?api_key={key}";
         }
@@ -19,7 +20,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>?> LookupAircraft(string address)
         {
-            return await MakeApiRequest($"&hex={address}");
+            Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+            var properties = await MakeApiRequest($"&hex={address}");
+            return properties;
         }
 
         /// <summary>
@@ -52,8 +55,11 @@ namespace BaseStationReader.Logic.Api.AirLabs
                         { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" }
                     };
                 }
-                catch
+                catch (Exception ex)
                 {
+                    var message = $"Error processing response: {ex.Message}";
+                    Logger.LogMessage(Severity.Error, message);
+                    Logger.LogException(ex);
                     properties = null;
                 }
             }

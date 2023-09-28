@@ -1,6 +1,8 @@
 ﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Tracking;
@@ -14,6 +16,7 @@ namespace BaseStationReader.UI.Models
 {
     public class LiveViewModel
     {
+        private ITrackerLogger? _logger = null;
         private ITrackerWrapper? _wrapper = null;
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
@@ -27,8 +30,12 @@ namespace BaseStationReader.UI.Models
         /// <param name="settings"></param>
         public void Initialise(ITrackerLogger logger, TrackerApplicationSettings settings)
         {
+            _logger = logger;
             _wrapper = new TrackerWrapper(logger, settings);
             _wrapper.Initialise();
+            _wrapper.AircraftAdded += OnAircraftAdded;
+            _wrapper.AircraftUpdated += OnAircraftUpdated;
+            _wrapper.AircraftRemoved += OnAircraftRemoved;
         }
 
         /// <summary>
@@ -83,6 +90,36 @@ namespace BaseStationReader.UI.Models
 
             // Update the observable collection from the filtered aircraft list
             TrackedAircraft = new ObservableCollection<Aircraft>(aircraft);
+        }
+
+        /// <summary>
+        /// Handle the event raised when a new aircraft is detected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnAircraftAdded(object? sender, AircraftNotificationEventArgs e)
+        {
+            _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address}");
+        }
+
+        /// <summary>
+        /// Handle the event raised when a new aircraft is updated
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
+        {
+            _logger!.LogMessage(Severity.Debug, $"Updated aircraft {e.Aircraft.Address}");
+        }
+
+        /// <summary>
+        /// Handle the event raised when a new aircraft is removed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnAircraftRemoved(object? sender, AircraftNotificationEventArgs e)
+        {
+            _logger!.LogMessage(Severity.Debug, $"Removed aircraft {e.Aircraft.Address}");
         }
     }
 }

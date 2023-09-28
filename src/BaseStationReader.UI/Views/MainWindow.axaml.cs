@@ -12,6 +12,7 @@ using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Configuration;
 using BaseStationReader.Logic.Logging;
@@ -29,7 +30,7 @@ namespace BaseStationReader.UI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
-        private DispatcherTimer _timer = new DispatcherTimer();
+        private readonly DispatcherTimer _timer = new DispatcherTimer();
         private ITrackerLogger? _logger = null;
         private bool _aircraftLookupIsEnabled = false;
 
@@ -54,12 +55,19 @@ namespace BaseStationReader.UI.Views
             // Set the title, based on the version set in the project properties
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Title = $"Aircraft Database Viewer {info.FileVersion}";
+            Title = $"Aircraft Tracker {info.FileVersion}";
 
             // Load the settings and configure the logger
             ViewModel!.Settings = new TrackerConfigReader().Read("appsettings.json");
             _logger = new FileLogger();
             _logger.Initialise(ViewModel!.Settings!.LogFile, ViewModel!.Settings.MinimumLogLevel);
+
+            // Log the startup messages
+            _logger.LogMessage(Severity.Info, new string('=', 80));
+            _logger.LogMessage(Severity.Info, Title);
+
+            // Make the logger available to the view model
+            ViewModel.Logger = _logger;
 
             // Configure the column titles and visibility
             ConfigureColumns(TrackedAircraftGrid);
@@ -234,7 +242,7 @@ namespace BaseStationReader.UI.Views
                 ViewModel!.LiveViewFilters = null;
 
                 // Start tracking and perform an initial refresh
-                ViewModel!.InitialiseTracker(_logger!, ViewModel.Settings);
+                ViewModel!.InitialiseTracker();
                 ViewModel.StartTracking();
                 _timer.Start();
 

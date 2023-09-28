@@ -1,4 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api
@@ -7,8 +9,11 @@ namespace BaseStationReader.Logic.Api
     {
         private readonly ITrackerHttpClient _client;
 
-        protected ExternalApiBase(ITrackerHttpClient client)
+        protected ITrackerLogger Logger { get; private set; }
+
+        protected ExternalApiBase(ITrackerLogger logger, ITrackerHttpClient client)
         {
+            Logger = logger;
             _client = client;
         }
 
@@ -35,12 +40,43 @@ namespace BaseStationReader.Logic.Api
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                var message = $"Error calling {endpoint}: {ex.Message}";
+                Logger.LogMessage(Severity.Error, message);
+                Logger.LogException(ex);
                 node = null;
             }
 
             return node;
+        }
+
+        /// <summary>
+        /// Log the content of a properties dictionary resulting from an external API call
+        /// </summary>
+        /// <param name="properties"></param>
+        protected void LogProperties(Dictionary<ApiProperty, string?>? properties)
+        {
+            // Check the properties dictionary isn't NULL
+            if (properties != null)
+            {
+                // Not a NULL dictionary, so iterate over all the properties it contains
+                foreach (var property in properties)
+                {
+                    // Construct a message containing the property name and the value, replacing
+                    // null values with "NULL"
+                    var value = property.Value != null ? property.Value.ToString() : "NULL";
+                    var message = $"API property {property.Key.ToString()} = {value}";
+
+                    // Log the message for this property
+                    Logger.LogMessage(Severity.Info, message);
+                }
+            }
+            else
+            {
+                // Log the fact that the properties dictionary is NULL
+                Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
+            }
         }
     }
 }

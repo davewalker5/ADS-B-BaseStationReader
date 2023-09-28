@@ -21,8 +21,9 @@ namespace BaseStationReader.Tests
         [TestInitialize]
         public void Initialise()
         {
+            var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsAircraftApi(_client, "", "");
+            _api = new AirLabsAircraftApi(logger, _client, "", "");
         }
 
         [TestMethod]

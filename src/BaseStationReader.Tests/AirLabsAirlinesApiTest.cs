@@ -14,6 +14,8 @@ namespace BaseStationReader.Tests
     public class AirLabsAirlinesApiTest
     {
         private const string Response = "{\"response\": [{\"name\": \"Jet2.com\", \"iata_code\": \"LS\", \"icao_code\": \"EXS\"}]}";
+        private const string NoIATACode = "{\"response\": [{\"name\": \"Jet2.com\", \"iata_code\": null, \"icao_code\": \"EXS\"}]}";
+        private const string NoICAOCode = "{\"response\": [{\"name\": \"Jet2.com\", \"iata_code\": \"LS\", \"icao_code\": null}]}";
 
         private MockTrackerHttpClient? _client = null;
         private IAirlinesApi? _api = null;
@@ -21,8 +23,9 @@ namespace BaseStationReader.Tests
         [TestInitialize]
         public void Initialise()
         {
+            var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsAirlinesApi(_client, "", "");
+            _api = new AirLabsAirlinesApi(logger, _client, "", "");
         }
 
         [TestMethod]
@@ -48,6 +51,32 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(3, properties.Count);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
+            Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
+        }
+
+        [TestMethod]
+        public void NoIATACodeTest()
+        {
+            _client!.AddResponse(NoIATACode);
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+
+            Assert.IsNotNull(properties);
+            Assert.AreEqual(3, properties.Count);
+            Assert.AreEqual("", properties[ApiProperty.AirlineIATA]);
+            Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
+            Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
+        }
+
+        [TestMethod]
+        public void NoICAOCodeTest()
+        {
+            _client!.AddResponse(NoICAOCode);
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+
+            Assert.IsNotNull(properties);
+            Assert.AreEqual(3, properties.Count);
+            Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
+            Assert.AreEqual("", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
         }
 

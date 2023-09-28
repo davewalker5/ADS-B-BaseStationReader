@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Logic.Api;
 using BaseStationReader.Logic.Api.AirLabs;
@@ -14,7 +15,7 @@ namespace BaseStationReader.UI.Models
     {
         private readonly AircraftLookupManager _lookupManager;
 
-        public AircraftLookupModel(TrackerApplicationSettings settings)
+        public AircraftLookupModel(ITrackerLogger logger, TrackerApplicationSettings settings)
         {
             // Create a database context
             var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
@@ -31,8 +32,8 @@ namespace BaseStationReader.UI.Models
 
             // Create the API wrappers
             var client = TrackerHttpClient.Instance;
-            var airlinesApi = new AirLabsAirlinesApi(client, airlinesUrl, key);
-            var aircraftApi = new AirLabsAircraftApi(client, aircraftUrl, key);
+            var airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesUrl, key);
+            var aircraftApi = new AirLabsAircraftApi(logger, client, aircraftUrl, key);
 
             // Finally, create a lookup manager
             _lookupManager = new AircraftLookupManager(airlinesManager, detailsManager, modelsManager, airlinesApi, aircraftApi);
