@@ -10,8 +10,8 @@
         ModelICAO,
         DepartureAirportIATA,
         DepartureAirportICAO,
-        DesinationAirportIATA,
-        DesintationAirportICAO,
+        DestinationAirportIATA,
+        DestinationAirportICAO,
         FlightIATA,
         FlightICAO
     }

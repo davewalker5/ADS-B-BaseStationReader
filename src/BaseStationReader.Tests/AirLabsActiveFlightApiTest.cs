@@ -32,8 +32,8 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(6, properties.Count);
             Assert.AreEqual("MAN", properties[ApiProperty.DepartureAirportIATA]);
             Assert.AreEqual("EGCC", properties[ApiProperty.DepartureAirportICAO]);
-            Assert.AreEqual("ALC", properties[ApiProperty.DesinationAirportIATA]);
-            Assert.AreEqual("LEAL", properties[ApiProperty.DesintationAirportICAO]);
+            Assert.AreEqual("ALC", properties[ApiProperty.DestinationAirportIATA]);
+            Assert.AreEqual("LEAL", properties[ApiProperty.DestinationAirportICAO]);
             Assert.AreEqual("FR9073", properties[ApiProperty.FlightIATA]);
             Assert.AreEqual("RYR4N", properties[ApiProperty.FlightICAO]);
         }

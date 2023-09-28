@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Logic.Api.AirLabs;
 using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Tracking;
@@ -23,6 +24,7 @@ namespace BaseStationReader.Tests
         private const string AirlineWithNoIATAResponse = "{\"response\": [{\"hex\": \"3C5468\",\"airline_icao\": \"DLH\",\"airline_iata\": null,\"manufacturer\": \"EMBRAER\",\"icao\": \"E190\",\"iata\": \"E90\"}]}";
         private const string FullResponse = "{\"response\": [{\"hex\": \"3C5468\",\"airline_icao\": \"DLH\",\"airline_iata\": \"LH\",\"manufacturer\": \"EMBRAER\",\"icao\": \"E190\",\"iata\": \"E90\"}]}";
         private const string AirlineResponse = "{\"response\": [{\"name\": \"Lufthansa\",\"iata_code\": \"LH\",\"icao_code\": \"DLH\"}]}";
+        private const string ActiveFlightResponse = "{\"response\": [{\"hex\": \"4CAC23\",\"reg_number\": \"EI-HGL\",\"flag\": \"IE\",\"lat\": 40.733487,\"lng\": -0.049688,\"alt\": 10683,\"dir\": 192.1,\"speed\": 822,\"v_speed\": -5.5,\"squawk\": \"2074\",\"flight_number\": \"4N\",\"flight_icao\": \"RYR4N\",\"flight_iata\": \"FR9073\",\"dep_icao\": \"EGCC\",\"dep_iata\": \"MAN\",\"arr_icao\": \"LEAL\",\"arr_iata\": \"ALC\",\"airline_icao\": \"RYR\",\"airline_iata\": \"FR\",\"aircraft_icao\": \"B38M\",\"updated\": 1695907120,\"status\": \"en-route\"}]}";
 
         private MockTrackerHttpClient? _client = null;
         private IAircraftLookupManager? _manager = null;
@@ -51,9 +53,10 @@ namespace BaseStationReader.Tests
             _client = new MockTrackerHttpClient();
             var airlinesApi = new AirLabsAirlinesApi(logger, _client, "", "");
             var aircraftApi = new AirLabsAircraftApi(logger, _client, "", "");
+            var flightsApi = new AirLabsActiveFlightApi(logger, _client, "", "");
 
             // Finally, create a lookup manager
-            _manager = new AircraftLookupManager(_airlines, _details, _models, airlinesApi, aircraftApi);
+            _manager = new AircraftLookupManager(_airlines, _details, _models, airlinesApi, aircraftApi, flightsApi);
         }
 
         [TestMethod]
@@ -180,6 +183,21 @@ namespace BaseStationReader.Tests
             Assert.AreEqual("E190", details.Model.ICAO);
             Assert.AreEqual("190 / Lineage 1000", details.Model.Name);
             Assert.AreEqual("Embraer", details.Model.Manufacturer.Name);
+        }
+
+        [TestMethod]
+        public void ActiveFlightLookupTest()
+        {
+            _client!.AddResponse(ActiveFlightResponse);
+            var details = Task.Run(() => _manager!.LookupActiveFlight("4CAC23")).Result;
+
+            Assert.IsNotNull(details);
+            Assert.AreEqual("MAN", details.DepartureAirportIATA);
+            Assert.AreEqual("EGCC", details.DepartureAirportICAO);
+            Assert.AreEqual("ALC", details.DestinationAirportIATA);
+            Assert.AreEqual("LEAL", details.DestinationAirportICAO);
+            Assert.AreEqual("FR9073", details.FlightNumberIATA);
+            Assert.AreEqual("RYR4N", details.FlightNumberICAO);
         }
     }
 }

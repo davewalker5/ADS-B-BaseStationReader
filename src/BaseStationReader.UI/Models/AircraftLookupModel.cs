@@ -29,14 +29,16 @@ namespace BaseStationReader.UI.Models
             var key = settings.ApiServiceKeys.Find(x => x.Service == ApiServiceType.AirLabs)!.Key;
             var airlinesUrl = settings.ApiEndpoints.Find(x => x.EndpointType == ApiEndpointType.Airlines)!.Url;
             var aircraftUrl = settings.ApiEndpoints.Find(x => x.EndpointType == ApiEndpointType.Aircraft)!.Url;
+            var flightsUrl = settings.ApiEndpoints.Find(x => x.EndpointType == ApiEndpointType.ActiveFlights)!.Url;
 
             // Create the API wrappers
             var client = TrackerHttpClient.Instance;
             var airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesUrl, key);
             var aircraftApi = new AirLabsAircraftApi(logger, client, aircraftUrl, key);
+            var flightsApi = new AirLabsActiveFlightApi(logger, client, flightsUrl, key);
 
             // Finally, create a lookup manager
-            _lookupManager = new AircraftLookupManager(airlinesManager, detailsManager, modelsManager, airlinesApi, aircraftApi);
+            _lookupManager = new AircraftLookupManager(airlinesManager, detailsManager, modelsManager, airlinesApi, aircraftApi, flightsApi);
         }
 
         /// <summary>

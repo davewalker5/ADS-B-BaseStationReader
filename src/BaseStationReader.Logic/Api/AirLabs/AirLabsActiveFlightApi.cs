@@ -50,8 +50,8 @@ namespace BaseStationReader.Logic.Api.AirLabs
                     {
                         { ApiProperty.DepartureAirportIATA, apiResponse!["dep_iata"]?.GetValue<string?>() ?? "" },
                         { ApiProperty.DepartureAirportICAO, apiResponse!["dep_icao"]?.GetValue<string?>() ?? "" },
-                        { ApiProperty.DesinationAirportIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.DesintationAirportICAO, apiResponse!["arr_icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DestinationAirportIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DestinationAirportICAO, apiResponse!["arr_icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" }
                     };
