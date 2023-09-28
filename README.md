@@ -208,10 +208,11 @@
 
 - Possible values for the endpoint type are:
 
-| Type     | Description                                                               |
-| -------- | ------------------------------------------------------------------------- |
-| Airlines | Endpoint used to retrieve airline details given an airline IATA/ICAO code |
-| Aircraft | Endpoint used to retrieve aircraft details given a 24-bit ICAO address    |
+| Type          | Description                                                                             |
+| ------------- | --------------------------------------------------------------------------------------- |
+| Airlines      | Endpoint used to retrieve airline details given an airline IATA/ICAO code               |
+| Aircraft      | Endpoint used to retrieve aircraft details given a 24-bit ICAO address                  |
+| ActiveFlights | Endpoint used to retrieve active flight details given the aircrafts 24-bit ICAO address |
 
 - Currently, only the AirLabs APIs are supported
 
