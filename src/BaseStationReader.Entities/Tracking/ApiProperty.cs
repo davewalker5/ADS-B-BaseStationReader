@@ -7,6 +7,12 @@
         AirlineName,
         ManufacturerName,
         ModelIATA,
-        ModelICAO
+        ModelICAO,
+        DepartureAirportIATA,
+        DepartureAirportICAO,
+        DestinationAirportIATA,
+        DestinationAirportICAO,
+        FlightIATA,
+        FlightICAO
     }
 }

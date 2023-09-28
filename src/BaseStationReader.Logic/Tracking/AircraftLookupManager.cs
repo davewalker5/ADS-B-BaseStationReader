@@ -11,19 +11,22 @@ namespace BaseStationReader.Logic.Tracking
         private readonly IModelManager _modelManager;
         private readonly IAirlinesApi _airlinesApi;
         private readonly IAircraftApi _aircraftApi;
+        private readonly IActiveFlightApi _flightsApi;
 
         public AircraftLookupManager(
             IAirlineManager airlineManager,
             IAircraftDetailsManager detailsManager,
             IModelManager modelManager,
             IAirlinesApi airlinesApi,
-            IAircraftApi aircraftApi)
+            IAircraftApi aircraftApi,
+            IActiveFlightApi flightsApi)
         {
             _airlineManager = airlineManager;
             _detailsManager = detailsManager;
             _modelManager = modelManager;
             _airlinesApi = airlinesApi;
             _aircraftApi = aircraftApi;
+            _flightsApi = flightsApi;
         }
 
         /// <summary>
@@ -56,6 +59,35 @@ namespace BaseStationReader.Logic.Tracking
                     }
                 }
 
+            }
+
+            return details;
+        }
+
+        /// <summary>
+        /// Lookup an active flight using the aircraft's 24-bit ICAO address
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public async Task<FlightDetails?> LookupActiveFlight(string address)
+        {
+            FlightDetails? details = null;
+
+            // Use the API to look-up the flight
+            var properties = await _flightsApi!.LookupFlightByAircraft(address);
+            if (properties != null)
+            {
+                // Create a new flight details object containing the details
+                details = new FlightDetails
+                {
+                    Address = address,
+                    DepartureAirportIATA = properties[ApiProperty.DepartureAirportIATA],
+                    DepartureAirportICAO = properties[ApiProperty.DepartureAirportICAO],
+                    DestinationAirportIATA = properties[ApiProperty.DestinationAirportIATA],
+                    DestinationAirportICAO = properties[ApiProperty.DestinationAirportICAO],
+                    FlightNumberIATA = properties[ApiProperty.FlightIATA],
+                    FlightNumberICAO = properties[ApiProperty.FlightICAO],
+                };
             }
 
             return details;

@@ -1,6 +1,7 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api
@@ -55,6 +56,7 @@ namespace BaseStationReader.Logic.Api
         /// Log the content of a properties dictionary resulting from an external API call
         /// </summary>
         /// <param name="properties"></param>
+        [ExcludeFromCodeCoverage]
         protected void LogProperties(Dictionary<ApiProperty, string?>? properties)
         {
             // Check the properties dictionary isn't NULL

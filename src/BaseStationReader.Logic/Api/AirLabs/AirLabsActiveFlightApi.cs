@@ -1,43 +1,32 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
-using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api.AirLabs
 {
-    public class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
+    public class AirLabsActiveFlightApi : ExternalApiBase, IActiveFlightApi
     {
         private readonly string _baseAddress;
 
-        public AirLabsAirlinesApi(ITrackerLogger logger, ITrackerHttpClient client, string url, string key) : base(logger, client)
+        public AirLabsActiveFlightApi(ITrackerLogger logger, ITrackerHttpClient client, string url, string key) : base(logger, client)
         {
             _baseAddress = $"{url}?api_key={key}";
         }
 
         /// <summary>
-        /// Lookup an airline using its IATA code
+        /// Lookup an active flight's details using the aircraft's ICAO 24-bit address
         /// </summary>
-        /// <param name="iata"></param>
+        /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByIATACode(string iata)
+        public async Task<Dictionary<ApiProperty, string>?> LookupFlightByAircraft(string address)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
-            return await MakeApiRequest($"&iata_code={iata}");
+            Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
+            var properties = await MakeApiRequest($"&hex={address}");
+            return properties;
         }
 
         /// <summary>
-        /// Lookup an airline using it's ICAO code
-        /// </summary>
-        /// <param name="icao"></param>
-        /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByICAOCode(string icao)
-        {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
-            return await MakeApiRequest($"&icao_code={icao}");
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL and return the response properties as a dictionary
+        /// Make a request to the specified URL
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
@@ -59,9 +48,12 @@ namespace BaseStationReader.Logic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AirlineIATA, apiResponse!["iata_code"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["icao_code"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineName, apiResponse!["name"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DepartureAirportIATA, apiResponse!["dep_iata"]?.GetValue<string?>() ?? "" },
+                        { ApiProperty.DepartureAirportICAO, apiResponse!["dep_icao"]?.GetValue<string?>() ?? "" },
+                        { ApiProperty.DestinationAirportIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DestinationAirportICAO, apiResponse!["arr_icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" }
                     };
 
                     // Log the properties dictionary
