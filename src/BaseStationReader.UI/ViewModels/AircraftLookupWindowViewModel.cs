@@ -26,11 +26,19 @@ namespace BaseStationReader.UI.ViewModels
         }
 
         /// <summary>
-        /// Search for the specified aircraft address
+        /// Search for the specified aircraft
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public AircraftDetails? Search(string? address)
-            => _aircraftLookup.Search(address);
+        public AircraftDetails? LookupAircraft(string? address)
+            => _aircraftLookup.LookupAircraft(address);
+
+        /// <summary>
+        /// Search for an active flight for the specified aircraft
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public FlightDetails? LookupActiveFlight(string? address)
+            => _aircraftLookup.LookupActiveFlight(address);
     }
 }

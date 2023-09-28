@@ -29,7 +29,7 @@ public partial class AircraftLookupWindow : ReactiveWindow<AircraftLookupWindowV
         Address.Text = ViewModel?.Address ?? "";
         if (!string.IsNullOrEmpty(Address.Text))
         {
-            LookupAircraftDetails();
+            LookupAircraftAndFlightDetails();
         }
     }
 
@@ -40,38 +40,59 @@ public partial class AircraftLookupWindow : ReactiveWindow<AircraftLookupWindowV
     /// <param name="e"></param>
     private void OnLookup(object source, RoutedEventArgs e)
     {
-        LookupAircraftDetails();
+        LookupAircraftAndFlightDetails();
     }
 
     /// <summary>
-    /// Look up the aircraft details and populate the dialog with the results
+    /// Look up the aircraft and active flight details and populate the dialog with the results
     /// </summary>
-    private void LookupAircraftDetails()
+    private void LookupAircraftAndFlightDetails()
     {
-        // Search for the current ICAO address
+        // Set a busy cursor
         var originalCursor = Cursor;
         Cursor = new Cursor(StandardCursorType.Wait);
-        var details = ViewModel!.Search(Address.Text);
-        Cursor = originalCursor;
 
-        // Check we have some valid details
-        if (details != null)
+        // Search for the current ICAO address
+        var aircraftDetails = ViewModel!.LookupAircraft(Address.Text);
+        var flightDetails = ViewModel!.LookupActiveFlight(Address.Text);
+
+        // Do we have valid aircraft details?
+        if (aircraftDetails != null)
         {
-            // Result is valid, so populate the text blocks with the aircraft details
-            AirlineName.Text = details.Airline?.Name ?? DetailsNotAvailableText;
-            ManufacturerName.Text = details.Model?.Manufacturer.Name ?? DetailsNotAvailableText;
-            ModelName.Text = details.Model?.Name ?? DetailsNotAvailableText;
-            ModelIATA.Text = details.Model?.IATA ?? DetailsNotAvailableText;
-            ModelICAO.Text = details.Model?.ICAO ?? DetailsNotAvailableText;
+            // Aircraft details are valid, so populate the text blocks with the aircraft details
+            AirlineName.Text = aircraftDetails.Airline?.Name ?? DetailsNotAvailableText;
+            ManufacturerName.Text = aircraftDetails.Model?.Manufacturer.Name ?? DetailsNotAvailableText;
+            ModelName.Text = aircraftDetails.Model?.Name ?? DetailsNotAvailableText;
+            ModelIATA.Text = aircraftDetails.Model?.IATA ?? DetailsNotAvailableText;
+            ModelICAO.Text = aircraftDetails.Model?.ICAO ?? DetailsNotAvailableText;
         }
         else
         {
-            // No details availables, so set the default "not available" text
+            // No details available, so set the default "not available" text
             AirlineName.Text = DetailsNotAvailableText;
             ManufacturerName.Text = DetailsNotAvailableText;
             ModelName.Text = DetailsNotAvailableText;
             ModelIATA.Text = DetailsNotAvailableText;
             ModelICAO.Text = DetailsNotAvailableText;
         }
+
+        // Do we have valid flight details?
+        if (aircraftDetails != null)
+        {
+            // Flight details are valid, so populate the text blocks with the flight details
+            FlightNumber.Text = flightDetails?.FlightNumberIATA ?? DetailsNotAvailableText;
+            DepartureIATA.Text = flightDetails?.DepartureAirportIATA ?? DetailsNotAvailableText;
+            DestinationIATA.Text = flightDetails?.DestinationAirportIATA ?? DetailsNotAvailableText;
+        }
+        else
+        {
+            // No details available, so set the default "not available" text
+            FlightNumber.Text = DetailsNotAvailableText;
+            DepartureIATA.Text = DetailsNotAvailableText;
+            DestinationIATA.Text = DetailsNotAvailableText;
+        }
+
+        // Restore the cursor
+        Cursor = originalCursor;
     }
 }

@@ -55,6 +55,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
                         { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" }
                     };
+
+                    // Log the properties dictionary
+                    LogProperties(properties!);
                 }
                 catch (Exception ex)
                 {

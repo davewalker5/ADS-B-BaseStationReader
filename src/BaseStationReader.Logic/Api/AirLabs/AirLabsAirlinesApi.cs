@@ -63,6 +63,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
                         { ApiProperty.AirlineICAO, apiResponse!["icao_code"]?.GetValue<string>() ?? "" },
                         { ApiProperty.AirlineName, apiResponse!["name"]?.GetValue<string>() ?? "" },
                     };
+
+                    // Log the properties dictionary
+                    LogProperties(properties!);
                 }
                 catch (Exception ex)
                 {
