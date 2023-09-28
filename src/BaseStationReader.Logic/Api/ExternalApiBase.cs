@@ -1,15 +1,19 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using BaseStationReader.Entities.Interfaces;
 using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Logic.Api
 {
-    [ExcludeFromCodeCoverage]
     public abstract class ExternalApiBase
     {
-        protected readonly HttpClient _client = new();
+        private readonly ITrackerHttpClient _client;
+
+        protected ExternalApiBase(ITrackerHttpClient client)
+        {
+            _client = client;
+        }
 
         /// <summary>
-        /// Make a request to the specified URL and return the response properties as a dictionary
+        /// Make a request to the specified URL and return the response properties as a JSON DOM
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
@@ -17,23 +21,23 @@ namespace BaseStationReader.Logic.Api
         {
             JsonNode? node = null;
 
-            // Make a request for the data from the API
-            using (var response = await _client.GetAsync(endpoint))
+            try
             {
-                // Check the request was successful
-                if (response.IsSuccessStatusCode)
+                // Make a request for the data from the API
+                using (var response = await _client.GetAsync(endpoint))
                 {
-                    try
+                    // Check the request was successful
+                    if (response.IsSuccessStatusCode)
                     {
-                        // Read the response, parse to a JSON DOM
-                        var json = await response.Content.ReadAsStringAsync();
-                        node = JsonNode.Parse(json);
-                    }
-                    catch
-                    {
-                        node = null;
+                            // Read the response, parse to a JSON DOM
+                            var json = await response.Content.ReadAsStringAsync();
+                            node = JsonNode.Parse(json);
                     }
                 }
+            }
+            catch
+            {
+                node = null;
             }
 
             return node;

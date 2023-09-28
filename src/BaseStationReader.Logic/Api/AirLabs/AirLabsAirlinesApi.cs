@@ -1,15 +1,13 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Logic.Api.AirLabs
 {
-    [ExcludeFromCodeCoverage]
     public class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
     {
         private readonly string _baseAddress;
 
-        public AirLabsAirlinesApi(string url, string key)
+        public AirLabsAirlinesApi(ITrackerHttpClient client, string url, string key) : base(client)
         {
             _baseAddress = $"{url}?api_key={key}";
         }
