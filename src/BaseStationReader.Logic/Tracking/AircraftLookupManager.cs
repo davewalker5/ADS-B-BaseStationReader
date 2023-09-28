@@ -1,12 +1,10 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Entities.Tracking;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Logic.Tracking
 {
-    [ExcludeFromCodeCoverage]
-    public class AircraftLookupManager
+    public class AircraftLookupManager : IAircraftLookupManager
     {
         private readonly IAirlineManager _airlineManager;
         private readonly IAircraftDetailsManager _detailsManager;
@@ -103,16 +101,17 @@ namespace BaseStationReader.Logic.Tracking
             Airline? airline = await _airlineManager!.GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
             if (airline == null)
             {
-                // Not cached locally, so look the airline up using the API, either using the ICAO code or IATA
-                // code, whichever is valid
+                // Not cached locally, so look the airline up using the API. Try using the IATA code, first
                 Dictionary<ApiProperty, string>? properties = null;
-                if (!string.IsNullOrEmpty(icao))
-                {
-                    properties = await _airlinesApi!.LookupAirlineByICAOCode(icao);
-                }
-                else if (!string.IsNullOrEmpty(iata))
+                if (!string.IsNullOrEmpty(iata))
                 {
                     properties = await _airlinesApi!.LookupAirlineByIATACode(iata);
+                }
+
+                // If we don't have any airline details, try using the ICAO code
+                if ((properties == null) && !string.IsNullOrEmpty(icao))
+                {
+                    properties = await _airlinesApi!.LookupAirlineByICAOCode(icao);
                 }
 
                 // Check we have some airline properties

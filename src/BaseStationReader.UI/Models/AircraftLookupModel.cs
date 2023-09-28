@@ -1,6 +1,7 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Logic.Api;
 using BaseStationReader.Logic.Api.AirLabs;
 using BaseStationReader.Logic.Database;
 using BaseStationReader.Logic.Tracking;
@@ -29,8 +30,9 @@ namespace BaseStationReader.UI.Models
             var aircraftUrl = settings.ApiEndpoints.Find(x => x.EndpointType == ApiEndpointType.Aircraft)!.Url;
 
             // Create the API wrappers
-            var airlinesApi = new AirLabsAirlinesApi(airlinesUrl, key);
-            var aircraftApi = new AirLabsAircraftApi(aircraftUrl, key);
+            var client = TrackerHttpClient.Instance;
+            var airlinesApi = new AirLabsAirlinesApi(client, airlinesUrl, key);
+            var aircraftApi = new AirLabsAircraftApi(client, aircraftUrl, key);
 
             // Finally, create a lookup manager
             _lookupManager = new AircraftLookupManager(airlinesManager, detailsManager, modelsManager, airlinesApi, aircraftApi);
