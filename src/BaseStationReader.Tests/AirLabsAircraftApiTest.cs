@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(5, properties.Count());
+            Assert.AreEqual(5, properties.Count);
             Assert.AreEqual("XM", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("IMX", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("ATR", properties[ApiProperty.ManufacturerName]);

@@ -6,9 +6,9 @@ namespace BaseStationReader.Logic.Api
     [ExcludeFromCodeCoverage]
     public sealed class TrackerHttpClient : ITrackerHttpClient
     {
-        private static HttpClient _client = new();
+        private readonly static HttpClient _client = new();
         private static TrackerHttpClient? _instance = null;
-        private static object _lock = new();
+        private readonly static object _lock = new();
 
         private TrackerHttpClient() { }
 

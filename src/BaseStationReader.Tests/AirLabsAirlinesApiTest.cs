@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByIATACode("LS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count());
+            Assert.AreEqual(3, properties.Count);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count());
+            Assert.AreEqual(3, properties.Count);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
