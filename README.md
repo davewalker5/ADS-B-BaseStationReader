@@ -9,6 +9,16 @@
 [![Language](https://img.shields.io/badge/database-SQLite-blue.svg)](https://github.com/davewalker5/ADS-B-BaseStationReader/)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/davewalker5/ADS-B-BaseStationReader)](https://github.com/davewalker5/ADS-B-BaseStationReader/)
 
+## Contents
+
+- [Overview](#overview)
+- [Console Application](#the-console-application)
+- [UI](#gui)
+- [Application Configuration File](#application-configuration-file)
+- [Aircraft Tracking](#aircraft-tracking)
+- [SQLite Database](#sqlite-database)
+- [Simulator](#simulator)
+
 ## Overview
 
 ![Application Schematic](Diagrams/application-schematic.png)
@@ -22,6 +32,8 @@
 - It also exposes events to notify subscribers when aircraft are added, updated and removed
 - On a timed interval, the QueuedWriter processes pending writes from the the queue
 
+[^ top](#ads-b-basestationreader)
+
 ## The Console Application
 
 - The repository includes a console application that uses the [Spectre.Console package](https://github.com/spectreconsole/spectre.console) to render a live view of the aircraft currently being tracked:
@@ -32,6 +44,8 @@
 - As an aircraft's details are updated on receipt of a new messages, it's details are immediately updated in the live view
 - As it moves through the tracking states (see below), it will be highlighted in yellow, when it reaches the "Recent" state, and red, when it reaches the "Stale" state
 - When it is removed from the tracker's tracking list, it is also removed from the live table
+
+[^ top](#ads-b-basestationreader)
 
 ## GUI
 
@@ -86,6 +100,8 @@
 - The database grid will be populated with any records matching the specified criteria
 - To export the records currently shown in the database search results, select "Export" from the "Database" menu
 - A file selection dialog will be displayed allowing you to export the results in either XLSX or CSV format
+
+[^ top](#ads-b-basestationreader)
 
 ## Application Configuration File
 
@@ -227,6 +243,8 @@
 }
 ```
 
+[^ top](#ads-b-basestationreader)
+
 ## Aircraft Tracking
 
 ### Adding and Updating Tracking Objects
@@ -271,6 +289,8 @@
   - Model IATA and ICAO codes
 - The model IATA and ICAO codes are used to look up model and manufacturer details from the local SQLite database
 - Airline details and a record mapping the aircraft's ICAO address to the airline, manufacturer and model are stored in the local SQLite database, to improve lookup performance for that address
+
+[^ top](#ads-b-basestationreader)
 
 ## SQLite Database
 
@@ -355,6 +375,8 @@ FROM AIRCRAFT
 WHERE Address = '3949F8';
 ```
 
+[^ top](#ads-b-basestationreader)
+
 ## Simulator
 
 - The project includes a simulator that broadcasts messages in BaseStation format on the local machine
@@ -372,6 +394,8 @@ WHERE Address = '3949F8';
 | ApplicationSettings | AircraftLifespan | --lifespan      | -ls        | Aircraft lifespan (ms)                                                  |
 | ApplicationSettings | LogFile          | --log-file      | -l         | Path and name of the log file. If this is blank, no log file is created |
 | ApplicationSettings | MinimumLogLevel  | --log-level     | -ll        | Minimum message severity to log (Debug, Info, Warning or Error)         |
+
+[^ top](#ads-b-basestationreader)
 
 ## Authors
 
