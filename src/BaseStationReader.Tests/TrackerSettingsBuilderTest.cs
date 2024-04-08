@@ -70,6 +70,14 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
+        public void OverrideRestartOnTimeoutTest()
+        {
+            var args = new string[] { "--auto-restart", "false" };
+            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            Assert.IsFalse(settings?.RestartOnTimeout);
+        }
+
+        [TestMethod]
         public void OverrideTimeToRecentTest()
         {
             var args = new string[] { "--recent", "25000" };
