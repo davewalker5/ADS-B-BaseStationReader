@@ -15,6 +15,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(30003, settings?.Port);
             Assert.AreEqual(60000, settings?.SocketReadTimeout);
             Assert.AreEqual(600000, settings?.ApplicationTimeout);
+            Assert.IsTrue(settings?.RestartOnTimeout);
             Assert.AreEqual(60000, settings?.TimeToRecent);
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);

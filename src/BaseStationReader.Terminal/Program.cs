@@ -50,20 +50,24 @@ namespace BaseStationReader.Terminal
             _wrapper.AircraftUpdated += OnAircraftUpdated;
             _wrapper.AircraftRemoved += OnAircraftRemoved;
 
-            // Configure the table
-            var trackerIndexManager = new TrackerIndexManager();
-            _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
-            _tableManager.CreateTable(title);
+            do
+            {
+                // Configure the table
+                var trackerIndexManager = new TrackerIndexManager();
+                _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
+                _tableManager.CreateTable(title);
 
-            // Construct the live view
-            await AnsiConsole.Live(_tableManager.Table!)
-                .AutoClear(true)
-                .Overflow(VerticalOverflow.Ellipsis)
-                .Cropping(VerticalOverflowCropping.Bottom)
-                .StartAsync(async ctx =>
-                {
-                    await ShowTrackingTable(ctx);
-                });
+                // Construct the live view
+                await AnsiConsole.Live(_tableManager.Table!)
+                    .AutoClear(true)
+                    .Overflow(VerticalOverflow.Ellipsis)
+                    .Cropping(VerticalOverflowCropping.Bottom)
+                    .StartAsync(async ctx =>
+                    {
+                        await ShowTrackingTable(ctx);
+                    });
+            }
+            while (_settings!.RestartOnTimeout);
         }
 
         /// <summary>
@@ -73,8 +77,11 @@ namespace BaseStationReader.Terminal
         /// <returns></returns>
         private static async Task ShowTrackingTable(LiveDisplayContext ctx)
         {
-            // Continously update the table
+            // Reset the elapsed time since the last update
             int elapsed = 0;
+            _lastUpdate = DateTime.Now;
+
+            // Start the wrapper and continuously update the table
             _wrapper!.Start();
             while (elapsed <= _settings!.ApplicationTimeout)
             {
@@ -87,6 +94,9 @@ namespace BaseStationReader.Terminal
                 elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
 #pragma warning restore S6561
             }
+
+            // Stop the wrapper
+            _wrapper.Stop();
         }
 
         /// <summary>
