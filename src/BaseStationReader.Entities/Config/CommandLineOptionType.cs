@@ -7,6 +7,7 @@
         Port,
         SocketReadTimeout,
         ApplicationTimeout,
+        RestartOnTimeout,
         TimeToRecent,
         TimeToStale,
         TimeToRemoval,

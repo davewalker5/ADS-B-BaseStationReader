@@ -24,6 +24,7 @@ namespace BaseStationReader.Logic.Configuration
             parser.Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
             parser.Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
             parser.Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
+            parser.Add(CommandLineOptionType.RestartOnTimeout, false, "--auto-restart", "-ar", "Automatically restart the tracker after a timeout", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToStale, false, "--stale", "-s", "Time (ms) to 'stale' staleness", 1, 1);
             parser.Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) to removal of stale records", 1, 1);
@@ -51,6 +52,9 @@ namespace BaseStationReader.Logic.Configuration
 
             values = parser.GetValues(CommandLineOptionType.ApplicationTimeout);
             if (values != null) settings!.ApplicationTimeout = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.RestartOnTimeout);
+            if (values != null) settings!.RestartOnTimeout = bool.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.TimeToRecent);
             if (values != null) settings!.TimeToRecent = int.Parse(values[0]);

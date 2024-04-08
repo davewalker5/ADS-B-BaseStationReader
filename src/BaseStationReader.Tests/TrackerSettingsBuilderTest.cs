@@ -15,6 +15,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(30003, settings?.Port);
             Assert.AreEqual(60000, settings?.SocketReadTimeout);
             Assert.AreEqual(600000, settings?.ApplicationTimeout);
+            Assert.IsTrue(settings?.RestartOnTimeout);
             Assert.AreEqual(60000, settings?.TimeToRecent);
             Assert.AreEqual(120000, settings?.TimeToStale);
             Assert.AreEqual(180000, settings?.TimeToRemoval);
@@ -66,6 +67,14 @@ namespace BaseStationReader.Tests
             var args = new string[] { "--app-timeout", "45198" };
             var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
             Assert.AreEqual(45198, settings?.ApplicationTimeout);
+        }
+
+        [TestMethod]
+        public void OverrideRestartOnTimeoutTest()
+        {
+            var args = new string[] { "--auto-restart", "false" };
+            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            Assert.IsFalse(settings?.RestartOnTimeout);
         }
 
         [TestMethod]
