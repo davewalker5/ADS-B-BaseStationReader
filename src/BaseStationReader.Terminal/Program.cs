@@ -25,49 +25,59 @@ namespace BaseStationReader.Terminal
 
         public static async Task Main(string[] args)
         {
-            // Read the application config file
-            _settings = new TrackerSettingsBuilder().BuildSettings(args, "appsettings.json");
+            // Process the command line arguments. If help's been requested, show help and exit
+            var parser = new TrackerCommandLineParser(new HelpTabulator());
+            parser.Parse(args);
+            if (parser.IsPresent(CommandLineOptionType.Help))
+            {
+                parser.Help();
+            }
+            else
+            {
+                // Read the application config file
+                _settings = new TrackerSettingsBuilder().BuildSettings(parser, "appsettings.json");
 
-            // Configure the log file
-            _logger = new FileLogger();
-            _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
+                // Configure the log file
+                _logger = new FileLogger();
+                _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
 
-            // Get the version number and application title
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
+                // Get the version number and application title
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
 #pragma warning disable S2589
-            var title = $"Aircraft Tracker v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
+                var title = $"Aircraft Tracker v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
 #pragma warning restore S2589
 
-            // Log the startup messages
-            _logger.LogMessage(Severity.Info, new string('=', 80));
-            _logger.LogMessage(Severity.Info, title);
+                // Log the startup messages
+                _logger.LogMessage(Severity.Info, new string('=', 80));
+                _logger.LogMessage(Severity.Info, title);
 
-            // Initialise the tracker wrapper
-            _wrapper = new TrackerWrapper(_logger, _settings!);
-            _wrapper.Initialise();
-            _wrapper.AircraftAdded += OnAircraftAdded;
-            _wrapper.AircraftUpdated += OnAircraftUpdated;
-            _wrapper.AircraftRemoved += OnAircraftRemoved;
+                // Initialise the tracker wrapper
+                _wrapper = new TrackerWrapper(_logger, _settings!);
+                _wrapper.Initialise();
+                _wrapper.AircraftAdded += OnAircraftAdded;
+                _wrapper.AircraftUpdated += OnAircraftUpdated;
+                _wrapper.AircraftRemoved += OnAircraftRemoved;
 
-            do
-            {
-                // Configure the table
-                var trackerIndexManager = new TrackerIndexManager();
-                _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
-                _tableManager.CreateTable(title);
+                do
+                {
+                    // Configure the table
+                    var trackerIndexManager = new TrackerIndexManager();
+                    _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
+                    _tableManager.CreateTable(title);
 
-                // Construct the live view
-                await AnsiConsole.Live(_tableManager.Table!)
-                    .AutoClear(true)
-                    .Overflow(VerticalOverflow.Ellipsis)
-                    .Cropping(VerticalOverflowCropping.Bottom)
-                    .StartAsync(async ctx =>
-                    {
-                        await ShowTrackingTable(ctx);
-                    });
+                    // Construct the live view
+                    await AnsiConsole.Live(_tableManager.Table!)
+                        .AutoClear(true)
+                        .Overflow(VerticalOverflow.Ellipsis)
+                        .Cropping(VerticalOverflowCropping.Bottom)
+                        .StartAsync(async ctx =>
+                        {
+                            await ShowTrackingTable(ctx);
+                        });
+                }
+                while (_settings!.RestartOnTimeout);
             }
-            while (_settings!.RestartOnTimeout);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
@@ -6,10 +7,21 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class SimulatorSettingsBuilderTest
     {
+        private ISimulatorSettingsBuilder? _builder = null;
+        private ICommandLineParser? _parser = null;
+
+        [TestInitialize]
+        public void Initialise()
+        {
+            _builder = new SimulatorSettingsBuilder();
+            _parser = new SimulatorCommandLineParser(null);
+        }
+
         [TestMethod]
         public void DefaultConfigTest()
         {
-            var settings = new SimulatorSettingsBuilder().BuildSettings(Array.Empty<string>(), "simulatorsettings.json");
+            _parser!.Parse(Array.Empty<string>());
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
 
             Assert.AreEqual(30003, settings?.Port);
             Assert.AreEqual(1000, settings?.SendInterval);
@@ -23,7 +35,8 @@ namespace BaseStationReader.Tests
         public void OverridePortTest()
         {
             var args = new string[] { "--port", "12345" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(12345, settings?.Port);
         }
 
@@ -31,7 +44,8 @@ namespace BaseStationReader.Tests
         public void OverrideSendIntervalTest()
         {
             var args = new string[] { "--send-interval", "33456" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(33456, settings?.SendInterval);
         }
 
@@ -39,7 +53,8 @@ namespace BaseStationReader.Tests
         public void OverrideNumberOfAircraftTest()
         {
             var args = new string[] { "--number", "126" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(126, settings?.NumberOfAircraft);
         }
 
@@ -47,7 +62,8 @@ namespace BaseStationReader.Tests
         public void OverrideAircraftLifespanTest()
         {
             var args = new string[] { "--lifespan", "543" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(543, settings?.AircraftLifespan);
         }
 
@@ -55,7 +71,8 @@ namespace BaseStationReader.Tests
         public void OverrideLogFileTest()
         {
             var args = new string[] { "--log-file", "MyLog.log" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual("MyLog.log", settings?.LogFile);
         }
 
@@ -63,7 +80,8 @@ namespace BaseStationReader.Tests
         public void OverrideMinimumLogLevelTest()
         {
             var args = new string[] { "--log-level", "Debug" };
-            var settings = new SimulatorSettingsBuilder().BuildSettings(args, "simulatorsettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(Severity.Debug, settings?.MinimumLogLevel);
         }
     }

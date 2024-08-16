@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Logic.Configuration;
 
 namespace BaseStationReader.Tests
@@ -6,10 +7,21 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class TrackerSettingsBuilderTest
     {
+        private ITrackerSettingsBuilder? _builder = null;
+        private ICommandLineParser? _parser = null;
+
+        [TestInitialize]
+        public void Initialise()
+        {
+            _builder = new TrackerSettingsBuilder();
+            _parser = new TrackerCommandLineParser(null);
+        }
+
         [TestMethod]
         public void DefaultConfigTest()
         {
-            var settings = new TrackerSettingsBuilder().BuildSettings(Array.Empty<string>(), "trackersettings.json");
+            _parser!.Parse(Array.Empty<string>());
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
 
             Assert.AreEqual("192.168.0.98", settings?.Host);
             Assert.AreEqual(30003, settings?.Port);
@@ -41,7 +53,8 @@ namespace BaseStationReader.Tests
         public void OverrideHostTest()
         {
             var args = new string[] { "--host", "127.0.0.1" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual("127.0.0.1", settings?.Host);
         }
 
@@ -49,7 +62,8 @@ namespace BaseStationReader.Tests
         public void OverridePortTest()
         {
             var args = new string[] { "--port", "12345" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(12345, settings?.Port);
         }
 
@@ -57,7 +71,8 @@ namespace BaseStationReader.Tests
         public void OverrideSocketReadTimeoutTest()
         {
             var args = new string[] { "--read-timeout", "33456" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(33456, settings?.SocketReadTimeout);
         }
 
@@ -65,7 +80,8 @@ namespace BaseStationReader.Tests
         public void OverrideApplicationTimeoutTest()
         {
             var args = new string[] { "--app-timeout", "45198" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(45198, settings?.ApplicationTimeout);
         }
 
@@ -73,7 +89,8 @@ namespace BaseStationReader.Tests
         public void OverrideRestartOnTimeoutTest()
         {
             var args = new string[] { "--auto-restart", "false" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.IsFalse(settings?.RestartOnTimeout);
         }
 
@@ -81,7 +98,8 @@ namespace BaseStationReader.Tests
         public void OverrideTimeToRecentTest()
         {
             var args = new string[] { "--recent", "25000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(25000, settings?.TimeToRecent);
         }
 
@@ -89,7 +107,8 @@ namespace BaseStationReader.Tests
         public void OverrideTimeToStaleTest()
         {
             var args = new string[] { "--stale", "31000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(31000, settings?.TimeToStale);
         }
 
@@ -97,7 +116,8 @@ namespace BaseStationReader.Tests
         public void OverrideTimeToRemovalTest()
         {
             var args = new string[] { "--remove", "39000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(39000, settings?.TimeToRemoval);
         }
 
@@ -105,7 +125,8 @@ namespace BaseStationReader.Tests
         public void OverrideTimeToLockTest()
         {
             var args = new string[] { "--lock", "501896" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(501896, settings?.TimeToLock);
         }
 
@@ -113,7 +134,8 @@ namespace BaseStationReader.Tests
         public void OverrideLogFileTest()
         {
             var args = new string[] { "--log-file", "MyLog.log" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual("MyLog.log", settings?.LogFile);
         }
 
@@ -121,7 +143,8 @@ namespace BaseStationReader.Tests
         public void OverrideMinimumLogLevelTest()
         {
             var args = new string[] { "--log-level", "Debug" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(Severity.Debug, settings?.MinimumLogLevel);
         }
 
@@ -129,7 +152,8 @@ namespace BaseStationReader.Tests
         public void OverrideEnableSqlWriterTest()
         {
             var args = new string[] { "--enable-sql-writer", "true" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.IsTrue(settings?.EnableSqlWriter);
         }
 
@@ -137,7 +161,8 @@ namespace BaseStationReader.Tests
         public void OverrideWriterIntervalTest()
         {
             var args = new string[] { "--writer-interval", "15000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(15000, settings?.WriterInterval);
         }
 
@@ -145,7 +170,8 @@ namespace BaseStationReader.Tests
         public void OverrideWriterBatchSizeTest()
         {
             var args = new string[] { "--writer-batch-size", "5000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(5000, settings?.WriterBatchSize);
         }
 
@@ -153,7 +179,8 @@ namespace BaseStationReader.Tests
         public void OverrideWriterRefreshIntervalTest()
         {
             var args = new string[] { "--ui-interval", "45000" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(45000, settings?.RefreshInterval);
         }
 
@@ -161,7 +188,8 @@ namespace BaseStationReader.Tests
         public void OverrideMaximumRowsTest()
         {
             var args = new string[] { "--max-rows", "0" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(0, settings?.MaximumRows);
         }
 
@@ -169,7 +197,8 @@ namespace BaseStationReader.Tests
         public void OverrideReceiverLatitudeTest()
         {
             var args = new string[] { "--latitude", "58.93" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(58.93, Math.Round((double)settings!.ReceiverLatitude!, 2, MidpointRounding.AwayFromZero));
         }
 
@@ -177,7 +206,8 @@ namespace BaseStationReader.Tests
         public void OverrideReceiverLongitueTest()
         {
             var args = new string[] { "--longitude", "120.56" };
-            var settings = new TrackerSettingsBuilder().BuildSettings(args, "trackersettings.json");
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(120.56, Math.Round((double)settings!.ReceiverLongitude!, 2, MidpointRounding.AwayFromZero));
         }
     }

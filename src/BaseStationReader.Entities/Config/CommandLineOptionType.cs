@@ -2,6 +2,7 @@
 {
     public enum CommandLineOptionType
     {
+        Help,
         MinimumLogLevel,
         Host,
         Port,
