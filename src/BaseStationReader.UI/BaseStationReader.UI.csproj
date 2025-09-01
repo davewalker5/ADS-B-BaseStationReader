@@ -2,9 +2,9 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <ReleaseVersion>1.32.0.0</ReleaseVersion>
-    <FileVersion>1.32.0.0</FileVersion>
-    <ProductVersion>1.32.0</ProductVersion>
+    <ReleaseVersion>1.33.0.0</ReleaseVersion>
+    <FileVersion>1.33.0.0</FileVersion>
+    <ProductVersion>1.33.0</ProductVersion>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
