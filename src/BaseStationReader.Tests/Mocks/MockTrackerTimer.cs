@@ -5,10 +5,10 @@ namespace BaseStationReader.Tests.Mocks
 {
     internal class MockTrackerTimer : ITrackerTimer
     {
-        private CancellationTokenSource? _tokenSource = null;
+        private CancellationTokenSource _tokenSource = null;
         private readonly double _interval;
 
-        public event EventHandler<EventArgs>? Tick = null;
+        public event EventHandler<EventArgs> Tick = null;
 
         public MockTrackerTimer(double interval)
         {

@@ -9,7 +9,7 @@ namespace BaseStationReader.Tests
     {
         private const string Name = "Airbus";
 
-        private IManufacturerManager? _manager = null;
+        private IManufacturerManager _manager = null;
 
         [TestInitialize]
         public void TestInitialize()

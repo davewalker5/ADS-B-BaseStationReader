@@ -5,13 +5,13 @@ namespace BaseStationReader.Tests.Mocks
 {
     internal class MockTrackerHttpClient : ITrackerHttpClient
     {
-        private readonly Queue<string?> _responses = new();
+        private readonly Queue<string> _responses = new();
 
         /// <summary>
         /// Queue a response
         /// </summary>
         /// <param name="response"></param>
-        public void AddResponse(string? response)
+        public void AddResponse(string response)
         {
             _responses.Enqueue(response);
         }
@@ -20,9 +20,9 @@ namespace BaseStationReader.Tests.Mocks
         /// Queue a set of responses
         /// </summary>
         /// <param name="responses"></param>
-        public void AddResponses(IEnumerable<string?> responses)
+        public void AddResponses(IEnumerable<string> responses)
         {
-            foreach (string? response in responses)
+            foreach (string response in responses)
             {
                 _responses.Enqueue(response);
             }

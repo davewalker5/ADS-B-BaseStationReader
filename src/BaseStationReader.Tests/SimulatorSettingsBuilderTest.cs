@@ -7,8 +7,8 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class SimulatorSettingsBuilderTest
     {
-        private ISimulatorSettingsBuilder? _builder = null;
-        private ICommandLineParser? _parser = null;
+        private ISimulatorSettingsBuilder _builder = null;
+        private ICommandLineParser _parser = null;
 
         [TestInitialize]
         public void Initialise()
@@ -20,7 +20,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void DefaultConfigTest()
         {
-            _parser!.Parse(Array.Empty<string>());
+            _parser!.Parse([]);
             var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
 
             Assert.AreEqual(30003, settings?.Port);

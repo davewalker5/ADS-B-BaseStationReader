@@ -4,6 +4,6 @@
     {
         public string PropertyName { get; set; } = "";
         public TrackerFilterOperator Operator { get; set; }
-        public object? Value { get; set; } = null;
+        public object Value { get; set; } = null;
     }
 }

@@ -20,7 +20,7 @@ namespace BaseStationReader.Logic.Simulator
         /// <param name="callsign"></param>
         /// <param name="squawk"></param>
         /// <returns></returns>
-        public Message Generate(string address, string? callsign, string? squawk)
+        public Message Generate(string address, string callsign, string squawk)
         {
             // Select a random generator
             var selector = _random.Next(0, _generators.Count);

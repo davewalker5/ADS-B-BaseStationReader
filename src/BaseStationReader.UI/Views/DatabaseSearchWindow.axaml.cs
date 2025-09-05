@@ -25,7 +25,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnLoaded(object? source, RoutedEventArgs e)
+        private void OnLoaded(object source, RoutedEventArgs e)
         {
             Address.Text = ViewModel?.Address ?? "";
             Callsign.Text = ViewModel?.Callsign ?? "";

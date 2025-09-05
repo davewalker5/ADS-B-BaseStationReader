@@ -49,7 +49,7 @@ namespace BaseStationReader.Logic.Database
         public async Task<AircraftPosition> WriteAsync(AircraftPosition template)
         {
             // If the template has an ID associated with it, retrieve that record for update
-            AircraftPosition? position = null;
+            AircraftPosition position = null;
             if (template.Id > 0)
             {
                 position = await GetAsync(x => x.Id == template.Id);

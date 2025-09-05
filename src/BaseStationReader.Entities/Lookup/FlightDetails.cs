@@ -8,11 +8,11 @@ namespace BaseStationReader.Entities.Lookup
     {
         [Required]
         public string Address { get; set; } = "";
-        public string? DepartureAirportIATA { get; set; }
-        public string? DepartureAirportICAO { get; set; }
-        public string? DestinationAirportIATA { get; set; }
-        public string? DestinationAirportICAO { get; set; }
-        public string? FlightNumberIATA { get; set; }
-        public string? FlightNumberICAO { get; set; }
+        public string DepartureAirportIATA { get; set; }
+        public string DepartureAirportICAO { get; set; }
+        public string DestinationAirportIATA { get; set; }
+        public string DestinationAirportICAO { get; set; }
+        public string FlightNumberIATA { get; set; }
+        public string FlightNumberICAO { get; set; }
     }
 }

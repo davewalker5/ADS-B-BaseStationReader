@@ -30,11 +30,11 @@ namespace BaseStationReader.Tests
         private const decimal VerticalRate = 2624.0M;
         private const string Squawk = "7710";
 
-        private BaseStationReaderDbContext? _context = null;
-        private IAircraftWriter? _aircraftWriter = null;
-        private IPositionWriter? _positionWriter = null;
-        private IAircraftLockManager? _aircraftLocker = null;
-        private QueuedWriter? _writer = null;
+        private BaseStationReaderDbContext _context = null;
+        private IAircraftWriter _aircraftWriter = null;
+        private IPositionWriter _positionWriter = null;
+        private IAircraftLockManager _aircraftLocker = null;
+        private QueuedWriter _writer = null;
         private bool _queueProcessed = false;
 
         [TestInitialize]
@@ -254,7 +254,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnBatchWritten(object? sender, BatchWrittenEventArgs e)
+        private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
         {
             if ((e.InitialQueueSize > 0) && (e.FinalQueueSize == 0))
             {

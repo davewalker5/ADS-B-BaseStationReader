@@ -17,10 +17,10 @@ namespace BaseStationReader.Terminal
     [ExcludeFromCodeCoverage]
     public static class Program
     {
-        private static ITrackerTableManager? _tableManager = null;
-        private static ITrackerLogger? _logger = null;
-        private static ITrackerWrapper? _wrapper = null;
-        private static TrackerApplicationSettings? _settings = null;
+        private static ITrackerTableManager _tableManager = null;
+        private static ITrackerLogger _logger = null;
+        private static ITrackerWrapper _wrapper = null;
+        private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
         public static async Task Main(string[] args)
@@ -114,7 +114,7 @@ namespace BaseStationReader.Terminal
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnAircraftAdded(object? sender, AircraftNotificationEventArgs e)
+        private static void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
@@ -132,7 +132,7 @@ namespace BaseStationReader.Terminal
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
+        private static void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
@@ -147,7 +147,7 @@ namespace BaseStationReader.Terminal
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnAircraftRemoved(object? sender, AircraftNotificationEventArgs e)
+        private static void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;

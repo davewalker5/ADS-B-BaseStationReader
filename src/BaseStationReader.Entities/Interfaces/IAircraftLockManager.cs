@@ -4,6 +4,6 @@ namespace BaseStationReader.Logic
 {
     public interface IAircraftLockManager
     {
-        Task<Aircraft?> GetActiveAircraft(string address);
+        Task<Aircraft> GetActiveAircraft(string address);
     }
 }

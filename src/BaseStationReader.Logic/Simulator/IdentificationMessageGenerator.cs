@@ -17,7 +17,7 @@ namespace BaseStationReader.Logic.Simulator
         /// <param name="callsign"></param>
         /// <param name="squawk"></param>
         /// <returns></returns>
-        public Message Generate(string address, string? callsign, string? squawk)
+        public Message Generate(string address, string callsign, string squawk)
         {
             // Generate the base message and populate the type-specific members
             var message = ConstructMessage(TransmissionType.Identification, address);

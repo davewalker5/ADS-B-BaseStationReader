@@ -10,10 +10,10 @@ namespace BaseStationReader.UI.ViewModels
     {
         public ObservableCollection<string> Statuses { get; private set; } = new();
 
-        public ReactiveCommand<Unit, DatabaseSearchCriteria?> SearchCommand { get; private set; }
-        public ReactiveCommand<Unit, DatabaseSearchCriteria?> CancelCommand { get; private set; }
+        public ReactiveCommand<Unit, DatabaseSearchCriteria> SearchCommand { get; private set; }
+        public ReactiveCommand<Unit, DatabaseSearchCriteria> CancelCommand { get; private set; }
 
-        public DatabaseSearchWindowViewModel(DatabaseSearchCriteria? initialValues)
+        public DatabaseSearchWindowViewModel(DatabaseSearchCriteria initialValues)
         {
             // Populate the list of available statuses
             Statuses.Add("All");
@@ -38,7 +38,7 @@ namespace BaseStationReader.UI.ViewModels
 #pragma warning restore CS8619
 
             // Create a command that can be bound to the Cancel button on the dialog, that returns null
-            CancelCommand = ReactiveCommand.Create(() => { return (DatabaseSearchCriteria?)null; });
+            CancelCommand = ReactiveCommand.Create(() => { return (DatabaseSearchCriteria)null; });
         }
     }
 }

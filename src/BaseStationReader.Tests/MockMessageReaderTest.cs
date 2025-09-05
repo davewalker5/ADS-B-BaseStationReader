@@ -78,7 +78,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMessageRead(object? sender, MessageReadEventArgs e)
+        private void OnMessageRead(object sender, MessageReadEventArgs e)
         {
             lock (_received)
             {

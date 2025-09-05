@@ -11,9 +11,9 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class AircraftLockManagerTest
     {
-        private BaseStationReaderDbContext? _context = null;
-        private IAircraftWriter? _aircraftWriter = null;
-        private IAircraftLockManager? _aircraftLocker = null;
+        private BaseStationReaderDbContext _context = null;
+        private IAircraftWriter _aircraftWriter = null;
+        private IAircraftLockManager _aircraftLocker = null;
         private const int TimeToLockMs = 600000;
 
         private const string Address = "406A3D";

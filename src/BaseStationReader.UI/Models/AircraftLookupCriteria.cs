@@ -4,6 +4,6 @@ namespace BaseStationReader.UI.Models
 {
     public class AircraftLookupCriteria : ViewModelBase
     {
-        public string? Address { get; set; }
+        public string Address { get; set; }
     }
 }

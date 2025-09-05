@@ -2,10 +2,9 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
-    <ReleaseVersion>1.33.0.0</ReleaseVersion>
-    <FileVersion>1.33.0.0</FileVersion>
-    <ProductVersion>1.33.0</ProductVersion>
-    <Nullable>enable</Nullable>
+    <ReleaseVersion>1.34.0.0</ReleaseVersion>
+    <FileVersion>1.34.0.0</FileVersion>
+    <ProductVersion>1.34.0</ProductVersion>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>

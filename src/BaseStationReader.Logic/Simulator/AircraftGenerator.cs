@@ -23,9 +23,9 @@ namespace BaseStationReader.Logic.Simulator
         /// </summary>
         /// <param name="existingAddresses"></param>
         /// <returns></returns>
-        public Aircraft Generate(IEnumerable<string>? existingAddresses)
+        public Aircraft Generate(IEnumerable<string> existingAddresses)
         {
-            Aircraft? aircraft = null;
+            Aircraft aircraft = null;
             string address;
 
             do

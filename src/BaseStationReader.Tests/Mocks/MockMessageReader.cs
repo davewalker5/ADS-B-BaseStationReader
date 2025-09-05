@@ -10,7 +10,7 @@ namespace BaseStationReader.Tests.Mocks
         private readonly int _interval;
         private readonly bool _sendEmptyMessages;
 
-        public event EventHandler<MessageReadEventArgs>? MessageRead;
+        public event EventHandler<MessageReadEventArgs> MessageRead;
 
         public MockMessageReader(IEnumerable<string> messages, int interval, bool sendEmptyMessages)
         {

@@ -15,8 +15,8 @@ namespace BaseStationReader.Tests
     {
         private const string Response = "{\"response\": [ { \"hex\": \"4B012F\", \"airline_icao\": \"IMX\", \"airline_iata\": \"XM\", \"manufacturer\": \"ATR\", \"icao\": \"AT75\", \"iata\": null }]}";
 
-        private MockTrackerHttpClient? _client = null;
-        private IAircraftApi? _api = null;
+        private MockTrackerHttpClient _client = null;
+        private IAircraftApi _api = null;
 
         [TestInitialize]
         public void Initialise()

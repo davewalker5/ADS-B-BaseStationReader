@@ -151,7 +151,7 @@ namespace BaseStationReader.Logic.Simulator
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnTimer(object? sender, EventArgs e)
+        private void OnTimer(object sender, EventArgs e)
         {
             _timer.Stop();
 

@@ -4,7 +4,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IMessageReader
     {
-        event EventHandler<MessageReadEventArgs>? MessageRead;
+        event EventHandler<MessageReadEventArgs> MessageRead;
         Task Start(CancellationToken token);
     }
 }

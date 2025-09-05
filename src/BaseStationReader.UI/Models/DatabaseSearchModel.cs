@@ -14,7 +14,7 @@ namespace BaseStationReader.UI.Models
     public class DatabaseSearchModel
     {
         public ObservableCollection<Aircraft> SearchResults { get; private set; } = new();
-        public DatabaseSearchCriteria? SearchCriteria { get; set; }
+        public DatabaseSearchCriteria SearchCriteria { get; set; }
 
         /// <summary>
         /// Search the database for records matching the current filtering criteria
@@ -74,7 +74,7 @@ namespace BaseStationReader.UI.Models
         /// Export the current search results to the specified file
         /// </summary>
         /// <param name="filePath"></param>
-        public void Export(string? filePath)
+        public void Export(string filePath)
         {
             // Check we have a valid file path
             if (!string.IsNullOrEmpty(filePath))

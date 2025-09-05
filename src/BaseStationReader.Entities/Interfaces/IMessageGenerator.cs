@@ -4,6 +4,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IMessageGenerator
     {
-        Message Generate(string address, string? callsign, string? squawk);
+        Message Generate(string address, string callsign, string squawk);
     }
 }

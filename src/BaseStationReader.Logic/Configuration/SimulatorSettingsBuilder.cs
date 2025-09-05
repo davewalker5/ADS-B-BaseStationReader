@@ -13,7 +13,7 @@ namespace BaseStationReader.Logic.Configuration
         /// <param name="configJsonPath"></param>
         /// <returns></returns>
 #pragma warning disable S3776
-        public SimulatorApplicationSettings? BuildSettings(ICommandLineParser parser, string configJsonPath)
+        public SimulatorApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath)
         {
             // Read the config file to provide default settings
             var settings = new ConfigReader<SimulatorApplicationSettings>().Read(configJsonPath);

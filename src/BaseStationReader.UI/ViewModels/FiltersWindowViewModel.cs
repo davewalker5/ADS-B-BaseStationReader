@@ -10,10 +10,10 @@ namespace BaseStationReader.UI.ViewModels
     {
         public ObservableCollection<string> Statuses { get; private set; } = new();
 
-        public ReactiveCommand<Unit, BaseFilters?> SelectFiltersCommand { get; private set; }
-        public ReactiveCommand<Unit, BaseFilters?> CancelFiltersCommand { get; private set; }
+        public ReactiveCommand<Unit, BaseFilters> SelectFiltersCommand { get; private set; }
+        public ReactiveCommand<Unit, BaseFilters> CancelFiltersCommand { get; private set; }
 
-        public FiltersWindowViewModel(BaseFilters? initialValues)
+        public FiltersWindowViewModel(BaseFilters initialValues)
         {
             // Populate the list of available statuses
             Statuses.Add("All");
@@ -36,7 +36,7 @@ namespace BaseStationReader.UI.ViewModels
 #pragma warning restore CS8619
 
             // Create a command that can be bound to the Cancel button on the dialog, that returns null
-            CancelFiltersCommand = ReactiveCommand.Create(() => { return (BaseFilters?)null; });
+            CancelFiltersCommand = ReactiveCommand.Create(() => { return (BaseFilters)null; });
         }
     }
 }

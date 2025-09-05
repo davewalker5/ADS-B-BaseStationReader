@@ -15,10 +15,10 @@ namespace BaseStationReader.Entities.Tracking
         public string Address { get; set; } = "";
 
         [Export("Callsign", 2)]
-        public string? Callsign { get; set; } = null;
+        public string Callsign { get; set; } = null;
 
         [Export("Squawk", 3)]
-        public string? Squawk { get; set; }
+        public string Squawk { get; set; }
 
         [Export("Altitude", 4)]
         public decimal? Altitude { get; set; }

@@ -16,7 +16,7 @@ namespace BaseStationReader.Terminal.Logic
         private readonly List<TrackerColumn> _columns;
         private readonly int _maximumRows;
 
-        public Spectre.Console.Table? Table { get; private set; } = null;
+        public Spectre.Console.Table Table { get; private set; } = null;
 
         public TrackerTableManager(ITrackerIndexManager indexManager, List<TrackerColumn> columns, int maximumRows)
         {

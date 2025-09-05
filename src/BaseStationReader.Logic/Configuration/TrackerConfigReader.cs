@@ -11,7 +11,7 @@ namespace BaseStationReader.Logic.Configuration
         /// </summary>
         /// <param name="jsonFileName"></param>
         /// <returns></returns>
-        public override TrackerApplicationSettings? Read(string jsonFileName)
+        public override TrackerApplicationSettings Read(string jsonFileName)
         {
             // Read the basic settings
             var settings = base.Read(jsonFileName);

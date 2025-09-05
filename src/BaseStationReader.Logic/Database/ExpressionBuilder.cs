@@ -22,7 +22,7 @@ namespace BaseStationReader.Logic.Database
         /// <param name="propertyName"></param>
         /// <param name="operator"></param>
         /// <param name="value"></param>
-        public void Add(string propertyName, TrackerFilterOperator @operator, object? value)
+        public void Add(string propertyName, TrackerFilterOperator @operator, object value)
         {
             Filters.Add(new TrackerFilter
             {
@@ -37,7 +37,7 @@ namespace BaseStationReader.Logic.Database
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Expression<Func<T, bool>>? Build()
+        public Expression<Func<T, bool>> Build()
         {
             // If there are no filters, return null
             if (Filters.Count == 0)
@@ -48,7 +48,7 @@ namespace BaseStationReader.Logic.Database
             // Get an expression representing the object type
             var parameter = Expression.Parameter(typeof(T), "p");
 
-            Expression? body = null;
+            Expression body = null;
             foreach (var filter in Filters)
             {
                 // Get an expression representing the class member for this filter and a constant representing

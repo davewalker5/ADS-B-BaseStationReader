@@ -17,8 +17,8 @@ namespace BaseStationReader.Tests
         private const string NoIATACode = "{\"response\": [{\"name\": \"Jet2.com\", \"iata_code\": null, \"icao_code\": \"EXS\"}]}";
         private const string NoICAOCode = "{\"response\": [{\"name\": \"Jet2.com\", \"iata_code\": \"LS\", \"icao_code\": null}]}";
 
-        private MockTrackerHttpClient? _client = null;
-        private IAirlinesApi? _api = null;
+        private MockTrackerHttpClient _client = null;
+        private IAirlinesApi _api = null;
 
         [TestInitialize]
         public void Initialise()

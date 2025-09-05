@@ -14,14 +14,14 @@ namespace BaseStationReader.Entities.Messages
         public string Address { get; set; } = "";
         public DateTime Generated { get; set; }
         public DateTime LastSeen { get; set; }
-        public string? Callsign { get; set; } = null;
+        public string Callsign { get; set; } = null;
         public decimal? Altitude { get; set; }
         public decimal? GroundSpeed { get; set; }
         public decimal? Track { get; set; }
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
         public decimal? VerticalRate { get; set; }
-        public string? Squawk { get ; set; }
+        public string Squawk { get ; set; }
         public bool Alert { get; set; }
         public bool Emergency { get; set; }
         public bool SPI { get; set; }
@@ -73,7 +73,7 @@ namespace BaseStationReader.Entities.Messages
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="value"></param>
-        private void AppendField(StringBuilder builder, object? value)
+        private void AppendField(StringBuilder builder, object value)
         {
             if (builder.Length > 0)
             {

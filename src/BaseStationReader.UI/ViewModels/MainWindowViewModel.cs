@@ -24,12 +24,12 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Application settings
         /// </summary>
-        public TrackerApplicationSettings? Settings { get; set; }
+        public TrackerApplicationSettings Settings { get; set; }
 
         /// <summary>
         /// Logging provider
         /// </summary>
-        public ITrackerLogger? Logger { get; set; }
+        public ITrackerLogger Logger { get; set; }
 
         /// <summary>
         /// True if the tracker is actively tracking
@@ -44,7 +44,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Filtering criteria for the live view
         /// </summary>
-        public BaseFilters? LiveViewFilters
+        public BaseFilters LiveViewFilters
         { 
             get { return _liveView.Filters; }
             set { _liveView.Filters = value; }
@@ -58,7 +58,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Database search criteria
         /// </summary>
-        public DatabaseSearchCriteria? DatabaseSearchCriteria
+        public DatabaseSearchCriteria DatabaseSearchCriteria
         {
             get { return _databaseSearch.SearchCriteria; }
             set { _databaseSearch.SearchCriteria = value; }
@@ -67,7 +67,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Aircraft lookup criteria
         /// </summary>
-        public AircraftLookupCriteria? AircraftLookupCriteria { get; set; }
+        public AircraftLookupCriteria AircraftLookupCriteria { get; set; }
 
         /// <summary>
         /// Command to show the live view filtering dialog
@@ -77,7 +77,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Interaction to show the live view filtering dialog
         /// </summary>
-        public Interaction<FiltersWindowViewModel,BaseFilters?> ShowFiltersDialog { get; private set; }
+        public Interaction<FiltersWindowViewModel,BaseFilters> ShowFiltersDialog { get; private set; }
 
         /// <summary>
         /// Command to show the aircraft lookup dialog
@@ -87,7 +87,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Interaction to show the aircraft lookup dialog
         /// </summary>
-        public Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria?> ShowAircraftLookupDialog { get; private set; }
+        public Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria> ShowAircraftLookupDialog { get; private set; }
 
         /// <summary>
         /// Command to show the tracking options dialog
@@ -97,7 +97,7 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Interaction to show the tracking options dialog
         /// </summary>
-        public Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings?> ShowTrackingOptionsDialog { get; private set; }
+        public Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings> ShowTrackingOptionsDialog { get; private set; }
 
         /// <summary>
         /// Command to show the database search dialog
@@ -107,12 +107,12 @@ namespace BaseStationReader.UI.ViewModels
         /// <summary>
         /// Interaction to show the database search dialog
         /// </summary>
-        public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> ShowDatabaseSearchDialog { get; private set; }
+        public Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria> ShowDatabaseSearchDialog { get; private set; }
 
         public MainWindowViewModel()
         {
             // Wire up the tracking filters dialog
-            ShowFiltersDialog = new Interaction<FiltersWindowViewModel, BaseFilters?>();
+            ShowFiltersDialog = new Interaction<FiltersWindowViewModel, BaseFilters>();
             ShowTrackingFiltersCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 var dialogViewModel = new FiltersWindowViewModel(LiveViewFilters);
@@ -121,7 +121,7 @@ namespace BaseStationReader.UI.ViewModels
             });
 
             // Wire up the aircraft lookup dialog
-            ShowAircraftLookupDialog = new Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria?>();
+            ShowAircraftLookupDialog = new Interaction<AircraftLookupWindowViewModel, AircraftLookupCriteria>();
             ShowAircraftLookupCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 var dialogViewModel = new AircraftLookupWindowViewModel(Logger!, Settings!, AircraftLookupCriteria);
@@ -130,7 +130,7 @@ namespace BaseStationReader.UI.ViewModels
             });
 
             // Wire up the tracking options dialog
-            ShowTrackingOptionsDialog = new Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings?>();
+            ShowTrackingOptionsDialog = new Interaction<TrackingOptionsWindowViewModel, TrackerApplicationSettings>();
             ShowTrackingOptionsCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 var dialogViewModel = new TrackingOptionsWindowViewModel(Settings!);
@@ -139,7 +139,7 @@ namespace BaseStationReader.UI.ViewModels
             });
 
             // Wire up the database search dialog
-            ShowDatabaseSearchDialog = new Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?>();
+            ShowDatabaseSearchDialog = new Interaction<DatabaseSearchWindowViewModel, DatabaseSearchCriteria>();
             ShowDatabaseSearchCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 var dialogViewModel = new DatabaseSearchWindowViewModel(DatabaseSearchCriteria);
@@ -183,7 +183,7 @@ namespace BaseStationReader.UI.ViewModels
         /// Export the current search results to the specified file
         /// </summary>
         /// <param name="filePath"></param>
-        public void Export(string? filePath)
+        public void Export(string filePath)
             => _databaseSearch.Export(filePath);
     }
 }

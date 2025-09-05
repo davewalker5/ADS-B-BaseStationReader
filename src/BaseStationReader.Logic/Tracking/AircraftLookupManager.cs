@@ -34,7 +34,7 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<AircraftDetails?> LookupAircraft(string address)
+        public async Task<AircraftDetails> LookupAircraft(string address)
         {
             // See if the details are locally cached, first
             var details = await _detailsManager!.GetAsync(x => x.Address == address);
@@ -69,9 +69,9 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<FlightDetails?> LookupActiveFlight(string address)
+        public async Task<FlightDetails> LookupActiveFlight(string address)
         {
-            FlightDetails? details = null;
+            FlightDetails details = null;
 
             // Use the API to look-up the flight
             var properties = await _flightsApi!.LookupFlightByAircraft(address);
@@ -99,10 +99,10 @@ namespace BaseStationReader.Logic.Tracking
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <returns></returns>
-        private async Task<Model?> GetModel(string iata, string icao)
+        private async Task<Model> GetModel(string iata, string icao)
         {
             // Look for a match for both the IATA and ICAO codes
-            Model? model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
+            Model model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
 
             // See if there's a match? If not, use the IATA code alone. This provides more granularity
             // than the ICAO code alone. For example, there are multiple aircraft models with ICAO
@@ -127,14 +127,14 @@ namespace BaseStationReader.Logic.Tracking
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <returns></returns>
-        private async Task<Airline?> GetAirlineFromResponse(string iata, string icao)
+        private async Task<Airline> GetAirlineFromResponse(string iata, string icao)
         {
             // See if the airline has been cached locally
-            Airline? airline = await _airlineManager!.GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
+            Airline airline = await _airlineManager!.GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
             if (airline == null)
             {
                 // Not cached locally, so look the airline up using the API. Try using the IATA code, first
-                Dictionary<ApiProperty, string>? properties = null;
+                Dictionary<ApiProperty, string> properties = null;
                 if (!string.IsNullOrEmpty(iata))
                 {
                     properties = await _airlinesApi!.LookupAirlineByIATACode(iata);

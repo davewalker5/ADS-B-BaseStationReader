@@ -18,7 +18,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupFlightByAircraft(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByAircraft(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
             var properties = await MakeApiRequest($"&hex={address}");
@@ -30,9 +30,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>?> MakeApiRequest(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequest(string parameters)
         {
-            Dictionary<ApiProperty, string>? properties = null;
+            Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
@@ -48,8 +48,8 @@ namespace BaseStationReader.Logic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.DepartureAirportIATA, apiResponse!["dep_iata"]?.GetValue<string?>() ?? "" },
-                        { ApiProperty.DepartureAirportICAO, apiResponse!["dep_icao"]?.GetValue<string?>() ?? "" },
+                        { ApiProperty.DepartureAirportIATA, apiResponse!["dep_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DepartureAirportICAO, apiResponse!["dep_icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.DestinationAirportIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.DestinationAirportICAO, apiResponse!["arr_icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },

@@ -18,7 +18,7 @@ namespace BaseStationReader.Logic.Simulator
         /// <param name="squawk"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Message Generate(string address, string? callsign, string? squawk)
+        public Message Generate(string address, string callsign, string squawk)
         {
             // Generate the base message
             var message = ConstructMessage(TransmissionType.SurveillanceAlt, address);

@@ -23,9 +23,9 @@ namespace BaseStationReader.Logic.Api
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        protected async Task<JsonNode?> SendRequest(string endpoint)
+        protected async Task<JsonNode> SendRequest(string endpoint)
         {
-            JsonNode? node = null;
+            JsonNode node = null;
 
             try
             {
@@ -57,7 +57,7 @@ namespace BaseStationReader.Logic.Api
         /// </summary>
         /// <param name="properties"></param>
         [ExcludeFromCodeCoverage]
-        protected void LogProperties(Dictionary<ApiProperty, string?>? properties)
+        protected void LogProperties(Dictionary<ApiProperty, string> properties)
         {
             // Check the properties dictionary isn't NULL
             if (properties != null)

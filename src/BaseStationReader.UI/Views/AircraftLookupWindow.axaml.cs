@@ -24,7 +24,7 @@ public partial class AircraftLookupWindow : ReactiveWindow<AircraftLookupWindowV
     /// </summary>
     /// <param name="source"></param>
     /// <param name="e"></param>
-    private void OnLoaded(object? source, RoutedEventArgs e)
+    private void OnLoaded(object source, RoutedEventArgs e)
     {
         Address.Text = ViewModel?.Address ?? "";
         if (!string.IsNullOrEmpty(Address.Text))

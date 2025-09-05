@@ -31,7 +31,7 @@ namespace BaseStationReader.UI.Views
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
         private readonly DispatcherTimer _timer = new DispatcherTimer();
-        private ITrackerLogger? _logger = null;
+        private ITrackerLogger _logger = null;
         private bool _aircraftLookupIsEnabled = false;
 
         public MainWindow()
@@ -50,7 +50,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnLoaded(object? source, RoutedEventArgs e)
+        private void OnLoaded(object source, RoutedEventArgs e)
         {
             // Set the title, based on the version set in the project properties
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -128,7 +128,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnLoadingRow(object? source, DataGridRowEventArgs e)
+        private void OnLoadingRow(object source, DataGridRowEventArgs e)
         {
             // Set the row colour based on the aircraft staleness
             var aircraft = e.Row.DataContext as Aircraft;
@@ -157,7 +157,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnRowTapped(object? source, TappedEventArgs e)
+        private void OnRowTapped(object source, TappedEventArgs e)
         {
             // Get the source as a grid row and check it's valid
             var row = source as DataGridRow;
@@ -182,7 +182,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void OnTimerTick(object? source, EventArgs e)
+        private void OnTimerTick(object source, EventArgs e)
         {
             RefreshTrackedAircraftGrid();
         }
@@ -283,14 +283,14 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowTrackingFiltersAsync(InteractionContext<FiltersWindowViewModel, BaseFilters?> interaction)
+        private async Task DoShowTrackingFiltersAsync(InteractionContext<FiltersWindowViewModel, BaseFilters> interaction)
         {
             // Create the dialog
             var dialog = new FiltersWindow();
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<BaseFilters?>(this);
+            var result = await dialog.ShowDialog<BaseFilters>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604
@@ -329,14 +329,14 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowTrackingOptionsAsync(InteractionContext<TrackingOptionsWindowViewModel, TrackerApplicationSettings?> interaction)
+        private async Task DoShowTrackingOptionsAsync(InteractionContext<TrackingOptionsWindowViewModel, TrackerApplicationSettings> interaction)
         {
             // Create the dialog
             var dialog = new TrackingOptionsWindow();
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<TrackerApplicationSettings?>(this);
+            var result = await dialog.ShowDialog<TrackerApplicationSettings>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604
@@ -364,7 +364,7 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowAircraftLookupAsync(InteractionContext<AircraftLookupWindowViewModel, AircraftLookupCriteria?> interaction)
+        private async Task DoShowAircraftLookupAsync(InteractionContext<AircraftLookupWindowViewModel, AircraftLookupCriteria> interaction)
         {
 
             // Create the dialog
@@ -372,7 +372,7 @@ namespace BaseStationReader.UI.Views
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<AircraftLookupCriteria?>(this);
+            var result = await dialog.ShowDialog<AircraftLookupCriteria>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604
@@ -387,14 +387,14 @@ namespace BaseStationReader.UI.Views
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        private async Task DoShowDatabaseSearchAsync(InteractionContext<DatabaseSearchWindowViewModel, DatabaseSearchCriteria?> interaction)
+        private async Task DoShowDatabaseSearchAsync(InteractionContext<DatabaseSearchWindowViewModel, DatabaseSearchCriteria> interaction)
         {
             // Create the dialog
             var dialog = new DatabaseSearchWindow();
             dialog.DataContext = interaction.Input;
 
             // Show the dialog and capture the results
-            var result = await dialog.ShowDialog<DatabaseSearchCriteria?>(this);
+            var result = await dialog.ShowDialog<DatabaseSearchCriteria>(this);
 #pragma warning disable CS8604
             interaction.SetOutput(result);
 #pragma warning restore CS8604

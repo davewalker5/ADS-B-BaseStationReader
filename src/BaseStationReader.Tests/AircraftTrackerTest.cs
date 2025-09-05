@@ -120,7 +120,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="expectedSquawk"></param>
-        private static void ConfirmAircraftProperties(Aircraft aircraft, string? expectedSquawk)
+        private static void ConfirmAircraftProperties(Aircraft aircraft, string expectedSquawk)
         {
             Assert.AreEqual("3965A3", aircraft.Address);
             Assert.IsNull(aircraft.Callsign);
@@ -140,7 +140,7 @@ namespace BaseStationReader.Tests
             }
         }
 
-        private void OnAircraftNotification(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
             lock (_notifications)
             {

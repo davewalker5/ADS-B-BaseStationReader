@@ -49,7 +49,7 @@ namespace BaseStationReader.Logic.Database
         public async Task<Aircraft> WriteAsync(Aircraft template)
         {
             // If the template has an ID associated with it, retrieve that record for update
-            Aircraft? aircraft = null;
+            Aircraft aircraft = null;
             if (template.Id > 0)
             {
                 aircraft = await GetAsync(x => x.Id == template.Id);

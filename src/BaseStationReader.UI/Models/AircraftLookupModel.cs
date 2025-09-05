@@ -45,9 +45,9 @@ namespace BaseStationReader.UI.Models
         /// Look up the details of the specified aircraft
         /// </summary>
         /// <param name="address"></param>
-        public AircraftDetails? LookupAircraft(string? address)
+        public AircraftDetails LookupAircraft(string address)
         {
-            AircraftDetails? details = null;
+            AircraftDetails details = null;
 
             if (!string.IsNullOrEmpty(address))
             {
@@ -61,9 +61,9 @@ namespace BaseStationReader.UI.Models
         /// Look for active flights for the aircraft with the specified ICAO address
         /// </summary>
         /// <param name="address"></param>
-        public FlightDetails? LookupActiveFlight(string? address)
+        public FlightDetails LookupActiveFlight(string address)
         {
-            FlightDetails? details = null;
+            FlightDetails details = null;
 
             if (!string.IsNullOrEmpty(address))
             {

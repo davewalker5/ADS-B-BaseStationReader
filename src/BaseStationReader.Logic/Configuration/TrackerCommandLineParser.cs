@@ -5,7 +5,7 @@ namespace BaseStationReader.Logic.Configuration
 {
     public class TrackerCommandLineParser : CommandLineParser
     {
-        public TrackerCommandLineParser(IHelpGenerator? generator) : base(generator)
+        public TrackerCommandLineParser(IHelpGenerator generator) : base(generator)
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
             Add(CommandLineOptionType.Host, false, "--host", "-ho", "Host to connect to for data stream", 1, 1);

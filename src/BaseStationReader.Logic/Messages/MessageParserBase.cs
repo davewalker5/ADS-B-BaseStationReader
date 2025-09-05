@@ -36,7 +36,7 @@ namespace BaseStationReader.Logic.Messages
         /// <param name="fields"></param>
         /// <param name="fieldIndex"></param>
         /// <returns></returns>
-        protected static string? GetStringValue(string[] fields, MessageField fieldIndex)
+        protected static string GetStringValue(string[] fields, MessageField fieldIndex)
         {
             var valueString = fields[(int)fieldIndex].Trim();
             var value = (int)fieldIndex < fields.Length && valueString.Length > 0 ? valueString : null;

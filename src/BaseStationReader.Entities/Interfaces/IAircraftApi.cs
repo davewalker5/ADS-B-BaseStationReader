@@ -5,6 +5,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftApi
     {
-        Task<Dictionary<ApiProperty, string>?> LookupAircraft(string address);
+        Task<Dictionary<ApiProperty, string>> LookupAircraft(string address);
     }
 }

@@ -7,10 +7,10 @@ namespace BaseStationReader.Logic.Tracking
     [ExcludeFromCodeCoverage]
     public class TrackerTimer : ITrackerTimer
     {
-        private System.Timers.Timer? _timer = null;
+        private System.Timers.Timer _timer = null;
         private readonly double _interval;
 
-        public event EventHandler<EventArgs>? Tick = null;
+        public event EventHandler<EventArgs> Tick = null;
 
         public TrackerTimer(double interval)
         {
@@ -33,7 +33,7 @@ namespace BaseStationReader.Logic.Tracking
             _timer = null;
         }
 
-        private void OnElapsed(object? sender, ElapsedEventArgs e)
+        private void OnElapsed(object sender, ElapsedEventArgs e)
         {
             Tick?.Invoke(this, e);
         }

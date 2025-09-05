@@ -5,7 +5,7 @@ namespace BaseStationReader.Logic.Configuration
 {
     public class SimulatorCommandLineParser : CommandLineParser
     {
-        public SimulatorCommandLineParser(IHelpGenerator? generator) : base(generator)
+        public SimulatorCommandLineParser(IHelpGenerator generator) : base(generator)
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help",0, 0);
             Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to send data on", 1, 1);

@@ -18,7 +18,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAircraft(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupAircraft(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
             var properties = await MakeApiRequest($"&hex={address}");
@@ -30,9 +30,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>?> MakeApiRequest(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequest(string parameters)
         {
-            Dictionary<ApiProperty, string>? properties = null;
+            Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
@@ -48,8 +48,8 @@ namespace BaseStationReader.Logic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string?>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string?>() ?? "" },
+                        { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ModelIATA, apiResponse!["iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" }

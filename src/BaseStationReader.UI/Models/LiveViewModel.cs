@@ -16,12 +16,12 @@ namespace BaseStationReader.UI.Models
 {
     public class LiveViewModel
     {
-        private ITrackerLogger? _logger = null;
-        private ITrackerWrapper? _wrapper = null;
+        private ITrackerLogger _logger = null;
+        private ITrackerWrapper _wrapper = null;
 
         public ObservableCollection<Aircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return _wrapper != null && _wrapper.IsTracking; } }
-        public BaseFilters? Filters { get; set; }
+        public BaseFilters Filters { get; set; }
 
         /// <summary>
         /// Initialise the tracker
@@ -97,7 +97,7 @@ namespace BaseStationReader.UI.Models
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftAdded(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address}");
         }
@@ -107,7 +107,7 @@ namespace BaseStationReader.UI.Models
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
             _logger!.LogMessage(Severity.Debug, $"Updated aircraft {e.Aircraft.Address}");
         }
@@ -117,7 +117,7 @@ namespace BaseStationReader.UI.Models
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftRemoved(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             _logger!.LogMessage(Severity.Debug, $"Removed aircraft {e.Aircraft.Address}");
         }

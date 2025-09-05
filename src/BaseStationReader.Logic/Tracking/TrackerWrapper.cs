@@ -17,13 +17,13 @@ namespace BaseStationReader.Logic.Tracking
     public class TrackerWrapper : ITrackerWrapper
     {
         private readonly ITrackerLogger _logger;
-        private IAircraftTracker? _tracker = null;
+        private IAircraftTracker _tracker = null;
         private readonly TrackerApplicationSettings _settings;
-        private IQueuedWriter? _writer = null;
+        private IQueuedWriter _writer = null;
 
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftAdded;
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftUpdated;
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
         public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
@@ -61,7 +61,7 @@ namespace BaseStationReader.Logic.Tracking
             };
 
             // Set up a distance calculator, if the receiver's latitude and longitude have been supplied
-            IDistanceCalculator? distanceCalculator = null;
+            IDistanceCalculator distanceCalculator = null;
             if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
             {
                 distanceCalculator = new HaversineCalculator
@@ -119,7 +119,7 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftAdded(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             // Add the aircraft to the collection
             TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
@@ -146,7 +146,7 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftUpdated(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
             // Update the aircraft in the collection
             TrackedAircraft[e.Aircraft.Address] = e.Aircraft;
@@ -173,10 +173,10 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftRemoved(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             // Remove the aircraft from the collection
-            TrackedAircraft.Remove(e.Aircraft.Address, out Aircraft? dummy);
+            TrackedAircraft.Remove(e.Aircraft.Address, out Aircraft dummy);
 
             // Forward the event to subscribers
             AircraftRemoved?.Invoke(this, e);
@@ -187,7 +187,7 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnBatchWritten(object? sender, BatchWrittenEventArgs e)
+        private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
             => _logger!.LogMessage(Severity.Info, $"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
     }
 }

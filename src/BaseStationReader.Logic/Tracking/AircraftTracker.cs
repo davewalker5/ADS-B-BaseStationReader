@@ -12,9 +12,9 @@ namespace BaseStationReader.Logic.Tracking
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
-        private readonly IDistanceCalculator? _distanceCalculator;
-        private readonly Dictionary<string, Aircraft> _aircraft = new();
-        private CancellationTokenSource? _cancellationTokenSource = null;
+        private readonly IDistanceCalculator _distanceCalculator;
+        private readonly Dictionary<string, Aircraft> _aircraft = [];
+        private CancellationTokenSource _cancellationTokenSource = null;
         private readonly int _recentMs;
         private readonly int _staleMs;
         private readonly int _removedMs;
@@ -22,9 +22,9 @@ namespace BaseStationReader.Logic.Tracking
         private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
         private readonly PropertyInfo[] _messageProperties = typeof(Message).GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftAdded;
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftUpdated;
-        public event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
         public bool IsTracking { get; private set; } = false;
 
@@ -33,7 +33,7 @@ namespace BaseStationReader.Logic.Tracking
             Dictionary<MessageType, IMessageParser> parsers,
             ITrackerLogger logger,
             ITrackerTimer timer,
-            IDistanceCalculator? distanceCalculator,
+            IDistanceCalculator distanceCalculator,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -81,11 +81,11 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnNewMessage(object? sender, MessageReadEventArgs e)
+        private void OnNewMessage(object sender, MessageReadEventArgs e)
         {
             // Split the message into individual fields and check we have a valid message type
             var fields = e.Message.Split(",");
-            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser? parser))
+            if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser parser))
             {
                 // Parse the message and check the aircraft identifier is valid
                 Message msg = parser.Parse(fields);
@@ -123,7 +123,7 @@ namespace BaseStationReader.Logic.Tracking
                 try
                 {
                     // If the position's changed, construct a position instance to add to the notification event arguments
-                    AircraftPosition? position = null;
+                    AircraftPosition position = null;
                     if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
                     {
                         position = CreateAircraftPosition(aircraft);
@@ -182,9 +182,9 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private static AircraftPosition? CreateAircraftPosition(Aircraft aircraft)
+        private static AircraftPosition CreateAircraftPosition(Aircraft aircraft)
         {
-            AircraftPosition? position = null;
+            AircraftPosition position = null;
 
             if (aircraft.Altitude != null && aircraft.Latitude != null && aircraft.Longitude != null)
             {
@@ -249,7 +249,7 @@ namespace BaseStationReader.Logic.Tracking
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnTimer(object? sender, EventArgs e)
+        private void OnTimer(object sender, EventArgs e)
         {
             lock (_aircraft)
             {

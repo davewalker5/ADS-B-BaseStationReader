@@ -13,7 +13,7 @@ namespace BaseStationReader.Logic.Messages
         private readonly int _port;
         private readonly int _readTimeout;
 
-        public event EventHandler<MessageReadEventArgs>? MessageRead;
+        public event EventHandler<MessageReadEventArgs> MessageRead;
 
         public MessageReader(ITrackerLogger logger, string server, int port, int readTimeout)
         {
@@ -51,7 +51,7 @@ namespace BaseStationReader.Logic.Messages
                             try
                             {
                                 // Read the next message and notify subscribers
-                                string? message = await reader.ReadLineAsync(token);
+                                string message = await reader.ReadLineAsync(token);
                                 if (!string.IsNullOrEmpty(message))
                                 {
                                     try

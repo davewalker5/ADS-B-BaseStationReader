@@ -19,7 +19,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="iata"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByIATACode(string iata)
+        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACode(string iata)
         {
             Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
             return await MakeApiRequest($"&iata_code={iata}");
@@ -30,7 +30,7 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>?> LookupAirlineByICAOCode(string icao)
+        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCode(string icao)
         {
             Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
             return await MakeApiRequest($"&icao_code={icao}");
@@ -41,9 +41,9 @@ namespace BaseStationReader.Logic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>?> MakeApiRequest(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequest(string parameters)
         {
-            Dictionary<ApiProperty, string>? properties = null;
+            Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";

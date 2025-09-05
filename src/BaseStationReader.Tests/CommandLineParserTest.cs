@@ -9,7 +9,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class CommandLineParserTest
     {
-        private CommandLineParser? _parser;
+        private CommandLineParser _parser;
 
         [TestInitialize]
         public void TestInitialise()

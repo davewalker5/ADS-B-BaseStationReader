@@ -7,7 +7,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class ModelManagerTest
     {
-        private IModelManager? _manager = null;
+        private IModelManager _manager = null;
 
         [TestInitialize]
         public void Initialise()

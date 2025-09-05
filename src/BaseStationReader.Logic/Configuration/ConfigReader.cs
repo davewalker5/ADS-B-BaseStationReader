@@ -9,7 +9,7 @@ namespace BaseStationReader.Logic.Configuration
         /// Load and return the application settings from the named JSON-format application settings file
         /// </summary>
         /// <returns></returns>
-        public virtual T? Read(string jsonFileName)
+        public virtual T Read(string jsonFileName)
         {
             // Set up the configuration reader
             IConfiguration configuration = new ConfigurationBuilder()

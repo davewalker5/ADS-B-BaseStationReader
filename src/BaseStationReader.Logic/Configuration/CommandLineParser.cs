@@ -6,13 +6,13 @@ namespace BaseStationReader.Logic.Configuration
 {
     public class CommandLineParser : ICommandLineParser
     {
-        private readonly List<CommandLineOption> _options = new List<CommandLineOption>();
-        private readonly Dictionary<CommandLineOptionType, CommandLineOptionValue> _values = new Dictionary<CommandLineOptionType, CommandLineOptionValue>();
-        private readonly IHelpGenerator? _helpGenerator = null;
+        private readonly List<CommandLineOption> _options = [];
+        private readonly Dictionary<CommandLineOptionType, CommandLineOptionValue> _values = [];
+        private readonly IHelpGenerator _helpGenerator = null;
 
         public CommandLineParser() { }
 
-        public CommandLineParser(IHelpGenerator? generator)
+        public CommandLineParser(IHelpGenerator generator)
             => _helpGenerator = generator;
 
         /// <summary>
@@ -88,9 +88,9 @@ namespace BaseStationReader.Logic.Configuration
         /// </summary>
         /// <param name="optionType"></param>
         /// <returns></returns>
-        public List<string>? GetValues(CommandLineOptionType optionType)
+        public List<string> GetValues(CommandLineOptionType optionType)
         {
-            List<string>? values = null;
+            List<string> values = null;
 
             if (IsPresent(optionType))
             {
@@ -146,7 +146,7 @@ namespace BaseStationReader.Logic.Configuration
         /// <exception cref="MalformedCommandLineException"></exception>
         private void BuildValueList(IEnumerable<string> args)
         {
-            CommandLineOptionValue? current = null;
+            CommandLineOptionValue current = null;
 
             // Iterate over the command line arguments extracting options and associated values
             foreach (string arg in args)

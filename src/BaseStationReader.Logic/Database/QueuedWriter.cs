@@ -17,7 +17,7 @@ namespace BaseStationReader.Logic.Database
         private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
 
-        public event EventHandler<BatchWrittenEventArgs>? BatchWritten;
+        public event EventHandler<BatchWrittenEventArgs> BatchWritten;
 
         public QueuedWriter(
             IAircraftWriter aircraftWriter,
@@ -82,7 +82,7 @@ namespace BaseStationReader.Logic.Database
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnTimer(object? sender, EventArgs e)
+        private void OnTimer(object sender, EventArgs e)
         {
             _timer.Stop();
 
@@ -94,7 +94,7 @@ namespace BaseStationReader.Logic.Database
             for (int i = 0; i < _batchSize; i++)
             {
                 // Attempt to get the next item and if it's not there break out
-                if (!_queue.TryDequeue(out object? queued))
+                if (!_queue.TryDequeue(out object queued))
                 {
                     break;
                 }
@@ -132,8 +132,8 @@ namespace BaseStationReader.Logic.Database
         private async Task WriteDequeuedObject(object queued)
         {
             // If it's an aircraft and it's an existing record that hasn't been locked, get the ID for update
-            Aircraft? aircraft = queued as Aircraft;
-            AircraftPosition? position = null;
+            Aircraft aircraft = queued as Aircraft;
+            AircraftPosition position = null;
             if (aircraft != null)
             {
                 // Get the active aircraft with the specified address, if there is one, so it can be updated

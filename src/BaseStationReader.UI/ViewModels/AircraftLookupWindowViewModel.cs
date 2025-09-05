@@ -11,9 +11,9 @@ namespace BaseStationReader.UI.ViewModels
     {
         private readonly AircraftLookupModel _aircraftLookup;
 
-        public ReactiveCommand<Unit, AircraftLookupCriteria?> CloseCommand { get; private set; }
+        public ReactiveCommand<Unit, AircraftLookupCriteria> CloseCommand { get; private set; }
 
-        public AircraftLookupWindowViewModel(ITrackerLogger logger, TrackerApplicationSettings settings, AircraftLookupCriteria? initialValues)
+        public AircraftLookupWindowViewModel(ITrackerLogger logger, TrackerApplicationSettings settings, AircraftLookupCriteria initialValues)
         {
             // Set up the aircraft lookup model
             _aircraftLookup = new AircraftLookupModel(logger, settings);
@@ -22,7 +22,7 @@ namespace BaseStationReader.UI.ViewModels
             Address = initialValues?.Address;
 
             // Create a command that can be bound to the Cancel button on the dialog
-            CloseCommand = ReactiveCommand.Create(() => { return (AircraftLookupCriteria?)this; });
+            CloseCommand = ReactiveCommand.Create(() => { return (AircraftLookupCriteria)this; });
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace BaseStationReader.UI.ViewModels
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public AircraftDetails? LookupAircraft(string? address)
+        public AircraftDetails LookupAircraft(string address)
             => _aircraftLookup.LookupAircraft(address);
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace BaseStationReader.UI.ViewModels
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public FlightDetails? LookupActiveFlight(string? address)
+        public FlightDetails LookupActiveFlight(string address)
             => _aircraftLookup.LookupActiveFlight(address);
     }
 }
