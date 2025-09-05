@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Messages;
-using BaseStationReader.Logic.Messages;
+using BaseStationReader.BusinessLogic.Messages;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 

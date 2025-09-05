@@ -1,10 +1,10 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Logic.Configuration;
-using BaseStationReader.Logic.Logging;
-using BaseStationReader.Logic.Simulator;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Configuration;
+using BaseStationReader.BusinessLogic.Logging;
+using BaseStationReader.BusinessLogic.Simulator;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Simulator.Logic;
 using System.Diagnostics;
 using System.Reflection;

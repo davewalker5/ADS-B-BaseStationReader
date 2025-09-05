@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Logic.Simulator;
+﻿using BaseStationReader.BusinessLogic.Simulator;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests

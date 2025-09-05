@@ -2,9 +2,9 @@
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Logic.Configuration;
-using BaseStationReader.Logic.Logging;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Configuration;
+using BaseStationReader.BusinessLogic.Logging;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using BaseStationReader.Terminal.Logic;
 using Spectre.Console;

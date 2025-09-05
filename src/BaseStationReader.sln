@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Terminal"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Entities", "BaseStationReader.Entities\BaseStationReader.Entities.csproj", "{08037705-12C5-49BB-84D6-B302A628E7DF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Logic", "BaseStationReader.Logic\BaseStationReader.Logic.csproj", "{7D4EA9D4-6F02-41F7-B56C-56B70DE3B21E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.BusinessLogic", "BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj", "{7D4EA9D4-6F02-41F7-B56C-56B70DE3B21E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Data", "BaseStationReader.Data\BaseStationReader.Data.csproj", "{F05C2B61-1577-4108-A8E4-F9CA82F5C369}"
 EndProject

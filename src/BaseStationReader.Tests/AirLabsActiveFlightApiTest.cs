@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests

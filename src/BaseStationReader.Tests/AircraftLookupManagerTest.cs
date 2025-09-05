@@ -1,8 +1,8 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Api.AirLabs;
-using BaseStationReader.Logic.Database;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests

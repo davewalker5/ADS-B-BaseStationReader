@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Logic.Tracking;
+﻿using BaseStationReader.BusinessLogic.Tracking;
 
 namespace BaseStationReader.Tests
 {

@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.Logic
+namespace BaseStationReader.BusinessLogic
 {
     public interface IAircraftLockManager
     {

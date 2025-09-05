@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests
 {

@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 using DocumentFormat.OpenXml.ExtendedProperties;
 
 namespace BaseStationReader.Tests

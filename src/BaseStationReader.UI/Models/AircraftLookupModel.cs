@@ -2,10 +2,10 @@
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
-using BaseStationReader.Logic.Api;
-using BaseStationReader.Logic.Api.AirLabs;
-using BaseStationReader.Logic.Database;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.BusinessLogic.Tracking;
 using System;
 using System.Threading.Tasks;
 

@@ -39,7 +39,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
-    <ProjectReference Include="..\BaseStationReader.Logic\BaseStationReader.Logic.csproj" />
+    <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
     <ProjectReference Include="..\BaseStationReader.Terminal\BaseStationReader.Terminal.csproj" />
   </ItemGroup>
 

@@ -1,8 +1,8 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Expressions;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Database;
-using BaseStationReader.Logic.DataExchange;
+using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.BusinessLogic.DataExchange;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
