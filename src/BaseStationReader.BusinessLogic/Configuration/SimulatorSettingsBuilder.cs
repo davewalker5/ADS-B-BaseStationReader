@@ -40,6 +40,45 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings!.MinimumLogLevel = minimumLogLevel;
             }
 
+            values = parser.GetValues(CommandLineOptionType.MinimumAltitude);
+            if (values != null) settings!.MinimumAltitude = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumAltitude);
+            if (values != null) settings!.MaximumAltitude = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MinimumTakeOffSpeed);
+            if (values != null) settings!.MinimumTakeOffSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumTakeOffSpeed);
+            if (values != null) settings!.MaximumTakeOffSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MinimumApproachSpeed);
+            if (values != null) settings!.MinimumApproachSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumApproachSpeed);
+            if (values != null) settings!.MaximumApproachSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MinimumCruisingSpeed);
+            if (values != null) settings!.MinimumCruisingSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumCruisingSpeed);
+            if (values != null) settings!.MaximumCruisingSpeed = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MinimumClimbRate);
+            if (values != null) settings!.MinimumClimbRate = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumClimbRate);
+            if (values != null) settings!.MaximumClimbRate = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MinimumDescentRate);
+            if (values != null) settings!.MinimumDescentRate = decimal.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumDescentRate);
+            if (values != null) settings!.MaximumDescentRate = decimal.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumInitialRange);
+            if (values != null) settings!.MaximumInitialRange = int.Parse(values[0]);
+
             return settings;
         }
 # pragma warning restore S3776

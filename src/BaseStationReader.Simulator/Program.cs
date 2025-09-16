@@ -47,23 +47,31 @@ namespace BaseStationReader.Simulator
                 Console.WriteLine("Press ESC to stop the simulator");
 
                 // Configure the aircraft and message generators
-                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger);
+                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings);
                 var generators = new List<IMessageGenerator>
-            {
-                new IdentificationMessageGenerator(logger),
-                new SurfacePositionMessageGenerator(logger),
-                new AirbornePositionMessageGenerator(logger),
-                new AirborneVelocityMessageGenerator(logger),
-                new SurveillanceAltMessageGenerator(logger),
-                new SurveillanceIdMessageGenerator(logger),
-                new AirToAirMessageGenerator(logger),
-                new AllCallReplyMessageGenerator(logger)
-            };
-                IMessageGenerator messageGenerator = new MessageGenerator(generators);
+                {
+                    new IdentificationMessageGenerator(logger),
+                    new SurfacePositionMessageGenerator(logger),
+                    new AirbornePositionMessageGenerator(logger),
+                    new AirborneVelocityMessageGenerator(logger),
+                    new SurveillanceAltMessageGenerator(logger),
+                    new SurveillanceIdMessageGenerator(logger),
+                    new AirToAirMessageGenerator(logger),
+                    new AllCallReplyMessageGenerator(logger)
+                };
+                IMessageGeneratorWrapper messageGeneratorWrapper = new MessageGeneratorWrapper(generators);
 
                 // Configure a timer, aircraft and message generatorand the simulator
                 ITrackerTimer timer = new TrackerTimer(settings.SendInterval);
-                using (var simulator = new ReceiverSimulator(logger, timer, aircraftGenerator, messageGenerator, settings.Port, settings.AircraftLifespan, settings.NumberOfAircraft))
+                using (var simulator = new ReceiverSimulator(
+                    logger,
+                    timer,
+                    aircraftGenerator,
+                    messageGeneratorWrapper,
+                    settings.MaximumAltitude,
+                    settings.Port,
+                    settings.AircraftLifespan,
+                    settings.NumberOfAircraft))
                 {
                     // Run the simulator
                     Task.Run(() => simulator.Start());

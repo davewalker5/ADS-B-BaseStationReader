@@ -23,6 +23,19 @@
         ReceiverLongitude,
         SendInterval,
         NumberOfAircraft,
-        Lifespan
+        Lifespan,
+        MinimumAltitude,
+        MaximumAltitude,
+        MinimumTakeOffSpeed,
+        MaximumTakeOffSpeed,
+        MinimumApproachSpeed,
+        MaximumApproachSpeed,
+        MinimumCruisingSpeed,
+        MaximumCruisingSpeed,
+        MinimumClimbRate,
+        MaximumClimbRate,
+        MinimumDescentRate,
+        MaximumDescentRate,
+        MaximumInitialRange
     }
 }

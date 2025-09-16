@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Attributes;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Tracking
@@ -54,6 +55,12 @@ namespace BaseStationReader.Entities.Tracking
 
         [Required]
         public TrackingStatus Status { get; set; }
+
+        [NotMapped]
+        public SimulatorFlags SimulatorFlags { get; set; }
+
+        [NotMapped]
+        public DateTime PositionLastUpdated { get; set; }
 
 #pragma warning disable CS8618
         public ICollection<AircraftPosition> Positions { get; set; }

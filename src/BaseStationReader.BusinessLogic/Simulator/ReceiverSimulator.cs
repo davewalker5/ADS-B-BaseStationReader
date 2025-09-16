@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -22,8 +23,9 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly IAircraftGenerator _aircraftGenerator;
-        private readonly IMessageGenerator _messageGenerator;
+        private readonly IMessageGeneratorWrapper _messageGeneratorWrapper;
 
+        private readonly int _maximumAltitude;
         private readonly int _lifespan;
         private readonly int _numberOfAircraft;
         private bool _listening = false;
@@ -32,7 +34,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
             ITrackerLogger logger,
             ITrackerTimer timer,
             IAircraftGenerator aircraftGenerator,
-            IMessageGenerator generator,
+            IMessageGeneratorWrapper generatorWrapper,
+            int maximumAltitude,
             int port,
             int lifespan,
             int numberOfAircraft)
@@ -41,7 +44,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
             _logger = logger;
             _timer = timer;
             _aircraftGenerator = aircraftGenerator;
-            _messageGenerator = generator;
+            _messageGeneratorWrapper = generatorWrapper;
+            _maximumAltitude = maximumAltitude;
             _lifespan = lifespan;
             _numberOfAircraft = numberOfAircraft;
             _timer.Tick += OnTimer;
@@ -147,6 +151,47 @@ namespace BaseStationReader.BusinessLogic.Simulator
         }
 
         /// <summary>
+        /// Update the positions of the aircraft
+        /// </summary>
+        private void UpdateAircraftPositions()
+        {
+            // Compile a list of aircraft that are still moving and need a position update
+            var now = DateTime.Now;
+            var aircraft = _aircraft.Where(x =>
+                ((now - x.PositionLastUpdated).TotalMilliseconds >= 1000) &&
+                (x.GroundSpeed > 0));
+
+            // Update the positions for those aircraft
+            foreach (var a in aircraft)
+            {
+                // Calculate the updated position
+                (double latitude, double longitude) = CoordinateMathematics.DestinationPoint(
+                    (double)a.Latitude.Value,
+                    (double)a.Longitude.Value,
+                    (double)a.Track.Value,
+                    (double)a.GroundSpeed.Value);
+
+                // Set the new position and altitude, clipping the altitude to the range 0 to
+                // the maximum configured altitude
+                a.PositionLastUpdated = now;
+                a.Latitude = (decimal)latitude;
+                a.Longitude = (decimal)longitude;
+                a.Altitude = Math.Max(0, a.Altitude.Value + a.VerticalRate.Value);
+                a.Altitude = Math.Min(a.Altitude.Value, _maximumAltitude);
+
+                // If the altitude has reached zero, stop the aircraft from moving
+                if (a.Altitude == 0)
+                {
+                    a.GroundSpeed = 0;
+                }
+
+                // Generate and broadcast a surface position message for this aircraft
+                var message = GenerateMessage(a, "SurfacePosition");
+                BroadcastMessage(message);
+            }
+        }
+
+        /// <summary>
         /// Handler to handle timer events
         /// </summary>
         /// <param name="sender"></param>
@@ -160,10 +205,14 @@ namespace BaseStationReader.BusinessLogic.Simulator
                 // Remove expired aircraft
                 RemoveExpiredAircraft();
 
+                // Update aircraft positions
+                UpdateAircraftPositions();
+
                 // Top the aircraft list up to the required number
                 TopUpAircraft();
 
-                // Generate the message
+                // The position updates will automatically generate position updates but also generate
+                // another random message
                 var message = GenerateMessage();
 
                 // Send the message to each client
@@ -176,15 +225,32 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Generate the next message, from a randomly selected aircraft
         /// </summary>
+        /// <param name="messageType"></param>
         /// <returns></returns>
-        private byte[] GenerateMessage()
+        private byte[] GenerateMessage(string messageType = "")
         {
             // Select the aircraft
             var index = _random.Next(0, _aircraft.Count);
             var aircraft = _aircraft[index];
 
+            // Generate the message
+            var messageBytes = GenerateMessage(aircraft, messageType);
+
+            return messageBytes;
+        }
+
+        /// <summary>
+        /// Generate a message from a specified aircraft
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <param name="messageType"></param>
+        /// <returns></returns>
+        private byte[] GenerateMessage(Aircraft aircraft, string messageType = "")
+        {
             /// Create the message instance
-            var message = _messageGenerator.Generate(aircraft.Address, aircraft.Callsign, aircraft.Squawk);
+            var message = !string.IsNullOrEmpty(messageType) ?
+                _messageGeneratorWrapper.Generate(aircraft, messageType) :
+                _messageGeneratorWrapper.Generate(aircraft);
 
             // Log it in Base Station format
             var basestation = message.ToBaseStation();

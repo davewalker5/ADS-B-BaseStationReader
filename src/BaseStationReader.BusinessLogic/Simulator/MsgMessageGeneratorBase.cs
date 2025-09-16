@@ -6,7 +6,6 @@ namespace BaseStationReader.BusinessLogic.Simulator
 {
     public abstract class MsgMessageGeneratorBase
     {
-        protected readonly Random _random = new();
         private readonly ITrackerLogger _logger;
 
         protected MsgMessageGeneratorBase(ITrackerLogger logger)
@@ -15,15 +14,28 @@ namespace BaseStationReader.BusinessLogic.Simulator
         }
 
         /// <summary>
-        /// Generate a random integer in the specified range (inclusive)
+        /// Convert a descent or ascent rate expressed as m/s to ft/min
         /// </summary>
-        /// <param name="minValue"></param>
-        /// <param name="maxValue"></param>
+        /// <param name="rate"></param>
         /// <returns></returns>
-        protected int RandomInt(int minValue, int maxValue)
-        {
-            return _random.Next(minValue, maxValue + 1);
-        }
+        protected static decimal VerticalRateToFeetPerMinute(decimal rate)
+            => Math.Round(rate * 196.85M, MidpointRounding.AwayFromZero);
+
+        /// <summary>
+        /// Convert an altitude in metres to feet
+        /// </summary>
+        /// <param name="metres"></param>
+        /// <returns></returns>
+        protected static decimal AltitudeToFeet(decimal metres)
+            => Math.Round(metres * 3.28084M, MidpointRounding.AwayFromZero);
+
+        /// <summary>
+        /// Convert a ground speed in m/s to knots
+        /// </summary>
+        /// <param name="metresPerSecond"></param>
+        /// <returns></returns>
+        protected static decimal GroundSpeedToKnots(decimal metresPerSecond)
+            => Math.Round(metresPerSecond * 1.943844M, MidpointRounding.AwayFromZero);
 
         /// <summary>
         /// Construct a message with the core fields common to all message types populated
