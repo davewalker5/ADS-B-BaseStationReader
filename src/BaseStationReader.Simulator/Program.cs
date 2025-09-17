@@ -34,9 +34,7 @@ namespace BaseStationReader.Simulator
                 // Get the version number and application title
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-#pragma warning disable S2589
                 var title = $"Receiver Simulator v{info.FileVersion}: Port: {settings!.Port}";
-#pragma warning restore S2589
 
                 // Log the startup messages
                 logger.LogMessage(Severity.Info, new string('=', 80));

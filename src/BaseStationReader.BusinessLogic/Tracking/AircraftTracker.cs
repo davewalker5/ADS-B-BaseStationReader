@@ -21,6 +21,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _recentMs;
         private readonly int _staleMs;
         private readonly int _removedMs;
+        private readonly int? _maximumDistance;
         private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
         private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -39,6 +40,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerTimer timer,
             IDistanceCalculator distanceCalculator,
             IEnumerable<AircraftBehaviour> behaviours,
+            int? maximumDistance,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -48,6 +50,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _logger = logger;
             _timer = timer;
             _distanceCalculator = distanceCalculator;
+            _maximumDistance = maximumDistance;
             _behaviours = behaviours;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
@@ -142,8 +145,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                         _logger.LogMessage(Severity.Debug, $"Aircraft {aircraft.Address} : {aircraft.Behaviour}");
                     }
 
-                    // If the aircraft matches the tracked behaviours, notify subscribers
-                    if (_behaviours.Contains(aircraft.Behaviour))
+                    // Check the aircraft qualifies for notifications
+                    if (NotificationRequired(aircraft))
                     {
                         // If the position's changed, construct a position instance to add to the notification event arguments
                         AircraftPosition position = null;
@@ -171,6 +174,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
         }
 
         /// <summary>
+        /// Return true if an aircraft meets the criteria for notifications to be sent
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        private bool NotificationRequired(Aircraft aircraft)
+            => _behaviours.Contains(aircraft.Behaviour) &&
+               ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance));
+
+        /// <summary>
         /// Handle a message that is from a new aircraft to be added to the collection
         /// </summary>
         /// <param name="msg"></param>
@@ -184,9 +196,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _aircraft.Add(msg.Address, aircraft);
             }
 
-            // On first addition, aircraft behaviour isn't known so only raise an "added"
-            // notification if the "unknown" behaviour is in the list of tracked behaviours
-            if (_behaviours.Contains(AircraftBehaviour.Unknown))
+            // Check the aircraft qualifies for notification
+            if (NotificationRequired(aircraft))
             {
                 try
                 {
@@ -289,9 +300,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 {
                     // Determine how long it is since this aircraft updated
                     var aircraft = entry.Value;
-#pragma warning disable S6561
                     var elapsed = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
-#pragma warning restore S6561
 
                     try
                     {

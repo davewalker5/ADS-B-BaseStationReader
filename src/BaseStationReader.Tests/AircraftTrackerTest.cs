@@ -47,6 +47,7 @@ namespace BaseStationReader.Tests
                 timer,
                 null,
                 Enum.GetValues<AircraftBehaviour>(),
+                null,
                 TrackerRecentMs,
                 TrackerStaleMs,
                 TrackerRemovedMs);

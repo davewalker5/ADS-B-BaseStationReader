@@ -46,9 +46,7 @@ namespace BaseStationReader.Terminal
                 // Get the version number and application title
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-#pragma warning disable S2589
                 var title = $"Aircraft Tracker v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
-#pragma warning restore S2589
 
                 // Log the startup messages
                 _logger.LogMessage(Severity.Info, new string('=', 80));
@@ -108,9 +106,7 @@ namespace BaseStationReader.Terminal
                 await Task.Delay(100);
 
                 // Check we've not exceeded the application timeout
-#pragma warning disable S6561
                 elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
-#pragma warning restore S6561
             }
 
             // Stop the wrapper

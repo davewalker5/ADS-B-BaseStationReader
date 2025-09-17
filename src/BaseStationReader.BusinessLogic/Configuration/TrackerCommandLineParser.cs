@@ -27,6 +27,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
+            Add(CommandLineOptionType.MaximumTrackedDistance, false, "--max-distance", "-md", "Maximum distance (Nm) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.TrackedBehaviours, false, "--behaviours", "-b", "Specify a list of aircraft behaviours to track", 1, 1);
         }
     }

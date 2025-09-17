@@ -25,6 +25,7 @@ namespace BaseStationReader.Entities.Config
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
+        public int? MaximumTrackedDistance { get; set;  }
         public List<ApiEndpoint> ApiEndpoints { get; set; } = [];
         public List<ApiServiceKey> ApiServiceKeys { get; set; } = [];
         public List<TrackerColumn> Columns { get; set; } = [];
