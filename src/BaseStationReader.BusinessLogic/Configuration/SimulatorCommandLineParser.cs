@@ -28,6 +28,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MinimumDescentRate, false, "--min-descentrate", "-mindr", "Minimum descent rate in m/s", 1, 1);
             Add(CommandLineOptionType.MaximumDescentRate, false, "--max-descentrate", "-maxdr", "Maximum descent rate in m/s", 1, 1);
             Add(CommandLineOptionType.MaximumInitialRange, false, "--max-range", "--maxr", "Maximum initial distance to an aircraft in m", 1, 1);
+            Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
+            Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
         }
     }
 }
