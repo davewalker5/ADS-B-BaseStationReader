@@ -7,10 +7,12 @@ using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using BaseStationReader.Terminal.Logic;
+using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using BaseStationReader.Data;
 
 namespace BaseStationReader.Terminal
 {
@@ -52,9 +54,15 @@ namespace BaseStationReader.Terminal
                 _logger.LogMessage(Severity.Info, new string('=', 80));
                 _logger.LogMessage(Severity.Info, title);
 
+                // Make sure the latest migrations have been applied - this ensures the DB is created and in the
+                // correct state if it's absent or stale on startup
+                var context = new BaseStationReaderDbContextFactory().CreateDbContext([]);
+                context.Database.Migrate();
+                _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
+
                 // Initialise the tracker wrapper
                 _wrapper = new TrackerWrapper(_logger, _settings!);
-                _wrapper.Initialise();
+                await _wrapper.InitialiseAsync();
                 _wrapper.AircraftAdded += OnAircraftAdded;
                 _wrapper.AircraftUpdated += OnAircraftUpdated;
                 _wrapper.AircraftRemoved += OnAircraftRemoved;

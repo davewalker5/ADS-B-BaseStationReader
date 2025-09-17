@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Config
@@ -27,5 +28,6 @@ namespace BaseStationReader.Entities.Config
         public List<ApiEndpoint> ApiEndpoints { get; set; } = [];
         public List<ApiServiceKey> ApiServiceKeys { get; set; } = [];
         public List<TrackerColumn> Columns { get; set; } = [];
+        public List<AircraftBehaviour> TrackedBehaviours { get; set; } = [];
     }
 }

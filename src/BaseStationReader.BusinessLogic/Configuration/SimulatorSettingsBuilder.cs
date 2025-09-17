@@ -12,7 +12,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
         /// <param name="parser"></param>
         /// <param name="configJsonPath"></param>
         /// <returns></returns>
-#pragma warning disable S3776
         public SimulatorApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath)
         {
             // Read the config file to provide default settings
@@ -81,6 +80,5 @@ namespace BaseStationReader.BusinessLogic.Configuration
 
             return settings;
         }
-# pragma warning restore S3776
     }
 }

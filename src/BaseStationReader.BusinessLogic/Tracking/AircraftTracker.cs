@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
+using DocumentFormat.OpenXml.Office2019.Presentation;
 using System.Reflection;
 
 namespace BaseStationReader.BusinessLogic.Tracking
@@ -20,6 +21,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _recentMs;
         private readonly int _staleMs;
         private readonly int _removedMs;
+        private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
         private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
         private readonly PropertyInfo[] _messageProperties = typeof(Message).GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -36,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerLogger logger,
             ITrackerTimer timer,
             IDistanceCalculator distanceCalculator,
+            IEnumerable<AircraftBehaviour> behaviours,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -45,6 +48,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _logger = logger;
             _timer = timer;
             _distanceCalculator = distanceCalculator;
+            _behaviours = behaviours;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
             _staleMs = staleMilliseconds;
@@ -126,6 +130,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 try
                 {
+                    // If the altitude is specified, use changes in altitude to characterise aircraft behaviour
                     if ((lastAltitude != null) && (aircraft.Altitude != null))
                     {
                         // Calculate the change in altitude and add it to the history
@@ -137,20 +142,24 @@ namespace BaseStationReader.BusinessLogic.Tracking
                         _logger.LogMessage(Severity.Debug, $"Aircraft {aircraft.Address} : {aircraft.Behaviour}");
                     }
 
-                    // If the position's changed, construct a position instance to add to the notification event arguments
-                    AircraftPosition position = null;
-                    if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
+                    // If the aircraft matches the tracked behaviours, notify subscribers
+                    if (_behaviours.Contains(aircraft.Behaviour))
                     {
-                        position = CreateAircraftPosition(aircraft);
-                    }
+                        // If the position's changed, construct a position instance to add to the notification event arguments
+                        AircraftPosition position = null;
+                        if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
+                        {
+                            position = CreateAircraftPosition(aircraft);
+                        }
 
-                    // Notify subscribers
-                    AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
-                    {
-                        Aircraft = aircraft,
-                        Position = position,
-                        NotificationType = AircraftNotificationType.Updated
-                    });
+                        // Notify subscribers
+                        AircraftUpdated?.Invoke(this, new AircraftNotificationEventArgs
+                        {
+                            Aircraft = aircraft,
+                            Position = position,
+                            NotificationType = AircraftNotificationType.Updated
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -175,20 +184,25 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _aircraft.Add(msg.Address, aircraft);
             }
 
-            try
+            // On first addition, aircraft behaviour isn't known so only raise an "added"
+            // notification if the "unknown" behaviour is in the list of tracked behaviours
+            if (_behaviours.Contains(AircraftBehaviour.Unknown))
             {
-                AircraftAdded?.Invoke(this, new AircraftNotificationEventArgs
+                try
                 {
-                    Aircraft = aircraft,
-                    Position = CreateAircraftPosition(aircraft),
-                    NotificationType = AircraftNotificationType.Added
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log and sink the exception. The tracker has to be protected from errors in the
-                // subscriber callbacks or the application will stop updating
-                _logger.LogException(ex);
+                    AircraftAdded?.Invoke(this, new AircraftNotificationEventArgs
+                    {
+                        Aircraft = aircraft,
+                        Position = CreateAircraftPosition(aircraft),
+                        NotificationType = AircraftNotificationType.Added
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Log and sink the exception. The tracker has to be protected from errors in the
+                    // subscriber callbacks or the application will stop updating
+                    _logger.LogException(ex);
+                }
             }
         }
 

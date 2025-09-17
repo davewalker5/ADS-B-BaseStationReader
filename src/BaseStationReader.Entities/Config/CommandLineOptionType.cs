@@ -3,6 +3,7 @@
     public enum CommandLineOptionType
     {
         Help,
+        SettingsFile,
         MinimumLogLevel,
         Host,
         Port,
@@ -36,6 +37,7 @@
         MaximumClimbRate,
         MinimumDescentRate,
         MaximumDescentRate,
-        MaximumInitialRange
+        MaximumInitialRange,
+        TrackedBehaviours
     }
 }

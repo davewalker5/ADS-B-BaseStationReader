@@ -1,6 +1,7 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
@@ -10,16 +11,19 @@ namespace BaseStationReader.BusinessLogic.Configuration
         /// Construct the application settings from the configuration file and any command line arguments
         /// </summary>
         /// <param name="parser"></param>
-        /// <param name="configJsonPath"></param>
+        /// <param name="defaultConfigJsonPath"></param>
         /// <returns></returns>
-#pragma warning disable S3776
-        public TrackerApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath)
+        public TrackerApplicationSettings BuildSettings(ICommandLineParser parser, string defaultConfigJsonPath)
         {
+            // If a settings file has been specified, use it in place of the default
+            var values = parser.GetValues(CommandLineOptionType.SettingsFile);
+            var configJsonPath = (values != null) ? values[0] : defaultConfigJsonPath;
+
             // Read the config file to provide default settings
             var settings = new TrackerConfigReader().Read(configJsonPath);
 
             // Apply the command line values over the defaults
-            var values = parser.GetValues(CommandLineOptionType.Host);
+            values = parser.GetValues(CommandLineOptionType.Host);
             if (values != null) settings!.Host = values[0];
 
             values = parser.GetValues(CommandLineOptionType.Port);
@@ -75,9 +79,17 @@ namespace BaseStationReader.BusinessLogic.Configuration
 
             values = parser.GetValues(CommandLineOptionType.ReceiverLongitude);
             if (values != null) settings!.ReceiverLongitude = double.Parse(values[0]);
+            
+            values = parser.GetValues(CommandLineOptionType.TrackedBehaviours);
+            if (values != null)
+            {
+                settings!.TrackedBehaviours = values[0]
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => Enum.Parse<AircraftBehaviour>(s))
+                    .ToList();
+            }
 
             return settings;
         }
-# pragma warning restore S3776
     }
 }

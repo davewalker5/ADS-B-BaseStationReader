@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <summary>
         /// Initialise the tracking and writing system
         /// </summary>
-        public void Initialise()
+        public async Task InitialiseAsync()
         {
             // Log the settings on startup
             _logger.LogMessage(Severity.Debug, $"Host = {_settings.Host}");
@@ -78,6 +78,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _logger,
                 trackerTimer,
                 distanceCalculator,
+                _settings.TrackedBehaviours,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
@@ -97,10 +98,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(aircraftWriter, positionWriter, aircraftLocker, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
-                _writer.StartAsync();
+                await _writer.StartAsync();
             }
         }
-
 
         /// <summary>
         /// Start reading messages
@@ -148,8 +148,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="e"></param>
         private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
-            // Update the aircraft in the collection
-            TrackedAircraft[e.Aircraft.Address] = e.Aircraft;
+            // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
+            if (!TrackedAircraft.ContainsKey(e.Aircraft.Address))
+            {
+                TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
+            }
+            else
+            {
+                TrackedAircraft[e.Aircraft.Address] = e.Aircraft;
+            }
 
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)

@@ -12,7 +12,7 @@ namespace BaseStationReader.Entities.Interfaces
 
         ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; }
         bool IsTracking { get; }
-        void Initialise();
+        Task InitialiseAsync();
         void Start();
         void Stop();
     }
