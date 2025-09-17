@@ -2,7 +2,6 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
-using System.Reflection;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -122,11 +121,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Assess the aircraft behaviour
                 _updater.UpdateBehaviour(aircraft, lastAltitude);
 
-                // Check the aircraft qualifies for notifications and, if so, send one
-                if (_sender.NotificationRequired(aircraft))
-                {
-                    _sender.SendUpdatedNotification(aircraft, this, AircraftUpdated, lastLatitude, lastLongitude);
-                }
+                // Send a notification to subscribers
+                _sender.SendUpdatedNotification(aircraft, this, AircraftUpdated, lastLatitude, lastLongitude);
             }
         }
 
@@ -144,11 +140,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _aircraft.Add(msg.Address, aircraft);
             }
             
-            // Check the aircraft qualifies for notifications and, if so, send one
-            if (_sender.NotificationRequired(aircraft))
-            {
-                _sender.SendAddedNotification(aircraft, this, AircraftAdded);
-            }
+            // Send a notification to subscribers
+            _sender.SendAddedNotification(aircraft, this, AircraftAdded);
         }
 
         /// <summary>

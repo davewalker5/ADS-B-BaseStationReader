@@ -5,8 +5,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface INotificationSender
     {
-        bool NotificationRequired(Aircraft aircraft);
-
         void SendAddedNotification(
             Aircraft aircraft,
             object sender,

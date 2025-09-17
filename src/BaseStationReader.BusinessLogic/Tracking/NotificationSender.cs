@@ -24,16 +24,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         }
 
         /// <summary>
-        /// Return true if an aircraft meets the criteria for notifications to be sent
-        /// </summary>
-        /// <param name="aircraft"></param>
-        /// <returns></returns>
-        public bool NotificationRequired(Aircraft aircraft)
-            => _behaviours.Contains(aircraft.Behaviour) &&
-               ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
-               ((_maximumAltitude == null) || (aircraft.Altitude <= _maximumAltitude));
-
-        /// <summary>
         /// Send an "aircraft added" notification to the subscribers to the specified handler
         /// </summary>
         /// <param name="aircraft"></param>
@@ -46,7 +36,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             Aircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
-            => SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Added);
+        {
+            if (NotificationRequired(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Added);
+            }
+        }
 
         /// <summary>
         /// Send an "aircraft updated" notification to the subscribers to the specified handler
@@ -64,15 +59,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             decimal? previousLatitude,
             decimal? previousLongitude)
         {
-            // If the position's changed, create a position object to attach to the event arguments
-            AircraftPosition position = null;
-            if ((aircraft.Latitude != previousLatitude) || (aircraft.Longitude != previousLongitude))
+            if (NotificationRequired(aircraft))
             {
-                position = CreateAircraftPosition(aircraft);
-            }
+                // If the position's changed, create a position object to attach to the event arguments
+                AircraftPosition position = null;
+                if ((aircraft.Latitude != previousLatitude) || (aircraft.Longitude != previousLongitude))
+                {
+                    position = CreateAircraftPosition(aircraft);
+                }
 
-            // Send the notification
-            SendNotification(aircraft, position, sender, handler, AircraftNotificationType.Updated);
+                // Send the notification
+                SendNotification(aircraft, position, sender, handler, AircraftNotificationType.Updated);
+            }
         }
 
         /// <summary>
@@ -85,7 +83,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             Aircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
-            => SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
+        {
+            if (NotificationRequired(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
+            }
+        }
 
         /// <summary>
         /// Send an "inactive aircraft" notification to the subscribers to the specified handler
@@ -97,7 +100,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             Aircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
-            => SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
+        {
+            if (NotificationRequired(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
+            }
+        }
 
         /// <summary>
         /// Send an "aircraft removed" notification to the subscribers to the specified handler
@@ -109,7 +117,22 @@ namespace BaseStationReader.BusinessLogic.Tracking
             Aircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
-            => SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
+        {
+            if (NotificationRequired(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
+            }
+        }
+
+        /// <summary>
+        /// Return true if an aircraft meets the criteria for notifications to be sent
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        private bool NotificationRequired(Aircraft aircraft)
+            => _behaviours.Contains(aircraft.Behaviour) &&
+               ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
+               ((_maximumAltitude == null) || (aircraft.Altitude <= _maximumAltitude));
 
         /// <summary>
         /// Send a notification of the specified type to the subscribers to the specified handler
