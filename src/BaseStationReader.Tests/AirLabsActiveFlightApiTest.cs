@@ -26,7 +26,7 @@ namespace BaseStationReader.Tests
         public void GetActiveFlightTest()
         {
             _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupFlightByAircraft(AircraftAddress)).Result;
+            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(6, properties.Count);
@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests
         public void InvalidJsonResponseTest()
         {
             _client!.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupFlightByAircraft(AircraftAddress)).Result;
+            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNull(properties);
         }
@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests
         public void ClientExceptionTest()
         {
             _client!.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupFlightByAircraft(AircraftAddress)).Result;
+            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNull(properties);
         }

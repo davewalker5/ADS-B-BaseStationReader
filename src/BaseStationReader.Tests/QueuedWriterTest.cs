@@ -53,7 +53,7 @@ namespace BaseStationReader.Tests
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer
-            _writer.Start();
+            _writer.StartAsync();
         }
 
         [TestCleanup]
@@ -208,7 +208,7 @@ namespace BaseStationReader.Tests
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer!.Stop();
-            _writer.Start();
+            _writer.StartAsync();
             WaitForQueueToEmpty();
 
             var locked = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;

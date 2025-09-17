@@ -54,7 +54,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Start the simulator
         /// </summary>
-        public async Task Start()
+        public async Task StartAsync()
         {
             // Check the listener isn't running
             if (!_listening)

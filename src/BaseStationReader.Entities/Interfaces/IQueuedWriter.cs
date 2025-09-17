@@ -6,7 +6,7 @@ namespace BaseStationReader.Entities.Interfaces
     {
         event EventHandler<BatchWrittenEventArgs> BatchWritten;
         void Push(object entity);
-        void Start();
+        Task StartAsync();
         void Stop();
     }
 }

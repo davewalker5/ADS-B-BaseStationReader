@@ -23,7 +23,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
-        protected async Task<JsonNode> SendRequest(string endpoint)
+        protected async Task<JsonNode> SendRequestAsync(string endpoint)
         {
             JsonNode node = null;
 

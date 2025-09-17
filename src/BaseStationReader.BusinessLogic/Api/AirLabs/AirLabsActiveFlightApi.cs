@@ -18,10 +18,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightByAircraft(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
-            var properties = await MakeApiRequest($"&hex={address}");
+            var properties = await MakeApiRequestAsync($"&hex={address}");
             return properties;
         }
 
@@ -30,13 +30,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequest(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
         {
             Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequest(url);
+            var node = await SendRequestAsync(url);
 
             if (node != null)
             {

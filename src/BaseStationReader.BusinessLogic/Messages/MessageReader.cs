@@ -29,7 +29,7 @@ namespace BaseStationReader.BusinessLogic.Messages
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task Start(CancellationToken token)
+        public async Task StartAsync(CancellationToken token)
         {
             // Continue until cancellation's requested
             while (!token.IsCancellationRequested)

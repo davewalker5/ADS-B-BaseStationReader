@@ -36,7 +36,7 @@ namespace BaseStationReader.Tests
                 LastSeen = DateTime.Now
             });
 
-            var active = await _aircraftLocker!.GetActiveAircraft(Address);
+            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
             Assert.IsNotNull(active);
             Assert.AreEqual(added.Id, active.Id);
         }
@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests
                 LastSeen = DateTime.Now.AddMinutes(-15)
             });
 
-            var active = await _aircraftLocker!.GetActiveAircraft(Address);
+            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
             Assert.IsNull(active);
         }
 
@@ -68,7 +68,7 @@ namespace BaseStationReader.Tests
             Assert.IsTrue(aircraft.Id > 0);
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
-            var active = await _aircraftLocker!.GetActiveAircraft(Address);
+            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
             Assert.IsNull(active);
 
             var retrieved = await _aircraftWriter.GetAsync(x => x.Address == Address);
@@ -80,7 +80,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task GetMissingAircraftTest()
         {
-            var active = await _aircraftLocker!.GetActiveAircraft("000000");
+            var active = await _aircraftLocker!.GetActiveAircraftAsync("000000");
             Assert.IsNull(active);
         }
     }

@@ -75,7 +75,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
             _tracker = new AircraftTracker(reader,
                 parsers,
-                _logger!,
+                _logger,
                 trackerTimer,
                 distanceCalculator,
                 _settings.TimeToRecent,
@@ -97,7 +97,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(aircraftWriter, positionWriter, aircraftLocker, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
-                _writer.Start();
+                _writer.StartAsync();
             }
         }
 

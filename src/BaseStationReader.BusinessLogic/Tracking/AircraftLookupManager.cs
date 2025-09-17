@@ -34,25 +34,25 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<AircraftDetails> LookupAircraft(string address)
+        public async Task<AircraftDetails> LookupAircraftAsync(string address)
         {
             // See if the details are locally cached, first
             var details = await _detailsManager!.GetAsync(x => x.Address == address);
             if (details == null)
             {
                 // Not locally cached, so request a set of properties via the aircraft API
-                var properties = await _aircraftApi!.LookupAircraft(address);
+                var properties = await _aircraftApi!.LookupAircraftAsync(address);
                 if (properties != null)
                 {
                     // Retrieve the model
-                    var model = await GetModel(properties[ApiProperty.ModelIATA], properties[ApiProperty.ModelICAO]);
+                    var model = await GetModelAsync(properties[ApiProperty.ModelIATA], properties[ApiProperty.ModelICAO]);
 
                     // If we don't have model details, there's no point caching the aircraft details
                     // locally, so check we have a model
                     if (model != null)
                     {
                         // Get the airline details
-                        var airline = await GetAirlineFromResponse(properties[ApiProperty.AirlineIATA], properties[ApiProperty.AirlineICAO]);
+                        var airline = await GetAirlineFromResponseAsync(properties[ApiProperty.AirlineIATA], properties[ApiProperty.AirlineICAO]);
 
                         // Add a new aircraft details record to the local database
                         details = await _detailsManager.AddAsync(address, airline?.Id, model.Id);
@@ -69,12 +69,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<FlightDetails> LookupActiveFlight(string address)
+        public async Task<FlightDetails> LookupActiveFlightAsync(string address)
         {
             FlightDetails details = null;
 
             // Use the API to look-up the flight
-            var properties = await _flightsApi!.LookupFlightByAircraft(address);
+            var properties = await _flightsApi!.LookupFlightByAircraftAsync(address);
             if (properties != null)
             {
                 // Create a new flight details object containing the details
@@ -99,7 +99,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <returns></returns>
-        private async Task<Model> GetModel(string iata, string icao)
+        private async Task<Model> GetModelAsync(string iata, string icao)
         {
             // Look for a match for both the IATA and ICAO codes
             Model model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
@@ -127,7 +127,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <returns></returns>
-        private async Task<Airline> GetAirlineFromResponse(string iata, string icao)
+        private async Task<Airline> GetAirlineFromResponseAsync(string iata, string icao)
         {
             // See if the airline has been cached locally
             Airline airline = await _airlineManager!.GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
@@ -137,13 +137,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 Dictionary<ApiProperty, string> properties = null;
                 if (!string.IsNullOrEmpty(iata))
                 {
-                    properties = await _airlinesApi!.LookupAirlineByIATACode(iata);
+                    properties = await _airlinesApi!.LookupAirlineByIATACodeAsync(iata);
                 }
 
                 // If we don't have any airline details, try using the ICAO code
                 if ((properties == null) && !string.IsNullOrEmpty(icao))
                 {
-                    properties = await _airlinesApi!.LookupAirlineByICAOCode(icao);
+                    properties = await _airlinesApi!.LookupAirlineByICAOCodeAsync(icao);
                 }
 
                 // Check we have some airline properties

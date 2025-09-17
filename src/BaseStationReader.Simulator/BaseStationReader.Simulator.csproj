@@ -7,6 +7,8 @@
     <FileVersion>1.34.0.0</FileVersion>
     <ProductVersion>1.34.0</ProductVersion>
     <ImplicitUsings>enable</ImplicitUsings>
+    <WarningsAsErrors>CS4014</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1900</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

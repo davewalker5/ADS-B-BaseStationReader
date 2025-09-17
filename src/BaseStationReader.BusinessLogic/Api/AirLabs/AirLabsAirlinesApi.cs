@@ -19,10 +19,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="iata"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACode(string iata)
+        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACodeAsync(string iata)
         {
             Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
-            return await MakeApiRequest($"&iata_code={iata}");
+            return await MakeApiRequestAsync($"&iata_code={iata}");
         }
 
         /// <summary>
@@ -30,10 +30,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCode(string icao)
+        public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCodeAsync(string icao)
         {
             Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
-            return await MakeApiRequest($"&icao_code={icao}");
+            return await MakeApiRequestAsync($"&icao_code={icao}");
         }
 
         /// <summary>
@@ -41,13 +41,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequest(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
         {
             Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequest(url);
+            var node = await SendRequestAsync(url);
 
             if (node != null)
             {

@@ -47,12 +47,12 @@ namespace BaseStationReader.BusinessLogic.Simulator
             while (aircraft == null);
 
             // Aircraft has a unique address, so now set the remaining propertis
-            var flags = GenerateBehaviourFlags();
+            var flags = GenerateAircraftBehaviour();
             aircraft.Callsign = GenerateCallsign();
             aircraft.Squawk = _random.Next(0, 9999).ToString("0000");
             aircraft.FirstSeen = DateTime.Now;
             aircraft.LastSeen = DateTime.Now;
-            aircraft.SimulatorFlags = flags;
+            aircraft.Behaviour = flags;
             aircraft.Track = _random.Next(0, 361);
             aircraft.GroundSpeed = GenerateGroundSpeed(flags);
             aircraft.VerticalRate = GenerateVerticalRate(flags);
@@ -67,7 +67,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
             aircraft.PositionLastUpdated = DateTime.Now;
 
             // Log and return the aircraft
-            _logger.LogMessage(Severity.Info, $"Created aircraft {address}");
+            _logger.LogMessage(Severity.Info, $"Created aircraft {address}, behaviour = {aircraft.Behaviour}");
             return aircraft;
         }
 
@@ -106,31 +106,31 @@ namespace BaseStationReader.BusinessLogic.Simulator
         }
 
         /// <summary>
-        /// Generate a random flag indicating aircraft behaviour
+        /// Generate a random value indicating required aircraft behaviour
         /// </summary>
         /// <returns></returns>
-        private SimulatorFlags GenerateBehaviourFlags()
+        private AircraftBehaviour GenerateAircraftBehaviour()
         {
             var selector = _random.Next(1, 4);
             return selector switch
             {
-                1 => SimulatorFlags.LevelFlight,
-                2 => SimulatorFlags.Landing,
-                _ => SimulatorFlags.TakingOff,
+                1 => AircraftBehaviour.LevelFlight,
+                2 => AircraftBehaviour.Descending,
+                _ => AircraftBehaviour.Climbing,
             };
         }
 
         /// <summary>
         /// Generate the initial ground speed for an aircraft based on its intended behaviour
         /// </summary>
-        /// <param name="flags"></param>
+        /// <param name="behaviour"></param>
         /// <returns></returns>
-        private decimal GenerateGroundSpeed(SimulatorFlags flags)
+        private decimal GenerateGroundSpeed(AircraftBehaviour behaviour)
         {
-            return flags switch
+            return behaviour switch
             {
-                SimulatorFlags.Landing => _random.Next(_settings.MinimumApproachSpeed, _settings.MaximumApproachSpeed + 1),
-                SimulatorFlags.TakingOff => _random.Next(_settings.MinimumTakeOffSpeed, _settings.MaximumTakeOffSpeed + 1),
+                AircraftBehaviour.Descending => _random.Next(_settings.MinimumApproachSpeed, _settings.MaximumApproachSpeed + 1),
+                AircraftBehaviour.Climbing => _random.Next(_settings.MinimumTakeOffSpeed, _settings.MaximumTakeOffSpeed + 1),
                 _ => _random.Next(_settings.MinimumCruisingSpeed, _settings.MaximumCruisingSpeed + 1)
             };
         }
@@ -147,14 +147,14 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Generate the initial vertical rate for an aircraft based on its intended behaviour
         /// </summary>
-        /// <param name="flags"></param>
+        /// <param name="behaviour"></param>
         /// <returns></returns>
-        private decimal GenerateVerticalRate(SimulatorFlags flags)
+        private decimal GenerateVerticalRate(AircraftBehaviour behaviour)
         {
-            return flags switch
+            return behaviour switch
             {
-                SimulatorFlags.Landing => -GenerateVerticalRate(_settings.MinimumDescentRate, _settings.MaximumDescentRate),
-                SimulatorFlags.TakingOff => GenerateVerticalRate(_settings.MinimumClimbRate, _settings.MaximumClimbRate),
+                AircraftBehaviour.Descending => -GenerateVerticalRate(_settings.MinimumDescentRate, _settings.MaximumDescentRate),
+                AircraftBehaviour.Climbing => GenerateVerticalRate(_settings.MinimumClimbRate, _settings.MaximumClimbRate),
                 _ => 0M
             };
         }
@@ -162,14 +162,16 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Generate the initial altitude for an aircraft based on its intended behaviour
         /// </summary>
+        /// <param name="behaviour"></param>
+        /// <param name="verticalRate"></param>
         /// <returns></returns>
-        private decimal GenerateAltitude(SimulatorFlags flags, decimal verticalRate)
+        private decimal GenerateAltitude(AircraftBehaviour behaviour, decimal verticalRate)
         {
             // For aircraft that are landing, note that the lifespan is expressed in milliseconds
-            return flags switch
+            return behaviour switch
             {
-                SimulatorFlags.Landing => Math.Abs(verticalRate) * _settings.AircraftLifespan / 1000M,
-                SimulatorFlags.TakingOff => 0M,
+                AircraftBehaviour.Descending => Math.Abs(verticalRate) * _settings.AircraftLifespan / 1000M,
+                AircraftBehaviour.Climbing => 0M,
                 _ => (decimal)_random.NextDouble() * (_settings.MaximumAltitude - _settings.MinimumAltitude) + _settings.MinimumAltitude,
             };
         }
@@ -177,26 +179,26 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Calculate the initial position of the aircraft based on its behaviour
         /// </summary>
-        /// <param name="flags"></param>
+        /// <param name="behaviour"></param>
         /// <param name="heading"></param>
         /// <param name="speed"></param>
         /// <returns></returns>
         private (decimal latitude, decimal longitude) GenerateAircraftPostion(
-            SimulatorFlags flags,
+            AircraftBehaviour behaviour,
             decimal heading,
             decimal speed)
         {
             double latitude;
             double longitude;
 
-            switch (flags)
+            switch (behaviour)
             {
-                case SimulatorFlags.TakingOff:
+                case AircraftBehaviour.Climbing:
                     // Take off from the receiver position
                     latitude = _settings.ReceiverLatitude;
                     longitude = _settings.ReceiverLongitude;
                     break;
-                case SimulatorFlags.Landing:
+                case AircraftBehaviour.Descending:
                     // Use the heading, speed and aircraft lifespan to calculate an initial position that will
                     // result in a landing at the receiver as the aircraft expires. Note that aircraft lifespan
                     // in the settings file is expressed in milliseconds

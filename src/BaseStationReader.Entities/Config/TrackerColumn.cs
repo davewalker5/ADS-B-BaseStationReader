@@ -12,5 +12,6 @@ namespace BaseStationReader.Entities.Config
         public string Context { get; set; } = "";
         public PropertyInfo Info { get; set; } = null;
         public string TypeName { get; set; } = "";
+        public bool ShowBehaviour { get; set; } = false;
     }
 }

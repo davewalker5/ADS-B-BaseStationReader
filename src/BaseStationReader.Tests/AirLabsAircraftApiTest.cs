@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests
         public void GetAircraftByAddressTest()
         {
             _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(5, properties.Count);
@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests
         public void InvalidJsonResponseTest()
         {
             _client!.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNull(properties);
         }
@@ -54,7 +54,7 @@ namespace BaseStationReader.Tests
         public void ClientExceptionTest()
         {
             _client!.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNull(properties);
         }

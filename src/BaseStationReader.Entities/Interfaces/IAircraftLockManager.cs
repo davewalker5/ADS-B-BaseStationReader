@@ -4,6 +4,6 @@ namespace BaseStationReader.BusinessLogic
 {
     public interface IAircraftLockManager
     {
-        Task<Aircraft> GetActiveAircraft(string address);
+        Task<Aircraft> GetActiveAircraftAsync(string address);
     }
 }

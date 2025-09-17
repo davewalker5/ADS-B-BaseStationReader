@@ -51,7 +51,7 @@ namespace BaseStationReader.UI.Models
 
             if (!string.IsNullOrEmpty(address))
             {
-                details = Task.Run(() => _lookupManager.LookupAircraft(address)).Result;
+                details = Task.Run(() => _lookupManager.LookupAircraftAsync(address)).Result;
             }
 
             return details;
@@ -67,7 +67,7 @@ namespace BaseStationReader.UI.Models
 
             if (!string.IsNullOrEmpty(address))
             {
-                details = Task.Run(() => _lookupManager.LookupActiveFlight(address)).Result;
+                details = Task.Run(() => _lookupManager.LookupActiveFlightAsync(address)).Result;
             }
 
             return details;

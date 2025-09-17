@@ -1,5 +1,7 @@
+using BaseStationReader.Data.Migrations;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using System.Reflection;
@@ -60,7 +62,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Start the message reader
             _cancellationTokenSource = new CancellationTokenSource();
             _reader.MessageRead += OnNewMessage;
-            _reader.Start(_cancellationTokenSource.Token);
+            _reader.StartAsync(_cancellationTokenSource.Token);
 
             // Set a timer to migrate aircraft from New -> Recent -> Stale -> Removed
             _timer?.Start();
@@ -117,11 +119,24 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Capture the previous position
                 var lastLatitude = aircraft.Latitude;
                 var lastLongitude = aircraft.Longitude;
+                var lastAltitude = aircraft.Altitude;
 
                 // Update the aircraft propertes
                 UpdateAircraftProperties(aircraft, msg);
+
                 try
                 {
+                    if ((lastAltitude != null) && (aircraft.Altitude != null))
+                    {
+                        // Calculate the change in altitude and add it to the history
+                        var altitudeChange = aircraft.Altitude.Value - lastAltitude.Value;
+                        aircraft.AltitudeHistory.Add(altitudeChange);
+
+                        // Assess the aircraft behaviour using the history
+                        aircraft.Behaviour = AircraftBehaviourAssessor.Assess(aircraft);
+                        _logger.LogMessage(Severity.Debug, $"Aircraft {aircraft.Address} : {aircraft.Behaviour}");
+                    }
+
                     // If the position's changed, construct a position instance to add to the notification event arguments
                     AircraftPosition position = null;
                     if (aircraft.Latitude != lastLatitude || aircraft.Longitude != lastLongitude)
@@ -216,6 +231,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Increment the message count
             aircraft.Messages++;
 
+            // Capture the vertical rate before the aircraft is updated
+            decimal? originalAltitude = aircraft.Altitude;
+
             // Iterate over the aircraft propertues
             foreach (var aircraftProperty in _aircraftProperties)
             {
@@ -228,7 +246,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     var updated = messageProperty.GetValue(msg);
                     if (updated != null && original != updated)
                     {
-                        // It has, so u0date it
+                        // It has, so update it
                         aircraftProperty.SetValue(aircraft, updated);
                         aircraft.Status = TrackingStatus.Active;
                     }

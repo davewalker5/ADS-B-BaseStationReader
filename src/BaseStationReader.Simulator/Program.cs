@@ -74,7 +74,7 @@ namespace BaseStationReader.Simulator
                     settings.NumberOfAircraft))
                 {
                     // Run the simulator
-                    Task.Run(() => simulator.Start());
+                    Task.Run(() => simulator.StartAsync());
 
                     // Continue until the user hits ESC to stop the simulator
                     do

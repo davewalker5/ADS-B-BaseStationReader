@@ -19,7 +19,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Aircraft> GetActiveAircraft(string address)
+        public async Task<Aircraft> GetActiveAircraftAsync(string address)
         {
             // Get the aircraft. This method is guaranteed to return the most recent record for a given aircraft
             // address

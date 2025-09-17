@@ -8,6 +8,8 @@ namespace BaseStationReader.Entities.Tracking
     [ExcludeFromCodeCoverage]
     public class Aircraft : ICloneable
     {
+        private const int MaximumHistoryEntries = 50;
+
         [Key]
         public int Id { get; set; }
 
@@ -37,7 +39,7 @@ namespace BaseStationReader.Entities.Tracking
         public decimal? Longitude { get; set; }
 
         [Export("Distance", 9)]
-        public double? Distance { get; set;  }
+        public double? Distance { get; set; }
 
         [Export("Vertical Rate", 10)]
         public decimal? VerticalRate { get; set; }
@@ -57,10 +59,13 @@ namespace BaseStationReader.Entities.Tracking
         public TrackingStatus Status { get; set; }
 
         [NotMapped]
-        public SimulatorFlags SimulatorFlags { get; set; }
+        public AircraftBehaviour Behaviour { get; set; }
 
         [NotMapped]
         public DateTime PositionLastUpdated { get; set; }
+
+        [NotMapped]
+        public FixedSizeQueue<decimal> AltitudeHistory { get; private set; } = new(MaximumHistoryEntries);
 
 #pragma warning disable CS8618
         public ICollection<AircraftPosition> Positions { get; set; }

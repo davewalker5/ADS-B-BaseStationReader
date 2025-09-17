@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests
         public void GetAirlineByIATACodeTest()
         {
             _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAirlineByIATACode("LS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByIATACodeAsync("LS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(3, properties.Count);
@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests
         public void GetAirlineByICAOCodeTest()
         {
             _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(3, properties.Count);
@@ -58,7 +58,7 @@ namespace BaseStationReader.Tests
         public void NoIATACodeTest()
         {
             _client!.AddResponse(NoIATACode);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(3, properties.Count);
@@ -71,7 +71,7 @@ namespace BaseStationReader.Tests
         public void NoICAOCodeTest()
         {
             _client!.AddResponse(NoICAOCode);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(3, properties.Count);
@@ -84,7 +84,7 @@ namespace BaseStationReader.Tests
         public void InvalidJsonResponseTest()
         {
             _client!.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNull(properties);
         }
@@ -93,7 +93,7 @@ namespace BaseStationReader.Tests
         public void ClientExceptionTest()
         {
             _client!.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCode("EXS")).Result;
+            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNull(properties);
         }

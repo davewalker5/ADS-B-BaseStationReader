@@ -24,7 +24,7 @@ namespace BaseStationReader.Tests.Mocks
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task Start(CancellationToken token)
+        public async Task StartAsync(CancellationToken token)
         {
             await Task.Run(() =>
             {

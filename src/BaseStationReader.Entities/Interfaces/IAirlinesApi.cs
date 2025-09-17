@@ -4,7 +4,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAirlinesApi
     {
-        Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACode(string iata);
-        Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCode(string icao);
+        Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACodeAsync(string iata);
+        Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCodeAsync(string icao);
     }
 }

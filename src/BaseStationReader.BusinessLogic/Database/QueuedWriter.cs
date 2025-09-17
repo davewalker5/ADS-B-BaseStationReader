@@ -53,7 +53,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <summary>
         /// 
         /// </summary>
-        public async void Start()
+        public async Task StartAsync()
         {
             // Set the locked flag on all unlocked records. This prevents confusing tracking of the same aircraft
             // on different flights
@@ -100,7 +100,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 }
 
                 // Write the dequeued object to the database
-                Task.Run(() => WriteDequeuedObject(queued)).Wait();
+                Task.Run(() => WriteDequeuedObjectAsync(queued)).Wait();
             }
             stopwatch.Stop();
             var finalQueueSize = _queue.Count;
@@ -129,7 +129,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Receive a de-queued object, determine its type and use the appropriate writer to write it
         /// </summary>
         /// <param name="queued"></param>
-        private async Task WriteDequeuedObject(object queued)
+        private async Task WriteDequeuedObjectAsync(object queued)
         {
             // If it's an aircraft and it's an existing record that hasn't been locked, get the ID for update
             Aircraft aircraft = queued as Aircraft;
@@ -137,7 +137,7 @@ namespace BaseStationReader.BusinessLogic.Database
             if (aircraft != null)
             {
                 // Get the active aircraft with the specified address, if there is one, so it can be updated
-                var activeAircraft = await _locker.GetActiveAircraft(aircraft.Address);
+                var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
                 if (activeAircraft != null)
                 {
                     aircraft.Id = activeAircraft.Id;
@@ -149,7 +149,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 position = queued as AircraftPosition;
                 if (position != null)
                 {
-                    var activeAircraft = await _locker.GetActiveAircraft(position.Address);
+                    var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
                     if (activeAircraft != null)
                     {
                         position.AircraftId = activeAircraft.Id;
