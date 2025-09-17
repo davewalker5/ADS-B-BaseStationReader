@@ -1,16 +1,18 @@
-﻿using BaseStationReader.Logic.Simulator;
+﻿using BaseStationReader.BusinessLogic.Simulator;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests
 {
     [TestClass]
-    public class AircraftGeneratorTest
+    public class AircraftGeneratorTest : SimulatorTestBase
     {
+
         [TestMethod]
         public void GenerateNewAircraftTest()
         {
             var logger = new MockFileLogger();
-            var generator = new AircraftGenerator(logger);
+            var generator = new AircraftGenerator(logger, _settings);
             var aircraft = generator.Generate(new List<string>());
 
             Assert.IsNotNull(aircraft);
@@ -19,6 +21,12 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(4, aircraft.Squawk?.Length);
             Assert.IsNotNull(aircraft.FirstSeen);
             Assert.IsNotNull(aircraft.LastSeen);
+            Assert.IsNotNull(aircraft.Track);
+            Assert.IsNotNull(aircraft.GroundSpeed);
+            Assert.IsNotNull(aircraft.VerticalRate);
+            Assert.IsNotNull(aircraft.Altitude);
+            Assert.IsNotNull(aircraft.Latitude);
+            Assert.IsNotNull(aircraft.Longitude);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace BaseStationReader.Terminal.Interfaces
 {
     internal interface ITrackerTableManager
     {
-        Table? Table { get; }
+        Table Table { get; }
 
         int AddAircraft(Aircraft aircraft);
         void CreateTable(string title);

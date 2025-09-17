@@ -2,8 +2,8 @@
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic;
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
 using Spectre.Console;
 using System.Diagnostics;
@@ -30,11 +30,11 @@ namespace BaseStationReader.Tests
         private const decimal VerticalRate = 2624.0M;
         private const string Squawk = "7710";
 
-        private BaseStationReaderDbContext? _context = null;
-        private IAircraftWriter? _aircraftWriter = null;
-        private IPositionWriter? _positionWriter = null;
-        private IAircraftLockManager? _aircraftLocker = null;
-        private QueuedWriter? _writer = null;
+        private BaseStationReaderDbContext _context = null;
+        private IAircraftWriter _aircraftWriter = null;
+        private IPositionWriter _positionWriter = null;
+        private IAircraftLockManager _aircraftLocker = null;
+        private QueuedWriter _writer = null;
         private bool _queueProcessed = false;
 
         [TestInitialize]
@@ -53,7 +53,7 @@ namespace BaseStationReader.Tests
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer
-            _writer.Start();
+            _writer.StartAsync();
         }
 
         [TestCleanup]
@@ -208,7 +208,7 @@ namespace BaseStationReader.Tests
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer!.Stop();
-            _writer.Start();
+            _writer.StartAsync();
             WaitForQueueToEmpty();
 
             var locked = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;
@@ -254,7 +254,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnBatchWritten(object? sender, BatchWrittenEventArgs e)
+        private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
         {
             if ((e.InitialQueueSize > 0) && (e.FinalQueueSize == 0))
             {

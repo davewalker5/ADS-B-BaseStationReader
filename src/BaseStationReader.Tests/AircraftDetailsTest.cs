@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 using DocumentFormat.OpenXml.ExtendedProperties;
 
 namespace BaseStationReader.Tests
@@ -17,7 +17,7 @@ namespace BaseStationReader.Tests
         private const string ModelICAO = "A332";
         private const string ModelName = "A330-200";
 
-        private IAircraftDetailsManager? _manager = null;
+        private IAircraftDetailsManager _manager = null;
 
         [TestInitialize]
         public void Initialise()

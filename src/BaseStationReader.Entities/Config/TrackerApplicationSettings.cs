@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Config
@@ -24,8 +25,11 @@ namespace BaseStationReader.Entities.Config
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
-        public List<ApiEndpoint> ApiEndpoints { get; set; } = new List<ApiEndpoint>();
-        public List<ApiServiceKey> ApiServiceKeys { get; set; } = new List<ApiServiceKey>();
-        public List<TrackerColumn> Columns { get; set; } = new List<TrackerColumn>();
+        public int? MaximumTrackedDistance { get; set;  }
+        public int? MaximumTrackedAltitude { get; set; }
+        public List<ApiEndpoint> ApiEndpoints { get; set; } = [];
+        public List<ApiServiceKey> ApiServiceKeys { get; set; } = [];
+        public List<TrackerColumn> Columns { get; set; } = [];
+        public List<AircraftBehaviour> TrackedBehaviours { get; set; } = [];
     }
 }

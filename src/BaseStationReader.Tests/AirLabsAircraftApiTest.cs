@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests
@@ -15,8 +15,8 @@ namespace BaseStationReader.Tests
     {
         private const string Response = "{\"response\": [ { \"hex\": \"4B012F\", \"airline_icao\": \"IMX\", \"airline_iata\": \"XM\", \"manufacturer\": \"ATR\", \"icao\": \"AT75\", \"iata\": null }]}";
 
-        private MockTrackerHttpClient? _client = null;
-        private IAircraftApi? _api = null;
+        private MockTrackerHttpClient _client = null;
+        private IAircraftApi _api = null;
 
         [TestInitialize]
         public void Initialise()
@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests
         public void GetAircraftByAddressTest()
         {
             _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNotNull(properties);
             Assert.AreEqual(5, properties.Count);
@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests
         public void InvalidJsonResponseTest()
         {
             _client!.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNull(properties);
         }
@@ -54,7 +54,7 @@ namespace BaseStationReader.Tests
         public void ClientExceptionTest()
         {
             _client!.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupAircraft("4B012F")).Result;
+            var properties = Task.Run(() => _api!.LookupAircraftAsync("4B012F")).Result;
 
             Assert.IsNull(properties);
         }

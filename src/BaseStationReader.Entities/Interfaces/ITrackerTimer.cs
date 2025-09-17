@@ -2,7 +2,7 @@
 {
     public interface ITrackerTimer
     {
-        event EventHandler<EventArgs>? Tick;
+        event EventHandler<EventArgs> Tick;
         void Start();
         void Stop();
     }

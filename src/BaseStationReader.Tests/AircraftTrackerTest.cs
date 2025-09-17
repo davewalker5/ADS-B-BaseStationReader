@@ -2,8 +2,8 @@
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Messages;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Messages;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Entities;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
@@ -41,14 +41,24 @@ namespace BaseStationReader.Tests
             // Create an aircraft tracker and wire up the event handlers
             var timer = new MockTrackerTimer(TrackerRecentMs / 10.0);
             var logger = new MockFileLogger();
+            var assessor = new SimpleAircraftBehaviourAssessor();
+            var updater = new AircraftPropertyUpdater(logger, null, assessor);
+            
+            var notificationSender = new NotificationSender(
+                logger,
+                Enum.GetValues<AircraftBehaviour>(),
+                null,
+                null);
+
             var tracker = new AircraftTracker(reader,
                 parsers,
-                logger,
                 timer,
-                null,
+                updater,
+                notificationSender,
                 TrackerRecentMs,
                 TrackerStaleMs,
                 TrackerRemovedMs);
+
             tracker.AircraftAdded += OnAircraftNotification;
             tracker.AircraftUpdated += OnAircraftNotification;
             tracker.AircraftRemoved += OnAircraftNotification;
@@ -120,7 +130,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="expectedSquawk"></param>
-        private static void ConfirmAircraftProperties(Aircraft aircraft, string? expectedSquawk)
+        private static void ConfirmAircraftProperties(Aircraft aircraft, string expectedSquawk)
         {
             Assert.AreEqual("3965A3", aircraft.Address);
             Assert.IsNull(aircraft.Callsign);
@@ -140,7 +150,7 @@ namespace BaseStationReader.Tests
             }
         }
 
-        private void OnAircraftNotification(object? sender, AircraftNotificationEventArgs e)
+        private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
             lock (_notifications)
             {

@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests
 {
@@ -11,7 +11,7 @@ namespace BaseStationReader.Tests
         private const string ICAO = "BAW";
         private const string Name = "British Airways";
 
-        private IAirlineManager? _manager = null;
+        private IAirlineManager _manager = null;
 
         [TestInitialize]
         public void TestInitialize()

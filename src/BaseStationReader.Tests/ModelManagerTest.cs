@@ -1,13 +1,13 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests
 {
     [TestClass]
     public class ModelManagerTest
     {
-        private IModelManager? _manager = null;
+        private IModelManager _manager = null;
 
         [TestInitialize]
         public void Initialise()

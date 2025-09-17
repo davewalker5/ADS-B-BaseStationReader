@@ -7,8 +7,8 @@ namespace BaseStationReader.Entities.Interfaces
     {
         IList<TrackerFilter> Filters { get; set; }
 
-        void Add(string propertyName, TrackerFilterOperator @operator, object? value);
-        Expression<Func<T, bool>>? Build();
+        void Add(string propertyName, TrackerFilterOperator @operator, object value);
+        Expression<Func<T, bool>> Build();
         void Clear();
     }
 }

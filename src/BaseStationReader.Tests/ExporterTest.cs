@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.DataExchange;
+using BaseStationReader.BusinessLogic.DataExchange;
 
 namespace BaseStationReader.Tests
 {

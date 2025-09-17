@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Exceptions;
-using BaseStationReader.Logic.Configuration;
+using BaseStationReader.BusinessLogic.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests
@@ -9,7 +9,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class CommandLineParserTest
     {
-        private CommandLineParser? _parser;
+        private CommandLineParser _parser;
 
         [TestInitialize]
         public void TestInitialise()

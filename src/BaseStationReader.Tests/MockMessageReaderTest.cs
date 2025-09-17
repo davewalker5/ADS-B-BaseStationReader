@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests
 
             // Start the reader
             var tokenSource = new CancellationTokenSource();
-            await reader.Start(tokenSource.Token);
+            await reader.StartAsync(tokenSource.Token);
 
             // Wait until all the messages have been sent or it's clear there's a problem
             while ((_received.Count < messages.Length) && (stopwatch.ElapsedMilliseconds <= 1000))
@@ -78,7 +78,7 @@ namespace BaseStationReader.Tests
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMessageRead(object? sender, MessageReadEventArgs e)
+        private void OnMessageRead(object sender, MessageReadEventArgs e)
         {
             lock (_received)
             {

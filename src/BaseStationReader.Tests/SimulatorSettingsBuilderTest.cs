@@ -1,14 +1,14 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Logic.Configuration;
+using BaseStationReader.BusinessLogic.Configuration;
 
 namespace BaseStationReader.Tests
 {
     [TestClass]
     public class SimulatorSettingsBuilderTest
     {
-        private ISimulatorSettingsBuilder? _builder = null;
-        private ICommandLineParser? _parser = null;
+        private ISimulatorSettingsBuilder _builder = null;
+        private ICommandLineParser _parser = null;
 
         [TestInitialize]
         public void Initialise()
@@ -20,13 +20,14 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void DefaultConfigTest()
         {
-            _parser!.Parse(Array.Empty<string>());
+            _parser!.Parse([]);
             var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
 
             Assert.AreEqual(30003, settings?.Port);
-            Assert.AreEqual(1000, settings?.SendInterval);
+            Assert.AreEqual(100, settings?.SendInterval);
             Assert.AreEqual(10, settings?.NumberOfAircraft);
-            Assert.AreEqual(60000, settings?.AircraftLifespan);
+            Assert.AreEqual(60000, settings?.MinimumAircraftLifespan);
+            Assert.AreEqual(300000, settings?.MaximumAircraftLifespan);
             Assert.AreEqual("ReceiverSimulator.log", settings?.LogFile);
             Assert.AreEqual(Severity.Info, settings?.MinimumLogLevel);
         }
@@ -59,12 +60,21 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public void OverrideAircraftLifespanTest()
+        public void OverrideMinimumAircraftLifespanTest()
         {
-            var args = new string[] { "--lifespan", "543" };
+            var args = new string[] { "--min-lifespan", "543" };
             _parser!.Parse(args);
             var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
-            Assert.AreEqual(543, settings?.AircraftLifespan);
+            Assert.AreEqual(543, settings?.MinimumAircraftLifespan);
+        }
+
+        [TestMethod]
+        public void OverrideMaximumAircraftLifespanTest()
+        {
+            var args = new string[] { "--max-lifespan", "213234" };
+            _parser!.Parse(args);
+            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            Assert.AreEqual(213234, settings?.MaximumAircraftLifespan);
         }
 
         [TestMethod]

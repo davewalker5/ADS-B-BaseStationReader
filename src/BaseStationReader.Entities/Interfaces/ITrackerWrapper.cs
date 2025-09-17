@@ -6,13 +6,13 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface ITrackerWrapper
     {
-        event EventHandler<AircraftNotificationEventArgs>? AircraftAdded;
-        event EventHandler<AircraftNotificationEventArgs>? AircraftRemoved;
-        event EventHandler<AircraftNotificationEventArgs>? AircraftUpdated;
+        event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
+        event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
+        event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
 
         ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; }
         bool IsTracking { get; }
-        void Initialise();
+        Task InitialiseAsync();
         void Start();
         void Stop();
     }

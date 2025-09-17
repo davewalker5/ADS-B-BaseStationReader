@@ -4,6 +4,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface ITrackerSettingsBuilder
     {
-        TrackerApplicationSettings? BuildSettings(ICommandLineParser parser, string configJsonPath);
+        TrackerApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath);
     }
 }

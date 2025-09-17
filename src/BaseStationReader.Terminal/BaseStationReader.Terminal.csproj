@@ -1,13 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ReleaseVersion>1.32.0.0</ReleaseVersion>
-    <FileVersion>1.32.0.0</FileVersion>
-    <ProductVersion>1.32.0</ProductVersion>
+    <TargetFramework>net9.0</TargetFramework>
+    <ReleaseVersion>1.34.0.0</ReleaseVersion>
+    <FileVersion>1.34.0.0</FileVersion>
+    <ProductVersion>1.34.0</ProductVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <WarningsAsErrors>CS4014</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1900</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,16 +24,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Spectre.Console" Version="0.49.1" />
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
-    <ProjectReference Include="..\BaseStationReader.Logic\BaseStationReader.Logic.csproj" />
+    <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
   </ItemGroup>
 
 </Project>

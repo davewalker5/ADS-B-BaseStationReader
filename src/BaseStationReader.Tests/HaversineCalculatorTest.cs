@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Logic.Maths;
+﻿using BaseStationReader.BusinessLogic.Maths;
 
 namespace BaseStationReader.Tests
 {

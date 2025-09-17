@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Attributes;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Tracking
@@ -7,6 +8,8 @@ namespace BaseStationReader.Entities.Tracking
     [ExcludeFromCodeCoverage]
     public class Aircraft : ICloneable
     {
+        private const int MaximumHistoryEntries = 50;
+
         [Key]
         public int Id { get; set; }
 
@@ -15,10 +18,10 @@ namespace BaseStationReader.Entities.Tracking
         public string Address { get; set; } = "";
 
         [Export("Callsign", 2)]
-        public string? Callsign { get; set; } = null;
+        public string Callsign { get; set; } = null;
 
         [Export("Squawk", 3)]
-        public string? Squawk { get; set; }
+        public string Squawk { get; set; }
 
         [Export("Altitude", 4)]
         public decimal? Altitude { get; set; }
@@ -36,7 +39,7 @@ namespace BaseStationReader.Entities.Tracking
         public decimal? Longitude { get; set; }
 
         [Export("Distance", 9)]
-        public double? Distance { get; set;  }
+        public double? Distance { get; set; }
 
         [Export("Vertical Rate", 10)]
         public decimal? VerticalRate { get; set; }
@@ -54,6 +57,18 @@ namespace BaseStationReader.Entities.Tracking
 
         [Required]
         public TrackingStatus Status { get; set; }
+
+        [NotMapped]
+        public AircraftBehaviour Behaviour { get; set; }
+
+        [NotMapped]
+        public int Lifespan { get; set; }
+
+        [NotMapped]
+        public DateTime PositionLastUpdated { get; set; }
+
+        [NotMapped]
+        public FixedSizeQueue<decimal> AltitudeHistory { get; private set; } = new(MaximumHistoryEntries);
 
 #pragma warning disable CS8618
         public ICollection<AircraftPosition> Positions { get; set; }

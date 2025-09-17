@@ -3,7 +3,6 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using Spectre.Console;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
@@ -11,12 +10,14 @@ namespace BaseStationReader.Terminal.Logic
     [ExcludeFromCodeCoverage]
     internal class TrackerTableManager : ITrackerTableManager
     {
+        private const string UpArrow = "\u2191";
+        private const string DownArrow = "\u2193";
         private readonly object _lock = new();
         private readonly ITrackerIndexManager _indexManager;
         private readonly List<TrackerColumn> _columns;
         private readonly int _maximumRows;
 
-        public Spectre.Console.Table? Table { get; private set; } = null;
+        public Spectre.Console.Table Table { get; private set; } = null;
 
         public TrackerTableManager(ITrackerIndexManager indexManager, List<TrackerColumn> columns, int maximumRows)
         {
@@ -162,10 +163,20 @@ namespace BaseStationReader.Terminal.Logic
                 endColour = "[/]";
             }
 
+            // Determine the directional indicator
+            var behaviour = aircraft.Behaviour switch
+            {
+                AircraftBehaviour.Descending => DownArrow,
+                AircraftBehaviour.Climbing => UpArrow,
+                AircraftBehaviour.LevelFlight => "=",
+                _ => "?",
+            };
+
             // Construct the row data
             var data = new List<string>();
             foreach (var column in _columns)
             {
+                // Get the value for this column as a string
                 var valueString = "";
                 if (column.TypeName.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
                 {
@@ -192,7 +203,11 @@ namespace BaseStationReader.Terminal.Logic
                     valueString = column.Info!.GetValue(aircraft)?.ToString() ?? "";
                 }
 
-                data.Add($"{startColour}{valueString}{endColour}");
+                // Determine the ascent/descent behaviour indicator
+                var indicator = column.ShowBehaviour && !string.IsNullOrEmpty(valueString) ? $" {behaviour}" : "";
+
+                // Construct and add the row
+                data.Add($"{startColour}{valueString}{indicator}{endColour}");
             }
 
             return data.ToArray();

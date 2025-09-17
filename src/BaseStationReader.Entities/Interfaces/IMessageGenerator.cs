@@ -1,9 +1,10 @@
 ﻿using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Entities.Interfaces
 {
     public interface IMessageGenerator
     {
-        Message Generate(string address, string? callsign, string? squawk);
+        Message Generate(Aircraft aircraft);
     }
 }

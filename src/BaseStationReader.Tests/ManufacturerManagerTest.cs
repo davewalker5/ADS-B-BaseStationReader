@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Logic.Database;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests
 {
@@ -9,7 +9,7 @@ namespace BaseStationReader.Tests
     {
         private const string Name = "Airbus";
 
-        private IManufacturerManager? _manager = null;
+        private IManufacturerManager _manager = null;
 
         [TestInitialize]
         public void TestInitialize()

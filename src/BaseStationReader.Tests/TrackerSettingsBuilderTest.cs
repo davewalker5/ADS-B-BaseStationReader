@@ -1,14 +1,14 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Logic.Configuration;
+using BaseStationReader.BusinessLogic.Configuration;
 
 namespace BaseStationReader.Tests
 {
     [TestClass]
     public class TrackerSettingsBuilderTest
     {
-        private ITrackerSettingsBuilder? _builder = null;
-        private ICommandLineParser? _parser = null;
+        private ITrackerSettingsBuilder _builder = null;
+        private ICommandLineParser _parser = null;
 
         [TestInitialize]
         public void Initialise()

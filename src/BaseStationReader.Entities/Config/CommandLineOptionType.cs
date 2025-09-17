@@ -3,6 +3,7 @@
     public enum CommandLineOptionType
     {
         Help,
+        SettingsFile,
         MinimumLogLevel,
         Host,
         Port,
@@ -23,6 +24,23 @@
         ReceiverLongitude,
         SendInterval,
         NumberOfAircraft,
-        Lifespan
+        MinimumAircraftLifespan,
+        MaximumAircraftLifespan,
+        MinimumAltitude,
+        MaximumAltitude,
+        MinimumTakeOffSpeed,
+        MaximumTakeOffSpeed,
+        MinimumApproachSpeed,
+        MaximumApproachSpeed,
+        MinimumCruisingSpeed,
+        MaximumCruisingSpeed,
+        MinimumClimbRate,
+        MaximumClimbRate,
+        MinimumDescentRate,
+        MaximumDescentRate,
+        MaximumInitialRange,
+        MaximumTrackedDistance,
+        MaximumTrackedAltitude,
+        TrackedBehaviours
     }
 }

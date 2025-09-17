@@ -15,7 +15,7 @@ namespace BaseStationReader.Entities.Lookup
         public int? ModelId { get; set; }
         public int? AirlineId { get; set; }
 
-        public Model? Model { get; set; }
-        public Airline? Airline { get; set; }
+        public Model Model { get; set; }
+        public Airline Airline { get; set; }
     }
 }

@@ -1,9 +1,9 @@
 ﻿using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.Logic
+namespace BaseStationReader.BusinessLogic
 {
     public interface IAircraftLockManager
     {
-        Task<Aircraft?> GetActiveAircraft(string address);
+        Task<Aircraft> GetActiveAircraftAsync(string address);
     }
 }

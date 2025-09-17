@@ -1,9 +1,8 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Tracking;
-using BaseStationReader.Logic.Api.AirLabs;
-using BaseStationReader.Logic.Database;
-using BaseStationReader.Logic.Tracking;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests
@@ -26,11 +25,11 @@ namespace BaseStationReader.Tests
         private const string AirlineResponse = "{\"response\": [{\"name\": \"Lufthansa\",\"iata_code\": \"LH\",\"icao_code\": \"DLH\"}]}";
         private const string ActiveFlightResponse = "{\"response\": [{\"hex\": \"4CAC23\",\"reg_number\": \"EI-HGL\",\"flag\": \"IE\",\"lat\": 40.733487,\"lng\": -0.049688,\"alt\": 10683,\"dir\": 192.1,\"speed\": 822,\"v_speed\": -5.5,\"squawk\": \"2074\",\"flight_number\": \"4N\",\"flight_icao\": \"RYR4N\",\"flight_iata\": \"FR9073\",\"dep_icao\": \"EGCC\",\"dep_iata\": \"MAN\",\"arr_icao\": \"LEAL\",\"arr_iata\": \"ALC\",\"airline_icao\": \"RYR\",\"airline_iata\": \"FR\",\"aircraft_icao\": \"B38M\",\"updated\": 1695907120,\"status\": \"en-route\"}]}";
 
-        private MockTrackerHttpClient? _client = null;
-        private IAircraftLookupManager? _manager = null;
-        private IAirlineManager? _airlines = null;
-        private IAircraftDetailsManager? _details = null;
-        private IModelManager? _models = null;
+        private MockTrackerHttpClient _client = null;
+        private IAircraftLookupManager _manager = null;
+        private IAirlineManager _airlines = null;
+        private IAircraftDetailsManager _details = null;
+        private IModelManager _models = null;
         private int _manufacturerId;
 
         [TestInitialize]
@@ -63,7 +62,7 @@ namespace BaseStationReader.Tests
         public void AircraftNotFoundTest()
         {
             _client!.AddResponse(NotFoundResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
             Assert.IsNull(details);
         }
 
@@ -71,7 +70,7 @@ namespace BaseStationReader.Tests
         public void NoModelDetailsTest()
         {
             _client!.AddResponse(NoModelDetailsResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
             Assert.IsNull(details);
         }
 
@@ -79,7 +78,7 @@ namespace BaseStationReader.Tests
         public void ModelNotInDatabaseTest()
         {
             _client!.AddResponse(FullResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
             Assert.IsNull(details);
         }
 
@@ -88,7 +87,7 @@ namespace BaseStationReader.Tests
         {
             Task.Run(() => _models!.AddAsync("E90", "E190", "190 / Lineage 1000", _manufacturerId)).Wait();
             _client!.AddResponse(NoAirlineDetailsResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(details);
             Assert.IsNull(details.Airline);
@@ -106,7 +105,7 @@ namespace BaseStationReader.Tests
             Task.Run(() => _models!.AddAsync("E90", "E190", "190 / Lineage 1000", _manufacturerId)).Wait();
             _client!.AddResponse(FullResponse);
             _client!.AddResponse(AirlineResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(details);
             Assert.IsNotNull(details.Airline);
@@ -127,7 +126,7 @@ namespace BaseStationReader.Tests
             Task.Run(() => _models!.AddAsync("E90", "E190", "190 / Lineage 1000", _manufacturerId)).Wait();
             _client!.AddResponse(AirlineWithNoIATAResponse);
             _client!.AddResponse(AirlineResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(details);
             Assert.IsNotNull(details.Airline);
@@ -149,7 +148,7 @@ namespace BaseStationReader.Tests
             Task.Run(() => _models!.AddAsync("E90", "E190", "190 / Lineage 1000", _manufacturerId)).Wait();
             _client!.AddResponse(FullResponse);
             _client!.AddResponse(AirlineResponse);
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(details);
             Assert.IsNotNull(details.Airline);
@@ -170,7 +169,7 @@ namespace BaseStationReader.Tests
             var airlineId = Task.Run(() => _airlines!.AddAsync("LH", "DLH", "Lufthansa")).Result.Id;
             var modelId = Task.Run(() => _models!.AddAsync("E90", "E190", "190 / Lineage 1000", _manufacturerId)).Result.Id;
             Task.Run(() => _details!.AddAsync(AircraftAddress, airlineId, modelId)).Wait();
-            var details = Task.Run(() => _manager!.LookupAircraft(AircraftAddress)).Result;
+            var details = Task.Run(() => _manager!.LookupAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(details);
             Assert.IsNotNull(details.Airline);
@@ -189,7 +188,7 @@ namespace BaseStationReader.Tests
         public void ActiveFlightLookupTest()
         {
             _client!.AddResponse(ActiveFlightResponse);
-            var details = Task.Run(() => _manager!.LookupActiveFlight("4CAC23")).Result;
+            var details = Task.Run(() => _manager!.LookupActiveFlightAsync("4CAC23")).Result;
 
             Assert.IsNotNull(details);
             Assert.AreEqual("MAN", details.DepartureAirportIATA);
