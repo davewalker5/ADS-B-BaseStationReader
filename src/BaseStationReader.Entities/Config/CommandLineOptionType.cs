@@ -39,6 +39,7 @@
         MaximumDescentRate,
         MaximumInitialRange,
         MaximumTrackedDistance,
+        MaximumTrackedAltitude,
         TrackedBehaviours
     }
 }

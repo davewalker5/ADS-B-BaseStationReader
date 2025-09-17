@@ -22,6 +22,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _staleMs;
         private readonly int _removedMs;
         private readonly int? _maximumDistance;
+        private readonly int? _maximumAltitude;
         private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
         private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -41,6 +42,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             IDistanceCalculator distanceCalculator,
             IEnumerable<AircraftBehaviour> behaviours,
             int? maximumDistance,
+            int? maximumAltitude,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -51,6 +53,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _timer = timer;
             _distanceCalculator = distanceCalculator;
             _maximumDistance = maximumDistance;
+            _maximumAltitude = maximumAltitude;
             _behaviours = behaviours;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
@@ -180,7 +183,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <returns></returns>
         private bool NotificationRequired(Aircraft aircraft)
             => _behaviours.Contains(aircraft.Behaviour) &&
-               ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance));
+               ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
+               ((_maximumAltitude == null) || (aircraft.Altitude <= _maximumAltitude));
 
         /// <summary>
         /// Handle a message that is from a new aircraft to be added to the collection

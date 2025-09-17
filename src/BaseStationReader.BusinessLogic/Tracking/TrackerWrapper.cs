@@ -80,6 +80,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 distanceCalculator,
                 _settings.TrackedBehaviours,
                 _settings.MaximumTrackedDistance,
+                _settings.MaximumTrackedAltitude,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
