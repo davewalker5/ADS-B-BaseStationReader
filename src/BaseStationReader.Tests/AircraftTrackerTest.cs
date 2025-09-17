@@ -41,17 +41,24 @@ namespace BaseStationReader.Tests
             // Create an aircraft tracker and wire up the event handlers
             var timer = new MockTrackerTimer(TrackerRecentMs / 10.0);
             var logger = new MockFileLogger();
-            var tracker = new AircraftTracker(reader,
-                parsers,
+            var assessor = new SimpleAircraftBehaviourAssessor();
+            var updater = new AircraftPropertyUpdater(logger, null, assessor);
+            
+            var notificationSender = new NotificationSender(
                 logger,
-                timer,
-                null,
                 Enum.GetValues<AircraftBehaviour>(),
                 null,
-                null,
+                null);
+
+            var tracker = new AircraftTracker(reader,
+                parsers,
+                timer,
+                updater,
+                notificationSender,
                 TrackerRecentMs,
                 TrackerStaleMs,
                 TrackerRemovedMs);
+
             tracker.AircraftAdded += OnAircraftNotification;
             tracker.AircraftUpdated += OnAircraftNotification;
             tracker.AircraftRemoved += OnAircraftNotification;

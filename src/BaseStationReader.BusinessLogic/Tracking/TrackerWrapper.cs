@@ -73,14 +73,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
-            _tracker = new AircraftTracker(reader,
-                parsers,
+            var assessor = new SimpleAircraftBehaviourAssessor();
+            var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
+
+            var notificationSender = new NotificationSender(
                 _logger,
-                trackerTimer,
-                distanceCalculator,
                 _settings.TrackedBehaviours,
                 _settings.MaximumTrackedDistance,
-                _settings.MaximumTrackedAltitude,
+                _settings.MaximumTrackedAltitude);
+
+            _tracker = new AircraftTracker(reader,
+                parsers,
+                trackerTimer,
+                propertyUpdater,
+                notificationSender,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);

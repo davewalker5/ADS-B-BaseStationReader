@@ -1,6 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -26,7 +25,6 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly IMessageGeneratorWrapper _messageGeneratorWrapper;
 
         private readonly int _maximumAltitude;
-        private readonly int _lifespan;
         private readonly int _numberOfAircraft;
         private bool _listening = false;
 
@@ -37,7 +35,6 @@ namespace BaseStationReader.BusinessLogic.Simulator
             IMessageGeneratorWrapper generatorWrapper,
             int maximumAltitude,
             int port,
-            int lifespan,
             int numberOfAircraft)
         {
             _listener = new TcpListener(IPAddress.Loopback, port);
@@ -46,7 +43,6 @@ namespace BaseStationReader.BusinessLogic.Simulator
             _aircraftGenerator = aircraftGenerator;
             _messageGeneratorWrapper = generatorWrapper;
             _maximumAltitude = maximumAltitude;
-            _lifespan = lifespan;
             _numberOfAircraft = numberOfAircraft;
             _timer.Tick += OnTimer;
         }
@@ -136,11 +132,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         private void RemoveExpiredAircraft()
         {
-            // Determine the cutoff date and time
-            var cutoff = DateTime.Now.AddMilliseconds(-_lifespan);
-
             // Compile a list of aircraft to be removed
-            var expired = _aircraft.Where(x => x.FirstSeen < cutoff).Select(x => x.Address);
+            var expired = _aircraft.Where(x => x.FirstSeen < DateTime.Now.AddMilliseconds(-x.Lifespan)).Select(x => x.Address);
             if (expired.Any())
             {
                 // Log the removal and remove them

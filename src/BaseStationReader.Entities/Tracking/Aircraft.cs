@@ -62,6 +62,9 @@ namespace BaseStationReader.Entities.Tracking
         public AircraftBehaviour Behaviour { get; set; }
 
         [NotMapped]
+        public int Lifespan { get; set; }
+
+        [NotMapped]
         public DateTime PositionLastUpdated { get; set; }
 
         [NotMapped]

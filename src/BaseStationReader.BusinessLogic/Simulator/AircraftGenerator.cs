@@ -54,12 +54,14 @@ namespace BaseStationReader.BusinessLogic.Simulator
             aircraft.LastSeen = DateTime.Now;
             aircraft.Behaviour = flags;
             aircraft.Track = _random.Next(0, 361);
+            aircraft.Lifespan = _random.Next(_settings.MinimumAircraftLifespan, _settings.MaximumAircraftLifespan + 1);
             aircraft.GroundSpeed = GenerateGroundSpeed(flags);
             aircraft.VerticalRate = GenerateVerticalRate(flags);
-            aircraft.Altitude = GenerateAltitude(flags, aircraft.VerticalRate.Value);
+            aircraft.Altitude = GenerateAltitude(flags, aircraft.VerticalRate.Value, aircraft.Lifespan);
 
             // Calculate the initial position of the aircraft
-            (decimal latitude, decimal longitude) = GenerateAircraftPostion(flags, aircraft.Track.Value, aircraft.GroundSpeed.Value);
+            (decimal latitude, decimal longitude) = GenerateAircraftPostion(
+                flags, aircraft.Track.Value, aircraft.GroundSpeed.Value, aircraft.Lifespan);
             aircraft.Latitude = latitude;
             aircraft.Longitude = longitude;
 
@@ -67,7 +69,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
             aircraft.PositionLastUpdated = DateTime.Now;
 
             // Log and return the aircraft
-            _logger.LogMessage(Severity.Info, $"Created aircraft {address}, behaviour = {aircraft.Behaviour}");
+            _logger.LogMessage(Severity.Info, $"Created aircraft {address}, lifespan {aircraft.Lifespan} ms, behaviour = {aircraft.Behaviour}");
             return aircraft;
         }
 
@@ -164,13 +166,14 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="behaviour"></param>
         /// <param name="verticalRate"></param>
+        /// <param name="lifespan"></param>
         /// <returns></returns>
-        private decimal GenerateAltitude(AircraftBehaviour behaviour, decimal verticalRate)
+        private decimal GenerateAltitude(AircraftBehaviour behaviour, decimal verticalRate, int lifespan)
         {
             // For aircraft that are landing, note that the lifespan is expressed in milliseconds
             return behaviour switch
             {
-                AircraftBehaviour.Descending => Math.Abs(verticalRate) * _settings.AircraftLifespan / 1000M,
+                AircraftBehaviour.Descending => Math.Abs(verticalRate) * lifespan / 1000M,
                 AircraftBehaviour.Climbing => 0M,
                 _ => (decimal)_random.NextDouble() * (_settings.MaximumAltitude - _settings.MinimumAltitude) + _settings.MinimumAltitude,
             };
@@ -186,7 +189,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private (decimal latitude, decimal longitude) GenerateAircraftPostion(
             AircraftBehaviour behaviour,
             decimal heading,
-            decimal speed)
+            decimal speed,
+            int lifespan)
         {
             double latitude;
             double longitude;
@@ -207,7 +211,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
                         _settings.ReceiverLongitude,
                         (double)heading,
                         (double)speed,
-                        _settings.AircraftLifespan / 1000.0);
+                        lifespan / 1000.0);
                     break;
                 default:
                     // For level flight, generate a random position in a circle centred on the receiver

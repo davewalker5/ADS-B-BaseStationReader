@@ -1,8 +1,9 @@
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
-    public static class AircraftBehaviourAssessor
+    public class SimpleAircraftBehaviourAssessor : IAircraftBehaviourAssessor
     {
         /// <summary>
         /// Examine an aircrafts altitude history to determine if it's in level flight, climbing
@@ -10,7 +11,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public static AircraftBehaviour Assess(Aircraft aircraft)
+        public AircraftBehaviour Assess(Aircraft aircraft)
         {
             AircraftBehaviour behaviour = AircraftBehaviour.Unknown;
 

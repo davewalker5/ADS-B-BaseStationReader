@@ -11,7 +11,8 @@ namespace BaseStationReader.Entities.Config
         public int Port { get; set; }
         public int SendInterval { get; set; }
         public int NumberOfAircraft { get; set; }
-        public int AircraftLifespan { get; set; }
+        public int MinimumAircraftLifespan { get; set; }
+        public int MaximumAircraftLifespan { get; set; }
         public int MinimumAltitude { get; set; }
         public int MaximumAltitude { get; set; }
         public int MinimumTakeOffSpeed { get; set; }

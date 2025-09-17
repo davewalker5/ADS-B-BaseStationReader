@@ -11,7 +11,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to send data on", 1, 1);
             Add(CommandLineOptionType.SendInterval, false, "--send-interval", "-s", "Message send interval (ms)", 1, 1);
             Add(CommandLineOptionType.NumberOfAircraft, false, "--number", "-n", "Number of concurrent simulated aircraft", 1, 1);
-            Add(CommandLineOptionType.Lifespan, false, "--lifespan", "-ls", "Simulated aircraft lifespan (ms)", 1, 1);
+            Add(CommandLineOptionType.MinimumAircraftLifespan, false, "--min-lifespan", "-minls", "Minimum simulated aircraft lifespan (ms)", 1, 1);
+            Add(CommandLineOptionType.MaximumAircraftLifespan, false, "--max-lifespan", "-maxls", "Maximum simulated aircraft lifespan (ms)", 1, 1);
             Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
             Add(CommandLineOptionType.MinimumLogLevel, false, "--log-level", "-ll", "Minimum logging level (Debug, Info, Warning or Error)", 1, 1);
             Add(CommandLineOptionType.MinimumAltitude, false, "--min-altitude", "-minalt", "Minimum altitude in metres for aircraft in level flight", 1, 1);

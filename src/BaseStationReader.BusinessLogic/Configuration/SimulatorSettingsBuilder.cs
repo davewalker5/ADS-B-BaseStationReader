@@ -27,8 +27,11 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.NumberOfAircraft);
             if (values != null) settings!.NumberOfAircraft = int.Parse(values[0]);
 
-            values = parser.GetValues(CommandLineOptionType.Lifespan);
-            if (values != null) settings!.AircraftLifespan = int.Parse(values[0]);
+            values = parser.GetValues(CommandLineOptionType.MinimumAircraftLifespan);
+            if (values != null) settings!.MinimumAircraftLifespan = int.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.MaximumAircraftLifespan);
+            if (values != null) settings!.MaximumAircraftLifespan = int.Parse(values[0]);
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
             if (values != null) settings!.LogFile = values[0];

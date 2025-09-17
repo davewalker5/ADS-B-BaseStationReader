@@ -68,7 +68,6 @@ namespace BaseStationReader.Simulator
                     messageGeneratorWrapper,
                     settings.MaximumAltitude,
                     settings.Port,
-                    settings.AircraftLifespan,
                     settings.NumberOfAircraft))
                 {
                     // Run the simulator

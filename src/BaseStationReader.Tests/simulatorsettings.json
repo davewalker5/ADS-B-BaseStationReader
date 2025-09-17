@@ -1,10 +1,26 @@
 ﻿{
   "ApplicationSettings": {
     "Port": 30003,
-    "SendInterval": 1000,
+    "SendInterval": 100,
     "NumberOfAircraft": 10,
-    "AircraftLifespan": 60000,
+    "MinimumAircraftLifespan": 60000,
+    "MaximumAircraftLifespan": 300000,
     "LogFile": "ReceiverSimulator.log",
-    "MinimumLogLevel": "Info"
+    "MinimumLogLevel": "Info",
+    "MinimumAltitude": 4572,
+    "MaximumAltitude": 12192,
+    "MinimumTakeOffSpeed": 72,
+    "MaximumTakeOffSpeed": 82,
+    "MinimumApproachSpeed": 67,
+    "MaximumApproachSpeed": 76,
+    "MinimumCruisingSpeed": 231,
+    "MaximumCruisingSpeed": 247,
+    "MinimumClimbRate": 7,
+    "MaximumClimbRate": 20,
+    "MinimumDescentRate": 3.5,
+    "MaximumDescentRate": 4,
+    "MaximumInitialRange": 55560,
+    "ReceiverLatitude": 51.4711123,
+    "ReceiverLongitude": -0.4646874
   }
 }
