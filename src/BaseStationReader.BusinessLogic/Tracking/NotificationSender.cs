@@ -40,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            if (NotificationRequired(aircraft))
+            if (CheckTrackingCriteria(aircraft))
             {
                 SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Added);
             }
@@ -62,7 +62,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             decimal? previousLatitude,
             decimal? previousLongitude)
         {
-            if (NotificationRequired(aircraft))
+            if (CheckTrackingCriteria(aircraft))
             {
                 // If the position's changed, create a position object to attach to the event arguments
                 AircraftPosition position = null;
@@ -87,9 +87,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
-            // to catch cases where the aircraft *was* tracked but now no longer qualifies
-            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
+            // Messages regarding staleness and removal aren't subject to the distance and altitude
+            // constraints, only the aircraft behaviour constraints
+            if (CheckBehaviourMatches(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
+            }
         }
 
         /// <summary>
@@ -103,9 +106,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
-            // to catch cases where the aircraft *was* tracked but now no longer qualifies
-            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
+            // Messages regarding staleness and removal aren't subject to the distance and altitude
+            // constraints, only the aircraft behaviour constraints
+            if (CheckBehaviourMatches(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
+            }
         }
 
         /// <summary>
@@ -119,18 +125,29 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
-            // to catch cases where the aircraft *was* tracked but now no longer qualifies
-            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
+            // Messages regarding staleness and removal aren't subject to the distance and altitude
+            // constraints, only the aircraft behaviour constraints
+            if (CheckBehaviourMatches(aircraft))
+            {
+                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
+            }
         }
+
+        /// <summary>
+        /// Return true if the behaviour of an aircraft matches the tracking criteria
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        private bool CheckBehaviourMatches(Aircraft aircraft)
+            => _behaviours.Contains(aircraft.Behaviour);
 
         /// <summary>
         /// Return true if an aircraft meets the criteria for notifications to be sent
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private bool NotificationRequired(Aircraft aircraft)
-            => _behaviours.Contains(aircraft.Behaviour) &&
+        private bool CheckTrackingCriteria(Aircraft aircraft)
+            => CheckBehaviourMatches(aircraft) &&
                ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
                ((_minimumAltitude == null) || (aircraft.Altitude >= _minimumAltitude)) &&
                ((_maximumAltitude == null) || (aircraft.Altitude <= _maximumAltitude));
