@@ -87,10 +87,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            if (NotificationRequired(aircraft))
-            {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
-            }
+            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
+            // to catch cases where the aircraft *was* tracked but now no longer qualifies
+            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
         }
 
         /// <summary>
@@ -104,10 +103,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            if (NotificationRequired(aircraft))
-            {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
-            }
+            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
+            // to catch cases where the aircraft *was* tracked but now no longer qualifies
+            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
         }
 
         /// <summary>
@@ -121,10 +119,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
-            if (NotificationRequired(aircraft))
-            {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
-            }
+            // Messages regarding staleness and removal are sent irrespective of the qualifying criteria
+            // to catch cases where the aircraft *was* tracked but now no longer qualifies
+            SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
         }
 
         /// <summary>
