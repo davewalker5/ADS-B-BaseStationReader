@@ -8,6 +8,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
     {
         private readonly ITrackerLogger _logger;
         private readonly int? _maximumDistance;
+        private readonly int? _minimumAltitude;
         private readonly int? _maximumAltitude;
         private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
@@ -15,10 +16,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerLogger logger,
             IEnumerable<AircraftBehaviour> behaviours,
             int? maximumDistance,
+            int? minimumAltitude,
             int? maximumAltitude)
         {
             _logger = logger;
             _maximumDistance = maximumDistance;
+            _minimumAltitude = minimumAltitude;
             _maximumAltitude = maximumAltitude;
             _behaviours = behaviours;
         }
@@ -132,6 +135,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private bool NotificationRequired(Aircraft aircraft)
             => _behaviours.Contains(aircraft.Behaviour) &&
                ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
+               ((_minimumAltitude == null) || (aircraft.Altitude >= _minimumAltitude)) &&
                ((_maximumAltitude == null) || (aircraft.Altitude <= _maximumAltitude));
 
         /// <summary>

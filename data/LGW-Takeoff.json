@@ -1,0 +1,12 @@
+{
+  "Name": "London Gatwick - Taking Off",
+  "ReceiverLatitude": 51.14810180664062,
+  "ReceiverLongitude": -0.19027799367905,
+  "ReceiverElevation": 202,
+  "MaximumTrackedDistance": 15,
+  "MinimumTrackedAltitude": 200,
+  "MaximumTrackedAltitude": 4000,
+  "TrackedBehaviours": [
+    "Climbing"
+  ]
+}

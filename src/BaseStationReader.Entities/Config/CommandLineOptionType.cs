@@ -40,7 +40,9 @@
         MaximumDescentRate,
         MaximumInitialRange,
         MaximumTrackedDistance,
+        MinimumTrackedAltitude,
         MaximumTrackedAltitude,
-        TrackedBehaviours
+        TrackedBehaviours,
+        Profile
     }
 }
