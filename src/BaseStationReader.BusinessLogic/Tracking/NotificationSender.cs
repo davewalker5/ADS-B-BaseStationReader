@@ -1,6 +1,8 @@
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -168,6 +170,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             EventHandler<AircraftNotificationEventArgs> handler,
             AircraftNotificationType type)
         {
+            _logger.LogMessage(Severity.Debug, $"Sending {type} message for aircraft {aircraft.Address} {aircraft.Behaviour}");
+
             try
             {
                 // Send the notification to subscribers

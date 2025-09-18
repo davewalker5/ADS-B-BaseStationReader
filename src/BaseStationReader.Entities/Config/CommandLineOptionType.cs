@@ -43,6 +43,7 @@
         MinimumTrackedAltitude,
         MaximumTrackedAltitude,
         TrackedBehaviours,
-        Profile
+        Profile,
+        ClearDown
     }
 }

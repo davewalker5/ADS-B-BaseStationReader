@@ -20,6 +20,31 @@ namespace BaseStationReader.Data
         }
 
         /// <summary>
+        /// Truncate the specified table and reset its identity counter
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public async Task TruncateTable(string tableName)
+        {
+            // With a SQLite back-end we have no choice but to use ExecuteSqlRawAsync in this context, so
+            // suppress the warnings about idempotence and SQL injection risks
+#pragma warning disable EF1002
+            await Database.ExecuteSqlRawAsync($"DELETE FROM {tableName};");
+            await Database.ExecuteSqlRawAsync($"DELETE FROM sqlite_sequence WHERE name = '{tableName}';");
+#pragma warning restore EF1002
+        }
+
+        /// <summary>
+        /// Clear down aircraft tracking data while leaving aircraft details and airlines intact
+        /// </summary>
+        /// <returns></returns>
+        public async Task ClearDown()
+        {
+            await TruncateTable("AIRCRAFT_POSITION");
+            await TruncateTable("AIRCRAFT");
+        }
+
+        /// <summary>
         /// Initialise the aircraft tracker model
         /// </summary>
         /// <param name="modelBuilder"></param>
