@@ -80,6 +80,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _logger,
                 _settings.TrackedBehaviours,
                 _settings.MaximumTrackedDistance,
+                _settings.MinimumTrackedAltitude,
                 _settings.MaximumTrackedAltitude);
 
             _tracker = new AircraftTracker(reader,

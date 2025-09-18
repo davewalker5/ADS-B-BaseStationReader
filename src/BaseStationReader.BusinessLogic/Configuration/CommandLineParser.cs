@@ -164,9 +164,10 @@ namespace BaseStationReader.BusinessLogic.Configuration
                         // Add the value to the list of all values
                         _values.Add(current.Option.OptionType, current);
                     }
-                    else if (arg.StartsWith('-'))
+                    else if (arg.StartsWith('-') && !decimal.TryParse(arg, out _))
                     {
-                        // Starts with "-" so this is the short name of an option. Create a new value
+                        // Starts with "-" and it's not a number, which would be a parameter value, so this is
+                        // the short name of an option. Create a new value
                         current = new CommandLineOptionValue
                         {
                             Option = FindOption(arg, false)

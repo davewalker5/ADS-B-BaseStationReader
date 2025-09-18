@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Terminal
 {
@@ -37,7 +38,8 @@ namespace BaseStationReader.Terminal
             else
             {
                 // Read the application config file
-                _settings = new TrackerSettingsBuilder().BuildSettings(parser, "appsettings.json");
+                var reader = new TrackingProfileReaderWriter();
+                _settings = new TrackerSettingsBuilder().BuildSettings(parser, reader, "appsettings.json");
 
                 // Configure the log file
                 _logger = new FileLogger();

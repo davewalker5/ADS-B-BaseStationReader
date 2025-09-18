@@ -1,0 +1,12 @@
+{
+  "Name": "London City - Taking Off",
+  "ReceiverLatitude": 51.50529861450195,
+  "ReceiverLongitude": 0.05527799949050,
+  "ReceiverElevation": 19,
+  "MaximumTrackedDistance": 10,
+  "MinimumTrackedAltitude": 700,
+  "MaximumTrackedAltitude": 4000,
+  "TrackedBehaviours": [
+    "Climbing"
+  ]
+}

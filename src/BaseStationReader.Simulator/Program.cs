@@ -39,6 +39,7 @@ namespace BaseStationReader.Simulator
                 // Log the startup messages
                 logger.LogMessage(Severity.Info, new string('=', 80));
                 logger.LogMessage(Severity.Info, title);
+                logger.LogMessage(Severity.Info, $"Receiver is at {settings.ReceiverLatitude}, {settings.ReceiverLongitude}");
 
                 Console.WriteLine(title);
                 Console.WriteLine($"Output will be logged to {settings.LogFile}");

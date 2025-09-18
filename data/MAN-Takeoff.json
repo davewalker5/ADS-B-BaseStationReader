@@ -1,0 +1,12 @@
+{
+  "Name": "Manchester - Taking Off",
+  "ReceiverLatitude": 53.35369873046875,
+  "ReceiverLongitude": -2.27495002746582,
+  "ReceiverElevation": 257,
+  "MaximumTrackedDistance": 20,
+  "MinimumTrackedAltitude": 1000,
+  "MaximumTrackedAltitude": 6000,
+  "TrackedBehaviours": [
+    "Climbing"
+  ]
+}
