@@ -12,7 +12,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly ITrackerTimer _timer;
         private readonly IAircraftPropertyUpdater _updater;
         private readonly INotificationSender _sender;
-        private readonly Dictionary<string, Aircraft> _aircraft = [];
+        private readonly Dictionary<string, TrackedAircraft> _aircraft = [];
         private CancellationTokenSource _cancellationTokenSource = null;
         private readonly int _recentMs;
         private readonly int _staleMs;
@@ -110,6 +110,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var aircraft = _aircraft[msg.Address];
             lock (aircraft)
             {
+                // TODO: Capture all position parameters and use them all to trigger a position update
+
                 // Capture the previous position
                 var lastLatitude = aircraft.Latitude;
                 var lastLongitude = aircraft.Longitude;
@@ -132,7 +134,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="msg"></param>
         private void AddNewAircraft(Message msg)
         {
-            var aircraft = new Aircraft { FirstSeen = DateTime.Now };
+            var aircraft = new TrackedAircraft { FirstSeen = DateTime.Now };
             _updater.UpdateProperties(aircraft, msg);
 
             lock (_aircraft)

@@ -5,13 +5,13 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Lookup
 {
     [ExcludeFromCodeCoverage]
-    public class Model
+    public class Flight
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; } = "";
+        public string Number { get; set; } = "";
 
         [Required]
         public string ICAO { get; set; } = "";
@@ -20,9 +20,15 @@ namespace BaseStationReader.Entities.Lookup
         public string IATA { get; set; } = "";
 
         [Required]
-        [ForeignKey(nameof(Manufacturer))]
-        public int ManufacturerId { get; set; }
+        public string Embarkation { get; set; } = "";
 
-        public Manufacturer Manufacturer { get; set; }
+        [Required]
+        public string Destination { get; set; } = "";
+
+        [Required]
+        [ForeignKey(nameof(Airline))]
+        public int AirlineId { get; set; }
+        
+        public Airline Airline { get; set; }
     }
 }

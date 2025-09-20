@@ -4,7 +4,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftLookupManager
     {
-        Task<AircraftDetails> LookupAircraftAsync(string address);
-        Task<FlightDetails> LookupActiveFlightAsync(string address);
+        Task<Aircraft> LookupAircraftAsync(string address);
+        Task<Flight> LookupActiveFlightAsync(string address);
     }
 }

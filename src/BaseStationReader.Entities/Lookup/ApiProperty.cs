@@ -1,4 +1,4 @@
-﻿namespace BaseStationReader.Entities.Tracking
+﻿namespace BaseStationReader.Entities.Lookup
 {
     public enum ApiProperty
     {
@@ -8,10 +8,8 @@
         ManufacturerName,
         ModelIATA,
         ModelICAO,
-        DepartureAirportIATA,
-        DepartureAirportICAO,
-        DestinationAirportIATA,
-        DestinationAirportICAO,
+        EmbarkationIATA,
+        DestinationIATA,
         FlightIATA,
         FlightICAO
     }

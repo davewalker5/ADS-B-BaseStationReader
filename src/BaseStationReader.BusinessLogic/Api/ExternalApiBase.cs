@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 

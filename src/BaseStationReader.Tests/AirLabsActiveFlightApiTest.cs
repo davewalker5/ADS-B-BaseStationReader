@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 
@@ -29,11 +29,9 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(AircraftAddress)).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(6, properties.Count);
-            Assert.AreEqual("MAN", properties[ApiProperty.DepartureAirportIATA]);
-            Assert.AreEqual("EGCC", properties[ApiProperty.DepartureAirportICAO]);
-            Assert.AreEqual("ALC", properties[ApiProperty.DestinationAirportIATA]);
-            Assert.AreEqual("LEAL", properties[ApiProperty.DestinationAirportICAO]);
+            Assert.AreEqual(4, properties.Count);
+            Assert.AreEqual("MAN", properties[ApiProperty.EmbarkationIATA]);
+            Assert.AreEqual("ALC", properties[ApiProperty.DestinationIATA]);
             Assert.AreEqual("FR9073", properties[ApiProperty.FlightIATA]);
             Assert.AreEqual("RYR4N", properties[ApiProperty.FlightICAO]);
         }

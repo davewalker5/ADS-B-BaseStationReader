@@ -22,14 +22,14 @@ namespace BaseStationReader.Tests
         public void TestInitialise()
         {
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _aircraftWriter = new AircraftWriter(_context);
+            _aircraftWriter = new TrackedAircraftWriter(_context);
             _aircraftLocker = new AircraftLockManager(_aircraftWriter, TimeToLockMs);
         }
 
         [TestMethod]
         public async Task GetActiveAircraftTest()
         {
-            var added = await _aircraftWriter!.WriteAsync(new Aircraft
+            var added = await _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -44,7 +44,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task GetInactiveAircraftTest()
         {
-            await _aircraftWriter!.WriteAsync(new Aircraft
+            await _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
@@ -58,7 +58,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task InactiveAircraftIsLockedTest()
         {
-            var aircraft = await _aircraftWriter!.WriteAsync(new Aircraft
+            var aircraft = await _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),

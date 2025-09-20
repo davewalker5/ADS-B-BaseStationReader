@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -48,10 +48,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.DepartureAirportIATA, apiResponse!["dep_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.DepartureAirportICAO, apiResponse!["dep_icao"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.DestinationAirportIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.DestinationAirportICAO, apiResponse!["arr_icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.EmbarkationIATA, apiResponse!["dep_iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.DestinationIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" }
                     };

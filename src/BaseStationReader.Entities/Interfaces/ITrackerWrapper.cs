@@ -10,7 +10,7 @@ namespace BaseStationReader.Entities.Interfaces
         event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
         event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
 
-        ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; }
+        ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; }
         bool IsTracking { get; }
         Task InitialiseAsync();
         void Start();

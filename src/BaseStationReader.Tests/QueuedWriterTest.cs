@@ -8,6 +8,7 @@ using BaseStationReader.Tests.Mocks;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests
 {
@@ -38,11 +39,11 @@ namespace BaseStationReader.Tests
         private bool _queueProcessed = false;
 
         [TestInitialize]
-        public void TestInitialise()
+        public async Task TestInitialise()
         {
             // Create an in-memory database context, the two writers and a lock manager
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _aircraftWriter = new AircraftWriter(_context);
+            _aircraftWriter = new TrackedAircraftWriter(_context);
             _positionWriter = new PositionWriter(_context);
             _aircraftLocker = new AircraftLockManager(_aircraftWriter, TimeToLockMs);
 
@@ -53,7 +54,7 @@ namespace BaseStationReader.Tests
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer
-            _writer.StartAsync();
+            await _writer.StartAsync();
         }
 
         [TestCleanup]
@@ -65,7 +66,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void AddNewAircraftTest()
         {
-            Push(new Aircraft
+            Push(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -82,14 +83,14 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void UpdateExistingAircraftTest()
         {
-            var added =  Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
+            var added =  Task.Run(() => _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
             })).Result;
 
-            Push(new Aircraft
+            Push(new TrackedAircraft
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -125,7 +126,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void AddActivePositionTest()
         {
-            var aircraft = Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
+            var aircraft = Task.Run(() => _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -143,10 +144,10 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var position = Task.Run(() => _positionWriter!.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
+            var position = Task.Run(() => _positionWriter!.GetAsync(x => x.TrackedAircraftId == aircraft.Id)).Result;
             Assert.IsNotNull(position);
             Assert.IsTrue(position.Id > 0);
-            Assert.AreEqual(aircraft.Id, position.AircraftId);
+            Assert.AreEqual(aircraft.Id, position.TrackedAircraftId);
             Assert.AreEqual(Altitude, position.Altitude);
             Assert.AreEqual(Latitude, position.Latitude);
             Assert.AreEqual(Longitude, position.Longitude);
@@ -155,7 +156,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public void StaleRecordIsLockedOnUpdateTest()
         {
-            Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
+            Task.Run(() => _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
@@ -167,7 +168,7 @@ namespace BaseStationReader.Tests
             Assert.IsTrue(added.Id > 0);
             Assert.AreNotEqual(TrackingStatus.Locked, added.Status);
 
-            Push(new Aircraft
+            Push(new TrackedAircraft
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -193,9 +194,9 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public void NewSessionLocksAllTest()
+        public async Task NewSessionLocksAllTest()
         {
-            Task.Run(() => _aircraftWriter!.WriteAsync(new Aircraft
+            Task.Run(() => _aircraftWriter!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -208,7 +209,7 @@ namespace BaseStationReader.Tests
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer!.Stop();
-            _writer.StartAsync();
+            await _writer.StartAsync();
             WaitForQueueToEmpty();
 
             var locked = Task.Run(() => _aircraftWriter!.GetAsync(x => x.Address == Address)).Result;

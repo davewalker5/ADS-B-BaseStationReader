@@ -6,7 +6,7 @@ namespace BaseStationReader.Tests
     [TestClass]
     public class ExporterTest
     {
-        private IList<Aircraft> _aircraft = new List<Aircraft>();
+        private IList<TrackedAircraft> _aircraft = new List<TrackedAircraft>();
         private IList<AircraftPosition> _positions = new List<AircraftPosition>();
 
         [TestMethod]
@@ -15,7 +15,7 @@ namespace BaseStationReader.Tests
             GenerateRandomAircraft();
 
             var filepath = Path.ChangeExtension(Path.GetTempFileName(), "csv");
-            new CsvExporter<Aircraft>().Export(_aircraft, filepath, ',');
+            new CsvExporter<TrackedAircraft>().Export(_aircraft, filepath, ',');
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests
             GenerateRandomAircraft();
 
             var filepath = Path.ChangeExtension(Path.GetTempFileName(), "xlsx");
-            new XlsxExporter<Aircraft>().Export(_aircraft, filepath, "Aircraft");
+            new XlsxExporter<TrackedAircraft>().Export(_aircraft, filepath, "Aircraft");
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
@@ -78,7 +78,7 @@ namespace BaseStationReader.Tests
             {
                 var address = random.Next(0, 16777215).ToString("X6");
 
-                _aircraft.Add(new Aircraft
+                _aircraft.Add(new TrackedAircraft
                 {
                     Address = address,
                     FirstSeen = DateTime.Now,

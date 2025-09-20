@@ -10,29 +10,30 @@ namespace BaseStationReader.Entities.Tracking
     {
         [Key]
         public int Id { get; set; }
-        [ForeignKey("Aircraft.Id")]
-        public int AircraftId { get; set; }
 
         [Export("ICAO Address", 1)]
         public string Address { get; set; } = "";
 
         [Export("Altitude", 2)]
-        public decimal Altitude { get; set; }
+        public decimal? Altitude { get; set; }
 
         [Export("Latitude", 3)]
-        public decimal Latitude { get; set; }
+        public decimal? Latitude { get; set; }
 
         [Export("Longitude", 4)]
-        public decimal Longitude { get; set; }
+        public decimal? Longitude { get; set; }
 
         [Export("Distance", 5)]
         public double? Distance { get; set; }
 
+        [Required]
         [Export("Timestamp", 6)]
         public DateTime Timestamp { get; set; }
 
-#pragma warning disable CS8618
-        public Aircraft Aircraft { get; set; }
-#pragma warning restore CS8618
+        [Required]
+        [ForeignKey(nameof(Tracking.TrackedAircraft))]
+        public int TrackedAircraftId { get; set; }
+
+        public TrackedAircraft TrackedAircraft { get; set; }
     }
 }

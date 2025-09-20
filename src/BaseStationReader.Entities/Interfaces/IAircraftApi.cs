@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Tracking;
+﻿using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Entities.Interfaces
 {

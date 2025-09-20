@@ -8,7 +8,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 {
     public class AircraftPropertyUpdater : IAircraftPropertyUpdater
     {
-        private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
         private readonly PropertyInfo[] _messageProperties = typeof(Message).GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         private readonly ITrackerLogger _logger;
@@ -30,7 +30,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="msg"></param>
-        public void UpdateProperties(Aircraft aircraft, Message msg)
+        public void UpdateProperties(TrackedAircraft aircraft, Message msg)
         {
             // Increment the message count
             aircraft.Messages++;
@@ -71,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="lastAltitude"></param>
-        public void UpdateBehaviour(Aircraft aircraft, decimal? lastAltitude)
+        public void UpdateBehaviour(TrackedAircraft aircraft, decimal? lastAltitude)
         {
             // If the altitude is specified, use changes in altitude to characterise aircraft behaviour
             if ((lastAltitude != null) && (aircraft.Altitude != null))

@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 

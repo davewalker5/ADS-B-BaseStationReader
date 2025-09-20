@@ -54,7 +54,7 @@ namespace BaseStationReader.Terminal.Logic
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public int AddAircraft(Aircraft aircraft)
+        public int AddAircraft(TrackedAircraft aircraft)
         {
             var rowNumber = -1;
 
@@ -70,7 +70,7 @@ namespace BaseStationReader.Terminal.Logic
         /// Update an aircraft's entry in the table
         /// </summary>
         /// <param name="aircraft"></param>
-        public int UpdateAircraft(Aircraft aircraft)
+        public int UpdateAircraft(TrackedAircraft aircraft)
         {
             var rowNumber = -1;
 
@@ -101,7 +101,7 @@ namespace BaseStationReader.Terminal.Logic
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public int RemoveAircraft(Aircraft aircraft)
+        public int RemoveAircraft(TrackedAircraft aircraft)
         {
             lock (_lock)
             {
@@ -123,7 +123,7 @@ namespace BaseStationReader.Terminal.Logic
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public int AddTableRow(Aircraft aircraft)
+        public int AddTableRow(TrackedAircraft aircraft)
         {
             var rowNumber = -1;
 
@@ -147,7 +147,7 @@ namespace BaseStationReader.Terminal.Logic
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private string[] GetAircraftRowData(Aircraft aircraft)
+        private string[] GetAircraftRowData(TrackedAircraft aircraft)
         {
             // Use the aircraft's staleness to set the row colour
             var startColour = "";

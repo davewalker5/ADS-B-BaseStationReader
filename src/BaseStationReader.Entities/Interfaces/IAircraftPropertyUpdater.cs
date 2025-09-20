@@ -5,7 +5,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftPropertyUpdater
     {
-        void UpdateProperties(Aircraft aircraft, Message msg);
-        void UpdateBehaviour(Aircraft aircraft, decimal? lastAltitude);
+        void UpdateProperties(TrackedAircraft aircraft, Message msg);
+        void UpdateBehaviour(TrackedAircraft aircraft, decimal? lastAltitude);
     }
 }

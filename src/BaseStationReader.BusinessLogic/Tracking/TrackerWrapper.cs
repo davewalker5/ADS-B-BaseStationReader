@@ -25,7 +25,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
         public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
-        public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
+        public ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
         public TrackerWrapper(ITrackerLogger logger, TrackerApplicationSettings settings)
@@ -87,7 +87,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_settings.EnableSqlWriter)
             {
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var aircraftWriter = new AircraftWriter(context);
+                var aircraftWriter = new TrackedAircraftWriter(context);
                 var positionWriter = new PositionWriter(context);
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
@@ -124,7 +124,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             // Add the aircraft to the collection
-            TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
+            TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
 
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
@@ -153,7 +153,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
             if (!TrackedAircraft.ContainsKey(e.Aircraft.Address))
             {
-                TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
+                TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
             }
             else
             {
@@ -185,7 +185,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             // Remove the aircraft from the collection
-            TrackedAircraft.Remove(e.Aircraft.Address, out Aircraft dummy);
+            TrackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft dummy);
 
             // Forward the event to subscribers
             AircraftRemoved?.Invoke(this, e);

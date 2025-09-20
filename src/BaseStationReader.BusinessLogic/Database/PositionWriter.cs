@@ -28,9 +28,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<AircraftPosition> GetAsync(Expression<Func<AircraftPosition, bool>> predicate)
         {
             List<AircraftPosition> aircraft = await ListAsync(predicate);
-#pragma warning disable CS8603
             return aircraft.FirstOrDefault();
-#pragma warning restore CS8603
         }
 
         /// <summary>
@@ -39,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="predicate"></param>
         /// <returns></returns>
         public async Task<List<AircraftPosition>> ListAsync(Expression<Func<AircraftPosition, bool>> predicate)
-            => await _context.AircraftPositions.Where(predicate).ToListAsync();
+            => await _context.Positions.Where(predicate).ToListAsync();
 
         /// <summary>
         /// Write an aircraft position to the database, either creating a new record or updating an existing one

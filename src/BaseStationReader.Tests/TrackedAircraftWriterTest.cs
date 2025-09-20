@@ -30,13 +30,13 @@ namespace BaseStationReader.Tests
         public void TestInitialise()
         {
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _writer = new AircraftWriter(context);
+            _writer = new TrackedAircraftWriter(context);
         }
 
         [TestMethod]
         public async Task AddAndGetTest()
         {
-            await _writer!.WriteAsync(new Aircraft
+            await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task ListTest()
         {
-            await _writer!.WriteAsync(new Aircraft
+            await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
@@ -74,14 +74,14 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task ListOrderingTest()
         {
-            var first = await _writer!.WriteAsync(new Aircraft
+            var first = await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            var second = await _writer!.WriteAsync(new Aircraft
+            var second = await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
@@ -101,14 +101,14 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task UpdateTest()
         {
-            var initial = await _writer!.WriteAsync(new Aircraft
+            var initial = await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            await _writer!.WriteAsync(new Aircraft
+            await _writer!.WriteAsync(new TrackedAircraft
             {
                 Id = initial.Id,
                 Address = Address,
@@ -143,14 +143,14 @@ namespace BaseStationReader.Tests
         [TestMethod]
         public async Task AddSecondTest()
         {
-            await _writer!.WriteAsync(new Aircraft
+            await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            await _writer!.WriteAsync(new Aircraft
+            await _writer!.WriteAsync(new TrackedAircraft
             {
                 Address = SecondAddress,
                 FirstSeen = FirstSeen,

@@ -23,10 +23,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<Model> GetAsync(Expression<Func<Model, bool>> predicate)
         {
             List<Model> models = await ListAsync(predicate);
-
-#pragma warning disable CS8603
             return models.FirstOrDefault();
-#pragma warning restore CS8603
         }
 
         /// <summary>

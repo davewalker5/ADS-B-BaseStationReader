@@ -5,8 +5,8 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftWriter
     {
-        Task<Aircraft> GetAsync(Expression<Func<Aircraft, bool>> predicate);
-        Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate);
-        Task<Aircraft> WriteAsync(Aircraft template);
+        Task<TrackedAircraft> GetAsync(Expression<Func<TrackedAircraft, bool>> predicate);
+        Task<List<TrackedAircraft>> ListAsync(Expression<Func<TrackedAircraft, bool>> predicate);
+        Task<TrackedAircraft> WriteAsync(TrackedAircraft template);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
-using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -34,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<AircraftDetails> LookupAircraftAsync(string address)
+        public async Task<Aircraft> LookupAircraftAsync(string address)
         {
             // See if the details are locally cached, first
             var details = await _detailsManager!.GetAsync(x => x.Address == address);
@@ -51,11 +50,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     // locally, so check we have a model
                     if (model != null)
                     {
-                        // Get the airline details
-                        var airline = await GetAirlineFromResponseAsync(properties[ApiProperty.AirlineIATA], properties[ApiProperty.AirlineICAO]);
-
-                        // Add a new aircraft details record to the local database
-                        details = await _detailsManager.AddAsync(address, airline?.Id, model.Id);
+                        // TODO
+                        // details = await _detailsManager.AddAsync(address, model.Id);
                     }
                 }
 
@@ -69,24 +65,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<FlightDetails> LookupActiveFlightAsync(string address)
+        public async Task<Flight> LookupActiveFlightAsync(string address)
         {
-            FlightDetails details = null;
+            Flight details = null;
 
             // Use the API to look-up the flight
             var properties = await _flightsApi!.LookupFlightByAircraftAsync(address);
             if (properties != null)
             {
                 // Create a new flight details object containing the details
-                details = new FlightDetails
+                details = new Flight
                 {
-                    Address = address,
-                    DepartureAirportIATA = properties[ApiProperty.DepartureAirportIATA],
-                    DepartureAirportICAO = properties[ApiProperty.DepartureAirportICAO],
-                    DestinationAirportIATA = properties[ApiProperty.DestinationAirportIATA],
-                    DestinationAirportICAO = properties[ApiProperty.DestinationAirportICAO],
-                    FlightNumberIATA = properties[ApiProperty.FlightIATA],
-                    FlightNumberICAO = properties[ApiProperty.FlightICAO],
+                    Embarkation = properties[ApiProperty.EmbarkationIATA],
+                    Destination = properties[ApiProperty.DestinationIATA],
+                    IATA = properties[ApiProperty.FlightIATA],
+                    ICAO = properties[ApiProperty.FlightICAO],
                 };
             }
 

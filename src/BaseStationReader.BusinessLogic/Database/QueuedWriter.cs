@@ -44,7 +44,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // To stop the queue growing and consuming memory, entries are discarded if the timer
             // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if (_timer != null && (entity is Aircraft || entity is AircraftPosition))
+            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition))
             {
                 _queue.Enqueue(entity);
             }
@@ -57,7 +57,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // Set the locked flag on all unlocked records. This prevents confusing tracking of the same aircraft
             // on different flights
-            List<Aircraft> unlocked = await _aircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
+            List<TrackedAircraft> unlocked = await _aircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
             foreach (var aircraft in unlocked)
             {
                 aircraft.Status = TrackingStatus.Locked;
@@ -132,7 +132,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private async Task WriteDequeuedObjectAsync(object queued)
         {
             // If it's an aircraft and it's an existing record that hasn't been locked, get the ID for update
-            Aircraft aircraft = queued as Aircraft;
+            TrackedAircraft aircraft = queued as TrackedAircraft;
             AircraftPosition position = null;
             if (aircraft != null)
             {
@@ -152,7 +152,7 @@ namespace BaseStationReader.BusinessLogic.Database
                     var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
                     if (activeAircraft != null)
                     {
-                        position.AircraftId = activeAircraft.Id;
+                        position.TrackedAircraftId = activeAircraft.Id;
                     }
                 }
             }
@@ -165,9 +165,9 @@ namespace BaseStationReader.BusinessLogic.Database
                     _logger.LogMessage(Severity.Debug, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
                     await _aircraftWriter.WriteAsync(aircraft);
                 }
-                else if (position != null && position.AircraftId > 0)
+                else if (position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Writing position for aircraft with Id {position.AircraftId}");
+                    _logger.LogMessage(Severity.Debug, $"Writing position for aircraft with Id {position.TrackedAircraftId}");
                     await _positionWriter.WriteAsync(position);
                 }
             }

@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Tracking
 {
     [ExcludeFromCodeCoverage]
-    public class Aircraft : ICloneable
+    public class TrackedAircraft : ICloneable
     {
         private const int MaximumHistoryEntries = 50;
 

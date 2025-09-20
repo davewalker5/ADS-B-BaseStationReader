@@ -38,7 +38,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
         public void SendAddedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
@@ -58,7 +58,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
         public void SendUpdatedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler,
             decimal? previousLatitude,
@@ -85,7 +85,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sender"></param>
         /// <param name="handler"></param>
         public void SendStaleNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
@@ -104,7 +104,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sender"></param>
         /// <param name="handler"></param>
         public void SendInactiveNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
@@ -123,7 +123,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sender"></param>
         /// <param name="handler"></param>
         public void SendRemovedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler)
         {
@@ -140,7 +140,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private bool CheckBehaviourMatches(Aircraft aircraft)
+        private bool CheckBehaviourMatches(TrackedAircraft aircraft)
             => _behaviours.Contains(aircraft.Behaviour);
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private bool CheckTrackingCriteria(Aircraft aircraft)
+        private bool CheckTrackingCriteria(TrackedAircraft aircraft)
             => CheckBehaviourMatches(aircraft) &&
                ((_maximumDistance == null) || (aircraft.Distance <= _maximumDistance)) &&
                ((_minimumAltitude == null) || (aircraft.Altitude >= _minimumAltitude)) &&
@@ -164,7 +164,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
         private void SendNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             AircraftPosition position,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler,
@@ -195,7 +195,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private static AircraftPosition CreateAircraftPosition(Aircraft aircraft)
+        private static AircraftPosition CreateAircraftPosition(TrackedAircraft aircraft)
         {
             AircraftPosition position = null;
 

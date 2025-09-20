@@ -10,8 +10,8 @@ namespace BaseStationReader.Tests
         private const string Address1 = "4D225E";
         private const string Address2 = "502D0C";
 
-        private readonly List<Aircraft> _aircraft = new();
-        private readonly ExpressionBuilder<Aircraft> _builder = new();
+        private readonly List<TrackedAircraft> _aircraft = new();
+        private readonly ExpressionBuilder<TrackedAircraft> _builder = new();
         private readonly DateTime _date = DateTime.Now;
 
         [TestInitialize]
@@ -20,14 +20,14 @@ namespace BaseStationReader.Tests
             _builder.Clear();
             _aircraft.Clear();
 
-            _aircraft.Add(new Aircraft
+            _aircraft.Add(new TrackedAircraft
             {
                 Address = Address1,
                 FirstSeen = _date.AddDays(-1),
                 LastSeen = _date.AddDays(-1)
             });
 
-            _aircraft.Add(new Aircraft
+            _aircraft.Add(new TrackedAircraft
             {
                 Address = Address2,
                 FirstSeen = _date,
@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("Address", TrackerFilterOperator.Equals, Address1);
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());
@@ -59,7 +59,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("Address", TrackerFilterOperator.NotEquals, Address1);
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());
@@ -72,7 +72,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("LastSeen", TrackerFilterOperator.GreaterThan, _date.AddHours(-1));
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());
@@ -84,7 +84,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("LastSeen", TrackerFilterOperator.GreaterThanOrEqual, _date);
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());
@@ -96,7 +96,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("LastSeen", TrackerFilterOperator.LessThan, _date);
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());
@@ -108,7 +108,7 @@ namespace BaseStationReader.Tests
         {
             _builder.Add("LastSeen", TrackerFilterOperator.LessThanOrEqual, _date.AddHours(-1));
             var expression = _builder.Build();
-            var matches = _aircraft.AsQueryable<Aircraft>().Where(expression!);
+            var matches = _aircraft.AsQueryable<TrackedAircraft>().Where(expression!);
 
             Assert.IsNotNull(matches);
             Assert.AreEqual(1, matches.Count());

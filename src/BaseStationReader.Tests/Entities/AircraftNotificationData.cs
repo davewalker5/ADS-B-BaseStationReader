@@ -7,7 +7,7 @@ namespace BaseStationReader.Tests.Entities
     [ExcludeFromCodeCoverage]
     internal class AircraftNotificationData
     {
-        public Aircraft Aircraft { get; set; }
+        public TrackedAircraft Aircraft { get; set; }
         public AircraftNotificationType NotificationType { get; set; }
     }
 }

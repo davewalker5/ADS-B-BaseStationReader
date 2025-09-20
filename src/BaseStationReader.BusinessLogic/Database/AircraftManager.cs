@@ -6,11 +6,11 @@ using System.Linq.Expressions;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class AircraftDetailsManager : IAircraftDetailsManager
+    public class AircraftManager : IAircraftDetailsManager
     {
         private readonly BaseStationReaderDbContext _context;
 
-        public AircraftDetailsManager(BaseStationReaderDbContext context)
+        public AircraftManager(BaseStationReaderDbContext context)
         {
             _context = context;
         }
@@ -20,13 +20,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<AircraftDetails> GetAsync(Expression<Func<AircraftDetails, bool>> predicate)
+        public async Task<Aircraft> GetAsync(Expression<Func<Aircraft, bool>> predicate)
         {
-            List<AircraftDetails> details = await ListAsync(predicate);
-
-#pragma warning disable CS8603
+            List<Aircraft> details = await ListAsync(predicate);
             return details.FirstOrDefault();
-#pragma warning restore CS8603
         }
 
         /// <summary>
@@ -34,31 +31,32 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<List<AircraftDetails>> ListAsync(Expression<Func<AircraftDetails, bool>> predicate)
-#pragma warning disable CS8602
-            => await _context.AircraftDetails
+        public async Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate)
+            => await _context.Aircraft
                 .Where(predicate)
-                .Include(a => a.Airline)
-                .Include(a => a.Model)
-                .ThenInclude(m => m.Manufacturer)
                 .ToListAsync();
-#pragma warning restore CS8602
 
         /// <summary>
-        /// Add a set of details, if the associated ICAO address doesn't already exist
+        /// Add an aircraft, if the associated ICAO address doesn't already exist
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<AircraftDetails> AddAsync(string address, int? airlineId, int? modelId)
+        public async Task<Aircraft> AddAsync(string address, string registration, int modelId)
         {
             var details = await GetAsync(a => a.Address == address);
 
             if (details == null)
             {
-                details = new AircraftDetails { Address = address, AirlineId = airlineId, ModelId = modelId };
-                await _context.AircraftDetails.AddAsync(details);
+                details = new Aircraft
+                {
+                    Address = address,
+                    Registration = registration,
+                    ModelId = modelId
+                };
+
+                await _context.Aircraft.AddAsync(details);
                 await _context.SaveChangesAsync();
             }
 

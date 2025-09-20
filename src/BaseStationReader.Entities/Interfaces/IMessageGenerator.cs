@@ -5,6 +5,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IMessageGenerator
     {
-        Message Generate(Aircraft aircraft);
+        Message Generate(TrackedAircraft aircraft);
     }
 }
