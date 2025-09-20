@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace BaseStationReader.Entities.Interfaces
 {
-    public interface IAircraftDetailsManager
+    public interface IAircraftManager
     {
         Task<Aircraft> AddAsync(string address, string registration, int modelId);
         Task<Aircraft> GetAsync(Expression<Func<Aircraft, bool>> predicate);

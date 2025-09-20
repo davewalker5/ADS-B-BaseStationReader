@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class AircraftManager : IAircraftDetailsManager
+    public class AircraftManager : IAircraftManager
     {
         private readonly BaseStationReaderDbContext _context;
 

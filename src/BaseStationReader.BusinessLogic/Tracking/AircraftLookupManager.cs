@@ -6,7 +6,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
     public class AircraftLookupManager : IAircraftLookupManager
     {
         private readonly IAirlineManager _airlineManager;
-        private readonly IAircraftDetailsManager _detailsManager;
+        private readonly IAircraftManager _detailsManager;
         private readonly IModelManager _modelManager;
         private readonly IAirlinesApi _airlinesApi;
         private readonly IAircraftApi _aircraftApi;
@@ -14,7 +14,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
         public AircraftLookupManager(
             IAirlineManager airlineManager,
-            IAircraftDetailsManager detailsManager,
+            IAircraftManager detailsManager,
             IModelManager modelManager,
             IAirlinesApi airlinesApi,
             IAircraftApi aircraftApi,
