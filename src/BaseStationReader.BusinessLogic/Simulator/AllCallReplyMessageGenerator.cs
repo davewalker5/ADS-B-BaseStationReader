@@ -16,7 +16,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public Message Generate(Aircraft aircraft)
+        public Message Generate(TrackedAircraft aircraft)
         {
             // Generate the base message - there are no further fields to populate for this message type
             var message = ConstructMessage(TransmissionType.AllCallReply, aircraft.Address);

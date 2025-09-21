@@ -4,6 +4,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftGenerator
     {
-        Aircraft Generate(IEnumerable<string> existingAddresses);
+        TrackedAircraft Generate(IEnumerable<string> existingAddresses);
     }
 }

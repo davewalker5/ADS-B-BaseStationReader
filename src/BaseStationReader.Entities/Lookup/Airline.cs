@@ -10,10 +10,10 @@ namespace BaseStationReader.Entities.Lookup
         public int Id { get; set; }
 
         [Required]
-        public string IATA { get; set; } = "";
+        public string ICAO { get; set; } = "";
 
         [Required]
-        public string ICAO { get; set; } = "";
+        public string IATA { get; set; } = "";
 
         [Required]
         public string Name { get; set; } = "";

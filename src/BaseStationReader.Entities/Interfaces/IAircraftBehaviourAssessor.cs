@@ -4,6 +4,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IAircraftBehaviourAssessor
     {
-        AircraftBehaviour Assess(Aircraft aircraft);
+        AircraftBehaviour Assess(TrackedAircraft aircraft);
     }
 }

@@ -1,66 +1,79 @@
-﻿using BaseStationReader.Data;
+using BaseStationReader.Data;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Tests
 {
     [TestClass]
     public class ModelManagerTest
     {
+        private const string Manufacturer = "Airbus";
+        private const string ModelIATA = "332";
+        private const string ModelICAO = "A332";
+        private const string ModelName = "A330-200";
+
         private IModelManager _manager = null;
+        private Manufacturer _manufacturer;
 
         [TestInitialize]
-        public void Initialise()
+        public async Task Initialise()
         {
+            // Create a context and a model management class to test
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-
-            // Set up a manufacturer
-            var manufacturerManager = new ManufacturerManager(context);
-            var manufacturerId = Task.Run(() => manufacturerManager.AddAsync("Airbus")).Result.Id;
-
-            // Add two aircraft models
             _manager = new ModelManager(context);
-            Task.Run(() => _manager.AddAsync("332", "A332", "A330-200", manufacturerId)).Wait();
-            Task.Run(() => _manager.AddAsync("345", "A345", "A340-500", manufacturerId)).Wait();
+
+            // Set up a manufacturer and an aircraft model
+            _manufacturer = await new ManufacturerManager(context).AddAsync(Manufacturer);
+            _ = await _manager.AddAsync(ModelIATA, ModelICAO, ModelName, _manufacturer.Id);
         }
 
         [TestMethod]
-        public void GetAircraftByIATATest()
+        public async Task AddDuplicateTest()
         {
-            var aircraft = Task.Run(() => _manager!.GetAsync(x => x.IATA == "332")).Result;
-            Assert.AreEqual("332", aircraft.IATA);
-            Assert.AreEqual("A332", aircraft.ICAO);
-            Assert.AreEqual("A330-200", aircraft.Name);
-            Assert.AreEqual("Airbus", aircraft.Manufacturer.Name);
+            await _manager.AddAsync(ModelIATA, ModelICAO, ModelName, _manufacturer.Id);
+            var models = await _manager.ListAsync(x => true);
+            Assert.HasCount(1, models);
         }
 
         [TestMethod]
-        public void GetAircraftByICAOTest()
+        public async Task AddAndGetTest()
         {
-            var aircraft = Task.Run(() => _manager!.GetAsync(x => x.ICAO == "A345")).Result;
-            Assert.AreEqual("345", aircraft.IATA);
-            Assert.AreEqual("A345", aircraft.ICAO);
-            Assert.AreEqual("A340-500", aircraft.Name);
-            Assert.AreEqual("Airbus", aircraft.Manufacturer.Name);
+            var model = await _manager.GetAsync(a => a.IATA == ModelIATA);
+            Assert.IsNotNull(model);
+            Assert.IsGreaterThan(0, model.Id);
+            Assert.AreEqual(ModelIATA, model.IATA);
+            Assert.AreEqual(ModelICAO, model.ICAO);
+            Assert.AreEqual(ModelName, model.Name);
+            Assert.AreEqual(Manufacturer, model.Manufacturer.Name);
         }
 
         [TestMethod]
-        public void GetAircraftByNameTest()
+        public async Task GetMissingTest()
         {
-            var aircraft = Task.Run(() => _manager!.GetAsync(x => x.Name == "A330-200")).Result;
-            Assert.AreEqual("332", aircraft.IATA);
-            Assert.AreEqual("A332", aircraft.ICAO);
-            Assert.AreEqual("A330-200", aircraft.Name);
-            Assert.AreEqual("Airbus", aircraft.Manufacturer.Name);
+            var model = await _manager.GetAsync(a => a.IATA == "Missing");
+            Assert.IsNull(model);
         }
 
         [TestMethod]
-        public void ListAircraftByManufacturerTest()
+        public async Task ListAllTest()
         {
-            var aircraft = Task.Run(() => _manager!.ListAsync(x => x.Manufacturer.Name == "Airbus")).Result;
-            Assert.AreEqual(2, aircraft.Count);
-            Assert.IsNotNull(aircraft.Find(x => x.IATA == "332"));
-            Assert.IsNotNull(aircraft.Find(x => x.IATA == "345"));
+            var models = await _manager.ListAsync(x => true);
+            Assert.IsNotNull(models);
+            Assert.HasCount(1, models);
+            Assert.IsGreaterThan(0, models[0].Id);
+            Assert.AreEqual(ModelIATA, models[0].IATA);
+            Assert.AreEqual(ModelICAO, models[0].ICAO);
+            Assert.AreEqual(ModelName, models[0].Name);
+            Assert.AreEqual(Manufacturer, models[0].Manufacturer.Name);
+        }
+
+        [TestMethod]
+        public async Task ListMissingTest()
+        {
+            var models = await _manager.ListAsync(x => x.IATA == "Missing");
+            Assert.IsEmpty(models);
         }
     }
 }
+

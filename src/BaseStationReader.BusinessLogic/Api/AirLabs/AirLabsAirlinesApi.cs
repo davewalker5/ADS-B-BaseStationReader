@@ -1,7 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Tracking;
-using System.Text.Json.Nodes;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {

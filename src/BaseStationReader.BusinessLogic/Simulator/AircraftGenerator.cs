@@ -25,9 +25,9 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="existingAddresses"></param>
         /// <returns></returns>
-        public Aircraft Generate(IEnumerable<string> existingAddresses)
+        public TrackedAircraft Generate(IEnumerable<string> existingAddresses)
         {
-            Aircraft aircraft = null;
+            TrackedAircraft aircraft = null;
             string address;
 
             do
@@ -38,7 +38,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
                 if (!existing)
                 {
                     // It's not, so create the aircraft instance
-                    aircraft = new Aircraft
+                    aircraft = new TrackedAircraft
                     {
                         Address = address,
                     };

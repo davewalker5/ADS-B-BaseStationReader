@@ -25,7 +25,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
         public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
-        public ConcurrentDictionary<string, Aircraft> TrackedAircraft { get; private set; } = new();
+        public ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
         public TrackerWrapper(ITrackerLogger logger, TrackerApplicationSettings settings)
@@ -39,20 +39,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public async Task InitialiseAsync()
         {
-            // Log the settings on startup
-            _logger.LogMessage(Severity.Debug, $"Host = {_settings.Host}");
-            _logger.LogMessage(Severity.Debug, $"Port = {_settings.Port}");
-            _logger.LogMessage(Severity.Debug, $"SocketReadTimeout = {_settings.SocketReadTimeout}");
-            _logger.LogMessage(Severity.Debug, $"ApplicationTimeout = {_settings.ApplicationTimeout}");
-            _logger.LogMessage(Severity.Debug, $"TimeToRecent = {_settings.TimeToRecent}");
-            _logger.LogMessage(Severity.Debug, $"TimeToStale = {_settings.TimeToStale}");
-            _logger.LogMessage(Severity.Debug, $"TimeToRemoval = {_settings.TimeToRemoval}");
-            _logger.LogMessage(Severity.Debug, $"TimeToLock = {_settings.TimeToLock}");
-            _logger.LogMessage(Severity.Debug, $"LogFile = {_settings.LogFile}");
-            _logger.LogMessage(Severity.Debug, $"EnableSqlWriter = {_settings.EnableSqlWriter}");
-            _logger.LogMessage(Severity.Debug, $"WriterInterval = {_settings.WriterInterval}");
-            _logger.LogMessage(Severity.Debug, $"WriterBatchSize = {_settings.WriterBatchSize}");
-
             // Set up the message reader and parser
             var reader = new MessageReader(_logger, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
             var parsers = new Dictionary<MessageType, IMessageParser>
@@ -101,12 +87,19 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_settings.EnableSqlWriter)
             {
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var aircraftWriter = new AircraftWriter(context);
+                var aircraftWriter = new TrackedAircraftWriter(context);
                 var positionWriter = new PositionWriter(context);
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(aircraftWriter, positionWriter, aircraftLocker, _logger!, writerTimer, _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
+
+                // If instructed, clear down aircraft tracking data while leaving aircraft details and airlines intact
+                if (_settings.ClearDown)
+                {
+                    await context.ClearDown();
+                }
+
                 await _writer.StartAsync();
             }
         }
@@ -131,17 +124,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             // Add the aircraft to the collection
-            TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
+            TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
 
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
-                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
+                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
+                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }
@@ -160,7 +153,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
             if (!TrackedAircraft.ContainsKey(e.Aircraft.Address))
             {
-                TrackedAircraft[e.Aircraft.Address] = (Aircraft)e.Aircraft.Clone();
+                TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
             }
             else
             {
@@ -170,12 +163,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
-                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} for writing");
+                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} for writing");
+                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }
@@ -192,7 +185,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             // Remove the aircraft from the collection
-            TrackedAircraft.Remove(e.Aircraft.Address, out Aircraft dummy);
+            TrackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft dummy);
 
             // Forward the event to subscribers
             AircraftRemoved?.Invoke(this, e);

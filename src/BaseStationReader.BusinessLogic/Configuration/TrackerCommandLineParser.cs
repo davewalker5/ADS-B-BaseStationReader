@@ -32,6 +32,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MaximumTrackedAltitude, false, "--max-altitude", "-maxa", "Maximum altitude (ft) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.TrackedBehaviours, false, "--behaviours", "-b", "Specify a list of aircraft behaviours to track", 1, 1);
             Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tp", "Specify a JSON format tracking profile", 1, 1);
+            Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
         }
     }
 }

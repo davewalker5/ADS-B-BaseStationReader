@@ -7,15 +7,15 @@ using System.Reflection;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class AircraftWriter : IAircraftWriter
+    public class TrackedAircraftWriter : IAircraftWriter
     {
         private readonly BaseStationReaderDbContext _context;
-        private readonly PropertyInfo[] _aircraftProperties = typeof(Aircraft)
+        private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(x => x.Name != "Id")
             .ToArray();
 
-        public AircraftWriter(BaseStationReaderDbContext context)
+        public TrackedAircraftWriter(BaseStationReaderDbContext context)
         {
             _context = context;
         }
@@ -25,12 +25,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<Aircraft> GetAsync(Expression<Func<Aircraft, bool>> predicate)
+        public async Task<TrackedAircraft> GetAsync(Expression<Func<TrackedAircraft, bool>> predicate)
         {
-            List<Aircraft> aircraft = await ListAsync(predicate);
-#pragma warning disable CS8603
+            List<TrackedAircraft> aircraft = await ListAsync(predicate);
             return aircraft.FirstOrDefault();
-#pragma warning restore CS8603
         }
 
         /// <summary>
@@ -38,18 +36,18 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate)
-            => await _context.Aircraft.Where(predicate).OrderByDescending(x => x.LastSeen).ToListAsync();
+        public async Task<List<TrackedAircraft>> ListAsync(Expression<Func<TrackedAircraft, bool>> predicate)
+            => await _context.TrackedAircraft.Where(predicate).OrderByDescending(x => x.LastSeen).ToListAsync();
 
         /// <summary>
         /// Write an aircraft to the database, either creating a new record or updating an existing one
         /// </summary>
         /// <param name="template"></param>
         /// <returns></returns>
-        public async Task<Aircraft> WriteAsync(Aircraft template)
+        public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template)
         {
             // If the template has an ID associated with it, retrieve that record for update
-            Aircraft aircraft = null;
+            TrackedAircraft aircraft = null;
             if (template.Id > 0)
             {
                 aircraft = await GetAsync(x => x.Id == template.Id);
@@ -58,7 +56,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // If we still don't have an aircraft instance, we're creating a new one
             if (aircraft == null)
             {
-                aircraft = new Aircraft();
+                aircraft = new TrackedAircraft();
                 await _context.AddAsync(aircraft);
             }
 

@@ -8,15 +8,41 @@ namespace BaseStationReader.Data
     [ExcludeFromCodeCoverage]
     public partial class BaseStationReaderDbContext : DbContext
     {
-        public virtual DbSet<Aircraft> Aircraft { get; set; }
-        public virtual DbSet<AircraftPosition> AircraftPositions { get; set; }
+        public virtual DbSet<TrackedAircraft> TrackedAircraft { get; set; }
+        public virtual DbSet<AircraftPosition> Positions { get; set; }
+        public virtual DbSet<Flight> Flights { get; set; }
         public virtual DbSet<Airline> Airlines { get; set; }
-        public virtual DbSet<Manufacturer> Manufacturers { get; set; }
+        public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<Model> Models { get; set; }
-        public virtual DbSet<AircraftDetails> AircraftDetails { get; set; }
+        public virtual DbSet<Manufacturer> Manufacturers { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
+        }
+
+        /// <summary>
+        /// Truncate the specified table and reset its identity counter
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public async Task TruncateTable(string tableName)
+        {
+            // With a SQLite back-end we have no choice but to use ExecuteSqlRawAsync in this context, so
+            // suppress the warnings about idempotence and SQL injection risks
+#pragma warning disable EF1002
+            await Database.ExecuteSqlRawAsync($"DELETE FROM {tableName};");
+            await Database.ExecuteSqlRawAsync($"DELETE FROM sqlite_sequence WHERE name = '{tableName}';");
+#pragma warning restore EF1002
+        }
+
+        /// <summary>
+        /// Clear down aircraft tracking data while leaving aircraft details and airlines intact
+        /// </summary>
+        /// <returns></returns>
+        public async Task ClearDown()
+        {
+            await TruncateTable("POSITION");
+            await TruncateTable("TRACKED_AIRCRAFT");
         }
 
         /// <summary>
@@ -25,9 +51,9 @@ namespace BaseStationReader.Data
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Aircraft>(entity =>
+            modelBuilder.Entity<TrackedAircraft>(entity =>
             {
-                entity.ToTable("AIRCRAFT");
+                entity.ToTable("TRACKED_AIRCRAFT");
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
@@ -52,25 +78,80 @@ namespace BaseStationReader.Data
                     .IsRequired()
                     .HasColumnName("LastSeen")
                     .HasColumnType("DATETIME");
-
-                entity.HasMany(e => e.Positions)
-                    .WithOne(e => e.Aircraft)
-                    .HasForeignKey(e => e.AircraftId);
-
             });
 
             modelBuilder.Entity<AircraftPosition>(entity =>
             {
-                modelBuilder.Entity<AircraftPosition>().Ignore(e => e.Address);
-
-                entity.ToTable("AIRCRAFT_POSITION");
+                entity.ToTable("POSITION");
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.AircraftId).IsRequired().HasColumnName("AircraftId");
-                entity.Property(e => e.Latitude).IsRequired().HasColumnName("Latitude");
-                entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude");
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+                entity.Property(e => e.Altitude).HasColumnName("Altitude");
+                entity.Property(e => e.Latitude).HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).HasColumnName("Longitude");
                 entity.Property(e => e.Distance).HasColumnName("Distance");
                 entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
+            });
+
+            modelBuilder.Entity<Airline>(entity =>
+            {
+                entity.ToTable("AIRLINE");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
+                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+            });
+
+            modelBuilder.Entity<Flight>(entity =>
+            {
+                entity.ToTable("FLIGHT");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Number).IsRequired().HasColumnName("Number");
+                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
+                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+                entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
+                entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
+
+                modelBuilder.Entity<Flight>()
+                    .HasOne(e => e.Airline)
+                    .WithMany()
+                    .HasForeignKey(e => e.AirlineId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+    
+            modelBuilder.Entity<Aircraft>(entity =>
+            {
+                entity.ToTable("AIRCRAFT");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+                entity.Property(e => e.Registration).IsRequired().HasColumnName("Registration");
+                entity.Property(e => e.Manufactured).HasColumnName("Manufactured");
+                entity.Property(e => e.Age).HasColumnName("Age");
+
+                modelBuilder.Entity<Aircraft>()
+                    .HasOne(e => e.Model)
+                    .WithMany()
+                    .HasForeignKey(e => e.ModelId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Model>(entity =>
+            {
+                entity.ToTable("MODEL");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).HasColumnName("Name");
+                entity.Property(e => e.ICAO).HasColumnName("ICAO");
+                entity.Property(e => e.IATA).HasColumnName("IATA");
+
+                modelBuilder.Entity<Model>()
+                    .HasOne(e => e.Manufacturer)
+                    .WithMany()
+                    .HasForeignKey(e => e.ManufacturerId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Manufacturer>(entity =>
@@ -79,41 +160,6 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
-
-                entity.HasMany(e => e.Models)
-                    .WithOne(e => e.Manufacturer)
-                    .HasForeignKey(e => e.ManufacturerId);
-
-            });
-
-            modelBuilder.Entity<Airline>(entity =>
-            {
-                entity.ToTable("AIRLINE");
-
-                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
-                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
-                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
-            });
-
-            modelBuilder.Entity<Model>(entity =>
-            {
-                entity.ToTable("MODEL");
-
-                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.IATA).HasColumnName("IATA");
-                entity.Property(e => e.ICAO).HasColumnName("ICAO");
-                entity.Property(e => e.Name).HasColumnName("Name");
-            });
-
-            modelBuilder.Entity<AircraftDetails>(entity =>
-            {
-                entity.ToTable("AIRCRAFT_DETAILS");
-
-                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
-                entity.Property(e => e.ModelId).HasColumnName("ModelId");
-                entity.Property(e => e.AirlineId).HasColumnName("AirlineId");
             });
         }
     }

@@ -11,7 +11,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public AircraftBehaviour Assess(Aircraft aircraft)
+        public AircraftBehaviour Assess(TrackedAircraft aircraft)
         {
             AircraftBehaviour behaviour = AircraftBehaviour.Unknown;
 

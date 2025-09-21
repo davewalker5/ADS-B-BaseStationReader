@@ -5,6 +5,6 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IMessageGeneratorWrapper : IMessageGenerator
     {
-        Message Generate(Aircraft aircraft, string generatorType);
+        Message Generate(TrackedAircraft aircraft, string generatorType);
     }
 }

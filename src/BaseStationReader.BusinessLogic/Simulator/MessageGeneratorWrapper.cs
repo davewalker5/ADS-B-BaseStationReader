@@ -19,7 +19,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        public Message Generate(Aircraft aircraft)
+        public Message Generate(TrackedAircraft aircraft)
         {
             // Select a random generator
             var selector = _random.Next(0, _generators.Count);
@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <param name="aircraft"></param>
         /// <param name="messageType"></param>
         /// <returns></returns>
-        public Message Generate(Aircraft aircraft, string messageType)
+        public Message Generate(TrackedAircraft aircraft, string messageType)
         {
             // Find the specified generator
             var generatorName = $"{messageType}MessageGenerator";

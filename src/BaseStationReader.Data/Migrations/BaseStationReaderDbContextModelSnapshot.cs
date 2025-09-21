@@ -17,9 +17,9 @@ namespace BaseStationReader.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.10");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.AircraftDetails", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Aircraft", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -31,21 +31,27 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Address");
 
-                    b.Property<int?>("AirlineId")
+                    b.Property<int?>("Age")
                         .HasColumnType("INTEGER")
-                        .HasColumnName("AirlineId");
+                        .HasColumnName("Age");
 
-                    b.Property<int?>("ModelId")
+                    b.Property<int?>("Manufactured")
                         .HasColumnType("INTEGER")
-                        .HasColumnName("ModelId");
+                        .HasColumnName("Manufactured");
+
+                    b.Property<int>("ModelId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Registration")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Registration");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AirlineId");
-
                     b.HasIndex("ModelId");
 
-                    b.ToTable("AIRCRAFT_DETAILS", (string)null);
+                    b.ToTable("AIRCRAFT", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Lookup.Airline", b =>
@@ -73,6 +79,48 @@ namespace BaseStationReader.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AIRLINE", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Flight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<int>("AirlineId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Destination")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Destination");
+
+                    b.Property<string>("Embarkation")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Embarkation");
+
+                    b.Property<string>("IATA")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("IATA");
+
+                    b.Property<string>("ICAO")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("ICAO");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AirlineId");
+
+                    b.ToTable("FLIGHT", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Lookup.Manufacturer", b =>
@@ -124,7 +172,49 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("MODEL", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.Aircraft", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Address");
+
+                    b.Property<decimal?>("Altitude")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Altitude");
+
+                    b.Property<double?>("Distance")
+                        .HasColumnType("REAL")
+                        .HasColumnName("Distance");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Latitude");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Longitude");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("DATETIME")
+                        .HasColumnName("Timestamp");
+
+                    b.Property<int>("TrackedAircraftId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrackedAircraftId");
+
+                    b.ToTable("POSITION", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Tracking.TrackedAircraft", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -190,67 +280,37 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AIRCRAFT", (string)null);
+                    b.ToTable("TRACKED_AIRCRAFT", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Aircraft", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Id");
+                    b.HasOne("BaseStationReader.Entities.Lookup.Model", "Model")
+                        .WithMany()
+                        .HasForeignKey("ModelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Property<int>("AircraftId")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("AircraftId");
-
-                    b.Property<decimal>("Altitude")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double?>("Distance")
-                        .HasColumnType("REAL")
-                        .HasColumnName("Distance");
-
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Latitude");
-
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Longitude");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("DATETIME")
-                        .HasColumnName("Timestamp");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AircraftId");
-
-                    b.ToTable("AIRCRAFT_POSITION", (string)null);
+                    b.Navigation("Model");
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.AircraftDetails", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Flight", b =>
                 {
                     b.HasOne("BaseStationReader.Entities.Lookup.Airline", "Airline")
                         .WithMany()
-                        .HasForeignKey("AirlineId");
-
-                    b.HasOne("BaseStationReader.Entities.Lookup.Model", "Model")
-                        .WithMany()
-                        .HasForeignKey("ModelId");
+                        .HasForeignKey("AirlineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Airline");
-
-                    b.Navigation("Model");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Lookup.Model", b =>
                 {
                     b.HasOne("BaseStationReader.Entities.Lookup.Manufacturer", "Manufacturer")
-                        .WithMany("Models")
+                        .WithMany()
                         .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Manufacturer");
@@ -258,21 +318,16 @@ namespace BaseStationReader.Data.Migrations
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Tracking.Aircraft", "Aircraft")
+                    b.HasOne("BaseStationReader.Entities.Tracking.TrackedAircraft", "TrackedAircraft")
                         .WithMany("Positions")
-                        .HasForeignKey("AircraftId")
+                        .HasForeignKey("TrackedAircraftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Aircraft");
+                    b.Navigation("TrackedAircraft");
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Manufacturer", b =>
-                {
-                    b.Navigation("Models");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.Aircraft", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Tracking.TrackedAircraft", b =>
                 {
                     b.Navigation("Positions");
                 });

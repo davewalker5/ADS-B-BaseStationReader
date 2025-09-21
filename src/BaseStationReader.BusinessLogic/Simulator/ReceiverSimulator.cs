@@ -17,7 +17,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly List<TcpClient> _clients = new();
 
         private readonly Random _random = new();
-        private readonly List<Aircraft> _aircraft = new();
+        private readonly List<TrackedAircraft> _aircraft = new();
 
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
@@ -238,7 +238,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <param name="aircraft"></param>
         /// <param name="messageType"></param>
         /// <returns></returns>
-        private byte[] GenerateMessage(Aircraft aircraft, string messageType = "")
+        private byte[] GenerateMessage(TrackedAircraft aircraft, string messageType = "")
         {
             /// Create the message instance
             var message = !string.IsNullOrEmpty(messageType) ?

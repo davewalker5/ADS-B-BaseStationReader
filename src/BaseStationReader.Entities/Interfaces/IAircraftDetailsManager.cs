@@ -3,10 +3,10 @@ using System.Linq.Expressions;
 
 namespace BaseStationReader.Entities.Interfaces
 {
-    public interface IAircraftDetailsManager
+    public interface IAircraftManager
     {
-        Task<AircraftDetails> AddAsync(string address, int? airlineId, int? modelId);
-        Task<AircraftDetails> GetAsync(Expression<Func<AircraftDetails, bool>> predicate);
-        Task<List<AircraftDetails>> ListAsync(Expression<Func<AircraftDetails, bool>> predicate);
+        Task<Aircraft> AddAsync(string address, string registration, int? manufactured, int? age, int modelId);
+        Task<Aircraft> GetAsync(Expression<Func<Aircraft, bool>> predicate);
+        Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate);
     }
 }

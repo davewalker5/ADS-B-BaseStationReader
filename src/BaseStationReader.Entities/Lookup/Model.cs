@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Lookup
@@ -10,19 +11,18 @@ namespace BaseStationReader.Entities.Lookup
         public int Id { get; set; }
 
         [Required]
-        public int ManufacturerId { get; set; }
-
-        [Required]
-        public string IATA { get; set; } = "";
+        public string Name { get; set; } = "";
 
         [Required]
         public string ICAO { get; set; } = "";
 
         [Required]
-        public string Name { get; set; } = "";
+        public string IATA { get; set; } = "";
 
-#pragma warning disable CS8618
+        [Required]
+        [ForeignKey(nameof(Manufacturer))]
+        public int ManufacturerId { get; set; }
+
         public Manufacturer Manufacturer { get; set; }
-#pragma warning restore CS8618
     }
 }

@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 
@@ -35,7 +35,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByIATACodeAsync("LS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count);
+            Assert.HasCount(3, properties);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
@@ -48,7 +48,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count);
+            Assert.HasCount(3, properties);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
@@ -61,7 +61,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count);
+            Assert.HasCount(3, properties);
             Assert.AreEqual("", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("EXS", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);
@@ -74,7 +74,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
-            Assert.AreEqual(3, properties.Count);
+            Assert.HasCount(3, properties);
             Assert.AreEqual("LS", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("Jet2.com", properties[ApiProperty.AirlineName]);

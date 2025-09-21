@@ -23,10 +23,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<Manufacturer> GetAsync(Expression<Func<Manufacturer, bool>> predicate)
         {
             List<Manufacturer> manufacturers = await ListAsync(predicate);
-
-#pragma warning disable CS8603
             return manufacturers.FirstOrDefault();
-#pragma warning restore CS8603
         }
 
         /// <summary>

@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Lookup
 {
     [ExcludeFromCodeCoverage]
-    public class AircraftDetails
+    public class Aircraft
     {
         [Key]
         public int Id { get; set; }
@@ -12,10 +13,17 @@ namespace BaseStationReader.Entities.Lookup
         [Required]
         public string Address { get; set; } = "";
 
-        public int? ModelId { get; set; }
-        public int? AirlineId { get; set; }
+        [Required]
+        public string Registration { get; set; } = "";
+
+        public int? Manufactured { get; set; }
+
+        public int? Age { get; set; }
+
+        [Required]
+        [ForeignKey(nameof(Model))]
+        public int ModelId { get; set; }
 
         public Model Model { get; set; }
-        public Airline Airline { get; set; }
     }
 }

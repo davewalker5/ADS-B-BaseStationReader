@@ -21,7 +21,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
 
             // Add to the column definitions the property info objects associated with the associated property
             // of the Aircraft object
-            var allProperties = typeof(Aircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            var allProperties = typeof(TrackedAircraft).GetProperties(BindingFlags.Instance | BindingFlags.Public);
             foreach (var column in settings!.Columns)
             {
                 column.Info = Array.Find(allProperties, x => x.Name == column.Property);

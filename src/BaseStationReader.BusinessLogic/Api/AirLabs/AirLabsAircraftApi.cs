@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -48,11 +48,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AircraftRegistration, apiResponse!["reg_number"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AircraftManufactured, apiResponse!["built"]?.GetValue<int?>()?.ToString() ?? "" },
+                        { ApiProperty.AircraftAge, apiResponse!["age"]?.GetValue<int?>()?.ToString() ?? "" },
                         { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ModelIATA, apiResponse!["iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" }
+                        { ApiProperty.ModelName, apiResponse!["model"]?.GetValue<string>() ?? "" }
                     };
 
                     // Log the properties dictionary

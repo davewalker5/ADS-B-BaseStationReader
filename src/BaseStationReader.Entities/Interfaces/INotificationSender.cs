@@ -6,29 +6,29 @@ namespace BaseStationReader.Entities.Interfaces
     public interface INotificationSender
     {
         void SendAddedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler);
 
         void SendUpdatedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler,
             decimal? previousLatitude,
             decimal? previousLongitude);
 
         void SendStaleNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler);
 
         void SendInactiveNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler);
 
         void SendRemovedNotification(
-            Aircraft aircraft,
+            TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler);
     }
