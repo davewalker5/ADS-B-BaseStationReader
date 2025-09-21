@@ -46,8 +46,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// Lookup an active flight using the aircraft's ICAO 24-bit ICAO address
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="departureAirportCodes"></param>
+        /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupFlightAsync(string address)
+        public async Task<Flight> LookupFlightAsync(
+            string address,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalAirportCodes)
         {
             Flight flight = null;
 
@@ -62,20 +67,36 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var properties = await _flightsApi.LookupFlightByAircraftAsync(address);
             if (properties != null)
             {
-                // Create a new flight object containing the details returned by the API
-                flight = new()
+                // Extract the departure and arrival airport codes
+                var departure = properties[ApiProperty.EmbarkationIATA];
+                var arrival = properties[ApiProperty.DestinationIATA];
+
+                // Check the codes against the filters
+                var departureAllowed = departureAirportCodes?.Count() > 0 ? departureAirportCodes.Contains(departure) : true;
+                var arrivalAllowed = arrivalAirportCodes?.Count() > 0 ? arrivalAirportCodes.Contains(arrival) : true;
+
+                // Check both airports are found in the "allowed" lists
+                if (departureAllowed && arrivalAllowed)
                 {
-                    Embarkation = properties[ApiProperty.EmbarkationIATA],
-                    Destination = properties[ApiProperty.DestinationIATA],
-                    IATA = properties[ApiProperty.FlightIATA],
-                    ICAO = properties[ApiProperty.FlightICAO],
-                    Number = properties[ApiProperty.FlightNumber],
-                    Airline = new()
+                    // Create a new flight object containing the details returned by the API
+                    flight = new()
                     {
-                        IATA = properties[ApiProperty.AirlineIATA],
-                        ICAO = properties[ApiProperty.AirlineICAO]
-                    }
-                };
+                        Embarkation = departure,
+                        Destination = arrival,
+                        IATA = properties[ApiProperty.FlightIATA],
+                        ICAO = properties[ApiProperty.FlightICAO],
+                        Number = properties[ApiProperty.FlightNumber],
+                        Airline = new()
+                        {
+                            IATA = properties[ApiProperty.AirlineIATA],
+                            ICAO = properties[ApiProperty.AirlineICAO]
+                        }
+                    };
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Info, $"Route {departure} - {arrival} for aircraft {address} excluded by the airport filters");
+                }
             }
 
             return flight;
@@ -85,11 +106,16 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// Lookup an active flight and store it
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="departureAirportCodes"></param>
+        /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupAndStoreFlightAsync(string address)
+        public async Task<Flight> LookupAndStoreFlightAsync(
+            string address,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalAirportCodes)
         {
             // Request flight details for an active flight involving the aircraft with the specified ICAO address
-            var flight = await LookupFlightAsync(address);
+            var flight = await LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
             if (flight != null)
             {
                 // Get the airline details, storing them locally if not already present

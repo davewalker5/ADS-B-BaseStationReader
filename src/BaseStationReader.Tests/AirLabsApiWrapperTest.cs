@@ -148,7 +148,7 @@ namespace BaseStationReader.Tests
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
-            var flight = await _wrapper.LookupFlightAsync(AircraftAddress);
+            var flight = await _wrapper.LookupFlightAsync(AircraftAddress, null, null);
 
             Assert.IsNotNull(flight);
             Assert.AreEqual(FlightICAO, flight.ICAO);
@@ -166,7 +166,7 @@ namespace BaseStationReader.Tests
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
-            var flight = await _wrapper.LookupAndStoreFlightAsync(AircraftAddress);
+            var flight = await _wrapper.LookupAndStoreFlightAsync(AircraftAddress, null, null);
             var retrieved = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
             var airline = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
 

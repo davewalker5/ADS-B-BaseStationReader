@@ -45,6 +45,8 @@
         TrackedBehaviours,
         Profile,
         ClearDown,
-        AircraftAddress
+        AircraftAddress,
+        Departure,
+        Arrival
     }
 }
