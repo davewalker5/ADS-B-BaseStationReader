@@ -31,6 +31,14 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Address");
 
+                    b.Property<int?>("Age")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Age");
+
+                    b.Property<int?>("Manufactured")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Manufactured");
+
                     b.Property<int>("ModelId")
                         .HasColumnType("INTEGER");
 

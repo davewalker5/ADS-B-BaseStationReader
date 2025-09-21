@@ -148,6 +148,8 @@ namespace BaseStationReader.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Address = table.Column<string>(type: "TEXT", nullable: false),
                     Registration = table.Column<string>(type: "TEXT", nullable: false),
+                    Manufactured = table.Column<int>(type: "INTEGER", nullable: true),
+                    Age = table.Column<int>(type: "INTEGER", nullable: true),
                     ModelId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

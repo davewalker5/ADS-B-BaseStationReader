@@ -128,6 +128,8 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
                 entity.Property(e => e.Registration).IsRequired().HasColumnName("Registration");
+                entity.Property(e => e.Manufactured).HasColumnName("Manufactured");
+                entity.Property(e => e.Age).HasColumnName("Age");
 
                 modelBuilder.Entity<Aircraft>()
                     .HasOne(e => e.Model)

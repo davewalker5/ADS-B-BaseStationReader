@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    [Migration("20250920093648_InitialCreation")]
+    [Migration("20250921071419_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />
@@ -31,6 +31,14 @@ namespace BaseStationReader.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("Address");
+
+                    b.Property<int?>("Age")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Age");
+
+                    b.Property<int?>("Manufactured")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Manufactured");
 
                     b.Property<int>("ModelId")
                         .HasColumnType("INTEGER");
