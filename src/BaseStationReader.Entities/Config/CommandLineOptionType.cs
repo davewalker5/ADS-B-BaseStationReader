@@ -44,6 +44,7 @@
         MaximumTrackedAltitude,
         TrackedBehaviours,
         Profile,
-        ClearDown
+        ClearDown,
+        AircraftAddress
     }
 }

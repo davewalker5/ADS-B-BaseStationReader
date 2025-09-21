@@ -13,7 +13,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Terminal
 {

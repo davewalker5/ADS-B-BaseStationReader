@@ -1,4 +1,6 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Data;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 
@@ -18,91 +20,26 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
         public AirLabsApiWrapper(
             ITrackerLogger logger,
-            IAirlineManager airlineManager,
-            IFlightManager flightManager,
-            IAircraftManager detailsManager,
-            IModelManager modelManager,
-            IManufacturerManager manufacturerManager,
-            IAirlinesApi airlinesApi,
-            IAircraftApi aircraftApi,
-            IActiveFlightApi flightsApi)
+            ITrackerHttpClient client,
+            BaseStationReaderDbContext context,
+            string airlinesEndpointUrl,
+            string aircraftEndpointUrl,
+            string flightsEndpointUrl,
+            string key)
         {
             _logger = logger;
-            _airlineManager = airlineManager;
-            _flightManager = flightManager;
-            _aircraftManager = detailsManager;
-            _modelManager = modelManager;
-            _manufacturerManager = manufacturerManager;
-            _airlinesApi = airlinesApi;
-            _aircraftApi = aircraftApi;
-            _flightsApi = flightsApi;
-        }
 
-        /// <summary>
-        /// Lookup an active flight and store it
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        public async Task<Flight> LookupAndStoreFlightAsync(string address)
-        {
-            // Request flight details for an active flight involving the aircraft with the specified ICAO address
-            var flight = await LookupActiveFlightAsync(address);
-            if (flight != null)
-            {
-                // Get the airline details, storing them locally if not already present
-                var airline = await LookupAndStoreAirlineAsync(flight.Airline.ICAO, flight.Airline.IATA);
-                if (airline != null)
-                {
-                    // Airline details have been retrieved OK so create the flight (the flight manager prevents creation
-                    // of duplicates)
-                    flight = await _flightManager.AddAsync(flight.IATA, flight.ICAO, flight.Number, flight.Embarkation, flight.Destination, airline.Id);
-                }
-            }
+            // Construct the database management instances
+            _airlineManager = new AirlineManager(context);
+            _flightManager = new FlightManager(context);
+            _aircraftManager = new AircraftManager(context);
+            _modelManager = new ModelManager(context);
+            _manufacturerManager = new ManufacturerManager(context);
 
-            return flight;
-        }
-
-        /// <summary>
-        /// Retrieve or lookup an aircraft, making sure it's saved locally
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        public async Task<Aircraft> LookupAndStoreAircraftAsync(string address)
-        {
-            // Attempt to load the aircraft based on its 24-bit ICAO address
-            var aircraft = await LookupAircraftAsync(address);
-            if ((aircraft != null) && (aircraft.Id == 0))
-            {
-                // Save the manufacturer and model - the management classes prevent creation of duplicates
-                var manufacturer = await _manufacturerManager.AddAsync(aircraft.Model.Manufacturer.Name);
-                var model = await _modelManager.AddAsync(
-                    aircraft.Model.IATA, aircraft.Model.ICAO, aircraft.Model.Name, manufacturer.Id);
-
-                // Save the aircraft
-                aircraft = await _aircraftManager.AddAsync(
-                    aircraft.Address, aircraft.Registration, aircraft.Manufactured, aircraft.Age, model.Id);
-            }
-
-            return aircraft;
-        }
-
-        /// <summary>
-        /// Retrieve or lookup an airline, making sure it's saved locally
-        /// </summary>
-        /// <param name="icao"></param>
-        /// <param name="iata"></param>
-        /// <returns></returns>
-        public async Task<Airline> LookupAndStoreAirlineAsync(string icao, string iata)
-        {
-            // Attempt to load the airline based on its ICAO or IATA code
-            var airline = await LookupAirlineAsync(icao, iata);
-            if ((airline != null) && (airline.Id == 0))
-            {
-                // Airline was found but was not loaded from the database, so save it
-                airline = await _airlineManager.AddAsync(airline.IATA, airline.ICAO, airline.Name);
-            }
-
-            return airline;
+            // Construct the API instances
+            _airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesEndpointUrl, key);
+            _aircraftApi = new AirLabsAircraftApi(logger, client, aircraftEndpointUrl, key);
+            _flightsApi = new AirLabsActiveFlightApi(logger, client, flightsEndpointUrl, key);
         }
 
         /// <summary>
@@ -110,7 +47,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupActiveFlightAsync(string address)
+        public async Task<Flight> LookupFlightAsync(string address)
         {
             Flight flight = null;
 
@@ -145,6 +82,30 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         }
 
         /// <summary>
+        /// Lookup an active flight and store it
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public async Task<Flight> LookupAndStoreFlightAsync(string address)
+        {
+            // Request flight details for an active flight involving the aircraft with the specified ICAO address
+            var flight = await LookupFlightAsync(address);
+            if (flight != null)
+            {
+                // Get the airline details, storing them locally if not already present
+                var airline = await LookupAndStoreAirlineAsync(flight.Airline.ICAO, flight.Airline.IATA);
+                if (airline != null)
+                {
+                    // Airline details have been retrieved OK so create the flight (the flight manager prevents creation
+                    // of duplicates)
+                    flight = await _flightManager.AddAsync(flight.IATA, flight.ICAO, flight.Number, flight.Embarkation, flight.Destination, airline.Id);
+                }
+            }
+
+            return flight;
+        }
+
+        /// <summary>
         /// Retrieve or look up and aircraft given it's ICAO and/or IATA code
         /// </summary>
         /// <param name="icao"></param>
@@ -166,6 +127,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             if (airline == null)
             {
+                _logger.LogMessage(Severity.Debug, $"Airline {icao} ({iata}) is not stored locally : Using the API");
+
                 // Not stored locally, so use the API to look it up
                 var properties = !string.IsNullOrEmpty(icao) ?
                     await _airlinesApi.LookupAirlineByICAOCodeAsync(icao) :
@@ -181,6 +144,29 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         Name = properties[ApiProperty.AirlineName]
                     };
                 }
+                else
+                {
+                    _logger.LogMessage(Severity.Debug, $"API lookup for airline {icao} ({iata}) produced no results");
+                }
+            }
+
+            return airline;
+        }
+
+        /// <summary>
+        /// Retrieve or lookup an airline, making sure it's saved locally
+        /// </summary>
+        /// <param name="icao"></param>
+        /// <param name="iata"></param>
+        /// <returns></returns>
+        public async Task<Airline> LookupAndStoreAirlineAsync(string icao, string iata)
+        {
+            // Attempt to load the airline based on its ICAO or IATA code
+            var airline = await LookupAirlineAsync(icao, iata);
+            if ((airline != null) && (airline.Id == 0))
+            {
+                // Airline was found but was not loaded from the database, so save it
+                airline = await _airlineManager.AddAsync(airline.IATA, airline.ICAO, airline.Name);
             }
 
             return airline;
@@ -204,6 +190,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
+                _logger.LogMessage(Severity.Debug, $"Aircraft {address} is not stored locally : Using the API");
+
                 // Not stored locally, so use the API to look it up
                 var properties = await _aircraftApi.LookupAircraftAsync(address);
                 if (properties != null)
@@ -226,7 +214,34 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         }
                     };
                 }
+                else
+                {
+                    _logger.LogMessage(Severity.Debug, $"API lookup for aircraft {address} produced no results");
+                }
+            }
 
+            return aircraft;
+        }
+
+        /// <summary>
+        /// Retrieve or lookup an aircraft, making sure it's saved locally
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public async Task<Aircraft> LookupAndStoreAircraftAsync(string address)
+        {
+            // Attempt to load the aircraft based on its 24-bit ICAO address
+            var aircraft = await LookupAircraftAsync(address);
+            if ((aircraft != null) && (aircraft.Id == 0))
+            {
+                // Save the manufacturer and model - the management classes prevent creation of duplicates
+                var manufacturer = await _manufacturerManager.AddAsync(aircraft.Model.Manufacturer.Name);
+                var model = await _modelManager.AddAsync(
+                    aircraft.Model.IATA, aircraft.Model.ICAO, aircraft.Model.Name, manufacturer.Id);
+
+                // Save the aircraft
+                aircraft = await _aircraftManager.AddAsync(
+                    aircraft.Address, aircraft.Registration, aircraft.Manufactured, aircraft.Age, model.Id);
             }
 
             return aircraft;

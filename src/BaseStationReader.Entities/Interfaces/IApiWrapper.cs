@@ -4,7 +4,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IApiWrapper
     {
-        Task<Flight> LookupActiveFlightAsync(string address);
+        Task<Flight> LookupFlightAsync(string address);
         Task<Airline> LookupAirlineAsync(string icao, string iata);
         Task<Aircraft> LookupAircraftAsync(string address);
         Task<Flight> LookupAndStoreFlightAsync(string address);
