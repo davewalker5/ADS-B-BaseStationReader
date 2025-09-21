@@ -22,8 +22,8 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Flight> GetAsync(Expression<Func<Flight, bool>> predicate)
         {
-            List<Flight> models = await ListAsync(predicate);
-            return models.FirstOrDefault();
+            List<Flight> flights = await ListAsync(predicate);
+            return flights.FirstOrDefault();
         }
 
         /// <summary>
@@ -51,10 +51,11 @@ namespace BaseStationReader.BusinessLogic.Database
             string destination,
             int airlineId)
         {
-            var model = await GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
-            if (model == null)
+            // Check the flight doesn't exist
+            var flight = await GetAsync(x => (x.AirlineId == airlineId) && ((x.IATA == iata) || (x.ICAO == icao)));
+            if (flight == null)
             {
-                model = new Flight
+                flight = new Flight
                 {
                     Number = number,
                     IATA = iata,
@@ -63,11 +64,11 @@ namespace BaseStationReader.BusinessLogic.Database
                     Destination = destination,
                     AirlineId = airlineId
                 };
-                await _context.Flights.AddAsync(model);
+                await _context.Flights.AddAsync(flight);
                 await _context.SaveChangesAsync();
             }
 
-            return model;
+            return flight;
         }
     }
 }

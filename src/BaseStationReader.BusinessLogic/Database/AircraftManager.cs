@@ -34,33 +34,45 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<List<Aircraft>> ListAsync(Expression<Func<Aircraft, bool>> predicate)
             => await _context.Aircraft
                 .Where(predicate)
+                .Include(x => x.Model)
+                .ThenInclude(x => x.Manufacturer)
                 .ToListAsync();
 
         /// <summary>
         /// Add an aircraft, if the associated ICAO address doesn't already exist
         /// </summary>
-        /// <param name="iata"></param>
-        /// <param name="icao"></param>
-        /// <param name="name"></param>
+        /// <param name="address"></param>
+        /// <param name="registration"></param>
+        /// <param name="manufactured"></param>
+        /// <param name="age"></param>
+        /// <param name="modelId"></param>
         /// <returns></returns>
-        public async Task<Aircraft> AddAsync(string address, string registration, int modelId)
+        public async Task<Aircraft> AddAsync(string address, string registration, int? manufactured, int? age, int modelId)
         {
-            var details = await GetAsync(a => a.Address == address);
+            var aircraft = await GetAsync(a => a.Address == address);
 
-            if (details == null)
+            if (aircraft == null)
             {
-                details = new Aircraft
+                // Create a new instance
+                aircraft = new Aircraft
                 {
                     Address = address,
                     Registration = registration,
+                    Manufactured = manufactured,
+                    Age = age,
                     ModelId = modelId
                 };
 
-                await _context.Aircraft.AddAsync(details);
+                // Save the aircraft
+                await _context.Aircraft.AddAsync(aircraft);
                 await _context.SaveChangesAsync();
+
+                // Load related entities
+                await _context.Entry(aircraft).Reference(x => x.Model).LoadAsync();
+                await _context.Entry(aircraft.Model).Reference(x => x.Manufacturer).LoadAsync();
             }
 
-            return details;
+            return aircraft;
         }
     }
 }

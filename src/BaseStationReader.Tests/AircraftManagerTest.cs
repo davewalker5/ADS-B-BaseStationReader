@@ -14,9 +14,11 @@ namespace BaseStationReader.Tests
         private const string ModelICAO = "A332";
         private const string ModelName = "A330-200";
         private const string Registration = "G-ABCD";
+        private const int Manufactured = 2014;
 
         private IAircraftManager _manager = null;
         private Model _model;
+        private readonly int _age = DateTime.Now.Year - Manufactured;
 
         [TestInitialize]
         public async Task Initialise()
@@ -28,13 +30,13 @@ namespace BaseStationReader.Tests
             // Set up a manufacturer, an aircraft model and an aircraft
             var manufacturer = await new ManufacturerManager(context).AddAsync(Manufacturer);
             _model = await new ModelManager(context).AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
-            _ = await _manager.AddAsync(Address, Registration, _model.Id);
+            _ = await _manager.AddAsync(Address, Registration, Manufactured, _age, _model.Id);
         }
 
         [TestMethod]
         public async Task AddDuplicateTest()
         {
-            await _manager.AddAsync(Address, Registration, _model.Id);
+            await _manager.AddAsync(Address, Registration, Manufactured, _age, _model.Id);
             var aircraft = await _manager.ListAsync(x => true);
             Assert.HasCount(1, aircraft);
         }
@@ -46,6 +48,9 @@ namespace BaseStationReader.Tests
             Assert.IsNotNull(aircraft);
             Assert.IsGreaterThan(0, aircraft.Id);
             Assert.AreEqual(Address, aircraft.Address);
+            Assert.AreEqual(Registration, aircraft.Registration);
+            Assert.AreEqual(Manufactured, aircraft.Manufactured);
+            Assert.AreEqual(_age, aircraft.Age);
             Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
@@ -67,6 +72,9 @@ namespace BaseStationReader.Tests
             Assert.HasCount(1, aircraft);
             Assert.IsGreaterThan(0, aircraft[0].Id);
             Assert.AreEqual(Address, aircraft[0].Address);
+            Assert.AreEqual(Registration, aircraft[0].Registration);
+            Assert.AreEqual(Manufactured, aircraft[0].Manufactured);
+            Assert.AreEqual(_age, aircraft[0].Age);
             Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
             Assert.AreEqual(ModelICAO, aircraft[0].Model.ICAO);
             Assert.AreEqual(ModelName, aircraft[0].Model.Name);
