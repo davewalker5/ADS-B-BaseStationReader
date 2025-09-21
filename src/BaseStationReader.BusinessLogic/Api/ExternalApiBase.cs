@@ -35,9 +35,9 @@ namespace BaseStationReader.BusinessLogic.Api
                     // Check the request was successful
                     if (response.IsSuccessStatusCode)
                     {
-                            // Read the response, parse to a JSON DOM
-                            var json = await response.Content.ReadAsStringAsync();
-                            node = JsonNode.Parse(json);
+                        // Read the response, parse to a JSON DOM
+                        var json = await response.Content.ReadAsStringAsync();
+                        node = JsonNode.Parse(json);
                     }
                 }
             }

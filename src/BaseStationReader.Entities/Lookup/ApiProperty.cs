@@ -8,9 +8,14 @@
         ManufacturerName,
         ModelIATA,
         ModelICAO,
+        ModelName,
         EmbarkationIATA,
         DestinationIATA,
         FlightIATA,
-        FlightICAO
+        FlightICAO,
+        FlightNumber,
+        AircraftRegistration,
+        AircraftManufactured,
+        AircraftAge
     }
 }

@@ -1,31 +1,122 @@
 ﻿using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
     public class AircraftLookupManager : IAircraftLookupManager
     {
+        private readonly ITrackerLogger _logger;
         private readonly IAirlineManager _airlineManager;
-        private readonly IAircraftManager _detailsManager;
+        private readonly IFlightManager _flightManager;
+        private readonly IAircraftManager _aircraftManager;
         private readonly IModelManager _modelManager;
+        private readonly IManufacturerManager _manufacturerManager;
         private readonly IAirlinesApi _airlinesApi;
         private readonly IAircraftApi _aircraftApi;
         private readonly IActiveFlightApi _flightsApi;
 
         public AircraftLookupManager(
+            ITrackerLogger logger,
             IAirlineManager airlineManager,
+            IFlightManager flightManager,
             IAircraftManager detailsManager,
             IModelManager modelManager,
+            IManufacturerManager manufacturerManager,
             IAirlinesApi airlinesApi,
             IAircraftApi aircraftApi,
             IActiveFlightApi flightsApi)
         {
+            _logger = logger;
             _airlineManager = airlineManager;
-            _detailsManager = detailsManager;
+            _flightManager = flightManager;
+            _aircraftManager = detailsManager;
             _modelManager = modelManager;
+            _manufacturerManager = manufacturerManager;
             _airlinesApi = airlinesApi;
             _aircraftApi = aircraftApi;
             _flightsApi = flightsApi;
+        }
+
+        /// <summary>
+        /// Lookup an active flight using the aircraft's ICAO 24-bit ICAO address
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public async Task<Flight> LookupActiveFlightAsync(string address)
+        {
+            Flight flight = null;
+
+            // The aircraft address must be specified
+            if (string.IsNullOrEmpty(address))
+            {
+                _logger.LogMessage(Severity.Warning, $"Unable to look up flight details : Invalid aircraft address");
+                return null;
+            }
+
+            // Use the API to look-up the flight
+            var properties = await _flightsApi.LookupFlightByAircraftAsync(address);
+            if (properties != null)
+            {
+                // Create a new flight object containing the details returned by the API
+                flight = new()
+                {
+                    Embarkation = properties[ApiProperty.EmbarkationIATA],
+                    Destination = properties[ApiProperty.DestinationIATA],
+                    IATA = properties[ApiProperty.FlightIATA],
+                    ICAO = properties[ApiProperty.FlightICAO],
+                    Number = properties[ApiProperty.FlightNumber],
+                    Airline = new()
+                    {
+                        IATA = properties[ApiProperty.AirlineIATA],
+                        ICAO = properties[ApiProperty.AirlineICAO]
+                    }
+                };
+            }
+
+            return flight;
+        }
+
+        /// <summary>
+        /// Retrieve or look up and aircraft given it's ICAO and/or IATA code
+        /// </summary>
+        /// <param name="icao"></param>
+        /// <param name="iata"></param>
+        /// <returns></returns>
+        public async Task<Airline> LookupAirlineAsync(string icao, string iata)
+        {
+            // At least one of the parameters must be specified
+            if (string.IsNullOrEmpty(icao) && string.IsNullOrEmpty(iata))
+            {
+                _logger.LogMessage(Severity.Warning, $"Unable to look up airline details : Invalid ICAO and IATA codes");
+                return null;
+            }
+
+            // See if the airline is stored locally, first
+            Airline airline = !string.IsNullOrEmpty(icao) ?
+                await _airlineManager.GetAsync(x => x.ICAO == icao) :
+                await _airlineManager.GetAsync(x => x.IATA == iata);
+
+            if (airline == null)
+            {
+                // Not stored locally, so use the API to look it up
+                var properties = !string.IsNullOrEmpty(icao) ?
+                    await _airlinesApi.LookupAirlineByICAOCodeAsync(icao) :
+                    await _airlinesApi.LookupAirlineByICAOCodeAsync(iata);
+
+                if (properties != null)
+                {
+                    // Create a new airline object containing the details returned by the API
+                    airline = new()
+                    {
+                        IATA = properties[ApiProperty.AirlineIATA],
+                        ICAO = properties[ApiProperty.AirlineICAO],
+                        Name = properties[ApiProperty.AirlineName]
+                    };
+                }
+            }
+
+            return airline;
         }
 
         /// <summary>
@@ -35,122 +126,51 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <returns></returns>
         public async Task<Aircraft> LookupAircraftAsync(string address)
         {
-            // See if the details are locally cached, first
-            var details = await _detailsManager!.GetAsync(x => x.Address == address);
-            if (details == null)
+            // The aircraft address must be specified
+            if (string.IsNullOrEmpty(address))
             {
-                // Not locally cached, so request a set of properties via the aircraft API
-                var properties = await _aircraftApi!.LookupAircraftAsync(address);
+                _logger.LogMessage(Severity.Warning, $"Unable to look up aircraft details : Invalid aircraft address");
+                return null;
+            }
+
+            // See if the aircraft is stored locally, first
+            var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
+            if (aircraft == null)
+            {
+                // Not stored locally, so use the API to look it up
+                var properties = await _aircraftApi.LookupAircraftAsync(address);
                 if (properties != null)
                 {
-                    // Retrieve the model
-                    var model = await GetModelAsync(properties[ApiProperty.ModelIATA], properties[ApiProperty.ModelICAO]);
-
-                    // If we don't have model details, there's no point caching the aircraft details
-                    // locally, so check we have a model
-                    if (model != null)
+                    aircraft = new()
                     {
-                        // TODO
-                        // details = await _detailsManager.AddAsync(address, model.Id);
-                    }
+                        Address = address,
+                        Registration = properties[ApiProperty.AircraftRegistration],
+                        Manufactured = GetIntegerValue(properties[ApiProperty.AircraftManufactured]),
+                        Age = GetIntegerValue(properties[ApiProperty.AircraftAge]),
+                        Model = new()
+                        {
+                            ICAO = properties[ApiProperty.ModelICAO],
+                            IATA = properties[ApiProperty.ModelIATA],
+                            Name = properties[ApiProperty.ModelName],
+                            Manufacturer = new()
+                            {
+                                Name = properties[ApiProperty.ManufacturerName]
+                            }
+                        }
+                    };
                 }
 
             }
 
-            return details;
+            return aircraft;
         }
 
         /// <summary>
-        /// Lookup an active flight using the aircraft's 24-bit ICAO address
+        /// Return an integer value from a property value
         /// </summary>
-        /// <param name="address"></param>
+        /// <param name="property"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupActiveFlightAsync(string address)
-        {
-            Flight details = null;
-
-            // Use the API to look-up the flight
-            var properties = await _flightsApi!.LookupFlightByAircraftAsync(address);
-            if (properties != null)
-            {
-                // Create a new flight details object containing the details
-                details = new Flight
-                {
-                    Embarkation = properties[ApiProperty.EmbarkationIATA],
-                    Destination = properties[ApiProperty.DestinationIATA],
-                    IATA = properties[ApiProperty.FlightIATA],
-                    ICAO = properties[ApiProperty.FlightICAO],
-                };
-            }
-
-            return details;
-        }
-
-        /// <summary>
-        /// Retrieve the model given the IATA and ICAO codes
-        /// </summary>
-        /// <param name="iata"></param>
-        /// <param name="icao"></param>
-        /// <returns></returns>
-        private async Task<Model> GetModelAsync(string iata, string icao)
-        {
-            // Look for a match for both the IATA and ICAO codes
-            Model model = await _modelManager!.GetAsync(x => (x.IATA == iata) && (x.ICAO == icao));
-
-            // See if there's a match? If not, use the IATA code alone. This provides more granularity
-            // than the ICAO code alone. For example, there are multiple aircraft models with ICAO
-            // designation B738, but each has a different IATA code
-            if ((model == null) && !string.IsNullOrEmpty(iata))
-            {
-                model = await _modelManager!.GetAsync(x => x.IATA == iata);
-            }
-
-            // See if there's a match? If not, fallback to using the ICAO code alone
-            if ((model == null) && !string.IsNullOrEmpty(icao))
-            {
-                model = await _modelManager!.GetAsync(x => x.ICAO == icao);
-            }
-
-            return model;
-        }
-
-        /// <summary>
-        /// Get an airline instance with the properties returned by the API
-        /// </summary>
-        /// <param name="iata"></param>
-        /// <param name="icao"></param>
-        /// <returns></returns>
-        private async Task<Airline> GetAirlineFromResponseAsync(string iata, string icao)
-        {
-            // See if the airline has been cached locally
-            Airline airline = await _airlineManager!.GetAsync(x => (x.IATA == iata) || (x.ICAO == icao));
-            if (airline == null)
-            {
-                // Not cached locally, so look the airline up using the API. Try using the IATA code, first
-                Dictionary<ApiProperty, string> properties = null;
-                if (!string.IsNullOrEmpty(iata))
-                {
-                    properties = await _airlinesApi!.LookupAirlineByIATACodeAsync(iata);
-                }
-
-                // If we don't have any airline details, try using the ICAO code
-                if ((properties == null) && !string.IsNullOrEmpty(icao))
-                {
-                    properties = await _airlinesApi!.LookupAirlineByICAOCodeAsync(icao);
-                }
-
-                // Check we have some airline properties
-                if (properties != null)
-                {
-                    // Lookup has worked, so cache the airline in the local database
-                    airline = await _airlineManager.AddAsync(
-                        properties[ApiProperty.AirlineIATA],
-                        properties[ApiProperty.AirlineICAO],
-                        properties[ApiProperty.AirlineName]);
-                }
-            }
-
-            return airline;
-        }
+        private static int? GetIntegerValue(string property)
+            => int.TryParse(property, out int value) ? value : null;
     }
 }

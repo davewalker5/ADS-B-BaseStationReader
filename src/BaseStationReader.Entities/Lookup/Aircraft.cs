@@ -16,6 +16,10 @@ namespace BaseStationReader.Entities.Lookup
         [Required]
         public string Registration { get; set; } = "";
 
+        public int? Manufactured { get; set; }
+
+        public int? Age { get; set; }
+
         [Required]
         [ForeignKey(nameof(Model))]
         public int ModelId { get; set; }
