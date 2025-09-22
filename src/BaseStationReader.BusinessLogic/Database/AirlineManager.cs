@@ -16,6 +16,28 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
+        /// Return an airline by either ICAO or IATA code, whichever is specified
+        /// </summary>
+        /// <param name="iata"></param>
+        /// <param name="icao"></param>
+        /// <returns></returns>
+        public async Task<Airline> GetByCodeAsync(string iata, string icao)
+        {
+            Airline airline = null;
+
+            if (!string.IsNullOrEmpty(icao))
+            {
+                airline = await GetAsync(x => x.ICAO == icao);
+            }
+            else if (!string.IsNullOrEmpty(iata))
+            {
+                airline = await GetAsync(x => x.IATA == iata);
+            }
+
+            return airline;
+        }
+
+        /// <summary>
         /// Return the first airline matching the specified criteria
         /// </summary>
         /// <param name="predicate"></param>
@@ -25,6 +47,7 @@ namespace BaseStationReader.BusinessLogic.Database
             List<Airline> airlines = await ListAsync(predicate);
             return airlines.FirstOrDefault();
         }
+
 
         /// <summary>
         /// Return all airlines matching the specified criteria
@@ -43,8 +66,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Airline> AddAsync(string iata, string icao, string name)
         {
-            var airline = await GetAsync(a => (a.IATA == iata) || (a.ICAO == icao) || (a.Name == name));
-
+            var airline = await GetByCodeAsync(iata, icao);
             if (airline == null)
             {
                 airline = new Airline { IATA = iata, ICAO = icao, Name = name };

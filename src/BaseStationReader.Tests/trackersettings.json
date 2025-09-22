@@ -27,19 +27,6 @@
       "LevelFlight",
       "Unknown"
     ],
-    "ApiEndpoints": [
-      {
-        "EndpointType": "Airlines",
-        "Service": "AirLabs",
-        "Url": "https://airlabs.co/api/v9/airlines"
-      }
-    ],
-    "ApiServiceKeys": [
-      {
-        "Service": "AirLabs",
-        "Key": "my-key"
-      }
-    ],
     "Columns": [
       {
         "Property": "Latitude",

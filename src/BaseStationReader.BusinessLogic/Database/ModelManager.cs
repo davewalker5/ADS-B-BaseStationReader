@@ -16,6 +16,28 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
+        /// Return a model by either ICAO or IATA code, whichever is specified
+        /// </summary>
+        /// <param name="iata"></param>
+        /// <param name="icao"></param>
+        /// <returns></returns>
+        public async Task<Model> GetByCodeAsync(string iata, string icao)
+        {
+            Model model = null;
+
+            if (!string.IsNullOrEmpty(icao))
+            {
+                model = await GetAsync(x => x.ICAO == icao);
+            }
+            else if (!string.IsNullOrEmpty(iata))
+            {
+                model = await GetAsync(x => x.IATA == iata);
+            }
+
+            return model;
+        }
+
+        /// <summary>
         /// Get the first aircraft model matching the specified criteria
         /// </summary>
         /// <param name="predicate"></param>
@@ -45,7 +67,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Model> AddAsync(string iata, string icao, string name, int manufacturerId)
         {
-            var model = await GetAsync(x => (x.IATA == iata) || (x.ICAO == icao) || (x.Name == name));
+            var model = await GetByCodeAsync(iata, icao);
             if (model == null)
             {
                 model = new Model

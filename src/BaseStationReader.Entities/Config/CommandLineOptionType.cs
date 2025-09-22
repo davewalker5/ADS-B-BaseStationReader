@@ -47,6 +47,9 @@
         ClearDown,
         AircraftAddress,
         Departure,
-        Arrival
+        Arrival,
+        ImportAirlines,
+        ImportManufacturers,
+        ImportModels
     }
 }
