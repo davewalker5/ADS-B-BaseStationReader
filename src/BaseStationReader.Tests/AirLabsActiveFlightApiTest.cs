@@ -37,6 +37,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual("172", properties[ApiProperty.FlightNumber]);
             Assert.AreEqual("BA", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("BAW", properties[ApiProperty.AirlineICAO]);
+            Assert.AreEqual("B772", properties[ApiProperty.ModelICAO]);
         }
 
         [TestMethod]

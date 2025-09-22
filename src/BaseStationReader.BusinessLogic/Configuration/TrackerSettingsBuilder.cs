@@ -5,7 +5,7 @@ using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
-    public class TrackerSettingsBuilder : SettingsBuilderBase<TrackerApplicationSettings>, ITrackerSettingsBuilder
+    public class TrackerSettingsBuilder : ITrackerSettingsBuilder
     {
         /// <summary>
         /// Construct the application settings from the configuration file and any command line arguments
@@ -24,7 +24,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             var configJsonPath = (values != null) ? values[0] : defaultConfigJsonPath;
 
             // Read the config file to provide default settings
-            var settings = base.LoadSettings(parser, configJsonPath);
+            var settings = new TrackerConfigReader().Read(configJsonPath);
 
             // Apply the command line values over the defaults
             values = parser.GetValues(CommandLineOptionType.Host);
