@@ -29,8 +29,6 @@ namespace BaseStationReader.Entities.Config
         public int? MaximumTrackedDistance { get; set;  }
         public int? MinimumTrackedAltitude { get; set; }
         public int? MaximumTrackedAltitude { get; set; }
-        public List<ApiEndpoint> ApiEndpoints { get; set; } = [];
-        public List<ApiServiceKey> ApiServiceKeys { get; set; } = [];
         public List<TrackerColumn> Columns { get; set; } = [];
         public List<AircraftBehaviour> TrackedBehaviours { get; set; } = [];
     }

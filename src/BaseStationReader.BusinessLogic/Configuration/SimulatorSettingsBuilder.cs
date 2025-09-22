@@ -4,18 +4,18 @@ using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
-    public class SimulatorSettingsBuilder : ISimulatorSettingsBuilder
+    public class SimulatorSettingsBuilder : SettingsBuilderBase<SimulatorApplicationSettings>, ISimulatorSettingsBuilder
     {
         /// <summary>
         /// Construct the application settings from the configuration file and any command line arguments
         /// </summary>
         /// <param name="parser"></param>
-        /// <param name="configJsonPath"></param>
+        /// <param name="configPath"></param>
         /// <returns></returns>
-        public SimulatorApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath)
+        public SimulatorApplicationSettings BuildSettings(ICommandLineParser parser, string configPath)
         {
             // Read the config file to provide default settings
-            var settings = new ConfigReader<SimulatorApplicationSettings>().Read(configJsonPath);
+            var settings = base.LoadSettings(parser, configPath);
 
             // Apply the command line values over the defaults
             var values = parser.GetValues(CommandLineOptionType.Port);

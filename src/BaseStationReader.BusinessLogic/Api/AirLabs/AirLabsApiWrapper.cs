@@ -153,7 +153,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             if (airline == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Airline {icao} ({iata}) is not stored locally : Using the API");
+                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = !string.IsNullOrEmpty(icao) ?
@@ -172,8 +172,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Debug, $"API lookup for airline {icao} ({iata}) produced no results");
+                    _logger.LogMessage(Severity.Debug, $"API lookup for Airline with ICAO = '{icao}', IATA = '{iata}' produced no results");
                 }
+            }
+            else
+            {
+                    _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
             }
 
             return airline;
@@ -244,6 +248,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 {
                     _logger.LogMessage(Severity.Debug, $"API lookup for aircraft {address} produced no results");
                 }
+            }
+            else
+            {
+                _logger.LogMessage(Severity.Debug, $"Aircraft {address} retrieved from the database");
             }
 
             return aircraft;

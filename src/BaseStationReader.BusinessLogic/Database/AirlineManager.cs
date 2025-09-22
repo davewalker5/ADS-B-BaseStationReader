@@ -23,6 +23,10 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<Airline> GetAsync(Expression<Func<Airline, bool>> predicate)
         {
             List<Airline> airlines = await ListAsync(predicate);
+            foreach (var a in airlines)
+            {
+                Console.WriteLine($"{a.IATA} {a.ICAO} {a.Name}");
+            }
             return airlines.FirstOrDefault();
         }
 
@@ -43,7 +47,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Airline> AddAsync(string iata, string icao, string name)
         {
-            var airline = await GetAsync(a => (a.IATA == iata) || (a.ICAO == icao) || (a.Name == name));
+            var airline = await GetAsync(a =>
+                ((a.IATA == iata) && (a.IATA != "")) ||
+                ((a.ICAO == icao) && (a.ICAO != "")));
 
             if (airline == null)
             {

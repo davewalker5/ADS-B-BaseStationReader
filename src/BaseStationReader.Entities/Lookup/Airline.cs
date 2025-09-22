@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Entities.Lookup
@@ -17,5 +18,8 @@ namespace BaseStationReader.Entities.Lookup
 
         [Required]
         public string Name { get; set; } = "";
+
+        [NotMapped]
+        public bool Active { get; set; } = true;
     }
 }
