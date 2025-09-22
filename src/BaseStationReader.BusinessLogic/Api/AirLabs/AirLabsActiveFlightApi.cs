@@ -54,7 +54,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" },
                         { ApiProperty.FlightNumber, apiResponse!["flight_number"]?.GetValue<string>() ?? "" },
                         { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string>() ?? "" }
+                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelICAO, apiResponse!["aircraft_icao"]?.GetValue<string>() ?? "" }
                     };
 
                     // Log the properties dictionary

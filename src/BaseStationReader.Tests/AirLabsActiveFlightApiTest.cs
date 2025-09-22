@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests
             var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(Address)).Result;
 
             Assert.IsNotNull(properties);
-            Assert.HasCount(7, properties);
+            Assert.HasCount(8, properties);
             Assert.AreEqual("JFK", properties[ApiProperty.EmbarkationIATA]);
             Assert.AreEqual("LHR", properties[ApiProperty.DestinationIATA]);
             Assert.AreEqual("BA172", properties[ApiProperty.FlightIATA]);

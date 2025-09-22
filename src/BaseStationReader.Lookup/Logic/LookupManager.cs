@@ -51,8 +51,10 @@ namespace BaseStationReader.Lookup.Logic
             if (flight != null)
             {
                 // Lookup the aircraft, but only if the flight was found/returned. The flight
-                // could be filtered out, in which case we don't want to store any of the details
-                await wrapper.LookupAndStoreAircraftAsync(address);
+                // could be filtered out, in which case we don't want to store any of the details.
+                // Note, also, that the flight may contain the aircraft model that can be used to
+                // fill in model and manufacturer details if the aircraft request doesn't include them
+                await wrapper.LookupAndStoreAircraftAsync(address, flight.ModelICAO);
             }
         }
 

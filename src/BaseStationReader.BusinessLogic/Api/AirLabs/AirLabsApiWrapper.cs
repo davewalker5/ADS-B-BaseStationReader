@@ -90,7 +90,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         {
                             IATA = properties[ApiProperty.AirlineIATA],
                             ICAO = properties[ApiProperty.AirlineICAO]
-                        }
+                        },
+                        ModelICAO = properties[ApiProperty.ModelICAO]
                     };
                 }
                 else
@@ -122,9 +123,14 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var airline = await LookupAndStoreAirlineAsync(flight.Airline.ICAO, flight.Airline.IATA);
                 if (airline != null)
                 {
+                    // Capture the alternative ICAO for the aircraft model before saving as it's not a persisted
+                    // property and will need to be restored afterwards
+                    var alternateModelICAO = flight.ModelICAO;
+
                     // Airline details have been retrieved OK so create the flight (the flight manager prevents creation
                     // of duplicates)
                     flight = await _flightManager.AddAsync(flight.IATA, flight.ICAO, flight.Number, flight.Embarkation, flight.Destination, airline.Id);
+                    flight.ModelICAO = alternateModelICAO;
                 }
             }
 
@@ -203,8 +209,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// Lookup an aircraft's details given its ICAO 24-bit address
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="alternateModelICAO"></param>
         /// <returns></returns>
-        public async Task<Aircraft> LookupAircraftAsync(string address)
+        public async Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO)
         {
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
@@ -223,6 +230,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var properties = await _aircraftApi.LookupAircraftAsync(address);
                 if (properties != null)
                 {
+                    // If the aircraft is returned without a model and we have and alternative ICAO for the
+                    // model (often from the flight), then use that
+                    var modelICAO = string.IsNullOrEmpty(properties[ApiProperty.ModelICAO]) ?
+                        alternateModelICAO ?? "" :
+                        properties[ApiProperty.ModelICAO];
+
                     aircraft = new()
                     {
                         Address = address,
@@ -231,7 +244,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         Age = GetIntegerValue(properties[ApiProperty.AircraftAge]),
                         Model = new()
                         {
-                            ICAO = properties[ApiProperty.ModelICAO],
+                            ICAO = modelICAO,
                             IATA = properties[ApiProperty.ModelIATA],
                             Name = properties[ApiProperty.ModelName],
                             Manufacturer = new()
@@ -258,11 +271,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// Retrieve or lookup an aircraft, making sure it's saved locally
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="alternateModelICAO"></param>
         /// <returns></returns>
-        public async Task<Aircraft> LookupAndStoreAircraftAsync(string address)
+        public async Task<Aircraft> LookupAndStoreAircraftAsync(string address, string alternateModelICAO)
         {
             // Attempt to load the aircraft based on its 24-bit ICAO address
-            var aircraft = await LookupAircraftAsync(address);
+            var aircraft = await LookupAircraftAsync(address, alternateModelICAO);
             if ((aircraft != null) && (aircraft.Id == 0))
             {
                 // See if the model is already in the database

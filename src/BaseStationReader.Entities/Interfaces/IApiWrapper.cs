@@ -10,14 +10,14 @@ namespace BaseStationReader.Entities.Interfaces
             IEnumerable<string> arrivalAirportCodes);
 
         Task<Airline> LookupAirlineAsync(string icao, string iata);
-        Task<Aircraft> LookupAircraftAsync(string address);
+        Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO);
 
         Task<Flight> LookupAndStoreFlightAsync(
             string address,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes);
 
-        Task<Aircraft> LookupAndStoreAircraftAsync(string address);
+        Task<Aircraft> LookupAndStoreAircraftAsync(string address, string alternateModelICAO);
         Task<Airline> LookupAndStoreAirlineAsync(string icao, string iata);
     }
 }
