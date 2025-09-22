@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Entities.Interfaces
 {
-    public interface IAirlineImporter : ICsvImporter<AirlineMappingProfile, Airline>
+    public interface IManufacturerImporter : ICsvImporter<ManufacturerMappingProfile, Manufacturer>
     {
     }
 }

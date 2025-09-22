@@ -7,5 +7,7 @@ namespace BaseStationReader.Entities.Interfaces
         where T : class
     {
         List<T> Read(string filePath);
+        Task Save(IEnumerable<T> entities);
+        Task Import(string filePath);
     }
 }

@@ -48,6 +48,8 @@
         AircraftAddress,
         Departure,
         Arrival,
-        ImportAirlines
+        ImportAirlines,
+        ImportManufacturers,
+        ImportModels
     }
 }

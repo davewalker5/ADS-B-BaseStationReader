@@ -7,8 +7,6 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class AirlineImporter : CsvImporter<AirlineMappingProfile, Airline>, IAirlineImporter
     {
-        private readonly HashSet<string> _replace = new(["-", "n/a"], StringComparer.OrdinalIgnoreCase);
-
         private readonly IAirlineManager _airlineManager;
 
         public AirlineImporter(IAirlineManager airlineManager, ITrackerLogger logger) : base(logger)
@@ -23,25 +21,27 @@ namespace BaseStationReader.BusinessLogic.Logging
         {
             // Load the data
             var airlines = base.Read(filePath);
-
-            // Remove any that aren't active
-            airlines.RemoveAll(x => !x.Active);
-            Logger.LogMessage(Severity.Info, $"Inactive airlines removed : {airlines.Count} airlines remaining");
-
-            // Clean up the airline codes
-            foreach (var airline in airlines.Where(x => _replace.Contains(x.IATA)))
+            if (airlines?.Count > 0)
             {
-                airline.IATA = "";
-            }
+                // Remove any that aren't active
+                airlines.RemoveAll(x => !x.Active);
+                Logger.LogMessage(Severity.Info, $"Inactive airlines removed : {airlines.Count} airlines remaining");
 
-            foreach (var airline in airlines.Where(x => _replace.Contains(x.ICAO)))
-            {
-                airline.ICAO = "";
-            }
+                // Clean up the airline codes
+                foreach (var airline in airlines.Where(x => Replacements.Contains(x.IATA)))
+                {
+                    airline.IATA = "";
+                }
 
-            // Identify instances where there's no IATA or ICAO code and remove them
-            airlines.RemoveAll(x => string.IsNullOrEmpty(x.ICAO) && string.IsNullOrEmpty(x.IATA));
-            Logger.LogMessage(Severity.Info, $"Airlines with no IATA/ICAO code removed : {airlines.Count} airlines remaining");
+                foreach (var airline in airlines.Where(x => Replacements.Contains(x.ICAO)))
+                {
+                    airline.ICAO = "";
+                }
+
+                // Identify instances where there's no IATA or ICAO code and remove them
+                airlines.RemoveAll(x => string.IsNullOrEmpty(x.ICAO) && string.IsNullOrEmpty(x.IATA));
+                Logger.LogMessage(Severity.Info, $"Airlines with no IATA/ICAO code removed : {airlines.Count} airlines remaining");
+            }
 
             return airlines;
         }
@@ -51,7 +51,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="airlines"></param>
         /// <returns></returns>
-        public async Task Save(IEnumerable<Airline> airlines)
+        public override async Task Save(IEnumerable<Airline> airlines)
         {
             if (airlines?.Any() == true)
             {
@@ -59,7 +59,7 @@ namespace BaseStationReader.BusinessLogic.Logging
 
                 foreach (var airline in airlines)
                 {
-                    Logger.LogMessage(Severity.Debug, $"Saving airline '{airline.Name} : IATA = '{airline.IATA}', ICAO = '{airline.ICAO}'");
+                    Logger.LogMessage(Severity.Debug, $"Saving airline '{airline.Name}' : IATA = '{airline.IATA}', ICAO = '{airline.ICAO}'");
                     await _airlineManager.AddAsync(airline.IATA, airline.ICAO, airline.Name);
                 }
             }
@@ -67,17 +67,6 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Warning, $"No airlines to save");
             }
-        }
-
-        /// <summary>
-        /// Import a set of airline definitions into the database from a CSV file
-        /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns></returns>
-        public async Task Import(string filePath)
-        {
-            var airlines = Read(filePath);
-            await Save(airlines);
         }
     }
 }

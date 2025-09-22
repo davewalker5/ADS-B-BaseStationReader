@@ -7,10 +7,11 @@ using System.Globalization;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
-    public abstract class CsvImporter<M, T> : ICsvImporter<M,T>
+    public abstract class CsvImporter<M, T> : ICsvImporter<M, T>
         where M : ClassMap
         where T : class
     {
+        public HashSet<string> Replacements { get; private set; } = new(["-", "(undefined)", "n/a"], StringComparer.OrdinalIgnoreCase);
         public ITrackerLogger Logger { get; private set; }
 
         public CsvImporter(ITrackerLogger logger)
@@ -49,6 +50,32 @@ namespace BaseStationReader.BusinessLogic.Logging
             }
 
             return records;
+        }
+
+        /// <summary>
+        /// Save a collection of entities to the database
+        /// </summary>
+        /// <param name="manufacturers"></param>
+        /// <returns></returns>
+#pragma warning disable CS1998
+        public virtual async Task Save(IEnumerable<T> entities)
+        {
+            // This would be better as an abstract method but that's not possible with async
+            // methods. The expectation is classes inheriting from this one *must* override
+            // this method
+            throw new NotImplementedException();
+        }
+#pragma warning restore CS1998
+
+        /// <summary>
+        /// Import a set of airline definitions into the database from a CSV file
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public async Task Import(string filePath)
+        {
+            var entities = Read(filePath);
+            await Save(entities);
         }
     }
 }

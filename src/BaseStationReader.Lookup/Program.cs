@@ -57,6 +57,25 @@ namespace BaseStationReader.Lookup
                     await airlineImporter.Import(filePath);
                 }
 
+                // If a CSV file containing manufacturer details has been supplied, import it
+                if (parser.IsPresent(CommandLineOptionType.ImportManufacturers))
+                {
+                    var filePath = parser.GetValues(CommandLineOptionType.ImportManufacturers)[0];
+                    var manufacturerManager = new ManufacturerManager(context);
+                    var manufacturerImporter = new ManufacturerImporter(manufacturerManager, logger);
+                    await manufacturerImporter.Import(filePath);
+                }
+
+                // If a CSV file containing model details has been supplied, import it
+                if (parser.IsPresent(CommandLineOptionType.ImportModels))
+                {
+                    var filePath = parser.GetValues(CommandLineOptionType.ImportModels)[0];
+                    var manufacturerManager = new ManufacturerManager(context);
+                    var modelManager = new ModelManager(context);
+                    var modelImporter = new ModelImporter(manufacturerManager, modelManager, logger);
+                    await modelImporter.Import(filePath);
+                }
+
                 // If an aircraft address has been supplied, look it up and store the results
                 if (parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {

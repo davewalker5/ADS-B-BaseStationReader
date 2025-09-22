@@ -23,6 +23,9 @@ namespace BaseStationReader.Entities.Lookup
         [ForeignKey(nameof(Manufacturer))]
         public int ManufacturerId { get; set; }
 
+        [NotMapped]
+        public string ManufacturerName { get; set; }
+
         public Manufacturer Manufacturer { get; set; }
     }
 }

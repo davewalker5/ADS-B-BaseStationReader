@@ -147,10 +147,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             }
 
             // See if the airline is stored locally, first
-            Airline airline = !string.IsNullOrEmpty(icao) ?
-                await _airlineManager.GetAsync(x => x.ICAO == icao) :
-                await _airlineManager.GetAsync(x => x.IATA == iata);
-
+            var airline = await _airlineManager.GetByCodeAsync(iata, icao);
             if (airline == null)
             {
                 _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
@@ -177,7 +174,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             }
             else
             {
-                    _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
+                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
             }
 
             return airline;
@@ -268,14 +265,25 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var aircraft = await LookupAircraftAsync(address);
             if ((aircraft != null) && (aircraft.Id == 0))
             {
-                // Save the manufacturer and model - the management classes prevent creation of duplicates
-                var manufacturer = await _manufacturerManager.AddAsync(aircraft.Model.Manufacturer.Name);
-                var model = await _modelManager.AddAsync(
-                    aircraft.Model.IATA, aircraft.Model.ICAO, aircraft.Model.Name, manufacturer.Id);
+                // See if the model is already in the database
+                var model = await _modelManager.GetByCodeAsync(aircraft.Model.IATA, aircraft.Model.ICAO);
+                if (model == null)
+                {
+                    // Save the manufacturer and model
+                    _logger.LogMessage(Severity.Debug,
+                        $"Model '{aircraft.Model.Name}', ICAO = '{aircraft.Model.ICAO}', IATA = '{aircraft.Model.IATA}', manufacturer = '{aircraft.Model.Manufacturer.Name}' is not stored locally");
+
+                    var manufacturer = await _manufacturerManager.AddAsync(aircraft.Model.Manufacturer.Name);
+                    model = await _modelManager.AddAsync(aircraft.Model.IATA, aircraft.Model.ICAO, aircraft.Model.Name, manufacturer.Id);
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Debug,
+                        $"Model '{model.Name}', ICAO = '{model.ICAO}', IATA = '{model.IATA}' was retrieved from the database");
+                }
 
                 // Save the aircraft
-                aircraft = await _aircraftManager.AddAsync(
-                    aircraft.Address, aircraft.Registration, aircraft.Manufactured, aircraft.Age, model.Id);
+                aircraft = await _aircraftManager.AddAsync(aircraft.Address, aircraft.Registration, aircraft.Manufactured, aircraft.Age, model.Id);
             }
 
             return aircraft;
