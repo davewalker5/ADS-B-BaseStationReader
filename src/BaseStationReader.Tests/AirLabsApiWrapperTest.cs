@@ -95,7 +95,7 @@ namespace BaseStationReader.Tests
         public async Task LookupAircraftAsyncTest()
         {
             _client.AddResponse(AircraftResponse);
-            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress);
+            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress, "");
 
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(AircraftAddress, aircraft.Address);
@@ -110,7 +110,7 @@ namespace BaseStationReader.Tests
         public async Task LookupAndStoreAircraftAsyncTest()
         {
             _client.AddResponse(AircraftResponse);
-            var aircraft = await _wrapper.LookupAndStoreAircraftAsync(AircraftAddress);
+            var aircraft = await _wrapper.LookupAndStoreAircraftAsync(AircraftAddress, "");
             var retrieved = await _aircraftManager.GetAsync(x => x.Address == AircraftAddress);
             var model = await _modelManager.GetAsync(x => x.ICAO == ModelICAO);
             var manufacturer = await _manufacturerManager.GetAsync(x => x.Name == ManufacturerName);

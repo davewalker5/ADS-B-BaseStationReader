@@ -28,6 +28,9 @@ namespace BaseStationReader.Entities.Lookup
         [Required]
         [ForeignKey(nameof(Airline))]
         public int AirlineId { get; set; }
+
+        [NotMapped]
+        public string ModelICAO { get; set; } = "";
         
         public Airline Airline { get; set; }
     }
