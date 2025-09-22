@@ -4,18 +4,18 @@ using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
-    public class LookupToolSettingsBuilder : SettingsBuilderBase<LookupToolApplicationSettings>, ILookupToolSettingsBuilder
+    public class LookupToolSettingsBuilder : ConfigReader<LookupToolApplicationSettings>, ILookupToolSettingsBuilder
     {
         /// <summary>
         /// Construct the application settings from the configuration file and any command line arguments
         /// </summary>
         /// <param name="parser"></param>
-        /// <param name="configPath"></param>
+        /// <param name="configJsonPath"></param>
         /// <returns></returns>
-        public LookupToolApplicationSettings BuildSettings(ICommandLineParser parser, string configPath)
+        public LookupToolApplicationSettings BuildSettings(ICommandLineParser parser, string configJsonPath)
         {
             // Read the config file to provide default settings
-            var settings = base.LoadSettings(parser, configPath);
+            var settings = base.Read(configJsonPath);
 
             var values = parser.GetValues(CommandLineOptionType.LogFile);
             if (values != null) settings!.LogFile = values[0];

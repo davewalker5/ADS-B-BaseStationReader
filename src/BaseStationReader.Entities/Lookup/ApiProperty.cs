@@ -16,7 +16,6 @@
         FlightNumber,
         AircraftRegistration,
         AircraftManufactured,
-        AircraftAge,
-        AircraftICAO
+        AircraftAge
     }
 }

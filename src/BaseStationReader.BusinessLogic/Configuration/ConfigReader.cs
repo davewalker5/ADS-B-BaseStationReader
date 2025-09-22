@@ -11,9 +11,13 @@ namespace BaseStationReader.BusinessLogic.Configuration
         /// <returns></returns>
         public virtual T Read(string jsonFileName)
         {
+            // See if the development config file exists and use it preferentially if it does
+            var developmentJsonFileName = GetDevelopmentConfigFileName(jsonFileName);
+            var useJsonFileName = File.Exists(developmentJsonFileName) ? developmentJsonFileName : jsonFileName;
+
             // Set up the configuration reader
             IConfiguration configuration = new ConfigurationBuilder()
-                .AddJsonFile(jsonFileName)
+                .AddJsonFile(useJsonFileName)
                 .Build();
 
             // Read the application settings section
@@ -21,6 +25,22 @@ namespace BaseStationReader.BusinessLogic.Configuration
             var settings = section.Get<T>();
 
             return settings;
+        }
+
+        /// <summary>
+        /// Construct the development config file given a production config file name
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        private string GetDevelopmentConfigFileName(string jsonFileName)
+        {
+            // See if a development configuration file exists and, if so, use that in place of the
+            // file provided. For example, if the supplied file name is "appsettings.json", the development
+            // version is "appsettings.Development.json"
+            var fileName = Path.GetFileNameWithoutExtension(jsonFileName);
+            var extension = Path.GetExtension(jsonFileName);
+            var developmentConfigPath = $"{fileName}.Development{extension}";
+            return developmentConfigPath;
         }
     }
 }
