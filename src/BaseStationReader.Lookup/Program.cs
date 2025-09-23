@@ -12,7 +12,6 @@ using System.Reflection;
 
 namespace BaseStationReader.Lookup
 {
-    [ExcludeFromCodeCoverage]
     public static class Program
     {
         public static async Task Main(string[] args)

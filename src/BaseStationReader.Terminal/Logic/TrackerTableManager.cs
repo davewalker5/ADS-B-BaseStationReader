@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
 {
-    [ExcludeFromCodeCoverage]
     internal class TrackerTableManager : ITrackerTableManager
     {
         private const string UpArrow = "\u2191";
