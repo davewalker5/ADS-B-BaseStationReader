@@ -20,7 +20,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (history.Count > 2)
             {
                 // Calculate the average change across all entries
-                var averageChange = history.Average(x => x);
+                var averageChange = Math.Round(history.Average(x => x), 0, MidpointRounding.ToZero);
 
                 // Assess the behaviour based on the average change
                 if (averageChange < 0)

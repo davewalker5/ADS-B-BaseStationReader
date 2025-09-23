@@ -114,6 +114,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
             if (values != null)
             {
                 var profile = reader.Read(values[0]);
+                settings.ReceiverLatitude = profile.ReceiverLatitude;
+                settings.ReceiverLongitude = profile.ReceiverLongitude;
                 settings.MinimumTrackedAltitude = profile.MinimumTrackedAltitude;
                 settings.MaximumTrackedAltitude = profile.MaximumTrackedAltitude;
                 settings.MaximumTrackedDistance = profile.MaximumTrackedDistance;

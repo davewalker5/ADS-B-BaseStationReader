@@ -1,6 +1,6 @@
 ﻿{
   "ApplicationSettings": {
-    "Host": "192.168.0.98",
+    "Host": "127.0.0.1",
     "Port": 30003,
     "SocketReadTimeout": 60000,
     "ApplicationTimeout": 600000,
@@ -11,16 +11,17 @@
     "TimeToLock": 900000,
     "LogFile": "AircraftTracker.log",
     "MinimumLogLevel": "Info",
-    "EnableSqlWriter": false,
+    "EnableSqlWriter": true,
+    "ClearDown": false,
     "WriterInterval": 30000,
     "WriterBatchSize": 20000,
-    "RefreshInterval": 10000,
-    "MaximumRows": 20,
-    "ReceiverLatitude": 51.47138888,
-    "ReceiverLongitude": -0.45277777,
-    "MaximumTrackedDistance": 15,
-    "MinimumTrackedAltitude": 200,
-    "MaximumTrackedAltitude": 5000,
+    "RefreshInterval": 1000,
+    "MaximumRows": 0,
+    "ReceiverLatitude": 51.470020,
+    "ReceiverLongitude": -0.454295,
+    "MaximumTrackedDistance": null,
+    "MinimumTrackedAltitude": null,
+    "MaximumTrackedAltitude": null,
     "TrackPosition": true,
     "TrackedBehaviours": [
       "Climbing",
@@ -28,25 +29,88 @@
       "LevelFlight",
       "Unknown"
     ],
-    "ApiEndpoints": [
-      {
-        "EndpointType": "Airlines",
-        "Service": "AirLabs",
-        "Url": "https://airlabs.co/api/v9/airlines"
-      }
-    ],
-    "ApiServiceKeys": [
-      {
-        "Service": "AirLabs",
-        "Key": "my-key"
-      }
-    ],
     "Columns": [
       {
+        "Property": "Address",
+        "Label": "ID",
+        "Format": "",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Callsign",
+        "Label": "Callsign",
+        "Format": "",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Squawk",
+        "Label": "Squawk",
+        "Format": "",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Altitude",
+        "Label": "Altitude",
+        "Format": "N0",
+        "ShowBehaviour": true
+      },
+      {
+        "Property": "GroundSpeed",
+        "Label": "Speed",
+        "Format": "N0",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Track",
+        "Label": "Heading",
+        "Format": "N0",
+        "ShowBehaviour": false
+      },
+      {
         "Property": "Latitude",
-        "Label": "Lat",
-        "Format": "N5"
+        "Label": "Latitude",
+        "Format": "N5",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Longitude",
+        "Label": "Longitude",
+        "Format": "N5",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "VerticalRate",
+        "Label": "Vertical Rate",
+        "Format": "N0",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Distance",
+        "Label": "Distance",
+        "Format": "N0",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "FirstSeen",
+        "Label": "First Seen",
+        "Format": "HH:mm:ss.fff",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "LastSeen",
+        "Label": "Last Seen",
+        "Format": "HH:mm:ss.fff",
+        "ShowBehaviour": false
+      },
+      {
+        "Property": "Messages",
+        "Label": "Messages",
+        "Format": "",
+        "ShowBehaviour": false
       }
     ]
+  },
+  "ConnectionStrings": {
+    "BaseStationReaderDB": "Data Source=/Users/dave/Tracker/aircrafttracker.db"
   }
 }

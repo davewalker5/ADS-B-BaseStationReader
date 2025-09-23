@@ -5,10 +5,8 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
-using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests
 {

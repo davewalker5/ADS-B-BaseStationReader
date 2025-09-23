@@ -6,7 +6,7 @@ using BaseStationReader.Entities.Tracking;
 namespace BaseStationReader.Tests
 {
     [TestClass]
-    public class TrackerSettingsBuilderTest
+    public class TrackerSettingsBuilderTest : TrackerSettingsTestBase
     {
         private ITrackerSettingsBuilder _builder = new TrackerSettingsBuilder();
         private ICommandLineParser _parser = new TrackerCommandLineParser(null);
@@ -17,40 +17,16 @@ namespace BaseStationReader.Tests
         {
             _parser.Parse(Array.Empty<string>());
             var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            AssertCorrectSettings(settings);
+        }
 
-            Assert.AreEqual("192.168.0.98", settings.Host);
-            Assert.AreEqual(30003, settings.Port);
-            Assert.AreEqual(60000, settings.SocketReadTimeout);
-            Assert.AreEqual(600000, settings.ApplicationTimeout);
-            Assert.IsTrue(settings.RestartOnTimeout);
-            Assert.AreEqual(60000, settings.TimeToRecent);
-            Assert.AreEqual(120000, settings.TimeToStale);
-            Assert.AreEqual(180000, settings.TimeToRemoval);
-            Assert.AreEqual(900000, settings.TimeToLock);
-            Assert.AreEqual("AircraftTracker.log", settings.LogFile);
-            Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
-            Assert.IsFalse(settings.EnableSqlWriter);
-            Assert.AreEqual(30000, settings.WriterInterval);
-            Assert.AreEqual(20000, settings.WriterBatchSize);
-            Assert.AreEqual(10000, settings.RefreshInterval);
-            Assert.AreEqual(20, settings.MaximumRows);
-            Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
-            Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
-
-            Assert.AreEqual(15, settings.MaximumTrackedDistance);
-            Assert.AreEqual(200, settings.MinimumTrackedAltitude);
-            Assert.AreEqual(5000, settings.MaximumTrackedAltitude);
-
-            foreach (var behaviour in Enum.GetValues<AircraftBehaviour>())
-            {
-                Assert.Contains(behaviour, settings.TrackedBehaviours);
-            }
-
-            Assert.IsNotNull(settings.Columns);
-            Assert.HasCount(1, settings.Columns);
-            Assert.AreEqual("Latitude", settings.Columns.First().Property);
-            Assert.AreEqual("Lat", settings.Columns.First().Label);
-            Assert.AreEqual("N5", settings.Columns.First().Format);
+        [TestMethod]
+        public void OverrideDefaultConfigFileTest()
+        {
+            var args = new string[] { "--settings", "alternatesettings.json" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "");
+            AssertCorrectSettings(settings);
         }
 
         [TestMethod]
@@ -249,6 +225,40 @@ namespace BaseStationReader.Tests
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
 
+            Assert.HasCount(1, settings.TrackedBehaviours);
+            Assert.AreEqual(AircraftBehaviour.Descending, settings.TrackedBehaviours[0]);
+        }
+
+        [TestMethod]
+        public void OverrideClearDownTest()
+        {
+            var args = new string[] { "--cleardown", "true" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.IsTrue(settings.ClearDown);
+        }
+
+        [TestMethod]
+        public void OverrideTrackPositionTest()
+        {
+            var args = new string[] { "--track-position", "false" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.IsFalse(settings.TrackPosition);
+        }
+
+        [TestMethod]
+        public void SpecifyTrackingProfileTest()
+        {
+            var args = new string[] { "--tracking-profile", "LHR-Landing.json" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+
+            Assert.AreEqual("51.471", settings.ReceiverLatitude?.ToString("#.###"));
+            Assert.AreEqual("-.462", settings.ReceiverLongitude?.ToString("#.###"));
+            Assert.AreEqual(15, settings.MaximumTrackedDistance);
+            Assert.AreEqual(200, settings.MinimumTrackedAltitude);
+            Assert.AreEqual(5000, settings.MaximumTrackedAltitude);
             Assert.HasCount(1, settings.TrackedBehaviours);
             Assert.AreEqual(AircraftBehaviour.Descending, settings.TrackedBehaviours[0]);
         }

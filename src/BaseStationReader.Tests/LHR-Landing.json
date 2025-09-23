@@ -1,0 +1,12 @@
+{
+  "Name": "London Heathrow - Landing",
+  "ReceiverLatitude": 51.47060012817383,
+  "ReceiverLongitude": -0.46194100379944,
+  "ReceiverElevation": 83,
+  "MaximumTrackedDistance": 15,
+  "MinimumTrackedAltitude": 200,
+  "MaximumTrackedAltitude": 5000,
+  "TrackedBehaviours": [
+    "Descending"
+  ]
+}

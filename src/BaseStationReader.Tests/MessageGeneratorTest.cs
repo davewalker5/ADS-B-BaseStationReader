@@ -42,6 +42,22 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
+        public void GenerateUsingSpecificGeneratorTest()
+        {
+            var aircraft = _aircraftGenerator.Generate([]);
+            var generators = new List<IMessageGenerator>
+            {
+                new SurfacePositionMessageGenerator(_logger)
+            };
+            var message = new MessageGeneratorWrapper(generators).Generate(aircraft, "SurfacePosition");
+
+            Assert.AreEqual(MessageType.MSG, message.MessageType);
+            Assert.AreEqual(aircraft.Address, message.Address);
+            Assert.IsNotNull(message.Generated);
+            Assert.IsNotNull(message.LastSeen);
+        }
+
+        [TestMethod]
         public void IdentificationMessageTest()
         {
             var aircraft = _aircraftGenerator.Generate([]);

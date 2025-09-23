@@ -8,7 +8,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
         public TrackerCommandLineParser(IHelpGenerator generator) : base(generator)
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
-            Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 0, 0);
+            Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 1, 1);
             Add(CommandLineOptionType.Host, false, "--host", "-ho", "Host to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
