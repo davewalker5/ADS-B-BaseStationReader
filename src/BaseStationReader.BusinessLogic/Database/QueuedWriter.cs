@@ -262,7 +262,6 @@ namespace BaseStationReader.BusinessLogic.Database
                 if (activeAircraft.LookupTimestamp == null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-                    request.Address = "896192";
                     await _apiWrapper.Lookup(request.Address, _departureAirportCodes, _arrivalAirportCodes);
                     await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
                 }

@@ -166,14 +166,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
-                _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
-                _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                if (_settings.AutoLookup)
+                {
+                    _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
+                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                }
 
                 if (e.Position != null)
-                {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
-                    _writer.Push(e.Position);
-                }
+                    {
+                        _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                        _writer.Push(e.Position);
+                    }
             }
 
             // Forward the event to subscribers
@@ -206,7 +209,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _writer.Push(e.Aircraft);
 
                 // If this is a new aircraft, push a lookup request to the queued writer queue
-                if (!existingAircraft)
+                if (!existingAircraft && _settings.AutoLookup)
                 {
                     _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
                     _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
