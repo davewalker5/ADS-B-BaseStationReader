@@ -18,7 +18,6 @@
         EnableSqlWriter,
         WriterInterval,
         WriterBatchSize,
-        RefreshInterval,
         MaximumRows,
         ReceiverLatitude,
         ReceiverLongitude,

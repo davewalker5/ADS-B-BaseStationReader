@@ -23,7 +23,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
             Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
             Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-bs", "SQL write batch size", 1, 1);
-            Add(CommandLineOptionType.RefreshInterval, false, "--ui-interval", "-ui", "Interval (ms) at which live UI's should update", 1, 1);
             Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
