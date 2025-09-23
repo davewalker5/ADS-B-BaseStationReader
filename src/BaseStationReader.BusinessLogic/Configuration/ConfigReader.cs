@@ -11,12 +11,18 @@ namespace BaseStationReader.BusinessLogic.Configuration
         /// <returns></returns>
         public virtual T Read(string jsonFileName)
         {
+            // Make sure the JSON file path is absolute, using the application's base directory if
+            // it doesn't have a path
+            var jsonFilePath = Path.GetFullPath(jsonFileName, AppContext.BaseDirectory);
+
             // See if the development config file exists and use it preferentially if it does
-            var developmentJsonFileName = GetDevelopmentConfigFileName(jsonFileName);
-            var useJsonFileName = File.Exists(developmentJsonFileName) ? developmentJsonFileName : jsonFileName;
+            var developmentJsonFileName = GetDevelopmentConfigFileName(jsonFilePath);
+            var useJsonFileName = File.Exists(developmentJsonFileName) ? developmentJsonFileName : jsonFilePath;
 
             // Set up the configuration reader
+            var basePath = AppContext.BaseDirectory;
             IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(basePath)
                 .AddJsonFile(useJsonFileName)
                 .Build();
 
@@ -37,9 +43,11 @@ namespace BaseStationReader.BusinessLogic.Configuration
             // See if a development configuration file exists and, if so, use that in place of the
             // file provided. For example, if the supplied file name is "appsettings.json", the development
             // version is "appsettings.Development.json"
+            var path = Path.GetDirectoryName(jsonFileName);
             var fileName = Path.GetFileNameWithoutExtension(jsonFileName);
             var extension = Path.GetExtension(jsonFileName);
-            var developmentConfigPath = $"{fileName}.Development{extension}";
+            var developmentConfigName = $"{fileName}.Development{extension}";
+            var developmentConfigPath = Path.Combine(path, developmentConfigName);
             return developmentConfigPath;
         }
     }

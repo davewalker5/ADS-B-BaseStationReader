@@ -41,6 +41,8 @@ namespace BaseStationReader.Simulator
                 logger.LogMessage(Severity.Info, title);
                 logger.LogMessage(Severity.Info, $"Receiver is at {settings.ReceiverLatitude}, {settings.ReceiverLongitude}");
 
+                // Show the startup messages
+                Console.WriteLine(new string('=', 80));
                 Console.WriteLine(title);
                 Console.WriteLine($"Output will be logged to {settings.LogFile}");
                 Console.WriteLine("Press ESC to stop the simulator");

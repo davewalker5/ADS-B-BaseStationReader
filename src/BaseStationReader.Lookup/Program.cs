@@ -40,6 +40,11 @@ namespace BaseStationReader.Lookup
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
                 var title = $"Aircraft Lookup Tool v{info.FileVersion}";
 
+                // Show the startup messages
+                Console.WriteLine(new string('=', 80));
+                Console.WriteLine(title);
+                Console.WriteLine($"Output will be logged to {settings.LogFile}");
+
                 // Log the startup messages
                 _logger.LogMessage(Severity.Info, new string('=', 80));
                 _logger.LogMessage(Severity.Info, title);
