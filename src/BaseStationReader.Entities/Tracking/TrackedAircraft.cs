@@ -70,10 +70,6 @@ namespace BaseStationReader.Entities.Tracking
         [NotMapped]
         public FixedSizeQueue<decimal> AltitudeHistory { get; private set; } = new(MaximumHistoryEntries);
 
-#pragma warning disable CS8618
-        public ICollection<AircraftPosition> Positions { get; set; }
-#pragma warning restore CS8618
-
         public object Clone()
         {
             return MemberwiseClone();

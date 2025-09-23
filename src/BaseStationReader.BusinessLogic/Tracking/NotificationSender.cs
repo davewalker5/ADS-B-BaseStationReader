@@ -2,7 +2,6 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -57,18 +56,25 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="type"></param>
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
+        /// <param name="previousAltitude"></param>
+        /// <param name="previousDistance"></param>
         public void SendUpdatedNotification(
             TrackedAircraft aircraft,
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler,
             decimal? previousLatitude,
-            decimal? previousLongitude)
+            decimal? previousLongitude,
+            decimal? previousAltitude,
+            double? previousDistance)
         {
             if (CheckTrackingCriteria(aircraft))
             {
                 // If the position's changed, create a position object to attach to the event arguments
                 AircraftPosition position = null;
-                if ((aircraft.Latitude != previousLatitude) || (aircraft.Longitude != previousLongitude))
+                if ((aircraft.Latitude != previousLatitude) ||
+                    (aircraft.Longitude != previousLongitude) ||
+                    (aircraft.Altitude != previousAltitude) ||
+                    (aircraft.Distance != previousDistance))
                 {
                     position = CreateAircraftPosition(aircraft);
                 }
@@ -201,17 +207,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
             if (aircraft.Altitude != null && aircraft.Latitude != null && aircraft.Longitude != null)
             {
-                // Note that both the address and ID of the aircraft are added to the position. The address
-                // isn't persisted, but is used to map a position to an existing aircraft in cases where a
-                // new aircraft is detected and its position is pushed to the queue in the same batch as the
-                // aircraft itself
                 position = new AircraftPosition
                 {
-                    Id = aircraft.Id,
                     Address = aircraft.Address,
-                    Altitude = aircraft.Altitude ?? 0M,
-                    Latitude = aircraft.Latitude ?? 0M,
-                    Longitude = aircraft.Longitude ?? 0M,
+                    Altitude = aircraft.Altitude,
+                    Latitude = aircraft.Latitude,
+                    Longitude = aircraft.Longitude,
+                    Distance = aircraft.Distance,
                     Timestamp = aircraft.LastSeen
                 };
             }

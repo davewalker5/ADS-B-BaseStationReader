@@ -12,9 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="appsettings.desktop.json" />
+    <None Update="appsettings.Development.json"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="appsettings.json" />
-    <None Remove="appsettings.pi.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -31,9 +31,9 @@ namespace BaseStationReader.Entities.Tracking
         public DateTime Timestamp { get; set; }
 
         [Required]
-        [ForeignKey(nameof(Tracking.TrackedAircraft))]
-        public int TrackedAircraftId { get; set; }
+        [ForeignKey(nameof(TrackedAircraft))]
+        public int AircraftId { get; set; }
 
-        public TrackedAircraft TrackedAircraft { get; set; }
+        public TrackedAircraft Aircraft { get; set; }
     }
 }

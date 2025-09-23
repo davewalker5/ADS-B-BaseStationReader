@@ -134,7 +134,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }
@@ -168,7 +168,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }

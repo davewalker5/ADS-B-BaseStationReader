@@ -13,8 +13,6 @@ namespace BaseStationReader.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("PRAGMA foreign_keys = ON;");
-
             migrationBuilder.CreateTable(
                 name: "AIRLINE",
                 columns: table => new
@@ -127,17 +125,17 @@ namespace BaseStationReader.Data.Migrations
                     Longitude = table.Column<decimal>(type: "TEXT", nullable: true),
                     Distance = table.Column<double>(type: "REAL", nullable: true),
                     Timestamp = table.Column<DateTime>(type: "DATETIME", nullable: false),
-                    TrackedAircraftId = table.Column<int>(type: "INTEGER", nullable: false)
+                    AircraftId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_POSITION", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_POSITION_TRACKED_AIRCRAFT_TrackedAircraftId",
-                        column: x => x.TrackedAircraftId,
+                        name: "FK_POSITION_TRACKED_AIRCRAFT_AircraftId",
+                        column: x => x.AircraftId,
                         principalTable: "TRACKED_AIRCRAFT",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -179,9 +177,9 @@ namespace BaseStationReader.Data.Migrations
                 column: "ManufacturerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_POSITION_TrackedAircraftId",
+                name: "IX_POSITION_AircraftId",
                 table: "POSITION",
-                column: "TrackedAircraftId");
+                column: "AircraftId");
         }
 
         /// <inheritdoc />

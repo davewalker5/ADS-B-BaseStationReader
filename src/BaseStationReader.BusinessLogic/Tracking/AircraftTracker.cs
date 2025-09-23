@@ -110,21 +110,27 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var aircraft = _aircraft[msg.Address];
             lock (aircraft)
             {
-                // TODO: Capture all position parameters and use them all to trigger a position update
-
                 // Capture the previous position
-                var lastLatitude = aircraft.Latitude;
-                var lastLongitude = aircraft.Longitude;
-                var lastAltitude = aircraft.Altitude;
+                var previousLatitude = aircraft.Latitude;
+                var previousLongitude = aircraft.Longitude;
+                var previousAltitude = aircraft.Altitude;
+                var previousDistance = aircraft.Distance;
 
                 // Update the aircraft propertes
                 _updater.UpdateProperties(aircraft, msg);
 
                 // Assess the aircraft behaviour
-                _updater.UpdateBehaviour(aircraft, lastAltitude);
+                _updater.UpdateBehaviour(aircraft, previousAltitude);
 
                 // Send a notification to subscribers
-                _sender.SendUpdatedNotification(aircraft, this, AircraftUpdated, lastLatitude, lastLongitude);
+                _sender.SendUpdatedNotification(
+                    aircraft,
+                    this,
+                    AircraftUpdated,
+                    previousLatitude,
+                    previousLongitude,
+                    previousAltitude,
+                    previousDistance);
             }
         }
 

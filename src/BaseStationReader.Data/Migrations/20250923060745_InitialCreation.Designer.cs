@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    [Migration("20250921071419_InitialCreation")]
+    [Migration("20250923060745_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />
@@ -185,6 +185,9 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Address");
 
+                    b.Property<int>("AircraftId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal?>("Altitude")
                         .HasColumnType("TEXT")
                         .HasColumnName("Altitude");
@@ -205,12 +208,9 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("DATETIME")
                         .HasColumnName("Timestamp");
 
-                    b.Property<int>("TrackedAircraftId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TrackedAircraftId");
+                    b.HasIndex("AircraftId");
 
                     b.ToTable("POSITION", (string)null);
                 });
@@ -319,18 +319,13 @@ namespace BaseStationReader.Data.Migrations
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Tracking.TrackedAircraft", "TrackedAircraft")
-                        .WithMany("Positions")
-                        .HasForeignKey("TrackedAircraftId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("BaseStationReader.Entities.Tracking.TrackedAircraft", "Aircraft")
+                        .WithMany()
+                        .HasForeignKey("AircraftId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("TrackedAircraft");
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Tracking.TrackedAircraft", b =>
-                {
-                    b.Navigation("Positions");
+                    b.Navigation("Aircraft");
                 });
 #pragma warning restore 612, 618
         }
