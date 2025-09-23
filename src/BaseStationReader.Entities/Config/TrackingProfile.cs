@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Entities.Config
 {
+    [ExcludeFromCodeCoverage]
     public class TrackingProfile
     {
         public string Name { get; set; }
