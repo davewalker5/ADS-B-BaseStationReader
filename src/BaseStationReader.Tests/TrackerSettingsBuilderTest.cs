@@ -156,15 +156,6 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public void OverrideWriterRefreshIntervalTest()
-        {
-            var args = new string[] { "--ui-interval", "45000" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.AreEqual(45000, settings.RefreshInterval);
-        }
-
-        [TestMethod]
         public void OverrideMaximumRowsTest()
         {
             var args = new string[] { "--max-rows", "0" };

@@ -75,9 +75,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.WriterBatchSize);
             if (values != null) settings.WriterBatchSize = int.Parse(values[0]);
 
-            values = parser.GetValues(CommandLineOptionType.RefreshInterval);
-            if (values != null) settings.RefreshInterval = int.Parse(values[0]);
-
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
             if (values != null) settings.MaximumRows = int.Parse(values[0]);
 

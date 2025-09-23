@@ -17,7 +17,6 @@ namespace BaseStationReader.Entities.Config
         public int TimeToStale { get; set; }
         public int TimeToRemoval { get; set; }
         public int TimeToLock { get; set; }
-        public int RefreshInterval { get; set; }
         public string LogFile { get; set; } = "";
         public bool EnableSqlWriter { get; set; }
         public bool ClearDown { get; set; }
