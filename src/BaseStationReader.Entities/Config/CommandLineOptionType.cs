@@ -51,6 +51,7 @@
         ImportManufacturers,
         ImportModels,
         TrackPosition,
-        AutoLookup
+        AutoLookup,
+        CreateSightings
     }
 }

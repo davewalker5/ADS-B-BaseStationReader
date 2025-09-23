@@ -52,7 +52,8 @@ namespace BaseStationReader.Data
         /// </summary>
         /// <param name=""></param>
         /// <returns></returns>
-        private string GetDevelopmentConfigFileName(string jsonFileName)
+        [ExcludeFromCodeCoverage]
+        private static string GetDevelopmentConfigFileName(string jsonFileName)
         {
             // See if a development configuration file exists and, if so, use that in place of the
             // file provided. For example, if the supplied file name is "appsettings.json", the development

@@ -97,7 +97,7 @@ namespace BaseStationReader.Lookup
                     var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
                     // Perform the
-                    await wrapper.Lookup(address, departureAirportCodes, arrivalAirportCodes);
+                    await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, settings.CreateSightings);
                 }
             }
         }
