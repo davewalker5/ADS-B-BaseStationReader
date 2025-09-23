@@ -10,7 +10,6 @@ using BaseStationReader.Terminal.Logic;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using BaseStationReader.Data;
 
@@ -18,6 +17,9 @@ namespace BaseStationReader.Terminal
 {
     public static class Program
     {
+        private static char[] _separators = [' ', '.'];
+
+        private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerTableManager _tableManager = null;
         private static ITrackerLogger _logger = null;
         private static ITrackerWrapper _wrapper = null;
@@ -27,17 +29,16 @@ namespace BaseStationReader.Terminal
         public static async Task Main(string[] args)
         {
             // Process the command line arguments. If help's been requested, show help and exit
-            var parser = new TrackerCommandLineParser(new HelpTabulator());
-            parser.Parse(args);
-            if (parser.IsPresent(CommandLineOptionType.Help))
+            _parser.Parse(args);
+            if (_parser.IsPresent(CommandLineOptionType.Help))
             {
-                parser.Help();
+                _parser.Help();
             }
             else
             {
                 // Read the application config file
                 var reader = new TrackingProfileReaderWriter();
-                _settings = new TrackerSettingsBuilder().BuildSettings(parser, reader, "appsettings.json");
+                _settings = new TrackerSettingsBuilder().BuildSettings(_parser, reader, "appsettings.json");
 
                 // Configure the log file
                 _logger = new FileLogger();
@@ -58,8 +59,12 @@ namespace BaseStationReader.Terminal
                 context.Database.Migrate();
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
+                // Extract API lookup filtering properties from the command line arguments
+                var departureAirports = GetAirportCodeList(CommandLineOptionType.Departure);
+                var arrivalAirports = GetAirportCodeList(CommandLineOptionType.Arrival);
+
                 // Initialise the tracker wrapper
-                _wrapper = new TrackerWrapper(_logger, _settings!);
+                _wrapper = new TrackerWrapper(_logger, _settings, departureAirports, arrivalAirports);
                 await _wrapper.InitialiseAsync();
                 _wrapper.AircraftAdded += OnAircraftAdded;
                 _wrapper.AircraftUpdated += OnAircraftUpdated;
@@ -159,6 +164,32 @@ namespace BaseStationReader.Terminal
             // Remove the aircraft from the index
             var rowNumber = _tableManager!.RemoveAircraft(e.Aircraft);
             _logger!.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
+        }
+
+        /// <summary>
+        /// Extract a list of airport ICAO/IATA codes from a comma-separated string
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="airportCodeList"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> GetAirportCodeList(CommandLineOptionType option)
+        {
+            IEnumerable<string> airportCodes = null;
+
+            // Check the option is specified
+            if (_parser.IsPresent(option))
+            {
+                // Extract the comma-separated string from the command line options
+                var airportCodeList = _parser.GetValues(option)[0];
+                if (!string.IsNullOrEmpty(airportCodeList))
+                {
+                    // Log the list and split it list into an array of airport codes
+                    _logger.LogMessage(Severity.Info, $"{option} airport code filters: {airportCodeList}");
+                    airportCodes = airportCodeList.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
+                }
+            }
+
+            return airportCodes;
         }
     }
 }

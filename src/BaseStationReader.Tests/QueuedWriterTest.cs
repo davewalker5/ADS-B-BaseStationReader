@@ -48,7 +48,8 @@ namespace BaseStationReader.Tests
             // Create a queued writer, wire up the event handlers and start it
             var logger = new MockFileLogger();
             var writerTimer = new MockTrackerTimer(WriterInterval);
-            _writer = new QueuedWriter(_aircraftWriter, _positionWriter, _aircraftLocker, logger, writerTimer, WriterBatchSize);
+            _writer = new QueuedWriter(
+                _aircraftWriter, _positionWriter, _aircraftLocker, null, logger, writerTimer, [], [], WriterBatchSize);
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer

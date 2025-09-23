@@ -10,6 +10,9 @@ using BaseStationReader.BusinessLogic.Maths;
 using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Api;
+using System.Collections;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -17,8 +20,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
     public class TrackerWrapper : ITrackerWrapper
     {
         private readonly ITrackerLogger _logger;
-        private IAircraftTracker _tracker = null;
         private readonly TrackerApplicationSettings _settings;
+        private readonly IEnumerable<string> _departureAirportCodes;
+        private readonly IEnumerable<string> _arrivalAirportCodes;
+        private IAircraftTracker _tracker = null;
         private IQueuedWriter _writer = null;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
@@ -28,10 +33,16 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; private set; } = new();
         public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
-        public TrackerWrapper(ITrackerLogger logger, TrackerApplicationSettings settings)
+        public TrackerWrapper(
+            ITrackerLogger logger,
+            TrackerApplicationSettings settings,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalAirportCodes)
         {
             _logger = logger;
             _settings = settings;
+            _departureAirportCodes = departureAirportCodes;
+            _arrivalAirportCodes = arrivalAirportCodes;
         }
 
         /// <summary>
@@ -87,12 +98,34 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Set up the queued database writer
             if (_settings.EnableSqlWriter)
             {
+                // Configure the database context and management classes
                 BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
                 var aircraftWriter = new TrackedAircraftWriter(context);
                 var positionWriter = new PositionWriter(context);
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
+
+                // Extract the endpoint URLs and API key from the application settings
+                var airlinesEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url;
+                var aircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url;
+                var flightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url;
+                var key = _settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key;
+
+                // Configure external API lookup
+                var client = TrackerHttpClient.Instance;
+                var apiWrapper = new AirLabsApiWrapper(_logger, client, context, airlinesEndpointUrl, aircraftEndpointUrl, flightsEndpointUrl, key);
+
+                // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
-                _writer = new QueuedWriter(aircraftWriter, positionWriter, aircraftLocker, _logger!, writerTimer, _settings.WriterBatchSize);
+                _writer = new QueuedWriter(
+                    aircraftWriter,
+                    positionWriter,
+                    aircraftLocker,
+                    apiWrapper,
+                    _logger,
+                    writerTimer,
+                    _departureAirportCodes,
+                    _arrivalAirportCodes,
+                    _settings.WriterBatchSize);
                 _writer.BatchWritten += OnBatchWritten;
 
                 // If instructed, clear down aircraft tracking data while leaving aircraft details and airlines intact
@@ -127,11 +160,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Add the aircraft to the collection
             TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
 
-            // Push the aircraft and its position to the SQL writer, if enabled
+            // Push the aircraft, a lookup request and the aircraft position to the SQL writer, if enabled
             if (_writer != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
+
+                _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
+                _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
 
                 if (e.Position != null)
                 {
@@ -152,7 +188,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
-            if (!TrackedAircraft.ContainsKey(e.Aircraft.Address))
+            var existingAircraft = TrackedAircraft.ContainsKey(e.Aircraft.Address);
+            if (!existingAircraft)
             {
                 TrackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
             }
@@ -164,9 +201,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
+                // Push the aircraft to the queued writer queue
                 _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
+                // If this is a new aircraft, push a lookup request to the queued writer queue
+                if (!existingAircraft)
+                {
+                    _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
+                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                }
+
+                // Push the aircraft position to the queued writer queue
                 if (e.Position != null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");

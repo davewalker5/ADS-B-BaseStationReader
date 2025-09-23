@@ -2,9 +2,9 @@
 {
     public enum TrackingStatus
     {
-        Active,
-        Inactive,
-        Stale,
-        Locked
+        Active = 0,
+        Inactive = 1,
+        Stale = 2,
+        Locked = 3
     }
 }

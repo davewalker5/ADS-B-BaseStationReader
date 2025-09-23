@@ -4,6 +4,7 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IApiWrapper
     {
+        Task Lookup(string address, IEnumerable<string> departureAirports, IEnumerable<string> arrivalAirports);
         Task<Flight> LookupFlightAsync(
             string address,
             IEnumerable<string> departureAirportCodes,

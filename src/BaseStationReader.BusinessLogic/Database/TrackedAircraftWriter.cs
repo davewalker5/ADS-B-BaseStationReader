@@ -67,6 +67,24 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
+        /// Set the lookup timestamp on a tracked aircraft
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<TrackedAircraft> SetLookupTimestamp(int id)
+        {
+            var aircraft = await GetAsync(a => a.Id == id);
+
+            if (aircraft != null)
+            {
+                aircraft.LookupTimestamp = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+
+            return aircraft;
+        }
+
+        /// <summary>
         /// Update the properties of a tracked aircraft
         /// </summary>
         /// <param name="source"></param>
