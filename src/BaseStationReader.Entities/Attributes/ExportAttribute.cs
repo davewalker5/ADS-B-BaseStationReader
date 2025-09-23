@@ -1,5 +1,8 @@
-﻿namespace BaseStationReader.Entities.Attributes
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace BaseStationReader.Entities.Attributes
 {
+    [ExcludeFromCodeCoverage]
     public class ExportAttribute : Attribute
     {
         public string Name { get; set; }

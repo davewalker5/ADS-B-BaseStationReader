@@ -21,6 +21,8 @@ namespace BaseStationReader.Tests
         private const string AirlineName = "KLM Royal Dutch Airlines";
         private const string AircraftAddress = "4851F6";
         private const string AircraftRegistration = "PH-BVS";
+        private const int AircraftManufactured = 2018;
+        private const int AircraftAge = 3;
         private const string ModelICAO = "B77W";
         private const string ModelIATA = "77W";
         private const string ModelName = "Boeing 777-300ER pax";
@@ -33,6 +35,7 @@ namespace BaseStationReader.Tests
         private const string FlightResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"lat\": 51.17756, \"lng\": -2.833342, \"alt\": 9148, \"dir\": 253, \"speed\": 849, \"v_speed\": 0, \"flight_number\": \"743\", \"flight_icao\": \"KLM743\", \"flight_iata\": \"KL743\", \"dep_icao\": \"EHAM\", \"dep_iata\": \"AMS\", \"arr_icao\": \"SPJC\", \"arr_iata\": \"LIM\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"aircraft_icao\": \"B77W\", \"updated\": 1758446111, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
         private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
         private const string AircraftResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": \"B77W\", \"iata\": \"77W\", \"model\": \"Boeing 777-300ER pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"H\", \"built\": 2018, \"age\": 3, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
+        private const string AircraftResponseWithNoModel = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": null, \"iata\": null, \"model\": null, \"engine\": null, \"engine_count\": null, \"manufacturer\": null, \"type\": null, \"category\": null, \"built\": null, \"age\": null, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
 
         private MockTrackerHttpClient _client;
         private AirLabsApiWrapper _wrapper;
@@ -60,15 +63,62 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task LookupAirlineAsyncTest()
+        public async Task LookupAirlineByICAOAsyncTest()
         {
             _client.AddResponse(AirlineResponse);
-            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, AirlineIATA);
+            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, null);
 
             Assert.IsNotNull(airline);
             Assert.AreEqual(AirlineICAO, airline.ICAO);
             Assert.AreEqual(AirlineIATA, airline.IATA);
             Assert.AreEqual(AirlineName, airline.Name);
+        }
+
+        [TestMethod]
+        public async Task LookupAirlineByIATAAsyncTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var airline = await _wrapper.LookupAirlineAsync(null, AirlineIATA);
+
+            Assert.IsNotNull(airline);
+            Assert.AreEqual(AirlineICAO, airline.ICAO);
+            Assert.AreEqual(AirlineIATA, airline.IATA);
+            Assert.AreEqual(AirlineName, airline.Name);
+        }
+
+        [TestMethod]
+        public async Task LookupStoredAirlineAsyncTest()
+        {
+            _ = await _airlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, null);
+
+            Assert.IsNotNull(airline);
+            Assert.AreEqual(AirlineICAO, airline.ICAO);
+            Assert.AreEqual(AirlineIATA, airline.IATA);
+            Assert.AreEqual(AirlineName, airline.Name);
+        }
+
+        [TestMethod]
+        public async Task LookupAirlineWithNullCodesAsyncTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var airline = await _wrapper.LookupAirlineAsync(null, null);
+            Assert.IsNull(airline);
+        }
+
+        [TestMethod]
+        public async Task LookupAirlineWithSimulatedEmptyResponseAsyncTest()
+        {
+            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, AirlineIATA);
+            Assert.IsNull(airline);
+        }
+
+        [TestMethod]
+        public async Task LookupAirlineWithEmptyCodesAsyncTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var airline = await _wrapper.LookupAirlineAsync("", "");
+            Assert.IsNull(airline);
         }
 
         [TestMethod]
@@ -92,6 +142,13 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
+        public async Task LookupAndStoreAirlineWithSimulatedEmptyResponseAsyncTest()
+        {
+            var airline = await _wrapper.LookupAndStoreAirlineAsync(AirlineICAO, AirlineIATA);
+            Assert.IsNull(airline);
+        }
+
+        [TestMethod]
         public async Task LookupAircraftAsyncTest()
         {
             _client.AddResponse(AircraftResponse);
@@ -100,6 +157,55 @@ namespace BaseStationReader.Tests
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(AircraftAddress, aircraft.Address);
             Assert.AreEqual(AircraftRegistration, aircraft.Registration);
+            Assert.AreEqual(AircraftManufactured, aircraft.Manufactured);
+            Assert.AreEqual(AircraftAge, aircraft.Age);
+            Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
+            Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
+            Assert.AreEqual(ModelName, aircraft.Model.Name);
+            Assert.AreEqual(ManufacturerName, aircraft.Model.Manufacturer.Name);
+        }
+
+        [TestMethod]
+        public async Task LookupAircraftWithAlternateModelICAOAsyncTest()
+        {
+            _client.AddResponse(AircraftResponseWithNoModel);
+            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress, ModelICAO);
+
+            Assert.IsNotNull(aircraft);
+            Assert.AreEqual(AircraftAddress, aircraft.Address);
+            Assert.AreEqual(AircraftRegistration, aircraft.Registration);
+            Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
+        }
+
+        [TestMethod]
+        public async Task LookupAircraftWithNullAddressAsyncTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var aircraft = await _wrapper.LookupAircraftAsync(null, null);
+            Assert.IsNull(aircraft);
+        }
+
+        [TestMethod]
+        public async Task LookupAircraftWithEmptyAddressAsyncTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var aircraft = await _wrapper.LookupAircraftAsync("", null);
+            Assert.IsNull(aircraft);
+        }
+
+        [TestMethod]
+        public async Task LookupStoredAircraftAsyncTest()
+        {
+            var manufacturer = await _manufacturerManager.AddAsync(ManufacturerName);
+            var model = await _modelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            _ = await _aircraftManager.AddAsync(AircraftAddress, AircraftRegistration, AircraftManufactured, AircraftAge, model.Id);
+            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress, null);
+
+            Assert.IsNotNull(aircraft);
+            Assert.AreEqual(AircraftAddress, aircraft.Address);
+            Assert.AreEqual(AircraftRegistration, aircraft.Registration);
+            Assert.AreEqual(AircraftManufactured, aircraft.Manufactured);
+            Assert.AreEqual(AircraftAge, aircraft.Age);
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
@@ -143,7 +249,74 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task LookupFlightAsyncTest()
+        public async Task LookupAndStoreAircraftWithSimulatedEmptyResponseAsyncTest()
+        {
+            var aircraft = await _wrapper.LookupAndStoreAircraftAsync(AircraftAddress, "");
+            Assert.IsNull(aircraft);
+        }
+
+        [TestMethod]
+        public async Task LookupAndStoreAircraftWithStoredModelAsyncTest()
+        {
+            _client.AddResponse(AircraftResponse);
+            var manufacturer = await _manufacturerManager.AddAsync(ManufacturerName);
+            _ = await _modelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            var aircraft = await _wrapper.LookupAndStoreAircraftAsync(AircraftAddress, "");
+
+            Assert.IsNotNull(aircraft);
+            Assert.IsGreaterThan(0, aircraft.Id);
+            Assert.AreEqual(AircraftAddress, aircraft.Address);
+            Assert.AreEqual(AircraftRegistration, aircraft.Registration);
+            Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
+            Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
+            Assert.AreEqual(ModelName, aircraft.Model.Name);
+            Assert.AreEqual(ManufacturerName, aircraft.Model.Manufacturer.Name);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightByNullAddressAsyncTest()
+        {
+            var flight = await _wrapper.LookupFlightAsync(null, null, null);
+            Assert.IsNull(flight);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightByEmptyAddressAsyncTest()
+        {
+            var flight = await _wrapper.LookupFlightAsync("", null, null);
+            Assert.IsNull(flight);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightWithAcceptingAirportFiltersAsyncTest()
+        {
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            _client.AddResponse(AircraftResponse);
+            var flight = await _wrapper.LookupFlightAsync(AircraftAddress, [Embarkation], [Destination]);
+
+            Assert.IsNotNull(flight);
+            Assert.AreEqual(FlightICAO, flight.ICAO);
+            Assert.AreEqual(FlightIATA, flight.IATA);
+            Assert.AreEqual(FlightNumber, flight.Number);
+            Assert.AreEqual(Embarkation, flight.Embarkation);
+            Assert.AreEqual(Destination, flight.Destination);
+            Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
+            Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightWithExcludingAirportFiltersAsyncTest()
+        {
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            _client.AddResponse(AircraftResponse);
+            var flight = await _wrapper.LookupFlightAsync(AircraftAddress, [Destination], [Embarkation]);
+            Assert.IsNull(flight);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightWithoutAirportFiltersAsyncTest()
         {
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
@@ -166,7 +339,7 @@ namespace BaseStationReader.Tests
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
-            var flight = await _wrapper.LookupAndStoreFlightAsync(AircraftAddress, null, null);
+            var flight = await _wrapper.LookupAndStoreFlightAsync(AircraftAddress, [Embarkation], [Destination]);
             var retrieved = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
             var airline = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
 

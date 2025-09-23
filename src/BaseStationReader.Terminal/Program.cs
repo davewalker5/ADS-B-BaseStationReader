@@ -16,7 +16,6 @@ using BaseStationReader.Data;
 
 namespace BaseStationReader.Terminal
 {
-    [ExcludeFromCodeCoverage]
     public static class Program
     {
         private static ITrackerTableManager _tableManager = null;

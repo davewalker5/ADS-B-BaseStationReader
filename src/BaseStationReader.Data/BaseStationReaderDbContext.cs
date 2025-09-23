@@ -91,6 +91,11 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Longitude).HasColumnName("Longitude");
                 entity.Property(e => e.Distance).HasColumnName("Distance");
                 entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
+
+                entity.HasOne(e => e.Aircraft)
+                    .WithMany()
+                    .HasForeignKey(e => e.AircraftId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Airline>(entity =>
@@ -114,8 +119,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
                 entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
 
-                modelBuilder.Entity<Flight>()
-                    .HasOne(e => e.Airline)
+                entity.HasOne(e => e.Airline)
                     .WithMany()
                     .HasForeignKey(e => e.AirlineId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -131,8 +135,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Manufactured).HasColumnName("Manufactured");
                 entity.Property(e => e.Age).HasColumnName("Age");
 
-                modelBuilder.Entity<Aircraft>()
-                    .HasOne(e => e.Model)
+                entity.HasOne(e => e.Model)
                     .WithMany()
                     .HasForeignKey(e => e.ModelId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -147,8 +150,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).HasColumnName("IATA");
 
-                modelBuilder.Entity<Model>()
-                    .HasOne(e => e.Manufacturer)
+                entity.HasOne(e => e.Manufacturer)
                     .WithMany()
                     .HasForeignKey(e => e.ManufacturerId)
                     .OnDelete(DeleteBehavior.Restrict);

@@ -15,7 +15,9 @@ namespace BaseStationReader.Entities.Interfaces
             object sender,
             EventHandler<AircraftNotificationEventArgs> handler,
             decimal? previousLatitude,
-            decimal? previousLongitude);
+            decimal? previousLongitude,
+            decimal? previousAltitude,
+            double? previousDistance);
 
         void SendStaleNotification(
             TrackedAircraft aircraft,

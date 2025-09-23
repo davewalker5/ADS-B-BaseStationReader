@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BaseStationReader.Entities.Tracking
 {
+    [ExcludeFromCodeCoverage]
     public class TrackingRule
     {
         public double ReceiverLatitude { get; set; }

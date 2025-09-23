@@ -1,6 +1,7 @@
 ﻿using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -131,45 +132,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         private async Task WriteDequeuedObjectAsync(object queued)
         {
-            // If it's an aircraft and it's an existing record that hasn't been locked, get the ID for update
-            TrackedAircraft aircraft = queued as TrackedAircraft;
-            AircraftPosition position = null;
-            if (aircraft != null)
-            {
-                // Get the active aircraft with the specified address, if there is one, so it can be updated
-                var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
-                if (activeAircraft != null)
-                {
-                    aircraft.Id = activeAircraft.Id;
-                }
-            }
-            else
-            {
-                // Not an aircraft so it must be a position - match this to an active aircraft
-                position = queued as AircraftPosition;
-                if (position != null)
-                {
-                    var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
-                    if (activeAircraft != null)
-                    {
-                        position.TrackedAircraftId = activeAircraft.Id;
-                    }
-                }
-            }
-
-            // Write the data to the database
             try
             {
-                if (aircraft != null)
-                {
-                    _logger.LogMessage(Severity.Debug, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
-                    await _aircraftWriter.WriteAsync(aircraft);
-                }
-                else if (position != null)
-                {
-                    _logger.LogMessage(Severity.Debug, $"Writing position for aircraft with Id {position.TrackedAircraftId}");
-                    await _positionWriter.WriteAsync(position);
-                }
+                if (await WriteTrackedAircraft(queued)) return;
+                await WriteAircraftPosition(queued);
             }
             catch (Exception ex)
             {
@@ -177,6 +143,69 @@ namespace BaseStationReader.BusinessLogic.Database
                 // stop writing to the database
                 _logger.LogException(ex);
             }
+        }
+
+        /// <summary>
+        /// Attempt to handle a queued object as a tracked aircraft
+        /// </summary>
+        /// <param name="queued"></param>
+        /// <returns></returns>
+        private async Task<bool> WriteTrackedAircraft(object queued)
+        {
+            // Attempt to cast the queued object as a tracked aircraft and identify if that's
+            // what it is
+            var aircraft = queued as TrackedAircraft;
+            bool isTrackedAircraft = (aircraft != null);
+
+            if (isTrackedAircraft)
+            {
+                // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
+                // ID so that record will be updated rather than a new one created
+                var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
+                if (activeAircraft != null)
+                {
+                    aircraft.Id = activeAircraft.Id;
+                }
+
+                // Write the tracked aircraft
+                _logger.LogMessage(Severity.Debug, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
+                await _aircraftWriter.WriteAsync(aircraft);
+            }
+
+            return isTrackedAircraft;
+        }
+
+        /// <summary>
+        /// Attempt to handle a queued object as a tracked aircraft position
+        /// </summary>
+        /// <param name="queued"></param>
+        /// <returns></returns>
+        private async Task<bool> WriteAircraftPosition(object queued)
+        {
+            // Attempt to cast the queued object as a position and identify if that's what it is
+            var position = queued as AircraftPosition;
+            bool isPosition = (position != null);
+
+            if (isPosition)
+            {
+                // Find the associated tracked aircraft
+                var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
+                if (activeAircraft != null)
+                {
+                    // Assign the aircraft ID, for the foreign key relationship, and write the position
+                    position.AircraftId = activeAircraft.Id;
+
+                    _logger.LogMessage(Severity.Debug, $"Writing position for aircraft {position.Address} with ID {position.AircraftId}");
+                    await _positionWriter.WriteAsync(position);
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Debug, $"Active aircraft with address {position.Address} has not been saved. Re-queueing position");
+                    _queue.Enqueue(position);
+                }
+            }
+
+            return isPosition;
         }
     }
 }

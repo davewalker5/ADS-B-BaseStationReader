@@ -8,7 +8,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
         public TrackerCommandLineParser(IHelpGenerator generator) : base(generator)
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
-            Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 0, 0);
+            Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 1, 1);
             Add(CommandLineOptionType.Host, false, "--host", "-ho", "Host to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
@@ -30,8 +30,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MaximumTrackedDistance, false, "--max-distance", "-maxd", "Maximum distance (Nm) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.MinimumTrackedAltitude, false, "--min-altitude", "-mina", "Minimum altitude (ft) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.MaximumTrackedAltitude, false, "--max-altitude", "-maxa", "Maximum altitude (ft) at which an aircraft will be tracked", 1, 1);
+            Add(CommandLineOptionType.TrackPosition, false, "--track-position", "-tpos", "Set to true to record aircraft position over time", 1, 1);
             Add(CommandLineOptionType.TrackedBehaviours, false, "--behaviours", "-b", "Specify a list of aircraft behaviours to track", 1, 1);
-            Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tp", "Specify a JSON format tracking profile", 1, 1);
+            Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tpro", "Specify a JSON format tracking profile", 1, 1);
             Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
         }
     }

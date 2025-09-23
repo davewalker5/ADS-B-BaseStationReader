@@ -46,31 +46,38 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template)
         {
-            // If the template has an ID associated with it, retrieve that record for update
-            TrackedAircraft aircraft = null;
-            if (template.Id > 0)
+            // Find existing matching aircraft records
+            var aircraft = await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id);
+            if (aircraft != null)
             {
-                aircraft = await GetAsync(x => x.Id == template.Id);
+                // Record found, so update its properties
+                UpdateProperties(template, aircraft);
             }
-
-            // If we still don't have an aircraft instance, we're creating a new one
-            if (aircraft == null)
+            else
             {
-                aircraft = new TrackedAircraft();
-                await _context.AddAsync(aircraft);
-            }
-
-            // Update the aircraft properties
-            foreach (var aircraftProperty in _aircraftProperties)
-            {
-                var updated = aircraftProperty.GetValue(template);
-                aircraftProperty.SetValue(aircraft, updated);
+                // Existing record not found, so add a new one
+                aircraft = new();
+                UpdateProperties(template, aircraft);
+                await _context.TrackedAircraft.AddAsync(aircraft);
             }
 
             // Save changes
             await _context.SaveChangesAsync();
-
             return aircraft;
+        }
+
+        /// <summary>
+        /// Update the properties of a tracked aircraft
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
+        private void UpdateProperties(TrackedAircraft source, TrackedAircraft destination)
+        {
+            foreach (var positionProperty in _aircraftProperties)
+            {
+                var updated = positionProperty.GetValue(source);
+                positionProperty.SetValue(destination, updated);
+            }
         }
     }
 }

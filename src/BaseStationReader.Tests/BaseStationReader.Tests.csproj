@@ -13,6 +13,15 @@
   <ItemGroup>
     <None Remove="simulatorsettings.json" />
     <None Remove="trackersettings.json" />
+    <None Remove="alternatesettings.json" />
+    <None Remove="lookupsettings.json" />
+    <None Remove="LHR-Landing.json" />
+    <None Remove="airlines.csv" />
+    <None Remove="empty_airlines.csv" />
+    <None Remove="manufacturers.csv" />
+    <None Remove="empty_manufacturers.csv" />
+    <None Remove="models.csv" />
+    <None Remove="empty_models.csv" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +29,33 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="trackersettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="alternatesettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lookupsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LHR-Landing.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="airlines.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_airlines.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="manufacturers.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_manufacturers.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="models.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_models.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

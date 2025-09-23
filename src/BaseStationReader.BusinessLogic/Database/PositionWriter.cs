@@ -16,9 +16,7 @@ namespace BaseStationReader.BusinessLogic.Database
             .ToArray();
 
         public PositionWriter(BaseStationReaderDbContext context)
-        {
-            _context = context;
-        }
+            => _context = context;
 
         /// <summary>
         /// Get the first position record matching the specified criteria
@@ -46,31 +44,38 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<AircraftPosition> WriteAsync(AircraftPosition template)
         {
-            // If the template has an ID associated with it, retrieve that record for update
-            AircraftPosition position = null;
-            if (template.Id > 0)
+            // Find existing matching position records
+            var position = await _context.Positions.FirstOrDefaultAsync(x => x.Id == template.Id);
+            if (position != null)
             {
-                position = await GetAsync(x => x.Id == template.Id);
+                // Record found, so update its properties
+                UpdateProperties(template, position);
             }
-
-            // If we still don't have an aircraft position instance, we're creating a new one
-            if (position == null)
+            else
             {
-                position = new AircraftPosition();
-                await _context.AddAsync(position);
-            }
-
-            // Update the position properties
-            foreach (var positionProperty in _positionProperties)
-            {
-                var updated = positionProperty.GetValue(template);
-                positionProperty.SetValue(position, updated);
+                // Existing record not found, so add a new one
+                position = new();
+                UpdateProperties(template, position);
+                await _context.Positions.AddAsync(position);
             }
 
             // Save changes
             await _context.SaveChangesAsync();
-
             return position;
+        }
+
+        /// <summary>
+        /// Update the properties of an aircraft position  
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="destination"></param>
+        private void UpdateProperties(AircraftPosition source, AircraftPosition destination)
+        {
+            foreach (var positionProperty in _positionProperties)
+            {
+                var updated = positionProperty.GetValue(source);
+                positionProperty.SetValue(destination, updated);
+            }
         }
     }
 }

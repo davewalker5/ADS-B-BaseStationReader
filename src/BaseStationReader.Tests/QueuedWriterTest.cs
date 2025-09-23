@@ -5,10 +5,8 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
-using Spectre.Console;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests
 {
@@ -144,10 +142,10 @@ namespace BaseStationReader.Tests
 
             WaitForQueueToEmpty();
 
-            var position = Task.Run(() => _positionWriter!.GetAsync(x => x.TrackedAircraftId == aircraft.Id)).Result;
+            var position = Task.Run(() => _positionWriter!.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
             Assert.IsNotNull(position);
             Assert.IsTrue(position.Id > 0);
-            Assert.AreEqual(aircraft.Id, position.TrackedAircraftId);
+            Assert.AreEqual(aircraft.Id, position.AircraftId);
             Assert.AreEqual(Altitude, position.Altitude);
             Assert.AreEqual(Latitude, position.Latitude);
             Assert.AreEqual(Longitude, position.Longitude);

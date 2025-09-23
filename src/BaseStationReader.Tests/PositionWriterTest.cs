@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests
 {
@@ -34,6 +35,7 @@ namespace BaseStationReader.Tests
                 LastSeen = LastSeen
             });
 
+            var logger = new MockFileLogger();
             _writer = new PositionWriter(context);
         }
 
@@ -42,16 +44,16 @@ namespace BaseStationReader.Tests
         {
             await _writer!.WriteAsync(new AircraftPosition
             {
-                TrackedAircraftId = _aircraftId,
+                AircraftId = _aircraftId,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Timestamp = DateTime.Now
             });
 
-            var position = await _writer.GetAsync(x => x.TrackedAircraftId == _aircraftId);
+            var position = await _writer.GetAsync(x => x.AircraftId == _aircraftId);
             Assert.IsNotNull(position);
             Assert.IsGreaterThan(0, position.Id);
-            Assert.AreEqual(_aircraftId, position.TrackedAircraftId);
+            Assert.AreEqual(_aircraftId, position.AircraftId);
             Assert.AreEqual(Latitude, position.Latitude);
             Assert.AreEqual(Longitude, position.Longitude);
         }
@@ -62,7 +64,7 @@ namespace BaseStationReader.Tests
         {
             await _writer!.WriteAsync(new AircraftPosition
             {
-                TrackedAircraftId = _aircraftId,
+                AircraftId = _aircraftId,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Timestamp = DateTime.Now
@@ -72,7 +74,7 @@ namespace BaseStationReader.Tests
             Assert.IsNotNull(positions);
             Assert.HasCount(1, positions);
             Assert.IsGreaterThan(0, positions.First().Id);
-            Assert.AreEqual(_aircraftId, positions.First().TrackedAircraftId);
+            Assert.AreEqual(_aircraftId, positions.First().AircraftId);
             Assert.AreEqual(Latitude, positions.First().Latitude);
             Assert.AreEqual(Longitude, positions.First().Longitude);
         }
@@ -82,7 +84,7 @@ namespace BaseStationReader.Tests
         {
             var initial = await _writer!.WriteAsync(new AircraftPosition
             {
-                TrackedAircraftId = _aircraftId,
+                AircraftId = _aircraftId,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Timestamp = DateTime.Now
@@ -100,7 +102,7 @@ namespace BaseStationReader.Tests
             Assert.IsNotNull(positions);
             Assert.HasCount(1, positions);
             Assert.IsGreaterThan(0, positions.First().Id);
-            Assert.AreEqual(_aircraftId, positions.First().TrackedAircraftId);
+            Assert.AreEqual(_aircraftId, positions.First().AircraftId);
             Assert.AreEqual(Latitude, positions.First().Latitude);
             Assert.AreEqual(SecondLongitude, positions.First().Longitude);
         }
@@ -110,7 +112,7 @@ namespace BaseStationReader.Tests
         {
             var writtenFirst = await _writer!.WriteAsync(new AircraftPosition
             {
-                TrackedAircraftId = _aircraftId,
+                AircraftId = _aircraftId,
                 Latitude = Latitude,
                 Longitude = Longitude,
                 Timestamp = DateTime.Now
@@ -126,14 +128,14 @@ namespace BaseStationReader.Tests
             var first = await _writer.GetAsync(x => x.Id == writtenFirst.Id);
             Assert.IsNotNull(first);
             Assert.AreEqual(writtenFirst.Id, first.Id);
-            Assert.AreEqual(_aircraftId, first.TrackedAircraftId);
+            Assert.AreEqual(_aircraftId, first.AircraftId);
             Assert.AreEqual(Latitude, first.Latitude);
             Assert.AreEqual(Longitude, first.Longitude);
 
             var second = await _writer.GetAsync(x => x.Id == writtenSecond.Id);
             Assert.IsNotNull(second);
             Assert.AreEqual(writtenSecond.Id, second.Id);
-            Assert.AreEqual(_aircraftId, second.TrackedAircraftId);
+            Assert.AreEqual(_aircraftId, second.AircraftId);
             Assert.AreEqual(Latitude, second.Latitude);
             Assert.AreEqual(SecondLongitude, second.Longitude);
         }
