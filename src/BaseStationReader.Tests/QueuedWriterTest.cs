@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests
             var logger = new MockFileLogger();
             var writerTimer = new MockTrackerTimer(WriterInterval);
             _writer = new QueuedWriter(
-                _aircraftWriter, _positionWriter, _aircraftLocker, null, logger, writerTimer, [], [], WriterBatchSize);
+                _aircraftWriter, _positionWriter, _aircraftLocker, null, logger, writerTimer, [], [], WriterBatchSize, true);
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer

@@ -1,7 +1,6 @@
 ﻿using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -19,6 +18,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
+        private readonly bool _createSightings;
         private readonly IEnumerable<string> _departureAirportCodes;
         private readonly IEnumerable<string> _arrivalAirportCodes;
 
@@ -33,7 +33,8 @@ namespace BaseStationReader.BusinessLogic.Database
             ITrackerTimer timer,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalArportCodes,
-            int batchSize)
+            int batchSize,
+            bool createSightings)
         {
             _aircraftWriter = aircraftWriter;
             _positionWriter = positionWriter;
@@ -43,6 +44,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _timer = timer;
             _timer.Tick += OnTimer;
             _batchSize = batchSize;
+            _createSightings = createSightings;
             _departureAirportCodes = departureAirportCodes;
             _arrivalAirportCodes = arrivalArportCodes;
         }
@@ -262,7 +264,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 if (activeAircraft.LookupTimestamp == null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-                    await _apiWrapper.Lookup(request.Address, _departureAirportCodes, _arrivalAirportCodes);
+                    await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
                     await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
                 }
                 else

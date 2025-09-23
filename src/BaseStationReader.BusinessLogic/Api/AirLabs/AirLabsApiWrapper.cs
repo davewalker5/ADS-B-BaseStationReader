@@ -14,6 +14,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private readonly IAircraftManager _aircraftManager;
         private readonly IModelManager _modelManager;
         private readonly IManufacturerManager _manufacturerManager;
+        private readonly ISightingManager _sightingManager;
         private readonly IAirlinesApi _airlinesApi;
         private readonly IAircraftApi _aircraftApi;
         private readonly IActiveFlightApi _flightsApi;
@@ -35,6 +36,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             _aircraftManager = new AircraftManager(context);
             _modelManager = new ModelManager(context);
             _manufacturerManager = new ManufacturerManager(context);
+            _sightingManager = new SightingManager(context);
 
             // Construct the API instances
             _airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesEndpointUrl, key);
@@ -49,7 +51,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <param name="departureAirports"></param>
         /// <param name="arrivalAirports"></param>
         /// <returns></returns>
-        public async Task Lookup(string address, IEnumerable<string> departureAirports, IEnumerable<string> arrivalAirports)
+        public async Task LookupAsync(
+            string address,
+            IEnumerable<string> departureAirports,
+            IEnumerable<string> arrivalAirports,
+            bool createSighting)
         {
             // Lookup the flight
             var flight = await LookupAndStoreFlightAsync(address, departureAirports, arrivalAirports);
@@ -59,7 +65,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 // could be filtered out, in which case we don't want to store any of the details.
                 // Note, also, that the flight may contain the aircraft model that can be used to
                 // fill in model and manufacturer details if the aircraft request doesn't include them
-                await LookupAndStoreAircraftAsync(address, flight.ModelICAO);
+                var aircraft = await LookupAndStoreAircraftAsync(address, flight.ModelICAO);
+                if (createSighting && (aircraft != null))
+                {
+                    // Save the relationship between the flight and the aircraft as a sighting on this date
+                    _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+                }
             }
         }
 

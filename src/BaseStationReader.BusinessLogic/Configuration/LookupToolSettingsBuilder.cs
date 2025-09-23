@@ -26,6 +26,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.MinimumLogLevel = minimumLogLevel;
             }
 
+            values = parser.GetValues(CommandLineOptionType.CreateSightings);
+            if (values != null) settings.CreateSightings = bool.Parse(values[0]);
+
             return settings;
         }
     }

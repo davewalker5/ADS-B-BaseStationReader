@@ -15,6 +15,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
+        public virtual DbSet<Sighting> Sightings { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -166,6 +167,26 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+            });
+    
+            modelBuilder.Entity<Sighting>(entity =>
+            {
+                entity.ToTable("SIGHTING");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AircraftId).IsRequired().HasColumnName("AircraftId");
+                entity.Property(e => e.FlightId).IsRequired().HasColumnName("FlightId");
+                entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
+
+                entity.HasOne(e => e.Aircraft)
+                    .WithMany()
+                    .HasForeignKey(e => e.AircraftId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Flight)
+                    .WithMany()
+                    .HasForeignKey(e => e.FlightId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

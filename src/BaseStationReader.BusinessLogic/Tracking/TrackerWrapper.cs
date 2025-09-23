@@ -12,7 +12,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Api;
-using System.Collections;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -125,7 +124,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     writerTimer,
                     _departureAirportCodes,
                     _arrivalAirportCodes,
-                    _settings.WriterBatchSize);
+                    _settings.WriterBatchSize,
+                    true);
                 _writer.BatchWritten += OnBatchWritten;
 
                 // If instructed, clear down aircraft tracking data while leaving aircraft details and airlines intact

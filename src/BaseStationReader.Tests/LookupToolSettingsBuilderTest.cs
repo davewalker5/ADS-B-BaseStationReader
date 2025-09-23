@@ -2,7 +2,6 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
-using System.Security.Cryptography.X509Certificates;
 
 namespace BaseStationReader.Tests
 {
@@ -27,6 +26,7 @@ namespace BaseStationReader.Tests
 
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
+            Assert.IsFalse(settings.CreateSightings);
             Assert.AreEqual(ApiServiceType.AirLabs, settings.ApiServiceKeys[0].Service);
 
             var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines);
@@ -40,6 +40,15 @@ namespace BaseStationReader.Tests
             var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights);
             Assert.AreEqual(ApiServiceType.AirLabs, flightsEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/flights", flightsEndpoint.Url);
+        }
+
+        [TestMethod]
+        public void OverrideCreateSettingsTest()
+        {
+            var args = new string[] { "--create-sightings", "true" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
+            Assert.IsTrue(settings.CreateSightings);
         }
     }
 }
