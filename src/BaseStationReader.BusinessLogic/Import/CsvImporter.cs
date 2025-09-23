@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Logging;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace BaseStationReader.BusinessLogic.Logging
@@ -58,6 +59,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="manufacturers"></param>
         /// <returns></returns>
 #pragma warning disable CS1998
+        [ExcludeFromCodeCoverage]
         public virtual async Task Save(IEnumerable<T> entities)
         {
             // This would be better as an abstract method but that's not possible with async
