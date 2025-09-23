@@ -21,6 +21,7 @@
     "MaximumTrackedDistance": 15,
     "MinimumTrackedAltitude": 200,
     "MaximumTrackedAltitude": 5000,
+    "TrackPosition": true,
     "TrackedBehaviours": [
       "Climbing",
       "Descending",

@@ -50,6 +50,7 @@
         Arrival,
         ImportAirlines,
         ImportManufacturers,
-        ImportModels
+        ImportModels,
+        TrackPosition
     }
 }

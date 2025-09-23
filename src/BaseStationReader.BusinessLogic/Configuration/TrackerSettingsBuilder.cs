@@ -96,6 +96,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.MaximumTrackedAltitude);
             if (values != null) settings.MaximumTrackedAltitude = int.Parse(values[0]);
 
+            values = parser.GetValues(CommandLineOptionType.TrackPosition);
+            if (values != null) settings.TrackPosition = bool.Parse(values[0]);
+
             values = parser.GetValues(CommandLineOptionType.TrackedBehaviours);
             if (values != null)
             {

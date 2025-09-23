@@ -11,6 +11,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int? _maximumDistance;
         private readonly int? _minimumAltitude;
         private readonly int? _maximumAltitude;
+        private readonly bool _trackPosition;
         private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
         public NotificationSender(
@@ -18,12 +19,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
             IEnumerable<AircraftBehaviour> behaviours,
             int? maximumDistance,
             int? minimumAltitude,
-            int? maximumAltitude)
+            int? maximumAltitude,
+            bool trackPosition)
         {
             _logger = logger;
             _maximumDistance = maximumDistance;
             _minimumAltitude = minimumAltitude;
             _maximumAltitude = maximumAltitude;
+            _trackPosition = trackPosition;
             _behaviours = behaviours;
         }
 
@@ -71,10 +74,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 // If the position's changed, create a position object to attach to the event arguments
                 AircraftPosition position = null;
-                if ((aircraft.Latitude != previousLatitude) ||
+                if (_trackPosition &&
+                    ((aircraft.Latitude != previousLatitude) ||
                     (aircraft.Longitude != previousLongitude) ||
                     (aircraft.Altitude != previousAltitude) ||
-                    (aircraft.Distance != previousDistance))
+                    (aircraft.Distance != previousDistance)))
                 {
                     position = CreateAircraftPosition(aircraft);
                 }

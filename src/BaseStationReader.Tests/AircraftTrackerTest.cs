@@ -49,7 +49,8 @@ namespace BaseStationReader.Tests
                 Enum.GetValues<AircraftBehaviour>(),
                 null,
                 null,
-                null);
+                null,
+                true);
 
             var tracker = new AircraftTracker(reader,
                 parsers,

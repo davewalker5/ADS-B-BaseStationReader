@@ -30,8 +30,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MaximumTrackedDistance, false, "--max-distance", "-maxd", "Maximum distance (Nm) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.MinimumTrackedAltitude, false, "--min-altitude", "-mina", "Minimum altitude (ft) at which an aircraft will be tracked", 1, 1);
             Add(CommandLineOptionType.MaximumTrackedAltitude, false, "--max-altitude", "-maxa", "Maximum altitude (ft) at which an aircraft will be tracked", 1, 1);
+            Add(CommandLineOptionType.TrackPosition, false, "--track-position", "-tpos", "Set to true to record aircraft position over time", 1, 1);
             Add(CommandLineOptionType.TrackedBehaviours, false, "--behaviours", "-b", "Specify a list of aircraft behaviours to track", 1, 1);
-            Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tp", "Specify a JSON format tracking profile", 1, 1);
+            Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tpro", "Specify a JSON format tracking profile", 1, 1);
             Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
         }
     }
