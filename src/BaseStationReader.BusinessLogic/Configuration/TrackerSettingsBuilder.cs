@@ -69,6 +69,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.ClearDown);
             if (values != null) settings.ClearDown = bool.Parse(values[0]);
 
+            values = parser.GetValues(CommandLineOptionType.AutoLookup);
+            if (values != null) settings.AutoLookup = bool.Parse(values[0]);
+
             values = parser.GetValues(CommandLineOptionType.WriterInterval);
             if (values != null) settings.WriterInterval = int.Parse(values[0]);
 

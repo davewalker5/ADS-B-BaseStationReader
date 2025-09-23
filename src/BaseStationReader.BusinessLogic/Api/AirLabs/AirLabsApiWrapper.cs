@@ -43,6 +43,27 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         }
 
         /// <summary>
+        /// Lookup a flight and aircraft given a 24-bit aircraft ICAO address and filtering parameters
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="departureAirports"></param>
+        /// <param name="arrivalAirports"></param>
+        /// <returns></returns>
+        public async Task Lookup(string address, IEnumerable<string> departureAirports, IEnumerable<string> arrivalAirports)
+        {
+            // Lookup the flight
+            var flight = await LookupAndStoreFlightAsync(address, departureAirports, arrivalAirports);
+            if (flight != null)
+            {
+                // Lookup the aircraft, but only if the flight was found/returned. The flight
+                // could be filtered out, in which case we don't want to store any of the details.
+                // Note, also, that the flight may contain the aircraft model that can be used to
+                // fill in model and manufacturer details if the aircraft request doesn't include them
+                await LookupAndStoreAircraftAsync(address, flight.ModelICAO);
+            }
+        }
+
+        /// <summary>
         /// Lookup an active flight using the aircraft's ICAO 24-bit ICAO address
         /// </summary>
         /// <param name="address"></param>
@@ -70,6 +91,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 // Extract the departure and arrival airport codes
                 var departure = properties[ApiProperty.EmbarkationIATA];
                 var arrival = properties[ApiProperty.DestinationIATA];
+
+                _logger.LogMessage(Severity.Info, $"Found flight with route {departure} - {arrival} for aircraft {address}");
 
                 // Check the codes against the filters
                 var departureAllowed = departureAirportCodes?.Count() > 0 ? departureAirportCodes.Contains(departure) : true;
@@ -156,7 +179,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var airline = await _airlineManager.GetByCodeAsync(iata, icao);
             if (airline == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
+                _logger.LogMessage(Severity.Info, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = !string.IsNullOrEmpty(icao) ?
@@ -175,12 +198,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Debug, $"API lookup for Airline with ICAO = '{icao}', IATA = '{iata}' produced no results");
+                    _logger.LogMessage(Severity.Info, $"API lookup for Airline with ICAO = '{icao}', IATA = '{iata}' produced no results");
                 }
             }
             else
             {
-                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
+                _logger.LogMessage(Severity.Info, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
             }
 
             return airline;
@@ -224,7 +247,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft {address} is not stored locally : Using the API");
+                _logger.LogMessage(Severity.Info, $"Aircraft {address} is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = await _aircraftApi.LookupAircraftAsync(address);
@@ -256,12 +279,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Debug, $"API lookup for aircraft {address} produced no results");
+                    _logger.LogMessage(Severity.Info, $"API lookup for aircraft {address} produced no results");
                 }
             }
             else
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft {address} retrieved from the database");
+                _logger.LogMessage(Severity.Info, $"Aircraft {address} retrieved from the database");
             }
 
             return aircraft;

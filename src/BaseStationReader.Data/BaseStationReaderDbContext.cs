@@ -68,6 +68,10 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Status).HasColumnName("Status");
                 entity.Property(e => e.Messages).HasColumnName("Messages");
                 entity.Property(e => e.Distance).HasColumnName("Distance");
+                
+                entity.Property(e => e.FirstSeen)
+                    .HasColumnName("LookupTimestamp")
+                    .HasColumnType("DATETIME");
 
                 entity.Property(e => e.FirstSeen)
                     .IsRequired()

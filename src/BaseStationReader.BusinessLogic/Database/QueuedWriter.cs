@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -13,10 +14,13 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IAircraftWriter _aircraftWriter;
         private readonly IPositionWriter _positionWriter;
         private readonly IAircraftLockManager _locker;
+        private readonly IApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
+        private readonly IEnumerable<string> _departureAirportCodes;
+        private readonly IEnumerable<string> _arrivalAirportCodes;
 
         public event EventHandler<BatchWrittenEventArgs> BatchWritten;
 
@@ -24,17 +28,23 @@ namespace BaseStationReader.BusinessLogic.Database
             IAircraftWriter aircraftWriter,
             IPositionWriter positionWriter,
             IAircraftLockManager locker,
+            IApiWrapper apiWrapper,
             ITrackerLogger logger,
             ITrackerTimer timer,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalArportCodes,
             int batchSize)
         {
             _aircraftWriter = aircraftWriter;
             _positionWriter = positionWriter;
             _locker = locker;
+            _apiWrapper = apiWrapper;
             _logger = logger;
             _timer = timer;
             _timer.Tick += OnTimer;
             _batchSize = batchSize;
+            _departureAirportCodes = departureAirportCodes;
+            _arrivalAirportCodes = arrivalArportCodes;
         }
 
         /// <summary>
@@ -45,7 +55,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // To stop the queue growing and consuming memory, entries are discarded if the timer
             // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition))
+            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition || entity is APILookupRequest))
             {
                 _queue.Enqueue(entity);
             }
@@ -134,8 +144,10 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             try
             {
-                if (await WriteTrackedAircraft(queued)) return;
-                await WriteAircraftPosition(queued);
+                var objectId = RuntimeHelpers.GetHashCode(queued);
+                if (await WriteTrackedAircraft(queued, objectId)) return;
+                if (await WriteAircraftPosition(queued, objectId)) return;
+                await ProcessAPILookupRequest(queued, objectId);
             }
             catch (Exception ex)
             {
@@ -149,13 +161,16 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Attempt to handle a queued object as a tracked aircraft
         /// </summary>
         /// <param name="queued"></param>
+        /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteTrackedAircraft(object queued)
+        private async Task<bool> WriteTrackedAircraft(object queued, int objectId)
         {
+            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as a tracked aircraft");
+
             // Attempt to cast the queued object as a tracked aircraft and identify if that's
             // what it is
             var aircraft = queued as TrackedAircraft;
-            bool isTrackedAircraft = (aircraft != null);
+            bool isTrackedAircraft = aircraft != null;
 
             if (isTrackedAircraft)
             {
@@ -171,6 +186,10 @@ namespace BaseStationReader.BusinessLogic.Database
                 _logger.LogMessage(Severity.Debug, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
                 await _aircraftWriter.WriteAsync(aircraft);
             }
+            else
+            {
+                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not a tracked aircraft");
+            }
 
             return isTrackedAircraft;
         }
@@ -179,12 +198,15 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Attempt to handle a queued object as a tracked aircraft position
         /// </summary>
         /// <param name="queued"></param>
+        /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteAircraftPosition(object queued)
+        private async Task<bool> WriteAircraftPosition(object queued, int objectId)
         {
+            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an aircraft position");
+
             // Attempt to cast the queued object as a position and identify if that's what it is
             var position = queued as AircraftPosition;
-            bool isPosition = (position != null);
+            bool isPosition = position != null;
 
             if (isPosition)
             {
@@ -204,8 +226,56 @@ namespace BaseStationReader.BusinessLogic.Database
                     _queue.Enqueue(position);
                 }
             }
+            else
+            {
+                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not an aircraft position");
+            }
 
             return isPosition;
+        }
+
+        /// <summary>
+        /// Attempt to handle a queued object as a request to lookup a flight and aircraft via the
+        /// external APIs
+        /// </summary>
+        /// <param name="queued"></param>
+        /// <param name="objectId"></param>
+        /// <returns></returns>
+        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
+        {
+            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an API lookup request");
+
+            // Attempt to cast the queued object as a lookup request and identify if that's what it is
+            var request = queued as APILookupRequest;
+            bool isLookupRequest = request != null;
+
+            if (isLookupRequest)
+            {
+                // Find the associated tracked aircraft
+                var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
+                if (activeAircraft == null)
+                {
+                    _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not active - API lookup will not be performed");
+                    _queue.Enqueue(request);
+                }
+
+                if (activeAircraft.LookupTimestamp == null)
+                {
+                    _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
+                    await _apiWrapper.Lookup(request.Address, _departureAirportCodes, _arrivalAirportCodes);
+                    await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Debug, $"Lookup for aircraft with address {request.Address} was completed at {activeAircraft.LookupTimestamp} - API lookup will not be performed");
+                }
+            }
+            else
+            {
+                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not an API lookup request");
+            }
+
+            return isLookupRequest;
         }
     }
 }

@@ -13,6 +13,7 @@
     "MinimumLogLevel": "Info",
     "EnableSqlWriter": true,
     "ClearDown": false,
+    "AutoLookup": false,
     "WriterInterval": 30000,
     "WriterBatchSize": 20000,
     "RefreshInterval": 1000,
@@ -107,6 +108,29 @@
         "Label": "Messages",
         "Format": "",
         "ShowBehaviour": false
+      }
+    ],
+    "ApiEndpoints": [
+      {
+        "EndpointType": "Airlines",
+        "Service": "AirLabs",
+        "Url": "https://airlabs.co/api/v9/airlines"
+      },
+      {
+        "EndpointType": "Aircraft",
+        "Service": "AirLabs",
+        "Url": "https://airlabs.co/api/v9/fleets"
+      },
+      {
+        "EndpointType": "ActiveFlights",
+        "Service": "AirLabs",
+        "Url": "https://airlabs.co/api/v9/flights"
+      }
+    ],
+    "ApiServiceKeys": [
+      {
+        "Service": "AirLabs",
+        "Key": ""
       }
     ]
   },
