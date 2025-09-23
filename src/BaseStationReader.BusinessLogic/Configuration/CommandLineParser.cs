@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Config;
+﻿using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Exceptions;
 using BaseStationReader.Entities.Interfaces;
 
@@ -103,6 +104,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
         /// <summary>
         /// Generate help
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public void Help()
             => _helpGenerator?.Generate(_options);
 

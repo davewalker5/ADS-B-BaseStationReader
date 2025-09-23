@@ -14,6 +14,7 @@
     <None Remove="simulatorsettings.json" />
     <None Remove="trackersettings.json" />
     <None Remove="alternatesettings.json" />
+    <None Remove="lookupsettings.json" />
     <None Remove="LHR-Landing.json" />
   </ItemGroup>
 
@@ -25,6 +26,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="alternatesettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lookupsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="LHR-Landing.json">

@@ -111,6 +111,6 @@
     ]
   },
   "ConnectionStrings": {
-    "BaseStationReaderDB": "Data Source=/Users/dave/Tracker/aircrafttracker.db"
+    "BaseStationReaderDB": "Data Source=aircrafttracker.db"
   }
 }
