@@ -71,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Api
                     var message = $"API property {property.Key.ToString()} = {value}";
 
                     // Log the message for this property
-                    Logger.LogMessage(Severity.Info, message);
+                    Logger.LogMessage(Severity.Debug, message);
                 }
             }
             else

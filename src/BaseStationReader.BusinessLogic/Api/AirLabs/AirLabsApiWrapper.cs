@@ -92,6 +92,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var departure = properties[ApiProperty.EmbarkationIATA];
                 var arrival = properties[ApiProperty.DestinationIATA];
 
+                _logger.LogMessage(Severity.Info, $"Found flight with route {departure} - {arrival} for aircraft {address}");
+
                 // Check the codes against the filters
                 var departureAllowed = departureAirportCodes?.Count() > 0 ? departureAirportCodes.Contains(departure) : true;
                 var arrivalAllowed = arrivalAirportCodes?.Count() > 0 ? arrivalAirportCodes.Contains(arrival) : true;
@@ -177,7 +179,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var airline = await _airlineManager.GetByCodeAsync(iata, icao);
             if (airline == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
+                _logger.LogMessage(Severity.Info, $"Airline with ICAO = '{icao}', IATA = '{iata}' is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = !string.IsNullOrEmpty(icao) ?
@@ -196,12 +198,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Debug, $"API lookup for Airline with ICAO = '{icao}', IATA = '{iata}' produced no results");
+                    _logger.LogMessage(Severity.Info, $"API lookup for Airline with ICAO = '{icao}', IATA = '{iata}' produced no results");
                 }
             }
             else
             {
-                _logger.LogMessage(Severity.Debug, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
+                _logger.LogMessage(Severity.Info, $"Airline with ICAO = '{icao}', IATA = '{iata}' retrieved from the database");
             }
 
             return airline;
@@ -245,7 +247,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft {address} is not stored locally : Using the API");
+                _logger.LogMessage(Severity.Info, $"Aircraft {address} is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = await _aircraftApi.LookupAircraftAsync(address);
@@ -277,12 +279,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Debug, $"API lookup for aircraft {address} produced no results");
+                    _logger.LogMessage(Severity.Info, $"API lookup for aircraft {address} produced no results");
                 }
             }
             else
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft {address} retrieved from the database");
+                _logger.LogMessage(Severity.Info, $"Aircraft {address} retrieved from the database");
             }
 
             return aircraft;
