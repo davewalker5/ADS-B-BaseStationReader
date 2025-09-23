@@ -20,6 +20,7 @@ namespace BaseStationReader.Entities.Config
         public string LogFile { get; set; } = "";
         public bool EnableSqlWriter { get; set; }
         public bool ClearDown { get; set; }
+        public bool AutoLookup { get; set; }
         public int WriterInterval { get; set; }
         public int WriterBatchSize { get; set; }
         public int MaximumRows { get; set; }

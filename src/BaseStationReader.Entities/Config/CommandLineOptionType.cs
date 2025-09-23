@@ -50,6 +50,7 @@
         ImportAirlines,
         ImportManufacturers,
         ImportModels,
-        TrackPosition
+        TrackPosition,
+        AutoLookup
     }
 }

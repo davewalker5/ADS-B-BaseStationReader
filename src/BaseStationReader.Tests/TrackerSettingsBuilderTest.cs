@@ -230,6 +230,15 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
+        public void OverrideAutoLookupTest()
+        {
+            var args = new string[] { "--auto-lookup", "true" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.IsTrue(settings.AutoLookup);
+        }
+
+        [TestMethod]
         public void OverrideTrackPositionTest()
         {
             var args = new string[] { "--track-position", "false" };
