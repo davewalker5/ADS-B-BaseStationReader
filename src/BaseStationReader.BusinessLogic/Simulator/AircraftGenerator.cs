@@ -14,11 +14,16 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly Random _random = new();
         private readonly ITrackerLogger _logger;
         private readonly SimulatorApplicationSettings _settings;
+        private readonly IEnumerable<string> _aircraftAddresses;
 
-        public AircraftGenerator(ITrackerLogger logger, SimulatorApplicationSettings settings)
+        public AircraftGenerator(
+            ITrackerLogger logger,
+            SimulatorApplicationSettings settings,
+            IEnumerable<string> aircraftAddresses)
         {
             _logger = logger;
             _settings = settings;
+            _aircraftAddresses = aircraftAddresses;
         }
 
         /// <summary>
@@ -29,23 +34,21 @@ namespace BaseStationReader.BusinessLogic.Simulator
         public TrackedAircraft Generate(IEnumerable<string> existingAddresses)
         {
             TrackedAircraft aircraft = null;
-            string address;
 
-            do
+            // Select the next address from the address list that is not currently in use
+            string address = SelectAddress(existingAddresses);
+            if (address == null)
             {
-                // Create a new random address and make sure it's not already in the list
-                address = GenerateAddress();
-                var existing = (existingAddresses != null) && existingAddresses.Contains(address);
-                if (!existing)
-                {
-                    // It's not, so create the aircraft instance
-                    aircraft = new TrackedAircraft
-                    {
-                        Address = address,
-                    };
-                }
+                // All of the supplied addresses are in use (or there are none) so generate
+                // a random one
+                address = GenerateAddress(existingAddresses);
             }
-            while (aircraft == null);
+
+            // Create the aircraft instance
+            aircraft = new TrackedAircraft
+            {
+                Address = address,
+            };
 
             // Aircraft has a unique address, so now set the remaining propertis
             var flags = GenerateAircraftBehaviour();
@@ -75,10 +78,45 @@ namespace BaseStationReader.BusinessLogic.Simulator
         }
 
         /// <summary>
+        /// Generate a random address
+        /// </summary>
+        /// <param name="existingAddresses"></param>
+        /// <returns></returns>
+        private string GenerateAddress(IEnumerable<string> existingAddresses)
+        {
+            string address = null;
+
+            do
+            {
+                // Create a new random address
+                address = GenerateRandomAddress();
+
+                // See if it's in the existing address list
+                var existing = (existingAddresses != null) && existingAddresses.Contains(address);
+                if (existing)
+                {
+                    // It is, so clear it and try again
+                    address = null;
+                }
+            }
+            while (address == null);
+
+            return address;
+        }
+
+        /// <summary>
+        /// Select the next address from the address list that is not currently in use
+        /// </summary>
+        /// <param name="existingAddresses"></param>
+        /// <returns></returns>
+        private string SelectAddress(IEnumerable<string> existingAddresses)
+            => _aircraftAddresses?.FirstOrDefault(x => !existingAddresses.Contains(x));
+
+        /// <summary>
         /// Generate a random ICAO Address
         /// </summary>
         /// <returns></returns>
-        private string GenerateAddress()
+        private string GenerateRandomAddress()
             => _random.Next(0, 16777215).ToString("X6");
 
         /// <summary>

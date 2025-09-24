@@ -2,7 +2,6 @@ using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Simulator;
 using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Tests.Mocks;
 
@@ -21,7 +20,7 @@ namespace BaseStationReader.Tests
         {
             // Configure the simulated aircraft generator
             _logger = new MockFileLogger();
-            _aircraftGenerator = new AircraftGenerator(_logger, _settings);
+            _aircraftGenerator = new AircraftGenerator(_logger, _settings, null);
         }
 
         [TestMethod]

@@ -48,7 +48,7 @@ namespace BaseStationReader.Simulator
                 Console.WriteLine("Press ESC to stop the simulator");
 
                 // Configure the aircraft and message generators
-                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings);
+                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings, null);
                 var generators = new List<IMessageGenerator>
                 {
                     new IdentificationMessageGenerator(logger),

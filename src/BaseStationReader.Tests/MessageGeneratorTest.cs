@@ -15,7 +15,7 @@ namespace BaseStationReader.Tests
         public void Initialise()
         {
             _logger = new MockFileLogger();
-            _aircraftGenerator = new AircraftGenerator(_logger, _settings);
+            _aircraftGenerator = new AircraftGenerator(_logger, _settings, null);
         }
 
         [TestMethod]
