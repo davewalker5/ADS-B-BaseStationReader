@@ -21,6 +21,7 @@ namespace BaseStationReader.Entities.Config
         public bool EnableSqlWriter { get; set; }
         public bool ClearDown { get; set; }
         public bool AutoLookup { get; set; }
+        public string LiveApi { get; set; } = nameof(ApiServiceType.None);
         public int WriterInterval { get; set; }
         public int WriterBatchSize { get; set; }
         public int MaximumRows { get; set; }

@@ -3,6 +3,7 @@
     "LogFile": "AircraftLookup.log",
     "MinimumLogLevel": "Info",
     "CreateSightings": false,
+    "LiveApi": "AirLabs",
     "ApiEndpoints": [
       {
         "EndpointType": "Airlines",

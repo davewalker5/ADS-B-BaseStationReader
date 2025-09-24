@@ -27,6 +27,7 @@ namespace BaseStationReader.Tests
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.CreateSightings);
+            Assert.AreEqual("AirLabs", settings.LiveApi);
             Assert.AreEqual(ApiServiceType.AirLabs, settings.ApiServiceKeys[0].Service);
 
             var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines);
@@ -49,6 +50,15 @@ namespace BaseStationReader.Tests
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
             Assert.IsTrue(settings.CreateSightings);
+        }
+
+        [TestMethod]
+        public void OverrideLiveApiTest()
+        {
+            var args = new string[] { "--live-api", "Missing" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
+            Assert.AreEqual("Missing", settings.LiveApi);
         }
     }
 }

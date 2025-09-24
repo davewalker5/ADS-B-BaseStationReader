@@ -1,3 +1,4 @@
+using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
@@ -18,7 +19,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             var settings = base.Read(configJsonPath);
 
             var values = parser.GetValues(CommandLineOptionType.LogFile);
-            if (values != null) settings!.LogFile = values[0];
+            if (values != null) settings.LogFile = values[0];
 
             values = parser.GetValues(CommandLineOptionType.MinimumLogLevel);
             if (values != null && Enum.TryParse<Severity>(values[0], out Severity minimumLogLevel))
@@ -28,6 +29,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
 
             values = parser.GetValues(CommandLineOptionType.CreateSightings);
             if (values != null) settings.CreateSightings = bool.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.LiveApi);
+            if (values != null) settings.LiveApi = values[0];
 
             return settings;
         }

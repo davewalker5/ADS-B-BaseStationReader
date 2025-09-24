@@ -8,29 +8,29 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
     public class AirLabsApiWrapper : IApiWrapper
     {
-        private readonly ITrackerLogger _logger;
-        private readonly IAirlineManager _airlineManager;
-        private readonly IFlightManager _flightManager;
-        private readonly IAircraftManager _aircraftManager;
-        private readonly IModelManager _modelManager;
-        private readonly IManufacturerManager _manufacturerManager;
-        private readonly ISightingManager _sightingManager;
-        private readonly IAirlinesApi _airlinesApi;
-        private readonly IAircraftApi _aircraftApi;
-        private readonly IActiveFlightApi _flightsApi;
+        private ITrackerLogger _logger;
+        private IAirlineManager _airlineManager;
+        private IFlightManager _flightManager;
+        private IAircraftManager _aircraftManager;
+        private IModelManager _modelManager;
+        private IManufacturerManager _manufacturerManager;
+        private ISightingManager _sightingManager;
+        private IAirlinesApi _airlinesApi;
+        private IAircraftApi _aircraftApi;
+        private IActiveFlightApi _flightsApi;
 
-        public AirLabsApiWrapper(
-            ITrackerLogger logger,
-            ITrackerHttpClient client,
-            BaseStationReaderDbContext context,
-            string airlinesEndpointUrl,
-            string aircraftEndpointUrl,
-            string flightsEndpointUrl,
-            string key)
+        /// <summary>
+        /// Initialise the API wrapper
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="client"></param>
+        /// <param name="apiConfiguration"></param>
+        public void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration)
         {
             _logger = logger;
 
             // Construct the database management instances
+            var context = apiConfiguration.DatabaseContext as BaseStationReaderDbContext;
             _airlineManager = new AirlineManager(context);
             _flightManager = new FlightManager(context);
             _aircraftManager = new AircraftManager(context);
@@ -39,9 +39,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             _sightingManager = new SightingManager(context);
 
             // Construct the API instances
-            _airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesEndpointUrl, key);
-            _aircraftApi = new AirLabsAircraftApi(logger, client, aircraftEndpointUrl, key);
-            _flightsApi = new AirLabsActiveFlightApi(logger, client, flightsEndpointUrl, key);
+            _airlinesApi = new AirLabsAirlinesApi(logger, client, apiConfiguration.AirlinesEndpointUrl, apiConfiguration.Key);
+            _aircraftApi = new AirLabsAircraftApi(logger, client, apiConfiguration.AircraftEndpointUrl, apiConfiguration.Key);
+            _flightsApi = new AirLabsActiveFlightApi(logger, client, apiConfiguration.FlightsEndpointUrl, apiConfiguration.Key);
         }
 
         /// <summary>

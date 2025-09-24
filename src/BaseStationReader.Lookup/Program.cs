@@ -6,8 +6,10 @@ using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Lookup.Logic;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -87,22 +89,34 @@ namespace BaseStationReader.Lookup
                 if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
                     // Extract the API configuration properties from the settings
-                    var airlinesEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url;
-                    var aircraftEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url;
-                    var flightsEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url;
-                    var key = settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key;
+                    var apiProperties = new ApiConfiguration()
+                    {
+                        DatabaseContext = context,
+                        AirlinesEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url,
+                        AircraftEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url,
+                        FlightsEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url,
+                        Key = settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
+                    };
 
                     // Configure the API wrapper
                     var client = TrackerHttpClient.Instance;
-                    var wrapper = new AirLabsApiWrapper(_logger, client, context, airlinesEndpointUrl, aircraftEndpointUrl, flightsEndpointUrl, key);
+                    var wrapper = ApiWrapperBuilder.GetInstance(settings.LiveApi);
+                    if (wrapper != null)
+                    {
+                        wrapper.Initialise(_logger, client, apiProperties);
 
-                    // Extract the lookup parameters from the command line
-                    var address = _parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
-                    var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
-                    var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
+                        // Extract the lookup parameters from the command line
+                        var address = _parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
+                        var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
+                        var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
-                    // Perform the
-                    await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, settings.CreateSightings);
+                        // Perform the
+                        await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, settings.CreateSightings);
+                    }
+                    else
+                    {
+                        _logger.LogMessage(Severity.Error, $"Live API type is not specified or is not supported");
+                    }
                 }
             }
         }

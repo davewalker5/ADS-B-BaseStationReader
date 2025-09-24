@@ -264,8 +264,15 @@ namespace BaseStationReader.BusinessLogic.Database
                 if (activeAircraft.LookupTimestamp == null)
                 {
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-                    await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-                    await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
+                    if (_apiWrapper != null)
+                    {
+                        await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+                        await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
+                    }
+                    else
+                    {
+                        _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.Address} not done");
+                    }
                 }
                 else
                 {

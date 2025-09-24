@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Config;
+﻿using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
@@ -107,6 +108,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
                     .Select(s => Enum.Parse<AircraftBehaviour>(s))
                     .ToList();
             }
+
+            values = parser.GetValues(CommandLineOptionType.LiveApi);
+            if (values != null) settings.LiveApi = values[0];
 
             // If a profile's been specified, read it and override the tracking parameters specified
             // in the settings file and/or via the command line

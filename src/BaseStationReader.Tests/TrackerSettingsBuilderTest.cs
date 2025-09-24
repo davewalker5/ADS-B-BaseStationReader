@@ -2,6 +2,7 @@
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.Tests
 {
@@ -261,6 +262,15 @@ namespace BaseStationReader.Tests
             Assert.AreEqual(5000, settings.MaximumTrackedAltitude);
             Assert.HasCount(1, settings.TrackedBehaviours);
             Assert.AreEqual(AircraftBehaviour.Descending, settings.TrackedBehaviours[0]);
+        }
+
+        [TestMethod]
+        public void OverrideLiveApiTest()
+        {
+            var args = new string[] { "--live-api", "Missing" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.AreEqual("Missing", settings.LiveApi);
         }
     }
 }

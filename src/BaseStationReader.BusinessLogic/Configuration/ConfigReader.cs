@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
-    public class ConfigReader<T> : IConfigReader<T> where T : class
+    public class ConfigReader<T> : IConfigReader<T> where T : class, new()
     {
         /// <summary>
         /// Load and return the application settings from the named JSON-format application settings file
