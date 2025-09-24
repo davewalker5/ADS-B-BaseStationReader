@@ -102,7 +102,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         public void LogException(Exception ex)
         {
             // Check the logger's been configured and, if so, log the exception message and stack trace
-            if (!_configured)
+            if (_configured)
             {
                 Log.Error(ex.Message);
                 Log.Error(ex.ToString());
