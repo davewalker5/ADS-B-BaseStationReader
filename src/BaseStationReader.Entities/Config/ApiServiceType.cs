@@ -2,6 +2,7 @@
 {
     public enum ApiServiceType
     {
+        None,
         AirLabs
     }
 }

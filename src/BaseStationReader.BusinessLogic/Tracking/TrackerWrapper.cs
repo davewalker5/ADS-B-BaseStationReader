@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -104,17 +105,29 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
 
                 // Extract the endpoint URLs and API key from the application settings
-                var airlinesEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url;
-                var aircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url;
-                var flightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url;
-                var key = _settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key;
+                var apiProperties = new ApiConfiguration()
+                {
+                    DatabaseContext = context,
+                    AirlinesEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url,
+                    AircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url,
+                    FlightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url,
+                    Key = _settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
+                };
 
                 // Configure external API lookup
                 var client = TrackerHttpClient.Instance;
-                var apiWrapper = new AirLabsApiWrapper(_logger, client, context, airlinesEndpointUrl, aircraftEndpointUrl, flightsEndpointUrl, key);
+                var apiWrapper = ApiWrapperBuilder.GetInstance(_settings.LiveApi);
+                if (apiWrapper != null)
+                {
+                    apiWrapper.Initialise(_logger, client, apiProperties);
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Warning, "Live API type not specified or unsupported");
+                }
 
                 // Configure the queued writer
-                var writerTimer = new TrackerTimer(_settings.WriterInterval);
+                    var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(
                     aircraftWriter,
                     positionWriter,

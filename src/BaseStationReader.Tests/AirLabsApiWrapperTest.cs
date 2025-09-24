@@ -51,7 +51,8 @@ namespace BaseStationReader.Tests
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _wrapper = new AirLabsApiWrapper(logger, _client, context, "", "", "", "");
+            _wrapper = new AirLabsApiWrapper();
+            _wrapper.Initialise(logger, _client, new() { DatabaseContext = context });
 
             // Create DB management classes to check entities have been written OK
             _airlineManager = new AirlineManager(context);

@@ -4,6 +4,8 @@ namespace BaseStationReader.Entities.Interfaces
 {
     public interface IApiWrapper
     {
+        void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration);
+
         Task LookupAsync(
             string address,
             IEnumerable<string> departureAirports,

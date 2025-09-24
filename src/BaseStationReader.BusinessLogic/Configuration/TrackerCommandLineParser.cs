@@ -34,6 +34,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tpro", "Specify a JSON format tracking profile", 1, 1);
             Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
             Add(CommandLineOptionType.AutoLookup, false, "--auto-lookup", "-al", "Automatically lookup aircraft and flights via the external APIs", 1, 1);
+            Add(CommandLineOptionType.LiveApi, false, "--live-api", "-lapi", "Specify the name of an API to use for lookups", 1, 1);
         }
     }
 }
