@@ -100,8 +100,6 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
         {
-            
-            Logger.LogMessage(Severity.Info, $">>> {node}");
             // Extract the properties of interest from the node
             Dictionary<ApiProperty, string> properties = new()
             {

@@ -34,6 +34,7 @@ namespace BaseStationReader.Tests
         private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
         private const string AircraftResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": \"B77W\", \"iata\": \"77W\", \"model\": \"Boeing 777-300ER pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"H\", \"built\": 2018, \"age\": 3, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
         private const string AircraftResponseWithNoModel = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": null, \"iata\": null, \"model\": null, \"engine\": null, \"engine_count\": null, \"manufacturer\": null, \"type\": null, \"category\": null, \"built\": null, \"age\": null, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
+        private const string FlightsInBoundingBoxResponse = "{\"response\": [ { \"hex\": \"4CAA59\", \"reg_number\": \"EI-EVT\", \"flag\": \"IE\", \"lat\": 51.919514, \"lng\": -0.263958, \"alt\": 4002, \"dir\": 235, \"speed\": 670, \"v_speed\": 0, \"flight_number\": \"5552\", \"flight_icao\": \"RYR5552\", \"flight_iata\": \"FR5552\", \"dep_icao\": \"EGSS\", \"dep_iata\": \"STN\", \"arr_icao\": \"LEGE\", \"arr_iata\": \"GRO\", \"airline_icao\": \"RYR\", \"airline_iata\": \"FR\", \"aircraft_icao\": \"B738\", \"updated\": 1758732643, \"status\": \"en-route\", \"type\": \"adsb\" }, { \"hex\": \"4BAA8A\", \"reg_number\": \"TC-JTJ\", \"flag\": \"TR\", \"lat\": 51.168826, \"lng\": 0.022797, \"alt\": 1534, \"dir\": 87, \"speed\": 442, \"v_speed\": 0, \"flight_number\": \"1869\", \"flight_icao\": \"THY1869\", \"flight_iata\": \"TK1869\", \"dep_icao\": \"EGKK\", \"dep_iata\": \"LGW\", \"arr_icao\": \"LTFM\", \"arr_iata\": \"IST\", \"airline_icao\": \"THY\", \"airline_iata\": \"TK\", \"aircraft_icao\": \"A321\", \"updated\": 1758732643, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
 
         private MockTrackerHttpClient _client;
         private AirLabsApiWrapper _wrapper;
@@ -370,7 +371,7 @@ namespace BaseStationReader.Tests
         }
 
         [TestMethod]
-        public async Task LookupAsyncTest()
+        public async Task LookupAsyncWithSightingTest()
         {
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
@@ -412,6 +413,74 @@ namespace BaseStationReader.Tests
             Assert.IsGreaterThan(0, sightings[0].Id);
             Assert.AreEqual(aircraft.Id, sightings[0].AircraftId);
             Assert.AreEqual(flight.Id, sightings[0].FlightId);
+        }
+
+        [TestMethod]
+        public async Task LookupAsyncWithoutSightingTest()
+        {
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            _client.AddResponse(AircraftResponse);
+
+            await _wrapper.LookupAsync(AircraftAddress, [], [], false);
+            var flight = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
+            var airline = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
+            var aircraft = await _aircraftManager.GetAsync(x => x.Registration == AircraftRegistration);
+            var sightings = await _sightingManager.ListAsync(x => true);
+
+            Assert.IsNotNull(flight);
+            Assert.IsGreaterThan(0, flight.Id);
+            Assert.AreEqual(FlightICAO, flight.ICAO);
+            Assert.AreEqual(FlightIATA, flight.IATA);
+            Assert.AreEqual(FlightNumber, flight.Number);
+            Assert.AreEqual(Embarkation, flight.Embarkation);
+            Assert.AreEqual(Destination, flight.Destination);
+            Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
+            Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+
+            Assert.IsNotNull(airline);
+            Assert.IsGreaterThan(0, airline.Id);
+            Assert.AreEqual(AirlineICAO, airline.ICAO);
+            Assert.AreEqual(AirlineIATA, airline.IATA);
+            Assert.AreEqual(AirlineName, airline.Name);
+
+            Assert.IsNotNull(aircraft);
+            Assert.IsGreaterThan(0, aircraft.Id);
+            Assert.AreEqual(AircraftAddress, aircraft.Address);
+            Assert.AreEqual(AircraftRegistration, aircraft.Registration);
+            Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
+            Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
+            Assert.AreEqual(ModelName, aircraft.Model.Name);
+            Assert.AreEqual(ManufacturerName, aircraft.Model.Manufacturer.Name);
+
+            Assert.IsNotNull(sightings);
+            Assert.HasCount(0, sightings);
+        }
+
+        [TestMethod]
+        public async Task FlightsInBoundingBoxTest()
+        {
+            _client.AddResponse(FlightsInBoundingBoxResponse);
+            var flights = await _wrapper.LookupFlightsInBoundingBox(0, 0, 0);
+
+            Assert.IsNotNull(flights);
+            Assert.HasCount(2, flights);
+
+            var flight = flights.Where(x => x.AircraftAddress == "4CAA59").First();
+            Assert.IsNotNull(flight);
+            Assert.AreEqual("RYR5552", flight.ICAO);
+            Assert.AreEqual("FR5552", flight.IATA);
+            Assert.AreEqual("5552", flight.Number);
+            Assert.AreEqual("STN", flight.Embarkation);
+            Assert.AreEqual("GRO", flight.Destination);
+
+            flight = flights.Where(x => x.AircraftAddress == "4BAA8A").First();
+            Assert.IsNotNull(flight);
+            Assert.AreEqual("THY1869", flight.ICAO);
+            Assert.AreEqual("TK1869", flight.IATA);
+            Assert.AreEqual("1869", flight.Number);
+            Assert.AreEqual("LGW", flight.Embarkation);
+            Assert.AreEqual("IST", flight.Destination);
         }
     }
 }

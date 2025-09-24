@@ -1,12 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Export
 {
-
-    [ExcludeFromCodeCoverage]
     public class FlightExporter : IFlightExporter
     {
         public event EventHandler<ExportEventArgs<ExportableFlight>> RecordExport;
