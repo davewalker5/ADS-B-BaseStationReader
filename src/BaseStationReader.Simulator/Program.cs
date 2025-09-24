@@ -8,6 +8,7 @@ using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Simulator.Logic;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace BaseStationReader.Simulator
 {
@@ -47,8 +48,17 @@ namespace BaseStationReader.Simulator
                 Console.WriteLine($"Output will be logged to {settings.LogFile}");
                 Console.WriteLine("Press ESC to stop the simulator");
 
+                // If specified, load the list of aircraft addresses
+                string[] addresses = null;
+                if (parser.IsPresent(CommandLineOptionType.AddressFile))
+                {
+                    var addressFilePath = parser.GetValues(CommandLineOptionType.AddressFile)[0];
+                    logger.LogMessage(Severity.Info, $"Reading aircraft addresses from '{addressFilePath}");
+                    addresses = File.ReadAllLines(addressFilePath);
+                }
+
                 // Configure the aircraft and message generators
-                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings, null);
+                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings, addresses);
                 var generators = new List<IMessageGenerator>
                 {
                     new IdentificationMessageGenerator(logger),

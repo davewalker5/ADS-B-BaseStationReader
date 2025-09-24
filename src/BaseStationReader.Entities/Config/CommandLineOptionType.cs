@@ -2,6 +2,7 @@
 {
     public enum CommandLineOptionType
     {
+        AddressFile,
         AircraftAddress,
         ApplicationTimeout,
         Arrival,
