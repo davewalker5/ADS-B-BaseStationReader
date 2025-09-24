@@ -33,6 +33,12 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.LiveApi);
             if (values != null) settings.LiveApi = values[0];
 
+            values = parser.GetValues(CommandLineOptionType.ReceiverLatitude);
+            if (values != null) settings.ReceiverLatitude = double.Parse(values[0]);
+
+            values = parser.GetValues(CommandLineOptionType.ReceiverLongitude);
+            if (values != null) settings.ReceiverLongitude = double.Parse(values[0]);
+
             return settings;
         }
     }

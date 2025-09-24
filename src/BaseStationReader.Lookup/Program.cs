@@ -1,15 +1,10 @@
-﻿using BaseStationReader.BusinessLogic.Api;
-using BaseStationReader.BusinessLogic.Api.AirLabs;
-using BaseStationReader.BusinessLogic.Configuration;
-using BaseStationReader.BusinessLogic.Database;
+﻿using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Lookup.Logic;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -17,7 +12,6 @@ namespace BaseStationReader.Lookup
 {
     public static class Program
     {
-        private static char[] _separators = [' ', '.'];
         private static readonly FileLogger _logger = new();
         private static readonly LookupToolCommandLineParser _parser = new(new HelpTabulator());
 
@@ -60,91 +54,32 @@ namespace BaseStationReader.Lookup
                 // If a CSV file containing airline details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportAirlines))
                 {
-                    var filePath = _parser.GetValues(CommandLineOptionType.ImportAirlines)[0];
-                    var airlineManager = new AirlineManager(context);
-                    var airlineImporter = new AirlineImporter(airlineManager, _logger);
-                    await airlineImporter.Import(filePath);
+                    await new AirlineImportHandler(settings, _parser, _logger, context).Handle();
                 }
 
                 // If a CSV file containing manufacturer details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportManufacturers))
                 {
-                    var filePath = _parser.GetValues(CommandLineOptionType.ImportManufacturers)[0];
-                    var manufacturerManager = new ManufacturerManager(context);
-                    var manufacturerImporter = new ManufacturerImporter(manufacturerManager, _logger);
-                    await manufacturerImporter.Import(filePath);
+                    await new ManufacturerImportHandler(settings, _parser, _logger, context).Handle();
                 }
 
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {
-                    var filePath = _parser.GetValues(CommandLineOptionType.ImportModels)[0];
-                    var manufacturerManager = new ManufacturerManager(context);
-                    var modelManager = new ModelManager(context);
-                    var modelImporter = new ModelImporter(manufacturerManager, modelManager, _logger);
-                    await modelImporter.Import(filePath);
+                    await new ModelImportHandler(settings, _parser, _logger, context).Handle();
                 }
 
                 // If an aircraft address has been supplied, look it up and store the results
                 if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
-                    // Extract the API configuration properties from the settings
-                    var apiProperties = new ApiConfiguration()
-                    {
-                        DatabaseContext = context,
-                        AirlinesEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url,
-                        AircraftEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url,
-                        FlightsEndpointUrl = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url,
-                        Key = settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
-                    };
-
-                    // Configure the API wrapper
-                    var client = TrackerHttpClient.Instance;
-                    var wrapper = ApiWrapperBuilder.GetInstance(settings.LiveApi);
-                    if (wrapper != null)
-                    {
-                        wrapper.Initialise(_logger, client, apiProperties);
-
-                        // Extract the lookup parameters from the command line
-                        var address = _parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
-                        var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
-                        var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
-
-                        // Perform the
-                        await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, settings.CreateSightings);
-                    }
-                    else
-                    {
-                        _logger.LogMessage(Severity.Error, $"Live API type is not specified or is not supported");
-                    }
+                    await new AircraftLookupHandler(settings, _parser, _logger, context).Handle();
                 }
-            }
-        }
 
-        /// <summary>
-        /// Extract a list of airport ICAO/IATA codes from a comma-separated string
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="airportCodeList"></param>
-        /// <returns></returns>
-        public static IEnumerable<string> GetAirportCodeList(CommandLineOptionType option)
-        {
-            IEnumerable<string> airportCodes = null;
-
-            // Check the option is specified
-            if (_parser.IsPresent(option))
-            {
-                // Extract the comma-separated string from the command line options
-                var airportCodeList = _parser.GetValues(option)[0];
-                if (!string.IsNullOrEmpty(airportCodeList))
+                if (_parser.IsPresent(CommandLineOptionType.FlightsInRange))
                 {
-                    // Log the list and split it list into an array of airport codes
-                    _logger.LogMessage(Severity.Info, $"{option} airport code filters: {airportCodeList}");
-                    airportCodes = airportCodeList.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
+                    await new FlightsInRangeHandler(settings, _parser, _logger, context).Handle();
                 }
             }
-
-            return airportCodes;
         }
     }
 }

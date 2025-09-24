@@ -10,6 +10,7 @@
         CreateSightings,
         Departure,
         EnableSqlWriter,
+        FlightsInRange,
         Help,
         Host,
         ImportAirlines,
