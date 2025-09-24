@@ -6,7 +6,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
-using BaseStationReader.BusinessLogic.Maths;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;

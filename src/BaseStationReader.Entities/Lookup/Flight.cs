@@ -30,6 +30,9 @@ namespace BaseStationReader.Entities.Lookup
         public int AirlineId { get; set; }
 
         [NotMapped]
+        public string AircraftAddress { get; set; } = "";
+
+        [NotMapped]
         public string ModelICAO { get; set; } = "";
         
         public Airline Airline { get; set; }

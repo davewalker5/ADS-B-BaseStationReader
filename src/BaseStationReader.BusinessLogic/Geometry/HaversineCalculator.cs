@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Interfaces;
 
-namespace BaseStationReader.BusinessLogic.Maths
+namespace BaseStationReader.BusinessLogic.Geometry
 {
     public class HaversineCalculator : IDistanceCalculator
     {

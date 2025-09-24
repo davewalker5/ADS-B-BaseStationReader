@@ -12,7 +12,7 @@ namespace BaseStationReader.Tests
         public void GenerateNewAircraftTest()
         {
             var logger = new MockFileLogger();
-            var generator = new AircraftGenerator(logger, _settings);
+            var generator = new AircraftGenerator(logger, _settings, null);
             var aircraft = generator.Generate(new List<string>());
 
             Assert.IsNotNull(aircraft);

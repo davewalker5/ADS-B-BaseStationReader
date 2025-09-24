@@ -2,6 +2,7 @@
 {
     public enum CommandLineOptionType
     {
+        AddressFile,
         AircraftAddress,
         ApplicationTimeout,
         Arrival,
@@ -10,6 +11,7 @@
         CreateSightings,
         Departure,
         EnableSqlWriter,
+        FlightsInRange,
         Help,
         Host,
         ImportAirlines,

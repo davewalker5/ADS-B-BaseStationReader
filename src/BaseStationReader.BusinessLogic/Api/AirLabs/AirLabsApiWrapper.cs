@@ -75,6 +75,34 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         }
 
         /// <summary>
+        /// Lookup all active flights within a bounding box around a central point
+        /// </summary>
+        /// <param name="centreLatitude"></param>
+        /// <param name="centreLongitude"></param>
+        /// <param name="rangeNm"></param>
+        /// <returns></returns>
+        public async Task<List<Flight>> LookupFlightsInBoundingBox(
+            double centreLatitude,
+            double centreLongitude,
+            double rangeNm)
+        {
+            List<Flight> flights = [];
+
+            // Use the API to look-up the flights
+            var properties = await _flightsApi.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
+            if ((properties != null) && (properties.Count > 0))
+            {
+                foreach (var flightDetails in properties)
+                {
+                    var flight = CreateFlightFromPropertyDictionary(flightDetails);
+                    flights.Add(flight);
+                }
+            }
+
+            return flights;
+        }
+
+        /// <summary>
         /// Lookup an active flight using the aircraft's ICAO 24-bit ICAO address
         /// </summary>
         /// <param name="address"></param>
@@ -113,20 +141,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 if (departureAllowed && arrivalAllowed)
                 {
                     // Create a new flight object containing the details returned by the API
-                    flight = new()
-                    {
-                        Embarkation = departure,
-                        Destination = arrival,
-                        IATA = properties[ApiProperty.FlightIATA],
-                        ICAO = properties[ApiProperty.FlightICAO],
-                        Number = properties[ApiProperty.FlightNumber],
-                        Airline = new()
-                        {
-                            IATA = properties[ApiProperty.AirlineIATA],
-                            ICAO = properties[ApiProperty.AirlineICAO]
-                        },
-                        ModelICAO = properties[ApiProperty.ModelICAO]
-                    };
+                    flight = CreateFlightFromPropertyDictionary(properties);
                 }
                 else
                 {
@@ -344,5 +359,27 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private static int? GetIntegerValue(string property)
             => int.TryParse(property, out int value) ? value : null;
+
+        /// <summary>
+        /// Create a flight object from a dictionary of properties returned from the API
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        private Flight CreateFlightFromPropertyDictionary(Dictionary<ApiProperty, string> properties)
+            => new()
+            {
+                Embarkation = properties[ApiProperty.EmbarkationIATA],
+                Destination = properties[ApiProperty.DestinationIATA],
+                IATA = properties[ApiProperty.FlightIATA],
+                ICAO = properties[ApiProperty.FlightICAO],
+                Number = properties[ApiProperty.FlightNumber],
+                Airline = new()
+                {
+                    IATA = properties[ApiProperty.AirlineIATA],
+                    ICAO = properties[ApiProperty.AirlineICAO]
+                },
+                AircraftAddress = properties[ApiProperty.AircraftAddress],
+                ModelICAO = properties[ApiProperty.ModelICAO]
+            };
     }
 }

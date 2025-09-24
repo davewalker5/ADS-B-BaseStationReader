@@ -2,7 +2,6 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 

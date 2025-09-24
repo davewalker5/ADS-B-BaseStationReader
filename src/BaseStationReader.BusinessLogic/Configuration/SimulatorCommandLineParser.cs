@@ -30,6 +30,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.MaximumInitialRange, false, "--max-range", "--maxr", "Maximum initial distance to an aircraft in m", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
+            Add(CommandLineOptionType.AddressFile, false, "--address-file", "-af", "Specify a text file containing a list of aircraft addresses to use", 1, 1);
         }
     }
 }

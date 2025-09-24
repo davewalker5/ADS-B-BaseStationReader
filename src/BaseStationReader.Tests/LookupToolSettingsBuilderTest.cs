@@ -29,6 +29,8 @@ namespace BaseStationReader.Tests
             Assert.IsFalse(settings.CreateSightings);
             Assert.AreEqual("AirLabs", settings.LiveApi);
             Assert.AreEqual(ApiServiceType.AirLabs, settings.ApiServiceKeys[0].Service);
+            Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
+            Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
 
             var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines);
             Assert.AreEqual(ApiServiceType.AirLabs, airlinesEndpoint.Service);
@@ -59,6 +61,24 @@ namespace BaseStationReader.Tests
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
             Assert.AreEqual("Missing", settings.LiveApi);
+        }
+
+        [TestMethod]
+        public void OverrideReceiverLatitudeTest()
+        {
+            var args = new string[] { "--latitude", "58.93" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "trackersettings.json");
+            Assert.AreEqual(58.93, Math.Round((double)settings.ReceiverLatitude, 2, MidpointRounding.AwayFromZero));
+        }
+
+        [TestMethod]
+        public void OverrideReceiverLongitueTest()
+        {
+            var args = new string[] { "--longitude", "120.56" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "trackersettings.json");
+            Assert.AreEqual(120.56, Math.Round((double)settings.ReceiverLongitude, 2, MidpointRounding.AwayFromZero));
         }
     }
 }
