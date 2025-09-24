@@ -12,6 +12,11 @@ namespace BaseStationReader.Entities.Interfaces
             IEnumerable<string> arrivalAirports,
             bool createSighting);
 
+        Task<List<Flight>> LookupFlightsInBoundingBox(
+                    double centreLatitude,
+                    double centreLongitude,
+                    double rangeNm);
+
         Task<Flight> LookupFlightAsync(
             string address,
             IEnumerable<string> departureAirportCodes,

@@ -1,4 +1,7 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using System.Text.Json.Nodes;
+using BaseStationReader.BusinessLogic.Geometry;
+using BaseStationReader.Entities.Geometry;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 
@@ -22,6 +25,30 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
             var properties = await MakeApiRequestAsync($"&hex={address}");
+            return properties.Count > 0 ? properties.First() : null;
+        }
+
+        /// <summary>
+        /// Lookup all active flights within a bounding box around a central point
+        /// </summary>
+        /// <param name="centreLatitude"></param>
+        /// <param name="centreLongitude"></param>
+        /// <param name="rangeNm"></param>
+        /// <returns></returns>
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBox(
+            double centreLatitude,
+            double centreLongitude,
+            double rangeNm)
+        {
+            Logger.LogMessage(Severity.Info, $"Looking for active flights in a {rangeNm} Nm bounding box around ({centreLatitude}, {centreLongitude})");
+
+            // Convert the range to metres and calculate the bounding box
+            var rangeMetres = 1852.0 * rangeNm;
+            (_, Coordinate northEast, _, Coordinate southWest) =
+                CoordinateMathematics.GetBoundingBox(centreLatitude, centreLongitude, rangeMetres);
+
+            // Make the API request and parse the response to yield a list of flight property dicitonaries 
+            var properties = await MakeApiRequestAsync($"&bbox={southWest.Latitude},{southWest.Longitude},{northEast.Latitude},{northEast.Longitude}");
             return properties;
         }
 
@@ -30,9 +57,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
+        private async Task<List<Dictionary<ApiProperty, string>>> MakeApiRequestAsync(string parameters)
         {
-            Dictionary<ApiProperty, string> properties = null;
+            List<Dictionary<ApiProperty, string>> properties = [];
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
@@ -42,33 +69,55 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             {
                 try
                 {
-                    // Extract the response element from the JSON DOM
-                    var apiResponse = node!["response"]![0];
+                    // Extract the response element from the JSON DOM as a JSON array
+                    var apiResponse = node!["response"] as JsonArray;
 
-                    // Extract the values into a dictionary
-                    properties = new()
+                    // Iterate over each (presumed) flight in the response
+                    foreach (var flight in apiResponse)
                     {
-                        { ApiProperty.EmbarkationIATA, apiResponse!["dep_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.DestinationIATA, apiResponse!["arr_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.FlightIATA, apiResponse!["flight_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.FlightICAO, apiResponse!["flight_icao"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.FlightNumber, apiResponse!["flight_number"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineIATA, apiResponse!["airline_iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["airline_icao"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelICAO, apiResponse!["aircraft_icao"]?.GetValue<string>() ?? "" }
-                    };
-
-                    // Log the properties dictionary
-                    LogProperties(properties!);
+                        // Extract the flight properties into a dictionary and add them to the collection
+                        // of flight property dictionaries
+                        var flightProperties = ExtractSingleFlight(flight);
+                        properties.Add(flightProperties);
+                    }
                 }
                 catch (Exception ex)
                 {
                     var message = $"Error processing response: {ex.Message}";
                     Logger.LogMessage(Severity.Error, message);
                     Logger.LogException(ex);
-                    properties = null;
+                    properties = [];
                 }
             }
+
+            return properties;
+        }
+
+        /// <summary>
+        /// Extract properties for a single flight into a dictionary
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
+        {
+            
+            Logger.LogMessage(Severity.Info, $">>> {node}");
+            // Extract the properties of interest from the node
+            Dictionary<ApiProperty, string> properties = new()
+            {
+                { ApiProperty.EmbarkationIATA, node!["dep_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.DestinationIATA, node!["arr_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightIATA, node!["flight_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightICAO, node!["flight_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightNumber, node!["flight_number"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineIATA, node!["airline_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineICAO, node!["airline_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.ModelICAO, node!["aircraft_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AircraftAddress, node!["hex"]?.GetValue<string>() ?? "" },
+            };
+
+            // Log the properties dictionary
+            LogProperties(properties!);
 
             return properties;
         }
