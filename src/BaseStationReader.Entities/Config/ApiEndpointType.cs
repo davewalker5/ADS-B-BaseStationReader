@@ -4,6 +4,7 @@
     {
         Airlines,
         Aircraft,
-        ActiveFlights
+        ActiveFlights,
+        HistoricalFlights
     }
 }
