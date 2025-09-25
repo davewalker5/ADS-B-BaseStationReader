@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {
@@ -14,7 +15,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly Random _random = new();
         private readonly ITrackerLogger _logger;
         private readonly SimulatorApplicationSettings _settings;
-        private readonly IEnumerable<string> _aircraftAddresses;
+        private readonly List<string> _aircraftAddresses;
+        private int _nextAddress = 0;
 
         public AircraftGenerator(
             ITrackerLogger logger,
@@ -23,7 +25,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         {
             _logger = logger;
             _settings = settings;
-            _aircraftAddresses = aircraftAddresses;
+            _aircraftAddresses = CuratedAddressList(aircraftAddresses);
         }
 
         /// <summary>
@@ -37,12 +39,10 @@ namespace BaseStationReader.BusinessLogic.Simulator
 
             // Select the next address from the address list that is not currently in use
             string address = SelectAddress(existingAddresses);
-            if (address == null)
-            {
-                // All of the supplied addresses are in use (or there are none) so generate
-                // a random one
-                address = GenerateAddress(existingAddresses);
-            }
+
+            // If all of the supplied addresses are in use (or there are none), generate
+            // a random one
+            address ??= GenerateAddress(existingAddresses);
 
             // Create the aircraft instance
             aircraft = new TrackedAircraft
@@ -78,6 +78,17 @@ namespace BaseStationReader.BusinessLogic.Simulator
         }
 
         /// <summary>
+        /// Curate the list of addresses to ensure all entries are valid
+        /// </summary>
+        /// <param name="addresses"></param>
+        /// <returns></returns>
+        private List<string> CuratedAddressList(IEnumerable<string> addresses)
+            => addresses?
+                .Where(x => Regex.IsMatch(x, @"^[A-Za-z0-9]{6}$"))
+                .Select(x => x.ToUpper())
+                .ToList();
+
+        /// <summary>
         /// Generate a random address
         /// </summary>
         /// <param name="existingAddresses"></param>
@@ -110,7 +121,21 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <param name="existingAddresses"></param>
         /// <returns></returns>
         private string SelectAddress(IEnumerable<string> existingAddresses)
-            => _aircraftAddresses?.FirstOrDefault(x => !existingAddresses.Contains(x));
+        {
+            string address = null;
+
+            // Check we have some addresses
+            if (_aircraftAddresses?.Count > 0)
+            {
+                // Select the next address
+                address = _aircraftAddresses[_nextAddress];
+
+                // Increment the count and wrap round to the start if necessary
+                _nextAddress = _nextAddress >= _aircraftAddresses.Count ? 0 : _nextAddress + 1;
+            }
+
+            return address;
+        }
 
         /// <summary>
         /// Generate a random ICAO Address
