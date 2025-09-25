@@ -1,6 +1,13 @@
 PRAGMA journal_mode=WAL;
 
-SELECT a.Address, a.Callsign, a.Squawk, a.GroundSpeed, a.Track, a.VerticalRate, p.Altitude, p.Latitude, p.Longitude
-FROM AIRCRAFT a
-INNER JOIN AIRCRAFT_POSITION p on p.AircraftId = a.Id
-WHERE a.Address = '';
+SELECT      a.Address,
+            a.Callsign,
+            p.Altitude,
+            p.Latitude,
+            p.Longitude,
+            p.Distance, 
+            p.Timestamp
+FROM        TRACKED_AIRCRAFT a
+INNER JOIN  POSITION p on p.AircraftId = a.Id
+WHERE       a.Address = ''
+ORDER BY    p.Timestamp ASC;
