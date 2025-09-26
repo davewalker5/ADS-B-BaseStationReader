@@ -27,7 +27,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         private const string ManufacturerName = "BOEING";
         private const string FlightICAO = "KLM743";
         private const string FlightIATA = "KL743";
-        private const string FlightNumber = "743";
+        private const string FlightNumber = "KL743";
         private const string Embarkation = "AMS";
         private const string Destination = "LIM";
         private const string FlightResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"lat\": 51.17756, \"lng\": -2.833342, \"alt\": 9148, \"dir\": 253, \"speed\": 849, \"v_speed\": 0, \"flight_number\": \"743\", \"flight_icao\": \"KLM743\", \"flight_iata\": \"KL743\", \"dep_icao\": \"EHAM\", \"dep_iata\": \"AMS\", \"arr_icao\": \"SPJC\", \"arr_iata\": \"LIM\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"aircraft_icao\": \"B77W\", \"updated\": 1758446111, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
@@ -470,7 +470,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.IsNotNull(flight);
             Assert.AreEqual("RYR5552", flight.ICAO);
             Assert.AreEqual("FR5552", flight.IATA);
-            Assert.AreEqual("5552", flight.Number);
+            Assert.AreEqual("FR5552", flight.Number);
             Assert.AreEqual("STN", flight.Embarkation);
             Assert.AreEqual("GRO", flight.Destination);
 
@@ -478,7 +478,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.IsNotNull(flight);
             Assert.AreEqual("THY1869", flight.ICAO);
             Assert.AreEqual("TK1869", flight.IATA);
-            Assert.AreEqual("1869", flight.Number);
+            Assert.AreEqual("TK1869", flight.Number);
             Assert.AreEqual("LGW", flight.Embarkation);
             Assert.AreEqual("IST", flight.Destination);
         }

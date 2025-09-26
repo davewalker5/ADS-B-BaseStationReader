@@ -100,6 +100,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
         {
+            // Get the flight number and airline IATA code and combine them to produce a recognisable flight
+            // number (this is also the flight IATA)
+            var flightNumberOnly = node!["flight_number"]?.GetValue<string>() ?? "";
+            var airlineIATA = node!["airline_iata"]?.GetValue<string>() ?? "";
+            var flightNumber = ((flightNumberOnly != "") && (airlineIATA != "") && !flightNumberOnly.StartsWith(airlineIATA)) ?
+                $"{airlineIATA}{flightNumberOnly}" : flightNumberOnly;
+
             // Extract the properties of interest from the node
             Dictionary<ApiProperty, string> properties = new()
             {
@@ -107,8 +114,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 { ApiProperty.DestinationIATA, node!["arr_iata"]?.GetValue<string>() ?? "" },
                 { ApiProperty.FlightIATA, node!["flight_iata"]?.GetValue<string>() ?? "" },
                 { ApiProperty.FlightICAO, node!["flight_icao"]?.GetValue<string>() ?? "" },
-                { ApiProperty.FlightNumber, node!["flight_number"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AirlineIATA, node!["airline_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightNumber, flightNumber },
+                { ApiProperty.AirlineIATA, airlineIATA },
                 { ApiProperty.AirlineICAO, node!["airline_icao"]?.GetValue<string>() ?? "" },
                 { ApiProperty.ModelICAO, node!["aircraft_icao"]?.GetValue<string>() ?? "" },
                 { ApiProperty.AircraftAddress, node!["hex"]?.GetValue<string>() ?? "" },

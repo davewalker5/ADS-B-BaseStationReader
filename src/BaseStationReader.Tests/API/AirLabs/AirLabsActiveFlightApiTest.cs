@@ -26,7 +26,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void GetActiveFlightTest()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightByAircraftAsync(Address)).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(9, properties);
@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.AreEqual("LHR", properties[ApiProperty.DestinationIATA]);
             Assert.AreEqual("BA172", properties[ApiProperty.FlightIATA]);
             Assert.AreEqual("BAW172", properties[ApiProperty.FlightICAO]);
-            Assert.AreEqual("172", properties[ApiProperty.FlightNumber]);
+            Assert.AreEqual("BA172", properties[ApiProperty.FlightNumber]);
             Assert.AreEqual("BA", properties[ApiProperty.AirlineIATA]);
             Assert.AreEqual("BAW", properties[ApiProperty.AirlineICAO]);
             Assert.AreEqual("B772", properties[ApiProperty.ModelICAO]);
@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightByAircraftAsync(Address)).Result;
 
             Assert.IsNull(properties);
         }
@@ -54,7 +54,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupFlightByAircraftAsync(Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightByAircraftAsync(Address)).Result;
 
             Assert.IsNull(properties);
         }

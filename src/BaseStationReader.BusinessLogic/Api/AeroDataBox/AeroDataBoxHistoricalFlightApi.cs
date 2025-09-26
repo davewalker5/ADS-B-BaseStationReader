@@ -9,6 +9,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
     {
         private readonly string _baseAddress;
         private readonly string _host;
+        private readonly string _key;
 
         public AeroDataBoxHistoricalFlightApi(
             ITrackerLogger logger,
@@ -16,7 +17,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             string url,
             string key) : base(logger, client)
         {
-            _baseAddress = $"{url}?api_key={key}";
+            _baseAddress = $"{url}/flights/icao24";
+            _key = key;
 
             // Extract the host from the url
             var uri = new Uri(url);
@@ -31,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsByAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"&hex={address}");
+            var properties = await MakeApiRequestAsync(address);
             return properties;
         }
 
@@ -46,7 +48,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequestAsync(url);
+            var node = await SendRequestAsync(url, new Dictionary<string, string>()
+            {
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
             if (node != null)
             {
@@ -70,7 +76,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
             }
 
-            return properties;
+            return properties.Count > 0 ? properties : null;
         }
 
         /// <summary>
@@ -81,9 +87,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
         {
             // Extract the properties of interest from the node
+            var flightNumber = (node!["number"]?.GetValue<string>() ?? "").Replace(" ", "");
             Dictionary<ApiProperty, string> properties = new()
             {
-                { ApiProperty.EmbarkationIATA, node!["number"]?.GetValue<string>() ?? "" }
+                { ApiProperty.FlightNumber, flightNumber }
             };
 
             // Get the nodes for point of embarkation, destination and airline and add those
@@ -103,14 +110,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static void ExtractEmbarkationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
+        private void ExtractEmbarkationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the departure airport node
-            var departure = node["departure"];
+            var airport = node!["departure"]!["airport"];
+            var time = node!["departure"]!["runwayTime"];
+
+            Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
+            Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
+
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.EmbarkationIATA, departure!["icao"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.DepartureTime, departure!["runwayTime"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.EmbarkationIATA, airport!["iata"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.DepartureTime, time!["utc"]?.GetValue<string>() ?? "");
         }
 
         /// <summary>
@@ -118,14 +130,18 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
+        private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the arrival airport node
-            var arrival = node["arrival"];
+            var airport = node!["arrival"]!["airport"];
+            var time = node!["arrival"]!["revisedTime"];
+
+            Logger.LogMessage(Severity.Debug, $"Extracting arrival airport details from {airport?.ToJsonString()}");
+            Logger.LogMessage(Severity.Debug, $"Extracting arrival time from {time?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.DestinationIATA, arrival!["icao"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.ArrivalTime, arrival!["predictedTime"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.DestinationIATA, airport!["iata"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.ArrivalTime, time!["utc"]?.GetValue<string>() ?? "");
         }
 
         /// <summary>
@@ -133,16 +149,16 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static void ExtractAirline(JsonNode node, Dictionary<ApiProperty, string> properties)
+        private void ExtractAirline(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airlien node
-            var airline = node["airline"];
+            var airline = node!["airline"];
+            Logger.LogMessage(Severity.Debug, $"Extracting airline details from {airline?.ToJsonString()}");
 
             // Extract the properties of interest from the node
             properties.Add(ApiProperty.AirlineName, airline!["name"]?.GetValue<string>() ?? "");
             properties.Add(ApiProperty.AirlineIATA, airline!["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AirlineICAO, airline!["iaco"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AirlineICAO, airline!["icao"]?.GetValue<string>() ?? "");
         }
-
     }
 }
