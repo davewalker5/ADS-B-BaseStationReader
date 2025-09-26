@@ -33,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsByAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address}");
-            var properties = await MakeApiRequestAsync(address);
+            var properties = await MakeApiRequestAsync($"/icao24/{address}");
             return properties;
         }
 
