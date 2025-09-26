@@ -115,7 +115,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             };
 
             // Log the properties dictionary
-            LogProperties(properties!);
+            LogProperties("Flight", properties);
 
             return properties;
         }

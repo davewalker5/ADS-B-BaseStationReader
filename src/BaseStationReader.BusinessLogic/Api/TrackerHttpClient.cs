@@ -35,11 +35,11 @@ namespace BaseStationReader.BusinessLogic.Api
         }
 
         /// <summary>
-        /// Send a GET request to the specified URI and return the response
+        /// Send an HTTP request and return the response
         /// </summary>
-        /// <param name="uri"></param>
+        /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<HttpResponseMessage> GetAsync(string uri)
-            => await _client.GetAsync(uri);
+        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+            => await _client.SendAsync(request);
     }
 }

@@ -18,19 +18,37 @@ namespace BaseStationReader.BusinessLogic.Api
             _client = client;
         }
 
+
         /// <summary>
         /// Make a request to the specified URL and return the response properties as a JSON DOM
         /// </summary>
         /// <param name="endpoint"></param>
+        /// <param name="headers"></param>
         /// <returns></returns>
         protected async Task<JsonNode> SendRequestAsync(string endpoint)
+            => await SendRequestAsync(endpoint, []);
+
+        /// <summary>
+        /// Make a request to the specified URL and return the response properties as a JSON DOM
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="headers"></param>
+        /// <returns></returns>
+        protected async Task<JsonNode> SendRequestAsync(string endpoint, Dictionary<string, string> headers)
         {
             JsonNode node = null;
 
             try
             {
+                // Construct a request object, including the headers
+                var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                foreach (var header in headers)
+                {
+                    request.Headers.Add(header.Key, header.Value);
+                }
+
                 // Make a request for the data from the API
-                using (var response = await _client.GetAsync(endpoint))
+                using (var response = await _client.SendAsync(request))
                 {
                     // Check the request was successful
                     if (response.IsSuccessStatusCode)
@@ -57,7 +75,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// </summary>
         /// <param name="properties"></param>
         [ExcludeFromCodeCoverage]
-        protected void LogProperties(Dictionary<ApiProperty, string> properties)
+        protected void LogProperties(string type, Dictionary<ApiProperty, string> properties)
         {
             // Check the properties dictionary isn't NULL
             if (properties != null)
@@ -68,7 +86,7 @@ namespace BaseStationReader.BusinessLogic.Api
                     // Construct a message containing the property name and the value, replacing
                     // null values with "NULL"
                     var value = property.Value != null ? property.Value.ToString() : "NULL";
-                    var message = $"API property {property.Key.ToString()} = {value}";
+                    var message = $"{type} API property {property.Key.ToString()} = {value}";
 
                     // Log the message for this property
                     Logger.LogMessage(Severity.Debug, message);

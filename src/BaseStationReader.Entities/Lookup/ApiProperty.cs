@@ -9,6 +9,8 @@
         AirlineIATA,
         AirlineICAO,
         AirlineName,
+        ArrivalTime,
+        DepartureTime,
         DestinationIATA,
         EmbarkationIATA,
         FlightIATA,

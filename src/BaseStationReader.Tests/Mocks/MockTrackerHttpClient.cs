@@ -31,10 +31,10 @@ namespace BaseStationReader.Tests.Mocks
         /// <summary>
         /// Construct and return the next response
         /// </summary>
-        /// <param name="uri"></param>
+        /// <param name="_"></param>
         /// <returns></returns>
 #pragma warning disable CS1998
-        public async Task<HttpResponseMessage> GetAsync(string uri)
+        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage _)
         {
             // De-queue the next message
             var content = _responses.Dequeue();
