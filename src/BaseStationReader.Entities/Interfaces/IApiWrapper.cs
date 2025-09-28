@@ -6,7 +6,7 @@ namespace BaseStationReader.Entities.Interfaces
     {
         void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration);
 
-        Task LookupAsync(
+        Task<LookupResult> LookupAsync(
             string address,
             IEnumerable<string> departureAirports,
             IEnumerable<string> arrivalAirports,

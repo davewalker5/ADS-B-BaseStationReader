@@ -17,7 +17,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             string url,
             string key) : base(logger, client)
         {
-            _baseAddress = $"{url}/flights/icao24";
+            _baseAddress = $"{url}/icao24/";
             _key = key;
 
             // Extract the host from the url
@@ -33,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsByAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"/icao24/{address}");
+            var properties = await MakeApiRequestAsync(address);
             return properties;
         }
 
@@ -46,17 +46,17 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             List<Dictionary<ApiProperty, string>> properties = [];
 
-            // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequestAsync(url, new Dictionary<string, string>()
+            try
             {
-                { "X-RapidAPI-Key", _key },
-                { "X-RapidAPI-Host", _host },
-            });
+                // Make a request for the data from the API
+                var url = $"{_baseAddress}{parameters}";
+                var node = await SendRequestAsync(url, new Dictionary<string, string>()
+                {
+                    { "X-RapidAPI-Key", _key },
+                    { "X-RapidAPI-Host", _host },
+                });
 
-            if (node != null)
-            {
-                try
+                if (node != null)
                 {
                     // Iterate over each (presumed) flight in the response
                     foreach (var flight in node as JsonArray)
@@ -67,13 +67,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         properties.Add(flightProperties);
                     }
                 }
-                catch (Exception ex)
-                {
-                    var message = $"Error processing response: {ex.Message}";
-                    Logger.LogMessage(Severity.Error, message);
-                    Logger.LogException(ex);
-                    properties = [];
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMessage(Severity.Error, ex.Message);
+                Logger.LogException(ex);
             }
 
             return properties.Count > 0 ? properties : null;
@@ -116,9 +114,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private void ExtractEmbarkationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
-            // Find the departure airport node
+            // Find the departure airport node and the departure time node. For the latter, try "runwayTime" first
+            // and if that's not there fallback to "scheduledTime"
             var airport = node!["departure"]!["airport"];
             var time = node!["departure"]!["runwayTime"];
+            time ??= node!["departure"]!["scheduledTime"];
 
             Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
             Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
@@ -135,9 +135,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
-            // Find the arrival airport node
+            // Find the arrival airport node and the arrival time node. For the latter, use revised time, predicted
+            // time and scheduled time, in thatr order
             var airport = node!["arrival"]!["airport"];
             var time = node!["arrival"]!["revisedTime"];
+            time ??= node!["arrival"]!["predictedTime"];
+            time ??= node!["arrival"]!["scheduledTime"];
 
             Logger.LogMessage(Severity.Debug, $"Extracting arrival airport details from {airport?.ToJsonString()}");
             Logger.LogMessage(Severity.Debug, $"Extracting arrival time from {time?.ToJsonString()}");

@@ -266,8 +266,16 @@ namespace BaseStationReader.BusinessLogic.Database
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
                     if (_apiWrapper != null)
                     {
-                        await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-                        await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
+                        var result = await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+                        if (result.IsSuccessful)
+                        {
+                            _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");
+                            await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
+                        }
+                        else
+                        {
+                            _logger.LogMessage(Severity.Error, $"Lookup for aircraft {request.Address} was not successful");
+                        }
                     }
                     else
                     {

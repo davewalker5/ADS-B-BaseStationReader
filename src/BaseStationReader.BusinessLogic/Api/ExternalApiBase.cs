@@ -40,10 +40,13 @@ namespace BaseStationReader.BusinessLogic.Api
 
             try
             {
+                Logger.LogMessage(Severity.Debug, $"Making request to {endpoint}");
+
                 // Construct a request object, including the headers
                 var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
                 foreach (var header in headers)
                 {
+                    Logger.LogMessage(Severity.Debug, $"Adding header {header.Key}: {header.Value}");
                     request.Headers.Add(header.Key, header.Value);
                 }
 
@@ -56,6 +59,12 @@ namespace BaseStationReader.BusinessLogic.Api
                         // Read the response, parse to a JSON DOM
                         var json = await response.Content.ReadAsStringAsync();
                         node = JsonNode.Parse(json);
+
+                        Logger.LogMessage(Severity.Debug, $"Received response {json}");
+                    }
+                    else
+                    {
+                        Logger.LogMessage(Severity.Error, $"Response was not successful - code = {response.StatusCode}");
                     }
                 }
             }

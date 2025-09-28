@@ -11,17 +11,20 @@ namespace BaseStationReader.Lookup.Logic
 {
     internal class FlightsInRangeHandler : CommandHandlerBase
     {
+        private readonly ApiServiceType _serviceType;
+
         public FlightsInRangeHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context) : base(settings, parser, logger, context)
+            BaseStationReaderDbContext context,
+            ApiServiceType serviceType) : base(settings, parser, logger, context)
         {
-
+            _serviceType = serviceType;
         }
 
         /// <summary>
-        /// Handle the airline import command
+        /// Handle the command to lookup flights within a defined bounding box
         /// </summary>
         /// <returns></returns>
         public override async Task Handle()
@@ -39,15 +42,18 @@ namespace BaseStationReader.Lookup.Logic
             var apiProperties = new ApiConfiguration()
             {
                 DatabaseContext = Context,
-                AirlinesEndpointUrl = Settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url,
-                AircraftEndpointUrl = Settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url,
-                FlightsEndpointUrl = Settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url,
-                Key = Settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
+                AirlinesEndpointUrl = Settings.ApiEndpoints.First(x =>
+                    x.EndpointType == ApiEndpointType.Airlines && x.Service == _serviceType).Url,
+                AircraftEndpointUrl = Settings.ApiEndpoints.First(x =>
+                    x.EndpointType == ApiEndpointType.Aircraft && x.Service == _serviceType).Url,
+                FlightsEndpointUrl = Settings.ApiEndpoints.First(x =>
+                    x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == _serviceType).Url,
+                Key = Settings.ApiServiceKeys.First(x => x.Service == _serviceType).Key
             };
 
             // Configure the API wrapper
             var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(Settings.LiveApi);
+            var wrapper = ApiWrapperBuilder.GetInstance(_serviceType);
             if (wrapper != null)
             {
                 // Initialise the wrapper

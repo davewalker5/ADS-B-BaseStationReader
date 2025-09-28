@@ -4,9 +4,20 @@
     "MinimumLogLevel": "Info",
     "CreateSightings": false,
     "LiveApi": "AirLabs",
+    "HistoricalApi": "AeroDataBox",
     "ReceiverLatitude": 51.470020,
     "ReceiverLongitude": -0.454295,
     "ApiEndpoints": [
+      {
+        "EndpointType": "Aircraft",
+        "Service": "AeroDataBox",
+        "Url": "https://aerodatabox.p.rapidapi.com/aircrafts"
+      },
+      {
+        "EndpointType": "HistoricalFlights",
+        "Service": "AeroDataBox",
+        "Url": "https://aerodatabox.p.rapidapi.com/flights"
+      },
       {
         "EndpointType": "Airlines",
         "Service": "AirLabs",
@@ -24,6 +35,10 @@
       }
     ],
     "ApiServiceKeys": [
+      {
+        "Service": "AeroDataBox",
+        "Key": ""
+      },
       {
         "Service": "AirLabs",
         "Key": ""

@@ -377,11 +377,13 @@ namespace BaseStationReader.Tests.API.AirLabs
             _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
 
-            await _wrapper.LookupAsync(AircraftAddress, [], [], true);
+            var result = await _wrapper.LookupAsync(AircraftAddress, [], [], true);
             var flight = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
             var airline = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
             var aircraft = await _aircraftManager.GetAsync(x => x.Registration == AircraftRegistration);
             var sightings = await _sightingManager.ListAsync(x => true);
+
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);
@@ -422,11 +424,13 @@ namespace BaseStationReader.Tests.API.AirLabs
             _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
 
-            await _wrapper.LookupAsync(AircraftAddress, [], [], false);
+            var result = await _wrapper.LookupAsync(AircraftAddress, [], [], false);
             var flight = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
             var airline = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
             var aircraft = await _aircraftManager.GetAsync(x => x.Registration == AircraftRegistration);
             var sightings = await _sightingManager.ListAsync(x => true);
+
+            Assert.IsTrue(result.IsSuccessful);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);
