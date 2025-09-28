@@ -207,8 +207,8 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             }
 
             // Check the airport codes against the filters
-            var departureAllowed = departureAirportCodes?.Count() > 0 ? departureAirportCodes.Contains(departure) : true;
-            var arrivalAllowed = arrivalAirportCodes?.Count() > 0 ? arrivalAirportCodes.Contains(arrival) : true;
+            var departureAllowed = !(departureAirportCodes?.Count() > 0) || departureAirportCodes.Contains(departure);
+            var arrivalAllowed = !(arrivalAirportCodes?.Count() > 0) || arrivalAirportCodes.Contains(arrival);
 
             if (!departureAllowed || !arrivalAllowed)
             {

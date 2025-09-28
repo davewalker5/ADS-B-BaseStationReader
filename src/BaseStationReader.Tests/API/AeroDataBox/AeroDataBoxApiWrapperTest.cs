@@ -1,10 +1,11 @@
-using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.BusinessLogic.Api.AirLabs;
-using BaseStationReader.Tests.Mocks;
-using BaseStationReader.Data;
+using System.Globalization;
+using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Data;
+using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Tests.Mocks;
 
-namespace BaseStationReader.Tests.API.AirLabs
+namespace BaseStationReader.Tests.API.AeroDataBox
 {
     /// <summary>
     /// These tests can't test authentication/authorisation at the service end, the lookup of data at the
@@ -14,46 +15,51 @@ namespace BaseStationReader.Tests.API.AirLabs
     [TestClass]
     public class AirLabsApiWrapperTest
     {
-        private const string AirlineICAO = "KLM";
-        private const string AirlineIATA = "KL";
-        private const string AirlineName = "KLM Royal Dutch Airlines";
-        private const string AircraftAddress = "4851F6";
-        private const string AircraftRegistration = "PH-BVS";
+        private const string AircraftAddress = "4074B6";
+        private const string AircraftRegistration = "G-UZHF";
         private const int AircraftManufactured = 2018;
-        private const int AircraftAge = 3;
-        private const string ModelICAO = "B77W";
-        private const string ModelIATA = "77W";
-        private const string ModelName = "Boeing 777-300ER pax";
-        private const string ManufacturerName = "BOEING";
-        private const string FlightICAO = "KLM743";
-        private const string FlightIATA = "KL743";
-        private const string FlightNumber = "KL743";
-        private const string Embarkation = "AMS";
-        private const string Destination = "LIM";
-        private const string FlightResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"lat\": 51.17756, \"lng\": -2.833342, \"alt\": 9148, \"dir\": 253, \"speed\": 849, \"v_speed\": 0, \"flight_number\": \"743\", \"flight_icao\": \"KLM743\", \"flight_iata\": \"KL743\", \"dep_icao\": \"EHAM\", \"dep_iata\": \"AMS\", \"arr_icao\": \"SPJC\", \"arr_iata\": \"LIM\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"aircraft_icao\": \"B77W\", \"updated\": 1758446111, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
-        private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
-        private const string AircraftResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": \"B77W\", \"iata\": \"77W\", \"model\": \"Boeing 777-300ER pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"H\", \"built\": 2018, \"age\": 3, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
-        private const string AircraftResponseWithNoModel = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": null, \"iata\": null, \"model\": null, \"engine\": null, \"engine_count\": null, \"manufacturer\": null, \"type\": null, \"category\": null, \"built\": null, \"age\": null, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
-        private const string FlightsInBoundingBoxResponse = "{\"response\": [ { \"hex\": \"4CAA59\", \"reg_number\": \"EI-EVT\", \"flag\": \"IE\", \"lat\": 51.919514, \"lng\": -0.263958, \"alt\": 4002, \"dir\": 235, \"speed\": 670, \"v_speed\": 0, \"flight_number\": \"5552\", \"flight_icao\": \"RYR5552\", \"flight_iata\": \"FR5552\", \"dep_icao\": \"EGSS\", \"dep_iata\": \"STN\", \"arr_icao\": \"LEGE\", \"arr_iata\": \"GRO\", \"airline_icao\": \"RYR\", \"airline_iata\": \"FR\", \"aircraft_icao\": \"B738\", \"updated\": 1758732643, \"status\": \"en-route\", \"type\": \"adsb\" }, { \"hex\": \"4BAA8A\", \"reg_number\": \"TC-JTJ\", \"flag\": \"TR\", \"lat\": 51.168826, \"lng\": 0.022797, \"alt\": 1534, \"dir\": 87, \"speed\": 442, \"v_speed\": 0, \"flight_number\": \"1869\", \"flight_icao\": \"THY1869\", \"flight_iata\": \"TK1869\", \"dep_icao\": \"EGKK\", \"dep_iata\": \"LGW\", \"arr_icao\": \"LTFM\", \"arr_iata\": \"IST\", \"airline_icao\": \"THY\", \"airline_iata\": \"TK\", \"aircraft_icao\": \"A321\", \"updated\": 1758732643, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
+        private const string ModelICAO = "A320";
+        private const string ModelIATA = "32A";
+        private const string ModelName = "Airbus A320 (Sharklets)";
+        private const string ManufacturerName = "";
+        private const string FlightICAO = "";
+        private const string FlightIATA = "";
+        private const string FlightNumber = "U22123";
+        private const string Embarkation = "MAN";
+        private const string Destination = "FCO";
+        private const string DepartureTime = "2025-09-25 07:45Z";
+        private const string AirlineICAO = "EZY";
+        private const string AirlineIATA = "U2";
+        private const string AirlineName = "easyJet";
+        private const string AircraftResponse = "{ \"id\": 26975, \"reg\": \"G-UZHF\", \"active\": true, \"serial\": \"8193\", \"hexIcao\": \"4074B6\", \"airlineName\": \"easyJet\", \"iataCodeShort\": \"32A\", \"icaoCode\": \"A320\", \"model\": \"A20N\", \"modelCode\": \"320-251N\", \"numSeats\": 186, \"rolloutDate\": \"2018-04-09\", \"firstFlightDate\": \"2018-04-09\", \"deliveryDate\": \"2018-04-17\", \"registrationDate\": \"2018-04-17\", \"typeName\": \"Airbus A320 (Sharklets)\", \"numEngines\": 2, \"engineType\": \"Jet\", \"isFreighter\": false, \"productionLine\": \"Airbus A320\", \"ageYears\": 7.5, \"verified\": true, \"numRegistrations\": 1 }";
+        private const string FlightResponse = "[ { \"greatCircleDistance\": { \"meter\": 1679537.5, \"km\": 1679.54, \"mile\": 1043.62, \"nm\": 906.88, \"feet\": 5510293.62 }, \"departure\": { \"airport\": { \"icao\": \"EGCC\", \"iata\": \"MAN\", \"name\": \"Manchester\", \"shortName\": \"Manchester\", \"municipalityName\": \"Manchester\", \"location\": { \"lat\": 53.3537, \"lon\": -2.27495 }, \"countryCode\": \"GB\", \"timeZone\": \"Europe/London\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 07:20Z\", \"local\": \"2025-09-25 08:20+01:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 07:15Z\", \"local\": \"2025-09-25 08:15+01:00\" }, \"runwayTime\": { \"utc\": \"2025-09-25 07:45Z\", \"local\": \"2025-09-25 08:45+01:00\" }, \"terminal\": \"1\", \"gate\": \"4\", \"runway\": \"05L\", \"quality\": [ \"Basic\", \"Live\" ] }, \"arrival\": { \"airport\": { \"icao\": \"LIRF\", \"iata\": \"FCO\", \"name\": \"Rome Leonardo da Vinci–Fiumicino\", \"shortName\": \"Leonardo da Vinci–Fiumicino\", \"municipalityName\": \"Rome\", \"location\": { \"lat\": 41.8045, \"lon\": 12.2508 }, \"countryCode\": \"IT\", \"timeZone\": \"Europe/Rome\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 10:10Z\", \"local\": \"2025-09-25 12:10+02:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 10:04Z\", \"local\": \"2025-09-25 12:04+02:00\" }, \"predictedTime\": { \"utc\": \"2025-09-25 09:56Z\", \"local\": \"2025-09-25 11:56+02:00\" }, \"terminal\": \"1\", \"runway\": \"16R\", \"quality\": [ \"Basic\", \"Live\" ] }, \"lastUpdatedUtc\": \"2025-09-25 10:11Z\", \"number\": \"U2 2123\", \"callSign\": \"EZY12ND\", \"status\": \"Approaching\", \"codeshareStatus\": \"IsOperator\", \"isCargo\": false, \"aircraft\": { \"reg\": \"G-UZHF\", \"modeS\": \"4074B6\", \"model\": \"Airbus A320 (Sharklets)\" }, \"airline\": { \"name\": \"easyJet\", \"iata\": \"U2\", \"icao\": \"EZY\" } }, { \"greatCircleDistance\": { \"meter\": 1679537.5, \"km\": 1679.54, \"mile\": 1043.62, \"nm\": 906.88, \"feet\": 5510293.62 }, \"departure\": { \"airport\": { \"icao\": \"LIRF\", \"iata\": \"FCO\", \"name\": \"Rome Leonardo da Vinci–Fiumicino\", \"shortName\": \"Leonardo da Vinci–Fiumicino\", \"municipalityName\": \"Rome\", \"location\": { \"lat\": 41.8045, \"lon\": 12.2508 }, \"countryCode\": \"IT\", \"timeZone\": \"Europe/Rome\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 11:00Z\", \"local\": \"2025-09-25 13:00+02:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 12:16Z\", \"local\": \"2025-09-25 14:16+02:00\" }, \"runwayTime\": { \"utc\": \"2025-09-25 12:16Z\", \"local\": \"2025-09-25 14:16+02:00\" }, \"terminal\": \"1\", \"runway\": \"25\", \"quality\": [ \"Basic\", \"Live\" ] }, \"arrival\": { \"airport\": { \"icao\": \"EGCC\", \"iata\": \"MAN\", \"name\": \"Manchester\", \"shortName\": \"Manchester\", \"municipalityName\": \"Manchester\", \"location\": { \"lat\": 53.3537, \"lon\": -2.27495 }, \"countryCode\": \"GB\", \"timeZone\": \"Europe/London\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 13:50Z\", \"local\": \"2025-09-25 14:50+01:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 14:42Z\", \"local\": \"2025-09-25 15:42+01:00\" }, \"terminal\": \"1\", \"gate\": \"9\", \"quality\": [ \"Basic\", \"Live\" ] }, \"lastUpdatedUtc\": \"2025-09-25 14:47Z\", \"number\": \"U2 2124\", \"callSign\": \"EZY38DT\", \"status\": \"Arrived\", \"codeshareStatus\": \"IsOperator\", \"isCargo\": false, \"aircraft\": { \"reg\": \"G-UZHF\", \"modeS\": \"4074B6\", \"model\": \"Airbus A320 (Sharklets)\" }, \"airline\": { \"name\": \"easyJet\", \"iata\": \"U2\", \"icao\": \"EZY\" } } ]";
+        private const string FlightResponseWithMismatchedAddress = "[ { \"greatCircleDistance\": { \"meter\": 1679537.5, \"km\": 1679.54, \"mile\": 1043.62, \"nm\": 906.88, \"feet\": 5510293.62 }, \"departure\": { \"airport\": { \"icao\": \"EGCC\", \"iata\": \"MAN\", \"name\": \"Manchester\", \"shortName\": \"Manchester\", \"municipalityName\": \"Manchester\", \"location\": { \"lat\": 53.3537, \"lon\": -2.27495 }, \"countryCode\": \"GB\", \"timeZone\": \"Europe/London\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 07:20Z\", \"local\": \"2025-09-25 08:20+01:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 07:15Z\", \"local\": \"2025-09-25 08:15+01:00\" }, \"runwayTime\": { \"utc\": \"2025-09-25 07:45Z\", \"local\": \"2025-09-25 08:45+01:00\" }, \"terminal\": \"1\", \"gate\": \"4\", \"runway\": \"05L\", \"quality\": [ \"Basic\", \"Live\" ] }, \"arrival\": { \"airport\": { \"icao\": \"LIRF\", \"iata\": \"FCO\", \"name\": \"Rome Leonardo da Vinci–Fiumicino\", \"shortName\": \"Leonardo da Vinci–Fiumicino\", \"municipalityName\": \"Rome\", \"location\": { \"lat\": 41.8045, \"lon\": 12.2508 }, \"countryCode\": \"IT\", \"timeZone\": \"Europe/Rome\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 10:10Z\", \"local\": \"2025-09-25 12:10+02:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 10:04Z\", \"local\": \"2025-09-25 12:04+02:00\" }, \"predictedTime\": { \"utc\": \"2025-09-25 09:56Z\", \"local\": \"2025-09-25 11:56+02:00\" }, \"terminal\": \"1\", \"runway\": \"16R\", \"quality\": [ \"Basic\", \"Live\" ] }, \"lastUpdatedUtc\": \"2025-09-25 10:11Z\", \"number\": \"U2 2123\", \"callSign\": \"EZY12ND\", \"status\": \"Approaching\", \"codeshareStatus\": \"IsOperator\", \"isCargo\": false, \"aircraft\": { \"reg\": \"G-UZHF\", \"modeS\": \"6B4704\", \"model\": \"Airbus A320 (Sharklets)\" }, \"airline\": { \"name\": \"easyJet\", \"iata\": \"U2\", \"icao\": \"EZY\" } }, { \"greatCircleDistance\": { \"meter\": 1679537.5, \"km\": 1679.54, \"mile\": 1043.62, \"nm\": 906.88, \"feet\": 5510293.62 }, \"departure\": { \"airport\": { \"icao\": \"LIRF\", \"iata\": \"FCO\", \"name\": \"Rome Leonardo da Vinci–Fiumicino\", \"shortName\": \"Leonardo da Vinci–Fiumicino\", \"municipalityName\": \"Rome\", \"location\": { \"lat\": 41.8045, \"lon\": 12.2508 }, \"countryCode\": \"IT\", \"timeZone\": \"Europe/Rome\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 11:00Z\", \"local\": \"2025-09-25 13:00+02:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 12:16Z\", \"local\": \"2025-09-25 14:16+02:00\" }, \"runwayTime\": { \"utc\": \"2025-09-25 12:16Z\", \"local\": \"2025-09-25 14:16+02:00\" }, \"terminal\": \"1\", \"runway\": \"25\", \"quality\": [ \"Basic\", \"Live\" ] }, \"arrival\": { \"airport\": { \"icao\": \"EGCC\", \"iata\": \"MAN\", \"name\": \"Manchester\", \"shortName\": \"Manchester\", \"municipalityName\": \"Manchester\", \"location\": { \"lat\": 53.3537, \"lon\": -2.27495 }, \"countryCode\": \"GB\", \"timeZone\": \"Europe/London\" }, \"scheduledTime\": { \"utc\": \"2025-09-25 13:50Z\", \"local\": \"2025-09-25 14:50+01:00\" }, \"revisedTime\": { \"utc\": \"2025-09-25 14:42Z\", \"local\": \"2025-09-25 15:42+01:00\" }, \"terminal\": \"1\", \"gate\": \"9\", \"quality\": [ \"Basic\", \"Live\" ] }, \"lastUpdatedUtc\": \"2025-09-25 14:47Z\", \"number\": \"U2 2124\", \"callSign\": \"EZY38DT\", \"status\": \"Arrived\", \"codeshareStatus\": \"IsOperator\", \"isCargo\": false, \"aircraft\": { \"reg\": \"G-UZHF\", \"modeS\": \"4074B6\", \"model\": \"Airbus A320 (Sharklets)\" }, \"airline\": { \"name\": \"easyJet\", \"iata\": \"U2\", \"icao\": \"EZY\" } } ]";
 
         private MockTrackerHttpClient _client;
-        private AirLabsApiWrapper _wrapper;
+        private AeroDataBoxApiWrapper _wrapper;
         private IAirlineManager _airlineManager;
         private IFlightManager _flightManager;
         private IAircraftManager _aircraftManager;
         private IModelManager _modelManager;
         private IManufacturerManager _manufacturerManager;
         private ISightingManager _sightingManager;
+        private IAircraftWriter _aircraftWriter;
+        private readonly int _aircraftAge = DateTime.Today.Year - AircraftManufactured;
 
         [TestInitialize]
-        public void Initialise()
+        public async Task Initialise()
         {
             // Create the wrapper
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _wrapper = new AirLabsApiWrapper();
-            _wrapper.Initialise(logger, _client, new() { DatabaseContext = context });
+            _wrapper = new AeroDataBoxApiWrapper();
+            _wrapper.Initialise(logger, _client, new()
+            {
+                DatabaseContext = context,
+                AircraftEndpointUrl = "http://some.host/com",
+                FlightsEndpointUrl = "http://some.host/com"
+            });
 
             // Create DB management classes to check entities have been written OK
             _airlineManager = new AirlineManager(context);
@@ -62,12 +68,23 @@ namespace BaseStationReader.Tests.API.AirLabs
             _modelManager = new ModelManager(context);
             _manufacturerManager = new ManufacturerManager(context);
             _sightingManager = new SightingManager(context);
+            _aircraftWriter = new TrackedAircraftWriter(context);
+
+            // Create a tracked aircraft that will match the first flight in the flights response
+            DateTime.TryParse(DepartureTime, null, DateTimeStyles.AdjustToUniversal, out DateTime utc);
+            _ = await _aircraftWriter.WriteAsync(new()
+            {
+                Address = AircraftAddress,
+                LastSeen = utc.AddMinutes(30).ToLocalTime()
+            });
         }
+
 
         [TestMethod]
         public async Task LookupAirlineByICAOAsyncTest()
         {
-            _client.AddResponse(AirlineResponse);
+            // This is just a wrapper around stored airline lookup
+            _ = await _airlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, null);
 
             Assert.IsNotNull(airline);
@@ -79,7 +96,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public async Task LookupAirlineByIATAAsyncTest()
         {
-            _client.AddResponse(AirlineResponse);
+            // This is just a wrapper around stored airline lookup
+            _ = await _airlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var airline = await _wrapper.LookupAirlineAsync(null, AirlineIATA);
 
             Assert.IsNotNull(airline);
@@ -103,7 +121,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public async Task LookupAirlineWithNullCodesAsyncTest()
         {
-            _client.AddResponse(AirlineResponse);
             var airline = await _wrapper.LookupAirlineAsync(null, null);
             Assert.IsNull(airline);
         }
@@ -118,7 +135,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public async Task LookupAirlineWithEmptyCodesAsyncTest()
         {
-            _client.AddResponse(AirlineResponse);
             var airline = await _wrapper.LookupAirlineAsync("", "");
             Assert.IsNull(airline);
         }
@@ -126,7 +142,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public async Task LookupAndStoreAirlineAsyncTest()
         {
-            _client.AddResponse(AirlineResponse);
+            // This is just a wrapper around stored airline lookup
+            _ = await _airlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var airline = await _wrapper.LookupAndStoreAirlineAsync(AirlineICAO, AirlineIATA);
             var retrieved = await _airlineManager.GetAsync(x => x.ICAO == AirlineICAO);
 
@@ -144,13 +161,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public async Task LookupAndStoreAirlineWithSimulatedEmptyResponseAsyncTest()
-        {
-            var airline = await _wrapper.LookupAndStoreAirlineAsync(AirlineICAO, AirlineIATA);
-            Assert.IsNull(airline);
-        }
-
-        [TestMethod]
         public async Task LookupAircraftAsyncTest()
         {
             _client.AddResponse(AircraftResponse);
@@ -160,23 +170,11 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.AreEqual(AircraftAddress, aircraft.Address);
             Assert.AreEqual(AircraftRegistration, aircraft.Registration);
             Assert.AreEqual(AircraftManufactured, aircraft.Manufactured);
-            Assert.AreEqual(AircraftAge, aircraft.Age);
+            Assert.AreEqual(_aircraftAge, aircraft.Age);
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
             Assert.AreEqual(ManufacturerName, aircraft.Model.Manufacturer.Name);
-        }
-
-        [TestMethod]
-        public async Task LookupAircraftWithAlternateModelICAOAsyncTest()
-        {
-            _client.AddResponse(AircraftResponseWithNoModel);
-            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress, ModelICAO);
-
-            Assert.IsNotNull(aircraft);
-            Assert.AreEqual(AircraftAddress, aircraft.Address);
-            Assert.AreEqual(AircraftRegistration, aircraft.Registration);
-            Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
         }
 
         [TestMethod]
@@ -200,14 +198,14 @@ namespace BaseStationReader.Tests.API.AirLabs
         {
             var manufacturer = await _manufacturerManager.AddAsync(ManufacturerName);
             var model = await _modelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
-            _ = await _aircraftManager.AddAsync(AircraftAddress, AircraftRegistration, AircraftManufactured, AircraftAge, model.Id);
+            _ = await _aircraftManager.AddAsync(AircraftAddress, AircraftRegistration, AircraftManufactured, _aircraftAge, model.Id);
             var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress, null);
 
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(AircraftAddress, aircraft.Address);
             Assert.AreEqual(AircraftRegistration, aircraft.Registration);
             Assert.AreEqual(AircraftManufactured, aircraft.Manufactured);
-            Assert.AreEqual(AircraftAge, aircraft.Age);
+            Assert.AreEqual(_aircraftAge, aircraft.Age);
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
@@ -276,6 +274,11 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
+        [ExpectedException(typeof(NotImplementedException))]
+        public async Task LookupFlightsInBoundingBoxTest()
+            => await _wrapper.LookupFlightsInBoundingBox(51.470020, -0.454295, 10);
+
+        [TestMethod]
         public async Task LookupFlightByNullAddressAsyncTest()
         {
             var flight = await _wrapper.LookupFlightAsync(null, null, null);
@@ -290,10 +293,27 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
+        public async Task LookupFlightWithNoTrackedAircraftRecordAsyncTest()
+        {
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AircraftResponse);
+            var flight = await _wrapper.LookupFlightAsync("ABC123", null, null);
+            Assert.IsNull(flight);
+        }
+
+        [TestMethod]
+        public async Task LookupFlightWithMismatchedAircraftAddresAsyncTest()
+        {
+            _client.AddResponse(FlightResponseWithMismatchedAddress);
+            _client.AddResponse(AircraftResponse);
+            var flight = await _wrapper.LookupFlightAsync(AircraftAddress, null, null);
+            Assert.IsNull(flight);
+        }
+
+        [TestMethod]
         public async Task LookupFlightWithAcceptingAirportFiltersAsyncTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
             var flight = await _wrapper.LookupFlightAsync(AircraftAddress, [Embarkation], [Destination]);
 
@@ -305,13 +325,13 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+            Assert.AreEqual(AirlineName, flight.Airline.Name);
         }
 
         [TestMethod]
         public async Task LookupFlightWithExcludingAirportFiltersAsyncTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
             var flight = await _wrapper.LookupFlightAsync(AircraftAddress, [Destination], [Embarkation]);
             Assert.IsNull(flight);
@@ -321,7 +341,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task LookupFlightWithoutAirportFiltersAsyncTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
             var flight = await _wrapper.LookupFlightAsync(AircraftAddress, null, null);
 
@@ -333,13 +352,13 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+            Assert.AreEqual(AirlineName, flight.Airline.Name);
         }
 
         [TestMethod]
         public async Task LookupAndStoreFlightAsyncTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
             var flight = await _wrapper.LookupAndStoreFlightAsync(AircraftAddress, [Embarkation], [Destination]);
             var retrieved = await _flightManager.GetAsync(x => x.ICAO == FlightICAO);
@@ -374,7 +393,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task LookupAsyncWithSightingTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
 
             await _wrapper.LookupAsync(AircraftAddress, [], [], true);
@@ -419,7 +437,6 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task LookupAsyncWithoutSightingTest()
         {
             _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
             _client.AddResponse(AircraftResponse);
 
             await _wrapper.LookupAsync(AircraftAddress, [], [], false);
@@ -455,32 +472,6 @@ namespace BaseStationReader.Tests.API.AirLabs
 
             Assert.IsNotNull(sightings);
             Assert.HasCount(0, sightings);
-        }
-
-        [TestMethod]
-        public async Task FlightsInBoundingBoxTest()
-        {
-            _client.AddResponse(FlightsInBoundingBoxResponse);
-            var flights = await _wrapper.LookupFlightsInBoundingBox(0, 0, 0);
-
-            Assert.IsNotNull(flights);
-            Assert.HasCount(2, flights);
-
-            var flight = flights.Where(x => x.AircraftAddress == "4CAA59").First();
-            Assert.IsNotNull(flight);
-            Assert.AreEqual("RYR5552", flight.ICAO);
-            Assert.AreEqual("FR5552", flight.IATA);
-            Assert.AreEqual("FR5552", flight.Number);
-            Assert.AreEqual("STN", flight.Embarkation);
-            Assert.AreEqual("GRO", flight.Destination);
-
-            flight = flights.Where(x => x.AircraftAddress == "4BAA8A").First();
-            Assert.IsNotNull(flight);
-            Assert.AreEqual("THY1869", flight.ICAO);
-            Assert.AreEqual("TK1869", flight.IATA);
-            Assert.AreEqual("TK1869", flight.Number);
-            Assert.AreEqual("LGW", flight.Embarkation);
-            Assert.AreEqual("IST", flight.Destination);
         }
     }
 }

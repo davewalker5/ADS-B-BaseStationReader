@@ -218,7 +218,7 @@ namespace BaseStationReader.BusinessLogic.Api
                 {
                     IATA = properties[ApiProperty.AirlineIATA],
                     ICAO = properties[ApiProperty.AirlineICAO],
-                    Name = properties[ApiProperty.AirlineICAO]
+                    Name = properties[ApiProperty.AirlineName]
                 },
                 AircraftAddress = properties[ApiProperty.AircraftAddress],
                 ModelICAO = properties[ApiProperty.ModelICAO]
