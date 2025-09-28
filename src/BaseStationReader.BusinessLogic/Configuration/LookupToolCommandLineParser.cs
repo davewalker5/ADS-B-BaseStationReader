@@ -18,7 +18,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.LiveApi, false, "--live-api", "-lapi", "Specify the name of an API to use for lookups", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
-            Add(CommandLineOptionType.FlightsInRange, false, "--export-in-range", "-eir", "Export flights within the specified range (Nm) to a CSV file", 2, 2);
+            Add(CommandLineOptionType.FlightsInRange, false, "--export-in-range", "-eir", "Export flights within the specified range (Nm) of the receiver to a CSV file", 2, 2);
         }
     }
 }

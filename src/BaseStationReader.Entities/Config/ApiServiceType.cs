@@ -3,6 +3,7 @@
     public enum ApiServiceType
     {
         None,
+        AeroDataBox,
         AirLabs
     }
 }

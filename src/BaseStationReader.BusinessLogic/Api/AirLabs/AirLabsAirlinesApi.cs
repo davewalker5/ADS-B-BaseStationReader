@@ -64,7 +64,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                     };
 
                     // Log the properties dictionary
-                    LogProperties(properties!);
+                    LogProperties("Airline", properties);
                 }
                 catch (Exception ex)
                 {

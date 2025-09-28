@@ -1,3 +1,4 @@
+using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
@@ -23,6 +24,7 @@ namespace BaseStationReader.BusinessLogic.Api
             return type switch
             {
                 ApiServiceType.AirLabs => new AirLabsApiWrapper(),
+                ApiServiceType.AeroDataBox => new AeroDataBoxApiWrapper(),
                 _ => null,
             };
         }
