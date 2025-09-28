@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Entities.Config;
 
@@ -65,6 +66,29 @@ namespace BaseStationReader.Tests.API
         {
             var type = ApiWrapperBuilder.GetServiceTypeFromString("AirLabs");
             Assert.AreEqual(ApiServiceType.AirLabs, type);
+        }
+
+        [TestMethod]
+        public void BuildAeroDataBoxApiWrapperFromTypeTest()
+        {
+            var wrapper = ApiWrapperBuilder.GetInstance(ApiServiceType.AeroDataBox);
+            Assert.IsNotNull(wrapper);
+            Assert.IsTrue(wrapper is AeroDataBoxApiWrapper);
+        }
+
+        [TestMethod]
+        public void BuildAeroDataBoxApiWrapperFromStringTest()
+        {
+            var wrapper = ApiWrapperBuilder.GetInstance("AeroDataBox");
+            Assert.IsNotNull(wrapper);
+            Assert.IsTrue(wrapper is AeroDataBoxApiWrapper);
+        }
+
+        [TestMethod]
+        public void GetAeroDataBoxServiceTypeFromStringTest()
+        {
+            var type = ApiWrapperBuilder.GetServiceTypeFromString("AeroDataBox");
+            Assert.AreEqual(ApiServiceType.AeroDataBox, type);
         }
     }
 }
