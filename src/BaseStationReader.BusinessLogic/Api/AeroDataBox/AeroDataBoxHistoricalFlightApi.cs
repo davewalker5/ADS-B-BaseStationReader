@@ -90,14 +90,18 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var flightNumber = (node!["number"]?.GetValue<string>() ?? "").Replace(" ", "");
             Dictionary<ApiProperty, string> properties = new()
             {
-                { ApiProperty.FlightNumber, flightNumber }
+                { ApiProperty.FlightIATA, "" },
+                { ApiProperty.FlightICAO, "" },
+                { ApiProperty.FlightNumber, flightNumber },
+                { ApiProperty.ModelICAO, "" }
             };
 
-            // Get the nodes for point of embarkation, destination and airline and add those
+            // Get the nodes for point of embarkation, destination, airline and aircraft and add those
             // to the dictionary
             ExtractEmbarkationAirport(node, properties);
             ExtractDestinationAirport(node, properties);
             ExtractAirline(node, properties);
+            ExtractAircraft(node, properties);
 
             // Log the properties dictionary
             LogProperties("Flight", properties);
@@ -118,7 +122,6 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
             Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
-
 
             // Extract the properties of interest from the node
             properties.Add(ApiProperty.EmbarkationIATA, airport!["iata"]?.GetValue<string>() ?? "");
@@ -151,7 +154,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private void ExtractAirline(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
-            // Find the airlien node
+            // Find the airline node
             var airline = node!["airline"];
             Logger.LogMessage(Severity.Debug, $"Extracting airline details from {airline?.ToJsonString()}");
 
@@ -159,6 +162,21 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             properties.Add(ApiProperty.AirlineName, airline!["name"]?.GetValue<string>() ?? "");
             properties.Add(ApiProperty.AirlineIATA, airline!["iata"]?.GetValue<string>() ?? "");
             properties.Add(ApiProperty.AirlineICAO, airline!["icao"]?.GetValue<string>() ?? "");
+        }
+
+        /// <summary>
+        /// Extract the properties of the aircraft
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private void ExtractAircraft(JsonNode node, Dictionary<ApiProperty, string> properties)
+        {
+            // Find the airline node
+            var airline = node!["aircraft"];
+            Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {airline?.ToJsonString()}");
+
+            // Extract the properties of interest from the node
+            properties.Add(ApiProperty.AircraftAddress, airline!["modeS"]?.GetValue<string>() ?? "");
         }
     }
 }

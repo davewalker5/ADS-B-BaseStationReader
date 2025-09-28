@@ -31,7 +31,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             Assert.IsNotNull(properties);
             Assert.HasCount(2, properties);
 
-            Assert.HasCount(8, properties[0]);
+            Assert.HasCount(12, properties[0]);
+            Assert.IsEmpty(properties[0][ApiProperty.FlightIATA]);
+            Assert.IsEmpty(properties[0][ApiProperty.FlightICAO]);
             Assert.AreEqual("U22123", properties[0][ApiProperty.FlightNumber]);
             Assert.AreEqual("MAN", properties[0][ApiProperty.EmbarkationIATA]);
             Assert.AreEqual("2025-09-25 07:45Z", properties[0][ApiProperty.DepartureTime]);
@@ -40,8 +42,12 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             Assert.AreEqual("easyJet", properties[0][ApiProperty.AirlineName]);
             Assert.AreEqual("U2", properties[0][ApiProperty.AirlineIATA]);
             Assert.AreEqual("EZY", properties[0][ApiProperty.AirlineICAO]);
+            Assert.AreEqual("4074B6", properties[0][ApiProperty.AircraftAddress]);
+            Assert.IsEmpty(properties[0][ApiProperty.ModelICAO]);
 
-            Assert.HasCount(8, properties[1]);
+            Assert.HasCount(12, properties[1]);
+            Assert.IsEmpty(properties[1][ApiProperty.FlightIATA]);
+            Assert.IsEmpty(properties[1][ApiProperty.FlightICAO]);
             Assert.AreEqual("U22124", properties[1][ApiProperty.FlightNumber]);
             Assert.AreEqual("FCO", properties[1][ApiProperty.EmbarkationIATA]);
             Assert.AreEqual("2025-09-25 12:16Z", properties[1][ApiProperty.DepartureTime]);
@@ -50,6 +56,8 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             Assert.AreEqual("easyJet", properties[1][ApiProperty.AirlineName]);
             Assert.AreEqual("U2", properties[1][ApiProperty.AirlineIATA]);
             Assert.AreEqual("EZY", properties[1][ApiProperty.AirlineICAO]);
+            Assert.AreEqual("4074B6", properties[0][ApiProperty.AircraftAddress]);
+            Assert.IsEmpty(properties[1][ApiProperty.ModelICAO]);
         }
 
         [TestMethod]

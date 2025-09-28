@@ -117,6 +117,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 { ApiProperty.FlightNumber, flightNumber },
                 { ApiProperty.AirlineIATA, airlineIATA },
                 { ApiProperty.AirlineICAO, node!["airline_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineName, "" },
                 { ApiProperty.ModelICAO, node!["aircraft_icao"]?.GetValue<string>() ?? "" },
                 { ApiProperty.AircraftAddress, node!["hex"]?.GetValue<string>() ?? "" },
             };

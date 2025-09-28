@@ -71,7 +71,8 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                         { ApiProperty.AircraftAge, age?.ToString() ?? "" },
                         { ApiProperty.ModelICAO, node!["icaoCode"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ModelIATA, node!["iataCodeShort"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelName, node!["typeName"]?.GetValue<string>() ?? "" }
+                        { ApiProperty.ModelName, node!["typeName"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ManufacturerName, "" }
                     };
 
                     // Log the properties dictionary

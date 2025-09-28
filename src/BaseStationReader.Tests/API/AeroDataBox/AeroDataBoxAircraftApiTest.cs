@@ -35,13 +35,14 @@ namespace BaseStationReader.Tests.API.AeroDataBox
 
             var expectedAge = (DateTime.Now.Year - 2012).ToString();
             Assert.IsNotNull(properties);
-            Assert.HasCount(6, properties);
+            Assert.HasCount(7, properties);
             Assert.AreEqual("G-DHLR", properties[ApiProperty.AircraftRegistration]);
             Assert.AreEqual("2012", properties[ApiProperty.AircraftManufactured]);
             Assert.AreEqual(expectedAge, properties[ApiProperty.AircraftAge]);
             Assert.AreEqual("B763", properties[ApiProperty.ModelICAO]);
             Assert.AreEqual("763", properties[ApiProperty.ModelIATA]);
             Assert.AreEqual("Boeing 767-300", properties[ApiProperty.ModelName]);
+            Assert.IsEmpty(properties[ApiProperty.ManufacturerName]);
         }
 
         [TestMethod]
