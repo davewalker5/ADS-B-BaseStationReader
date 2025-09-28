@@ -13,6 +13,7 @@
         EnableSqlWriter,
         FlightsInRange,
         Help,
+        HistoricalApi,
         Host,
         ImportAirlines,
         ImportManufacturers,

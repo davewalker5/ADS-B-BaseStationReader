@@ -19,7 +19,7 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the manufacturer import command
+        /// Handle the model import command
         /// </summary>
         /// <returns></returns>
         public override async Task Handle()

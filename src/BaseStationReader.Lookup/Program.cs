@@ -1,4 +1,6 @@
-﻿using BaseStationReader.BusinessLogic.Configuration;
+﻿using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.BusinessLogic.Configuration;
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
@@ -72,12 +74,23 @@ namespace BaseStationReader.Lookup
                 // If an aircraft address has been supplied, look it up and store the results
                 if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
-                    await new AircraftLookupHandler(settings, _parser, _logger, context).Handle();
+                    var serviceType = ApiWrapperBuilder.GetServiceTypeFromString(settings.LiveApi);
+                    await new AircraftLookupHandler(settings, _parser, _logger, context, serviceType).Handle();
                 }
 
+                // Lookup historical flight details and store the results
+                if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
+                {
+                    var serviceType = ApiWrapperBuilder.GetServiceTypeFromString(settings.HistoricalApi);
+                    var aircraftWriter = new TrackedAircraftWriter(context);
+                    await new HistoricalAircraftLookupHandler(settings, _parser, _logger, context, aircraftWriter, serviceType).Handle();
+                }
+
+                // Look up live flights within a given bounding box of the receiver
                 if (_parser.IsPresent(CommandLineOptionType.FlightsInRange))
                 {
-                    await new FlightsInRangeHandler(settings, _parser, _logger, context).Handle();
+                    var serviceType = ApiWrapperBuilder.GetServiceTypeFromString(settings.LiveApi);
+                    await new FlightsInRangeHandler(settings, _parser, _logger, context, serviceType).Handle();
                 }
             }
         }

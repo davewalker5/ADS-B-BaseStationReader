@@ -10,7 +10,6 @@ using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.Entities.Lookup;
 
@@ -23,6 +22,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly TrackerApplicationSettings _settings;
         private readonly IEnumerable<string> _departureAirportCodes;
         private readonly IEnumerable<string> _arrivalAirportCodes;
+        private readonly ApiServiceType _serviceType;
         private IAircraftTracker _tracker = null;
         private IQueuedWriter _writer = null;
 
@@ -37,12 +37,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerLogger logger,
             TrackerApplicationSettings settings,
             IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+            IEnumerable<string> arrivalAirportCodes,
+            ApiServiceType serviceType)
         {
             _logger = logger;
             _settings = settings;
             _departureAirportCodes = departureAirportCodes;
             _arrivalAirportCodes = arrivalAirportCodes;
+            _serviceType = serviceType;
         }
 
         /// <summary>
@@ -108,9 +110,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var apiProperties = new ApiConfiguration()
                 {
                     DatabaseContext = context,
-                    AirlinesEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines).Url,
-                    AircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft).Url,
-                    FlightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights).Url,
+                    AirlinesEndpointUrl = _settings.ApiEndpoints.First(x =>
+                        x.EndpointType == ApiEndpointType.Airlines &&
+                        x.Service == _serviceType).Url,
+                    AircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft &&
+                        x.Service == _serviceType).Url,
+                    FlightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights &&
+                        x.Service == _serviceType).Url,
                     Key = _settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
                 };
 

@@ -28,21 +28,29 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.CreateSightings);
             Assert.AreEqual("AirLabs", settings.LiveApi);
-            Assert.AreEqual(ApiServiceType.AirLabs, settings.ApiServiceKeys[0].Service);
+            Assert.AreEqual("AeroDataBox", settings.HistoricalApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
 
-            var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines);
+            var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines && x.Service == ApiServiceType.AirLabs);
             Assert.AreEqual(ApiServiceType.AirLabs, airlinesEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/airlines", airlinesEndpoint.Url);
 
-            var aircraftEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft);
+            var aircraftEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ApiServiceType.AirLabs);
             Assert.AreEqual(ApiServiceType.AirLabs, aircraftEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/fleets", aircraftEndpoint.Url);
 
-            var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights);
+            var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == ApiServiceType.AirLabs);
             Assert.AreEqual(ApiServiceType.AirLabs, flightsEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/flights", flightsEndpoint.Url);
+
+            aircraftEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ApiServiceType.AeroDataBox);
+            Assert.AreEqual(ApiServiceType.AeroDataBox, aircraftEndpoint.Service);
+            Assert.AreEqual("https://aerodatabox.p.rapidapi.com/aircrafts", aircraftEndpoint.Url);
+
+            flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == ApiServiceType.AeroDataBox);
+            Assert.AreEqual(ApiServiceType.AeroDataBox, flightsEndpoint.Service);
+            Assert.AreEqual("https://aerodatabox.p.rapidapi.com/flights", flightsEndpoint.Url);
         }
 
         [TestMethod]
@@ -61,6 +69,15 @@ namespace BaseStationReader.Tests.Configuration
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
             Assert.AreEqual("Missing", settings.LiveApi);
+        }
+
+        [TestMethod]
+        public void OverrideHistoricalApiTest()
+        {
+            var args = new string[] { "--historical-api", "Missing" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
+            Assert.AreEqual("Missing", settings.HistoricalApi);
         }
 
         [TestMethod]
