@@ -79,7 +79,7 @@ namespace BaseStationReader.Lookup
                 }
 
                 // Lookup historical flight details and store the results
-                if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
+                if (_parser.IsPresent(CommandLineOptionType.HistoricalLookup))
                 {
                     var serviceType = ApiWrapperBuilder.GetServiceTypeFromString(settings.HistoricalApi);
                     var aircraftWriter = new TrackedAircraftWriter(context);

@@ -18,7 +18,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             string url,
             string key) : base(logger, client)
         {
-            _baseAddress = $"{url}/flights/icao24";
+            _baseAddress = $"{url}/icao24/";
             _key = key;
 
             // Extract the host from the url
@@ -34,7 +34,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         public async Task<Dictionary<ApiProperty, string>> LookupAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"/icao24/{address}");
+            var properties = await MakeApiRequestAsync($"{address}");
             return properties;
         }
 
@@ -47,17 +47,17 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         {
             Dictionary<ApiProperty, string> properties = [];
 
-            // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequestAsync(url, new Dictionary<string, string>()
+            try
             {
-                { "X-RapidAPI-Key", _key },
-                { "X-RapidAPI-Host", _host },
-            });
+                // Make a request for the data from the API
+                var url = $"{_baseAddress}{parameters}";
+                var node = await SendRequestAsync(url, new Dictionary<string, string>()
+                {
+                    { "X-RapidAPI-Key", _key },
+                    { "X-RapidAPI-Host", _host },
+                });
 
-            if (node != null)
-            {
-                try
+                if (node != null)
                 {
                     // Extract the delivery date and use it to determine year of manufacture and age
                     int? manufactured = GetYearOfManufacture(node);
@@ -78,13 +78,11 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                     // Log the properties dictionary
                     LogProperties("Aircraft", properties);
                 }
-                catch (Exception ex)
-                {
-                    var message = $"Error processing response: {ex.Message}";
-                    Logger.LogMessage(Severity.Error, message);
-                    Logger.LogException(ex);
-                    properties = [];
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMessage(Severity.Error, ex.Message);
+                Logger.LogException(ex);
             }
 
             // Check there are some non-empty values

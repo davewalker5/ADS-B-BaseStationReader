@@ -78,6 +78,8 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                 return null;
             }
 
+            _logger.LogMessage(Severity.Info, $"Looking up historical flights for aircraft with address '{address}'");
+
             // Use the API to look-up the flight
             var properties = await _flightsApi.LookupFlightsByAircraftAsync(address);
             if (properties != null)

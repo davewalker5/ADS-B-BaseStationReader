@@ -34,13 +34,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             Dictionary<ApiProperty, string> properties = null;
 
-            // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequestAsync(url);
-
-            if (node != null)
+            try
             {
-                try
+                // Make a request for the data from the API
+                var url = $"{_baseAddress}{parameters}";
+                var node = await SendRequestAsync(url);
+
+                if (node != null)
                 {
                     // Extract the response element from the JSON DOM
                     var apiResponse = node!["response"]![0];
@@ -59,14 +59,14 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
                     // Log the properties dictionary
                     LogProperties("Aircraft", properties);
+
                 }
-                catch (Exception ex)
-                {
-                    var message = $"Error processing response: {ex.Message}";
-                    Logger.LogMessage(Severity.Error, message);
-                    Logger.LogException(ex);
-                    properties = null;
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMessage(Severity.Error, ex.Message);
+                Logger.LogException(ex);
+                properties = null;
             }
 
             return properties;

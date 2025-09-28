@@ -44,27 +44,38 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <param name="departureAirports"></param>
         /// <param name="arrivalAirports"></param>
         /// <returns></returns>
-        public async Task LookupAsync(
+        public async Task<LookupResult> LookupAsync(
             string address,
             IEnumerable<string> departureAirports,
             IEnumerable<string> arrivalAirports,
             bool createSighting)
         {
+            Aircraft aircraft = null;
+            Sighting sighting = null;
+
             // Lookup the flight
-            var flight = await LookupAndStoreFlightAsync(address, departureAirports, arrivalAirports);
+            Flight flight = await LookupAndStoreFlightAsync(address, departureAirports, arrivalAirports);
             if (flight != null)
             {
                 // Lookup the aircraft, but only if the flight was found/returned. The flight
                 // could be filtered out, in which case we don't want to store any of the details.
                 // Note, also, that the flight may contain the aircraft model that can be used to
                 // fill in model and manufacturer details if the aircraft request doesn't include them
-                var aircraft = await LookupAndStoreAircraftAsync(address, flight.ModelICAO);
+                aircraft = await LookupAndStoreAircraftAsync(address, flight.ModelICAO);
                 if (createSighting && (aircraft != null))
                 {
                     // Save the relationship between the flight and the aircraft as a sighting on this date
-                    _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+                    sighting = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
                 }
             }
+
+            return new()
+            {
+                FlightId = flight?.Id,
+                AircraftId = aircraft?.Id,
+                SightingId = sighting?.Id,
+                CreateSighting = createSighting
+            };
         }
 
         /// <summary>

@@ -65,9 +65,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var url = $"{_baseAddress}{parameters}";
             var node = await SendRequestAsync(url);
 
-            if (node != null)
+            try
             {
-                try
+                if (node != null)
                 {
                     // Extract the response element from the JSON DOM as a JSON array
                     var apiResponse = node!["response"] as JsonArray;
@@ -80,14 +80,14 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                         var flightProperties = ExtractSingleFlight(flight);
                         properties.Add(flightProperties);
                     }
+
                 }
-                catch (Exception ex)
-                {
-                    var message = $"Error processing response: {ex.Message}";
-                    Logger.LogMessage(Severity.Error, message);
-                    Logger.LogException(ex);
-                    properties = [];
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogMessage(Severity.Error, ex.Message);
+                Logger.LogException(ex);
+                properties = [];
             }
 
             return properties;

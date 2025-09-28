@@ -32,6 +32,8 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public override async Task Handle()
         {
+            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
+
             // Extract the API configuration properties from the settings
             var apiProperties = new ApiConfiguration()
             {
@@ -51,7 +53,6 @@ namespace BaseStationReader.Lookup.Logic
                 wrapper.Initialise(Logger, client, apiProperties);
 
                 // Extract the lookup parameters from the command line
-                var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
                 var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
                 var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
@@ -60,7 +61,7 @@ namespace BaseStationReader.Lookup.Logic
                 foreach (var a in aircraft)
                 {
                     // Look this one up then set the timestamp so it won't be considered again
-                    await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+                    await wrapper.LookupAsync(a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
                     await _writer.SetLookupTimestamp(a.Id);
                 }
             }
