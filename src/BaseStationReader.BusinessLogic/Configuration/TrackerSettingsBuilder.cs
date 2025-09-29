@@ -1,5 +1,4 @@
-﻿using BaseStationReader.BusinessLogic.Api;
-using BaseStationReader.Entities.Config;
+﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;

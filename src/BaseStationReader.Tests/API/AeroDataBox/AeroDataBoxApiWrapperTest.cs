@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             _settings = new()
             {
                 ApiServiceKeys = [
-                    new ApiServiceKey() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"}
+                    new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"}
                 ],
                 ApiEndpoints = [
                     new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},

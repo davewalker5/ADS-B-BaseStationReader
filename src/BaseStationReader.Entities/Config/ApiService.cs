@@ -3,7 +3,7 @@
 namespace BaseStationReader.Entities.Config
 {
     [ExcludeFromCodeCoverage]
-    public class ApiServiceKey
+    public class ApiService
     {
         public ApiServiceType Service { get; set; }
         public string Key { get; set; } = "";

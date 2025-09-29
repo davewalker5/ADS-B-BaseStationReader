@@ -56,7 +56,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             _settings = new()
             {
                 ApiServiceKeys = [
-                    new ApiServiceKey() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
+                    new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
                 ],
                 ApiEndpoints = [
                     new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},

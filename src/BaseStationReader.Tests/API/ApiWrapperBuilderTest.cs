@@ -19,8 +19,8 @@ namespace BaseStationReader.Tests.API
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServiceKeys = [
-                new ApiServiceKey() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"},
-                new ApiServiceKey() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
+                new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"},
+                new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
             ],
             ApiEndpoints = [
                 new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
