@@ -5,6 +5,7 @@
         Airlines,
         Aircraft,
         ActiveFlights,
-        HistoricalFlights
+        HistoricalFlights,
+        METAR
     }
 }
