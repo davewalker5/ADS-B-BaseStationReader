@@ -38,27 +38,11 @@ namespace BaseStationReader.Lookup.Logic
                 return;
             }
 
-            // Extract the API configuration properties from the settings
-            var apiProperties = new ApiConfiguration()
-            {
-                DatabaseContext = Context,
-                AirlinesEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.Airlines && x.Service == _serviceType).Url,
-                AircraftEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.Aircraft && x.Service == _serviceType).Url,
-                FlightsEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == _serviceType).Url,
-                Key = Settings.ApiServiceKeys.First(x => x.Service == _serviceType).Key
-            };
-
             // Configure the API wrapper
             var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(_serviceType);
+            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
             if (wrapper != null)
             {
-                // Initialise the wrapper
-                wrapper.Initialise(Logger, client, apiProperties);
-
                 // Perform the lookup
                 var flights = await wrapper.LookupFlightsInBoundingBox(
                     Settings.ReceiverLatitude.Value,
@@ -67,10 +51,6 @@ namespace BaseStationReader.Lookup.Logic
 
                 // Export the data
                 new FlightExporter().Export(flights, filePath);
-            }
-            else
-            {
-                Logger.LogMessage(Severity.Error, $"Live API type is not specified or is not supported");
             }
         }
     }

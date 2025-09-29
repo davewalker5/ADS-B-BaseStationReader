@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Data;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
@@ -16,15 +17,59 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <param name="logger"></param>
         /// <param name="client"></param>
         /// <param name="apiConfiguration"></param>
-        public void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration)
+        public bool Initialise(
+            ITrackerLogger logger,
+            ITrackerHttpClient client,
+            object context,
+            ExternalApiSettings settings)
         {
-            // Call the base class initialisation method
-            base.Initialise(logger, client, apiConfiguration.DatabaseContext as BaseStationReaderDbContext);
+            // Log the configuration properties
+            logger.LogApiConfiguration(settings);
 
-            // Construct the API instances
-            _airlinesApi = new AirLabsAirlinesApi(logger, client, apiConfiguration.AirlinesEndpointUrl, apiConfiguration.Key);
-            _aircraftApi = new AirLabsAircraftApi(logger, client, apiConfiguration.AircraftEndpointUrl, apiConfiguration.Key);
-            _flightsApi = new AirLabsActiveFlightApi(logger, client, apiConfiguration.FlightsEndpointUrl, apiConfiguration.Key);
+            // Cast the database context to the expected type
+            if (context is not BaseStationReaderDbContext dbContext)
+            {
+                logger.LogMessage(Severity.Error, $"Invalid database context object");
+                return false;
+            }
+
+            // Call the base class initialisation method
+            base.Initialise(logger, client, dbContext);
+
+            // Get the API configuration properties
+            var key = settings.ApiServiceKeys.FirstOrDefault(x => x.Service == ApiServiceType.AirLabs)?.Key;
+
+            var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
+                x.EndpointType == ApiEndpointType.Aircraft &&
+                x.Service == ApiServiceType.AirLabs)?.Url;
+
+            var airlinesEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
+                x.EndpointType == ApiEndpointType.Airlines &&
+                x.Service == ApiServiceType.AirLabs)?.Url;
+
+            var flightsEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
+                x.EndpointType == ApiEndpointType.ActiveFlights &&
+                x.Service == ApiServiceType.AirLabs)?.Url;
+
+            // For the configuration to be valid, we need the endpoint URLs and the key
+            bool valid = !string.IsNullOrEmpty(key) &&
+                !string.IsNullOrEmpty(aircraftEndpointUrl) &&
+                !string.IsNullOrEmpty(airlinesEndpointUrl) &&
+                !string.IsNullOrEmpty(flightsEndpointUrl);
+
+            if (valid)
+            {
+                // Construct the API instances
+                _airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesEndpointUrl, key);
+                _aircraftApi = new AirLabsAircraftApi(logger, client, aircraftEndpointUrl, key);
+                _flightsApi = new AirLabsActiveFlightApi(logger, client, flightsEndpointUrl, key);
+            }
+            else
+            {
+                logger.LogMessage(Severity.Error, $"Invalid API configuration - missing endpoint URL(s) or key");
+            }
+
+            return valid;
         }
 
         /// <summary>

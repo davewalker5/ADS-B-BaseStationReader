@@ -1,6 +1,7 @@
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
@@ -19,19 +20,59 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="client"></param>
-        /// <param name="apiConfiguration"></param>
-        public void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration)
+        /// <param name="context"></param>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public bool Initialise(
+            ITrackerLogger logger,
+            ITrackerHttpClient client,
+            object context,
+            ExternalApiSettings settings)
         {
+            // Log the configuration properties
+            logger.LogApiConfiguration(settings);
+
+            // Cast the database context to the expected type
+            if (context is not BaseStationReaderDbContext dbContext)
+            {
+                logger.LogMessage(Severity.Error, $"Invalid database context object");
+                return false;
+            }
+
             // Call the base class initialisation method
-            var context = apiConfiguration.DatabaseContext as BaseStationReaderDbContext;
-            base.Initialise(logger, client, context);
+            base.Initialise(logger, client, dbContext);
 
-            // Construct the API instances
-            _aircraftApi = new AeroDataBoxAircraftApi(logger, client, apiConfiguration.AircraftEndpointUrl, apiConfiguration.Key);
-            _flightsApi = new AeroDataBoxHistoricalFlightApi(logger, client, apiConfiguration.FlightsEndpointUrl, apiConfiguration.Key);
+            // Get the API configuration properties
+            var key = settings.ApiServiceKeys.FirstOrDefault(x => x.Service == ApiServiceType.AeroDataBox)?.Key;
 
-            // Construct the tracked aircraft manager
-            _trackedAircraftWriter = new TrackedAircraftWriter(context);
+            var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
+                x.EndpointType == ApiEndpointType.Aircraft &&
+                x.Service == ApiServiceType.AeroDataBox)?.Url;
+
+            var flightsEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
+                x.EndpointType == ApiEndpointType.HistoricalFlights &&
+                x.Service == ApiServiceType.AeroDataBox)?.Url;
+
+            // For the configuration to be valid, we need the endpoint URLs and the key
+            bool valid = !string.IsNullOrEmpty(key) &&
+                !string.IsNullOrEmpty(aircraftEndpointUrl) &&
+                !string.IsNullOrEmpty(flightsEndpointUrl);
+
+            if (valid)
+            {
+                // Construct the API instances
+                _aircraftApi = new AeroDataBoxAircraftApi(logger, client, aircraftEndpointUrl, key);
+                _flightsApi = new AeroDataBoxHistoricalFlightApi(logger, client, flightsEndpointUrl, key);
+
+                // Construct the tracked aircraft manager
+                _trackedAircraftWriter = new TrackedAircraftWriter(dbContext);
+            }
+            else
+            {
+                _logger.LogMessage(Severity.Error, $"Invalid API configuration - missing endpoint URL(s) or key");
+            }
+
+            return valid;
         }
 
         /// <summary>

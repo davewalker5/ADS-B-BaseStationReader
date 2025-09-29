@@ -1,10 +1,15 @@
-﻿using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Entities.Interfaces
 {
     public interface IApiWrapper
     {
-        void Initialise(ITrackerLogger logger, ITrackerHttpClient client, ApiConfiguration apiConfiguration);
+        bool Initialise(
+                    ITrackerLogger logger,
+                    ITrackerHttpClient client,
+                    object context,
+                    ExternalApiSettings settings);
 
         Task<LookupResult> LookupAsync(
             string address,

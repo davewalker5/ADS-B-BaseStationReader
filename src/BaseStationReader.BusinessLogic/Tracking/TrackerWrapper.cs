@@ -97,7 +97,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 // Configure the external API wrapper
                 var client = TrackerHttpClient.Instance;
-                var apiWrapper = ApiWrapperBuilder.ConfigureApiWrapper(_logger, _settings, context, client, _settings.LiveApi);
+                var apiWrapper = ApiWrapperBuilder.GetInstance(_logger, _settings, context, client, _settings.LiveApi);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);

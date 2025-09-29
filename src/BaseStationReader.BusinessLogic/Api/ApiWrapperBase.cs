@@ -24,7 +24,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <param name="logger"></param>
         /// <param name="client"></param>
         /// <param name="apiConfiguration"></param>
-        public virtual void Initialise(ITrackerLogger logger, ITrackerHttpClient client, BaseStationReaderDbContext context)
+        protected void Initialise(ITrackerLogger logger, ITrackerHttpClient client, BaseStationReaderDbContext context)
         {
             _logger = logger;
 

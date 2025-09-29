@@ -4,7 +4,6 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -28,26 +27,13 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public override async Task Handle()
         {
-            // Extract the API configuration properties from the settings
-            var apiProperties = new ApiConfiguration()
-            {
-                DatabaseContext = Context,
-                AirlinesEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.Airlines && x.Service == _serviceType).Url,
-                AircraftEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.Aircraft && x.Service == _serviceType).Url,
-                FlightsEndpointUrl = Settings.ApiEndpoints.First(x =>
-                x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == _serviceType).Url,
-                Key = Settings.ApiServiceKeys.First(x => x.Service == _serviceType).Key
-            };
+            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
             // Configure the API wrapper
             var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(_serviceType);
+            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
             if (wrapper != null)
             {
-                wrapper.Initialise(Logger, client, apiProperties);
-
                 // Extract the lookup parameters from the command line
                 var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
                 var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
@@ -55,10 +41,6 @@ namespace BaseStationReader.Lookup.Logic
 
                 // Perform the lookup
                 await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
-            }
-            else
-            {
-                Logger.LogMessage(Severity.Error, $"Live API type is not specified or is not supported");
             }
         }
     }

@@ -4,7 +4,6 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Api
 {
@@ -20,16 +19,34 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <summary>
         /// Get an instance of an API wrapper given the required service type
         /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="settings"></param>
+        /// <param name="context"></param>
+        /// <param name="client"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static IApiWrapper GetInstance(ApiServiceType type)
+        public static IApiWrapper GetInstance(
+            ITrackerLogger logger,
+            ExternalApiSettings settings,
+            BaseStationReaderDbContext context,
+            ITrackerHttpClient client,
+            ApiServiceType type)
         {
-            return type switch
+            IApiWrapper wrapper = type switch
             {
                 ApiServiceType.AirLabs => new AirLabsApiWrapper(),
                 ApiServiceType.AeroDataBox => new AeroDataBoxApiWrapper(),
                 _ => null,
             };
+
+            var valid = wrapper?.Initialise(logger, client, context, settings);
+            if (valid != true)
+            {
+                logger.LogMessage(Severity.Warning, $"API type {type} not configured or unsupported");
+                wrapper = null;
+            }
+
+            return wrapper;
         }
 
         /// <summary>
@@ -37,8 +54,13 @@ namespace BaseStationReader.BusinessLogic.Api
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static IApiWrapper GetInstance(string type)
-            => GetInstance(GetServiceTypeFromString(type));
+        public static IApiWrapper GetInstance(
+            ITrackerLogger logger,
+            ExternalApiSettings settings,
+            BaseStationReaderDbContext context,
+            ITrackerHttpClient client,
+            string type)
+            => GetInstance(logger, settings, context, client, GetServiceTypeFromString(type));
 
         /// <summary>
         /// Return an API service type given a string representation of a service type that may or may
@@ -48,87 +70,5 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <returns></returns>
         public static ApiServiceType GetServiceTypeFromString(string type)
             => !string.IsNullOrEmpty(type) && _lookup.ContainsKey(type) ? _lookup[type] : ApiServiceType.None;
-
-        /// <summary>
-        /// Construct an API configuration object from a set of API settings
-        /// </summary>
-        /// <param name="settings"></param>
-        /// <param name="context"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static ApiConfiguration BuildApiConfiguration(
-            ExternalApiSettings settings,
-            BaseStationReaderDbContext context,
-            ApiServiceType type)
-            => new()
-            {
-                DatabaseContext = context,
-                AirlinesEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                    x.EndpointType == ApiEndpointType.Airlines && x.Service == type).Url,
-                AircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft &&
-                    x.Service == type).Url,
-                FlightsEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.ActiveFlights &&
-                    x.Service == type).Url,
-                Key = settings.ApiServiceKeys.First(x => x.Service == type).Key
-            };
-
-        /// <summary>
-        /// Construct an API configuration object from a set of API settings
-        /// </summary>
-        /// <param name="settings"></param>
-        /// <param name="context"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static ApiConfiguration BuildApiConfiguration(
-            ExternalApiSettings settings,
-            BaseStationReaderDbContext context,
-            string type)
-            => BuildApiConfiguration(settings, context, GetServiceTypeFromString(type));
-
-        /// <summary>
-        /// Configure and return an API wrapper
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public static IApiWrapper ConfigureApiWrapper(
-            ITrackerLogger logger,
-            ExternalApiSettings settings,
-            BaseStationReaderDbContext context,
-            ITrackerHttpClient client,
-            ApiServiceType type)
-        {
-            // Build a configuration object
-            var config = BuildApiConfiguration(settings, context, type);
-
-            // Configure the API wrapper, if the configuration is valid
-            IApiWrapper apiWrapper = null;
-            if (config.IsValid)
-            {
-                apiWrapper = ApiWrapperBuilder.GetInstance(type);
-                apiWrapper.Initialise(logger, client, config);
-            }
-            else
-            {
-                logger.LogMessage(Severity.Warning, $"API type {type} not configured or unsupported");
-            }
-
-            return apiWrapper;
-        }
-
-        /// <summary>
-        /// Configure and return API wrapper
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="settings"></param>
-        /// <param name="context"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static IApiWrapper ConfigureApiWrapper(
-            ITrackerLogger logger,
-            ExternalApiSettings settings,
-            BaseStationReaderDbContext context,
-            ITrackerHttpClient client,
-            string type)
-            => ConfigureApiWrapper(logger, settings, context, client, GetServiceTypeFromString(type));
     }
 }

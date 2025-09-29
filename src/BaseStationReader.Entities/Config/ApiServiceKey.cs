@@ -7,5 +7,7 @@ namespace BaseStationReader.Entities.Config
     {
         public ApiServiceType Service { get; set; }
         public string Key { get; set; } = "";
+        public override string ToString()
+            => $"{Service} : Key = {Key}";
     }
 }
