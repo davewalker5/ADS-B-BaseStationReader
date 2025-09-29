@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json.Nodes;
 
 namespace BaseStationReader.BusinessLogic.Api
@@ -20,14 +21,19 @@ namespace BaseStationReader.BusinessLogic.Api
         }
 
         /// <summary>
-        /// Make a request to the specified URL and return the response properties as a JSON DOM
+        /// Make a GET request to the specified URL and return the response as a JSON string
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="type"></param>
         /// <param name="endpoint"></param>
+        /// <param name="headers"></param>
         /// <returns></returns>
-        protected async Task<JsonNode> SendRequestAsync(ITrackerLogger logger, ApiServiceType type, string endpoint)
-            => await SendRequestAsync(logger, type, endpoint, []);
+        protected async Task<JsonNode> GetAsync(
+            ITrackerLogger logger,
+            ApiServiceType type,
+            string endpoint,
+            Dictionary<string, string> headers)
+            => await SendRequestAsync(HttpMethod.Get, logger, type, endpoint, headers, null);
 
         /// <summary>
         /// Make a request to the specified URL and return the response properties as a JSON DOM
@@ -37,11 +43,13 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <param name="endpoint"></param>
         /// <param name="headers"></param>
         /// <returns></returns>
-        protected async Task<JsonNode> SendRequestAsync(
+        private async Task<JsonNode> SendRequestAsync(
+            HttpMethod method,
             ITrackerLogger logger,
             ApiServiceType type,
             string endpoint,
-            Dictionary<string, string> headers)
+            Dictionary<string, string> headers,
+            string payload)
         {
             JsonNode node = null;
 
@@ -55,6 +63,12 @@ namespace BaseStationReader.BusinessLogic.Api
                 {
                     Logger.LogMessage(Severity.Debug, $"Adding header {header.Key}: {header.Value}");
                     request.Headers.Add(header.Key, header.Value);
+                }
+
+                // If specified, set the body content
+                if (!string.IsNullOrEmpty(payload))
+                {
+                    request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
                 }
 
                 // Make a request for the data from the API
@@ -112,6 +126,20 @@ namespace BaseStationReader.BusinessLogic.Api
             {
                 // Log the fact that the properties dictionary is NULL
                 Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
+            }
+        }
+
+        /// <summary>
+        /// Log a set of debug messages, with prefix
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <param name="messages"></param>
+        [ExcludeFromCodeCoverage]
+        protected void LogMessages(string prefix, IEnumerable<string> messages)
+        {
+            foreach (var message in messages)
+            {
+                Logger.LogMessage(Severity.Debug, $"{prefix} : {message}");
             }
         }
     }
