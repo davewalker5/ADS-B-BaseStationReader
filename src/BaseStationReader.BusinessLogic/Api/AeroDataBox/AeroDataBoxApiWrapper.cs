@@ -11,6 +11,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
     public class AeroDataBoxApiWrapper: ApiWrapperBase, IApiWrapper
     {
+        private const ApiServiceType ServiceType = ApiServiceType.AeroDataBox;
 
         private IAircraftWriter _trackedAircraftWriter;
         private IHistoricalFlightApi _flightsApi;
@@ -43,23 +44,27 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             base.Initialise(logger, client, dbContext);
 
             // Get the API configuration properties
-            var key = settings.ApiServices.FirstOrDefault(x => x.Service == ApiServiceType.AeroDataBox)?.Key;
+            var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
+            var key = definition?.Key;
+            var rateLimit = definition?.RateLimit ?? 0;
 
             var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                x.EndpointType == ApiEndpointType.Aircraft &&
-                x.Service == ApiServiceType.AeroDataBox)?.Url;
+                x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
 
             var flightsEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                x.EndpointType == ApiEndpointType.HistoricalFlights &&
-                x.Service == ApiServiceType.AeroDataBox)?.Url;
+                x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == ServiceType)?.Url;
 
             // For the configuration to be valid, we need the endpoint URLs and the key
             bool valid = !string.IsNullOrEmpty(key) &&
                 !string.IsNullOrEmpty(aircraftEndpointUrl) &&
-                !string.IsNullOrEmpty(flightsEndpointUrl);
+                !string.IsNullOrEmpty(flightsEndpointUrl) &&
+                (rateLimit >= 0);
 
             if (valid)
             {
+                // Set the rate limit for this service on the HTTP client
+                client.SetRateLimits(ServiceType, rateLimit);
+
                 // Construct the API instances
                 _aircraftApi = new AeroDataBoxAircraftApi(logger, client, aircraftEndpointUrl, key);
                 _flightsApi = new AeroDataBoxHistoricalFlightApi(logger, client, flightsEndpointUrl, key);

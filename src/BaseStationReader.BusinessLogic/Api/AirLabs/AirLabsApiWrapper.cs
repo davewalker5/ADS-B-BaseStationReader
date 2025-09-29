@@ -8,6 +8,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
     public class AirLabsApiWrapper : ApiWrapperBase, IApiWrapper
     {
+        private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
+
         protected IAirlinesApi _airlinesApi;
         protected IActiveFlightApi _flightsApi;
 
@@ -37,28 +39,31 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             base.Initialise(logger, client, dbContext);
 
             // Get the API configuration properties
-            var key = settings.ApiServices.FirstOrDefault(x => x.Service == ApiServiceType.AirLabs)?.Key;
+            var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
+            var key = definition?.Key;
+            var rateLimit = definition?.RateLimit ?? 0;
 
             var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                x.EndpointType == ApiEndpointType.Aircraft &&
-                x.Service == ApiServiceType.AirLabs)?.Url;
+                x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
 
             var airlinesEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                x.EndpointType == ApiEndpointType.Airlines &&
-                x.Service == ApiServiceType.AirLabs)?.Url;
+                x.EndpointType == ApiEndpointType.Airlines && x.Service == ServiceType)?.Url;
 
             var flightsEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
-                x.EndpointType == ApiEndpointType.ActiveFlights &&
-                x.Service == ApiServiceType.AirLabs)?.Url;
+                x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == ServiceType)?.Url;
 
             // For the configuration to be valid, we need the endpoint URLs and the key
             bool valid = !string.IsNullOrEmpty(key) &&
                 !string.IsNullOrEmpty(aircraftEndpointUrl) &&
                 !string.IsNullOrEmpty(airlinesEndpointUrl) &&
-                !string.IsNullOrEmpty(flightsEndpointUrl);
+                !string.IsNullOrEmpty(flightsEndpointUrl) &&
+                (rateLimit >= 0);
 
             if (valid)
             {
+                // Set the rate limit for this service on the HTTP client
+                client.SetRateLimits(ServiceType, rateLimit);
+
                 // Construct the API instances
                 _airlinesApi = new AirLabsAirlinesApi(logger, client, airlinesEndpointUrl, key);
                 _aircraftApi = new AirLabsAircraftApi(logger, client, aircraftEndpointUrl, key);

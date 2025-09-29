@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 using System.Diagnostics.CodeAnalysis;
@@ -18,23 +19,29 @@ namespace BaseStationReader.BusinessLogic.Api
             _client = client;
         }
 
+        /// <summary>
+        /// Make a request to the specified URL and return the response properties as a JSON DOM
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="type"></param>
+        /// <param name="endpoint"></param>
+        /// <returns></returns>
+        protected async Task<JsonNode> SendRequestAsync(ITrackerLogger logger, ApiServiceType type, string endpoint)
+            => await SendRequestAsync(logger, type, endpoint, []);
 
         /// <summary>
         /// Make a request to the specified URL and return the response properties as a JSON DOM
         /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="type"></param>
         /// <param name="endpoint"></param>
         /// <param name="headers"></param>
         /// <returns></returns>
-        protected async Task<JsonNode> SendRequestAsync(string endpoint)
-            => await SendRequestAsync(endpoint, []);
-
-        /// <summary>
-        /// Make a request to the specified URL and return the response properties as a JSON DOM
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="headers"></param>
-        /// <returns></returns>
-        protected async Task<JsonNode> SendRequestAsync(string endpoint, Dictionary<string, string> headers)
+        protected async Task<JsonNode> SendRequestAsync(
+            ITrackerLogger logger,
+            ApiServiceType type,
+            string endpoint,
+            Dictionary<string, string> headers)
         {
             JsonNode node = null;
 
@@ -51,7 +58,7 @@ namespace BaseStationReader.BusinessLogic.Api
                 }
 
                 // Make a request for the data from the API
-                using (var response = await _client.SendAsync(request))
+                using (var response = await _client.SendAsync(logger, type, request))
                 {
                     // Check the request was successful
                     if (response.IsSuccessStatusCode)
