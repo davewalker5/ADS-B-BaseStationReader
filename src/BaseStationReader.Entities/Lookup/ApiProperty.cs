@@ -17,6 +17,7 @@
         FlightICAO,
         FlightNumber,
         ManufacturerName,
+        METAR,
         ModelIATA,
         ModelICAO,
         ModelName,

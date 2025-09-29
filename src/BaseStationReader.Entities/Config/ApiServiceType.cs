@@ -4,6 +4,7 @@
     {
         None,
         AeroDataBox,
-        AirLabs
+        AirLabs,
+        CheckWXApi
     }
 }

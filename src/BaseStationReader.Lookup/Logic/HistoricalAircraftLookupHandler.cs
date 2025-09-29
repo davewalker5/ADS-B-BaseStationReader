@@ -46,9 +46,12 @@ namespace BaseStationReader.Lookup.Logic
                 var aircraft = await _writer.ListAsync(x => x.LookupTimestamp == null);
                 foreach (var a in aircraft)
                 {
-                    // Look this one up then set the timestamp so it won't be considered again
-                    await wrapper.LookupAsync(a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
-                    await _writer.SetLookupTimestamp(a.Id);
+                    // Look this one up and, if successful, set the timestamp so it won't be considered again
+                    var result = await wrapper.LookupAsync(a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+                    if (result.IsSuccessful)
+                    {
+                        await _writer.SetLookupTimestamp(a.Id);
+                    }
                 }
             }
         }
