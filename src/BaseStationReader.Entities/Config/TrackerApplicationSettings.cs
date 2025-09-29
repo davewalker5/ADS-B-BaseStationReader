@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Config
 {
     [ExcludeFromCodeCoverage]
-    public class TrackerApplicationSettings
+    public class TrackerApplicationSettings : ExternalApiSettings
     {
         public Severity MinimumLogLevel { get; set; }
         public string Host { get; set; } = "";
@@ -31,8 +31,6 @@ namespace BaseStationReader.Entities.Config
         public int? MinimumTrackedAltitude { get; set; }
         public int? MaximumTrackedAltitude { get; set; }
         public bool TrackPosition { get; set; }
-        public List<ApiEndpoint> ApiEndpoints { get; set; } = [];
-        public List<ApiServiceKey> ApiServiceKeys { get; set; } = [];
         public List<TrackerColumn> Columns { get; set; } = [];
         public List<AircraftBehaviour> TrackedBehaviours { get; set; } = [];
     }
