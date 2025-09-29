@@ -4,9 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>BaseStationReader.Data</PackageId>
-    <PackageVersion>1.45.0.0</PackageVersion>
+    <PackageVersion>1.47.0.0</PackageVersion>
     <Authors>Dave Walker</Authors>
-    <Copyright>Copyright (c) 2023, 2024 Dave Walker</Copyright>
+    <Copyright>Copyright (c) 2023 - 2025 Dave Walker</Copyright>
     <Owners>Dave Walker</Owners>
     <Summary>Base Station Reader EF Core Database Layer</Summary>
     <PackageTags>BaseStationReader database</PackageTags>
@@ -16,7 +16,7 @@
     <PackageProjectUrl>https://github.com/davewalker5/ADS-B-BaseStationReader</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <ReleaseVersion>1.45.0.0</ReleaseVersion>
+    <ReleaseVersion>1.47.0.0</ReleaseVersion>
     <WarningsAsErrors>CS4014</WarningsAsErrors>
     <NoWarn>$(NoWarn);NU1900</NoWarn>
   </PropertyGroup>
