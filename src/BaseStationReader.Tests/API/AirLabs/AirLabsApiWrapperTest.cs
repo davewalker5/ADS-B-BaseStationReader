@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             // Create the API settings
             _settings = new()
             {
-                ApiServiceKeys = [
+                ApiServices = [
                     new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
                 ],
                 ApiEndpoints = [
@@ -83,7 +83,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void CannotInitialiseWithMissingKeyTest()
         {
-            _settings.ApiServiceKeys[0].Key = "";
+            _settings.ApiServices[0].Key = "";
             var valid = _wrapper.Initialise(_logger, _client, _context, _settings);
             Assert.IsFalse(valid);
         }

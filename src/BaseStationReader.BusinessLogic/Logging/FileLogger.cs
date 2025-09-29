@@ -115,7 +115,7 @@ namespace BaseStationReader.BusinessLogic.Logging
             // Check the logger is configured
             if (!_configured) return;
 
-            foreach (var service in settings.ApiServiceKeys)
+            foreach (var service in settings.ApiServices)
             {
                 LogMessage(Severity.Debug, service.ToString());
                 foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))

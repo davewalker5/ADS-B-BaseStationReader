@@ -18,7 +18,7 @@ namespace BaseStationReader.Tests.API
 
         private readonly ExternalApiSettings _settings = new()
         {
-            ApiServiceKeys = [
+            ApiServices = [
                 new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"},
                 new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
             ],

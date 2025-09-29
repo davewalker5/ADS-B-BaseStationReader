@@ -26,7 +26,7 @@ namespace BaseStationReader.Tests.Mocks
 
         public void LogApiConfiguration(ExternalApiSettings settings)
         {
-            foreach (var service in settings.ApiServiceKeys)
+            foreach (var service in settings.ApiServices)
             {
                 LogMessage(Severity.Debug, service.ToString());
                 foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))

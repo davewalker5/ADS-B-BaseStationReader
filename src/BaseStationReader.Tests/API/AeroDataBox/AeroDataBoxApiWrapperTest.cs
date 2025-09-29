@@ -56,7 +56,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             // Create the settings
             _settings = new()
             {
-                ApiServiceKeys = [
+                ApiServices = [
                     new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"}
                 ],
                 ApiEndpoints = [
@@ -92,7 +92,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         [TestMethod]
         public void CannotInitialiseWithMissingKeyTest()
         {
-            _settings.ApiServiceKeys[0].Key = "";
+            _settings.ApiServices[0].Key = "";
             var valid = _wrapper.Initialise(_logger, _client, _context, _settings);
             Assert.IsFalse(valid);
         }

@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             base.Initialise(logger, client, dbContext);
 
             // Get the API configuration properties
-            var key = settings.ApiServiceKeys.FirstOrDefault(x => x.Service == ApiServiceType.AirLabs)?.Key;
+            var key = settings.ApiServices.FirstOrDefault(x => x.Service == ApiServiceType.AirLabs)?.Key;
 
             var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
                 x.EndpointType == ApiEndpointType.Aircraft &&

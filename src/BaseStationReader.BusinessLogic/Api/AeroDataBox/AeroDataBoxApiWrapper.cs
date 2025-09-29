@@ -43,7 +43,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             base.Initialise(logger, client, dbContext);
 
             // Get the API configuration properties
-            var key = settings.ApiServiceKeys.FirstOrDefault(x => x.Service == ApiServiceType.AeroDataBox)?.Key;
+            var key = settings.ApiServices.FirstOrDefault(x => x.Service == ApiServiceType.AeroDataBox)?.Key;
 
             var aircraftEndpointUrl = settings.ApiEndpoints.FirstOrDefault(x =>
                 x.EndpointType == ApiEndpointType.Aircraft &&
