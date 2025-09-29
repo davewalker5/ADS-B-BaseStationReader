@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using System.Net;
 
 namespace BaseStationReader.Tests.Mocks
@@ -29,12 +30,24 @@ namespace BaseStationReader.Tests.Mocks
         }
 
         /// <summary>
+        /// Set the rate limit for a given service
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="limit"></param>
+        public void SetRateLimits(ApiServiceType type, int limit)
+        {
+            
+        }
+
+        /// <summary>
         /// Construct and return the next response
         /// </summary>
-        /// <param name="_"></param>
+        /// <param name="logger"></param>
+        /// <param name="type"></param>
+        /// <param name="message"></param>
         /// <returns></returns>
 #pragma warning disable CS1998
-        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage _)
+        public async Task<HttpResponseMessage> SendAsync(ITrackerLogger logger, ApiServiceType type, HttpRequestMessage message)
         {
             // De-queue the next message
             var content = _responses.Dequeue();

@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -21,6 +22,18 @@ namespace BaseStationReader.Tests.Mocks
         {
             LogMessage(Severity.Error, ex.Message);
             LogMessage(Severity.Error, ex.ToString());
+        }
+
+        public void LogApiConfiguration(ExternalApiSettings settings)
+        {
+            foreach (var service in settings.ApiServices)
+            {
+                LogMessage(Severity.Debug, service.ToString());
+                foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
+                {
+                    LogMessage(Severity.Debug, endpoint.ToString());
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Entities.Interfaces
 {
@@ -7,5 +8,6 @@ namespace BaseStationReader.Entities.Interfaces
         void Initialise(string logFile, Severity minimumSeverityToLog);
         void LogMessage(Severity severity, string message);
         void LogException(Exception ex);
+        void LogApiConfiguration(ExternalApiSettings settings);
     }
 }

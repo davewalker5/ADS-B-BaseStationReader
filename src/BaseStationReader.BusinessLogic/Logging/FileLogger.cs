@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using Serilog;
 using Serilog.Core;
@@ -69,11 +70,8 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="message"></param>
         public void LogMessage(Severity severity, string message)
         {
-            // Check the logger's been configured. If not, break out now
-            if (!_configured)
-            {
-                return;
-            }
+            // Check the logger is configured
+            if (!_configured) return;
 
             // Log the message
             switch (severity)
@@ -101,11 +99,29 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="ex"></param>
         public void LogException(Exception ex)
         {
-            // Check the logger's been configured and, if so, log the exception message and stack trace
-            if (_configured)
+            // Check the logger is configured
+            if (!_configured) return;
+
+            Log.Error(ex.Message);
+            Log.Error(ex.ToString());
+        }
+
+        /// <summary>
+        /// Log external API configuration details
+        /// </summary>
+        /// <param name=""></param>
+        public void LogApiConfiguration(ExternalApiSettings settings)
+        {
+            // Check the logger is configured
+            if (!_configured) return;
+
+            foreach (var service in settings.ApiServices)
             {
-                Log.Error(ex.Message);
-                Log.Error(ex.ToString());
+                LogMessage(Severity.Debug, service.ToString());
+                foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
+                {
+                    LogMessage(Severity.Debug, endpoint.ToString());
+                }
             }
         }
     }

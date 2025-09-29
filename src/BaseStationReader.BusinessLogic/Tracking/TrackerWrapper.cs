@@ -11,7 +11,6 @@ using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api;
-using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -59,20 +58,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 { MessageType.MSG, new MsgMessageParser() }
             };
 
-            // Set up a distance calculator, if the receiver's latitude and longitude have been supplied
-            IDistanceCalculator distanceCalculator = null;
-            if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
-            {
-                distanceCalculator = new HaversineCalculator
-                {
-                    ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
-                    ReferenceLongitude = _settings.ReceiverLongitude ?? 0
-                };
-            }
-
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
             var assessor = new SimpleAircraftBehaviourAssessor();
+            var distanceCalculator = ConfigureDistanceCalculator();
             var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
 
             var notificationSender = new NotificationSender(
@@ -106,34 +95,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var positionWriter = new PositionWriter(context);
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
 
-                // Extract the endpoint URLs and API key from the application settings
-                var apiProperties = new ApiConfiguration()
-                {
-                    DatabaseContext = context,
-                    AirlinesEndpointUrl = _settings.ApiEndpoints.First(x =>
-                        x.EndpointType == ApiEndpointType.Airlines &&
-                        x.Service == _serviceType).Url,
-                    AircraftEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft &&
-                        x.Service == _serviceType).Url,
-                    FlightsEndpointUrl = _settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights &&
-                        x.Service == _serviceType).Url,
-                    Key = _settings.ApiServiceKeys.First(x => x.Service == ApiServiceType.AirLabs).Key
-                };
-
-                // Configure external API lookup
+                // Configure the external API wrapper
                 var client = TrackerHttpClient.Instance;
-                var apiWrapper = ApiWrapperBuilder.GetInstance(_settings.LiveApi);
-                if (apiWrapper != null)
-                {
-                    apiWrapper.Initialise(_logger, client, apiProperties);
-                }
-                else
-                {
-                    _logger.LogMessage(Severity.Warning, "Live API type not specified or unsupported");
-                }
+                var apiWrapper = ApiWrapperBuilder.GetInstance(_logger, _settings, context, client, _settings.LiveApi);
 
                 // Configure the queued writer
-                    var writerTimer = new TrackerTimer(_settings.WriterInterval);
+                var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(
                     aircraftWriter,
                     positionWriter,
@@ -170,6 +137,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             => _tracker!.Stop();
 
         /// <summary>
+        /// Set up a distance calculator, if the receiver co-ordinates have been specified
+        /// </summary>
+        /// <returns></returns>
+        private HaversineCalculator ConfigureDistanceCalculator()
+            => ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null)) ?
+                new HaversineCalculator
+                {
+                    ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
+                    ReferenceLongitude = _settings.ReceiverLongitude ?? 0
+                } : null;
+
+        /// <summary>
         /// Handle the event raised when a new aircraft is detected
         /// </summary>
         /// <param name="sender"></param>
@@ -192,10 +171,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 }
 
                 if (e.Position != null)
-                    {
-                        _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
-                        _writer.Push(e.Position);
-                    }
+                {
+                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                    _writer.Push(e.Position);
+                }
             }
 
             // Forward the event to subscribers

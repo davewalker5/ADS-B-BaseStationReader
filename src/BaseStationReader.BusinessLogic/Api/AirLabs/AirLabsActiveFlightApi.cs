@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using BaseStationReader.BusinessLogic.Geometry;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Geometry;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
@@ -63,7 +64,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
-            var node = await SendRequestAsync(url);
+            var node = await SendRequestAsync(Logger, ApiServiceType.AirLabs, url);
 
             try
             {

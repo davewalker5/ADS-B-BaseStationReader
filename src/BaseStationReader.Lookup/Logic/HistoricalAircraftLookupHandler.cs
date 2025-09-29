@@ -5,7 +5,6 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -34,24 +33,11 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Extract the API configuration properties from the settings
-            var apiProperties = new ApiConfiguration()
-            {
-                DatabaseContext = Context,
-                AircraftEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.Aircraft && x.Service == _serviceType).Url,
-                FlightsEndpointUrl = Settings.ApiEndpoints.First(x =>
-                    x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == _serviceType).Url,
-                Key = Settings.ApiServiceKeys.First(x => x.Service == _serviceType).Key
-            };
-
             // Configure the API wrapper
             var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(_serviceType);
+            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
             if (wrapper != null)
             {
-                wrapper.Initialise(Logger, client, apiProperties);
-
                 // Extract the lookup parameters from the command line
                 var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
                 var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
@@ -64,10 +50,6 @@ namespace BaseStationReader.Lookup.Logic
                     await wrapper.LookupAsync(a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
                     await _writer.SetLookupTimestamp(a.Id);
                 }
-            }
-            else
-            {
-                Logger.LogMessage(Severity.Error, $"Historical API type is not specified or is not supported");
             }
         }
     }

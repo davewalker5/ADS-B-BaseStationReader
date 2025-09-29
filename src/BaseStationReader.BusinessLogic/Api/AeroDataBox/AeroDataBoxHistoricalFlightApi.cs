@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
@@ -50,7 +51,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             {
                 // Make a request for the data from the API
                 var url = $"{_baseAddress}{parameters}";
-                var node = await SendRequestAsync(url, new Dictionary<string, string>()
+                var node = await SendRequestAsync(Logger, ApiServiceType.AeroDataBox, url, new Dictionary<string, string>()
                 {
                     { "X-RapidAPI-Key", _key },
                     { "X-RapidAPI-Host", _host },

@@ -1,7 +1,10 @@
-﻿namespace BaseStationReader.Entities.Interfaces
+﻿using BaseStationReader.Entities.Config;
+
+namespace BaseStationReader.Entities.Interfaces
 {
     public interface ITrackerHttpClient
     {
-        Task<HttpResponseMessage> SendAsync(HttpRequestMessage request);
+        void SetRateLimits(ApiServiceType type, int limit);
+        Task<HttpResponseMessage> SendAsync(ITrackerLogger logger, ApiServiceType type, HttpRequestMessage request);
     }
 }

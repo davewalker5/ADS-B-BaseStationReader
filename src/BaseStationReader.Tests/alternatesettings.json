@@ -128,7 +128,7 @@
         "Url": "https://airlabs.co/api/v9/flights"
       }
     ],
-    "ApiServiceKeys": [
+    "ApiServices": [
       {
         "Service": "AirLabs",
         "Key": ""
