@@ -31,6 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Interfaces\BaseStationReader.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 {

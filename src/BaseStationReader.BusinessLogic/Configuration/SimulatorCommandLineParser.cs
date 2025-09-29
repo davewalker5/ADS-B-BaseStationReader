@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Config;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {

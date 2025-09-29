@@ -1,7 +1,7 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.BusinessLogic.Api.AeroDatabox;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {

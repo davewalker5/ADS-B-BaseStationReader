@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Terminal
 {

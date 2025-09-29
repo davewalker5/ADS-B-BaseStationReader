@@ -1,9 +1,9 @@
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Data;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {

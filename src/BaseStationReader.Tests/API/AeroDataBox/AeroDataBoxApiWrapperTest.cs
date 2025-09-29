@@ -3,7 +3,8 @@ using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
@@ -47,7 +48,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         private IModelManager _modelManager;
         private IManufacturerManager _manufacturerManager;
         private ISightingManager _sightingManager;
-        private IAircraftWriter _aircraftWriter;
+        private ITrackedAircraftWriter _aircraftWriter;
         private readonly int _aircraftAge = DateTime.Today.Year - AircraftManufactured;
 
         [TestInitialize]

@@ -2,10 +2,12 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
@@ -13,7 +15,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
     {
         private const ApiServiceType ServiceType = ApiServiceType.AeroDataBox;
 
-        private IAircraftWriter _trackedAircraftWriter;
+        private ITrackedAircraftWriter _trackedAircraftWriter;
         private IHistoricalFlightApi _flightsApi;
 
         /// <summary>

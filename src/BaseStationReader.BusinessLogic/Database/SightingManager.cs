@@ -1,8 +1,8 @@
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Lookup;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {

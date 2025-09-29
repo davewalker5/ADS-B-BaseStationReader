@@ -1,10 +1,10 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using BaseStationReader.Tests.Mocks;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
 {

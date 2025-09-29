@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.Tracking;
 using System.Diagnostics.CodeAnalysis;
 using System.Timers;
 

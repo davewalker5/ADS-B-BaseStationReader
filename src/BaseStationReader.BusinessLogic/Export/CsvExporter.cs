@@ -1,6 +1,6 @@
 using System.Text;
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.DataExchange;
 
 namespace BaseStationReader.BusinessLogic.Export
 {

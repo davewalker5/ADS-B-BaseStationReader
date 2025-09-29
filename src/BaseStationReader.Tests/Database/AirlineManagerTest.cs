@@ -1,6 +1,6 @@
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
 {

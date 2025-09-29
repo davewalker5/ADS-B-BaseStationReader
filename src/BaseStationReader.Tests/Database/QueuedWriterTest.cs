@@ -1,12 +1,12 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.BusinessLogic;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests.Database
         private const string Squawk = "7710";
 
         private BaseStationReaderDbContext _context = null;
-        private IAircraftWriter _aircraftWriter = null;
+        private ITrackedAircraftWriter _aircraftWriter = null;
         private IPositionWriter _positionWriter = null;
         private IAircraftLockManager _aircraftLocker = null;
         private QueuedWriter _writer = null;

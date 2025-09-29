@@ -1,16 +1,19 @@
 ﻿using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
     public class QueuedWriter : IQueuedWriter
     {
-        private readonly IAircraftWriter _aircraftWriter;
+        private readonly ITrackedAircraftWriter _aircraftWriter;
         private readonly IPositionWriter _positionWriter;
         private readonly IAircraftLockManager _locker;
         private readonly IApiWrapper _apiWrapper;
@@ -25,7 +28,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public event EventHandler<BatchWrittenEventArgs> BatchWritten;
 
         public QueuedWriter(
-            IAircraftWriter aircraftWriter,
+            ITrackedAircraftWriter aircraftWriter,
             IPositionWriter positionWriter,
             IAircraftLockManager locker,
             IApiWrapper apiWrapper,

@@ -1,8 +1,9 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api
 {

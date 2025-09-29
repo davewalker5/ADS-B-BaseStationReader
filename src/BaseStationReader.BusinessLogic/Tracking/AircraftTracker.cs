@@ -1,7 +1,8 @@
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Messages;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {

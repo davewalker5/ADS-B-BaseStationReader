@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.Tests.Mocks

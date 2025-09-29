@@ -1,9 +1,10 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {

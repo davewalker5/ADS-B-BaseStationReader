@@ -2,8 +2,9 @@ using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api
 {

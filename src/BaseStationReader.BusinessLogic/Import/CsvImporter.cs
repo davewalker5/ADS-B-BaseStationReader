@@ -1,9 +1,10 @@
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using BaseStationReader.Interfaces.DataExchange;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {

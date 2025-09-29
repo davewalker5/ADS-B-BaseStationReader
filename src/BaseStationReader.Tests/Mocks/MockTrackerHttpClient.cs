@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Api;
 using System.Net;
 
 namespace BaseStationReader.Tests.Mocks

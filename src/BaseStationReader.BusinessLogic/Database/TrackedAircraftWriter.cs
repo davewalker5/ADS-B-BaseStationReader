@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class TrackedAircraftWriter : IAircraftWriter
+    public class TrackedAircraftWriter : ITrackedAircraftWriter
     {
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)

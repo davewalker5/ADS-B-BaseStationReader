@@ -1,8 +1,9 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {

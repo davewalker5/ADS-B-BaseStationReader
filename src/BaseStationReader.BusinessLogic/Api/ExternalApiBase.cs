@@ -1,10 +1,11 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Lookup;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Nodes;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api
 {

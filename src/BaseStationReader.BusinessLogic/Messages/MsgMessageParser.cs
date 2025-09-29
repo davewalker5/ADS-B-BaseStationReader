@@ -1,4 +1,4 @@
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Entities.Messages;
 
 namespace BaseStationReader.BusinessLogic.Messages
