@@ -1,8 +1,10 @@
 using System.Reflection;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Geometry;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {

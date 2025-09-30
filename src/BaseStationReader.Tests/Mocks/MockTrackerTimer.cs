@@ -1,5 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using System.Timers;
+﻿using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.Tests.Mocks
 {

@@ -1,6 +1,7 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.Simulator;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {

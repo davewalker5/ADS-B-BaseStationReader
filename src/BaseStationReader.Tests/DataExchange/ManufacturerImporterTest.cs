@@ -1,7 +1,8 @@
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.DataExchange;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.DataExchange

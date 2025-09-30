@@ -1,11 +1,13 @@
 ﻿using BaseStationReader.BusinessLogic.Geometry;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Simulator;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {

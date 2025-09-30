@@ -1,7 +1,8 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.BusinessLogic.Api.AeroDatabox;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -19,12 +20,22 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         private MockTrackerHttpClient _client = null;
         private IAircraftApi _api = null;
 
+        private readonly ExternalApiSettings _settings = new()
+        {
+            ApiServices = [
+                new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "an-api-key"}
+            ],
+            ApiEndpoints = [
+                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"}
+            ]
+        };
+
         [TestInitialize]
         public void Initialise()
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxAircraftApi(logger, _client, "https://https://some.host.com", "");
+            _api = new AeroDataBoxAircraftApi(logger, _client, _settings);
         }
 
         [TestMethod]

@@ -1,9 +1,8 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Terminal.Interfaces;
 using Spectre.Console;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Terminal.Logic
 {

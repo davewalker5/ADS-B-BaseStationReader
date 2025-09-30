@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.Geometry;
 
 namespace BaseStationReader.BusinessLogic.Geometry
 {

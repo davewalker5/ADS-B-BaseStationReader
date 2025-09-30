@@ -1,10 +1,13 @@
 using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Simulator;
 using BaseStationReader.BusinessLogic.Tracking;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Tests.Simulator;
+using BaseStationReader.Interfaces.Geometry;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Simulator;
 
 namespace BaseStationReader.Tests.Tracking
 {

@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 

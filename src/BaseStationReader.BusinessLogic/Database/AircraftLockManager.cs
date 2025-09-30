@@ -1,14 +1,15 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Tracking;
+﻿using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
     public class AircraftLockManager : IAircraftLockManager
     {
-        private readonly IAircraftWriter _writer;
+        private readonly ITrackedAircraftWriter _writer;
         private readonly int _timeToLock;
 
-        public AircraftLockManager(IAircraftWriter writer, int timeToLockMs)
+        public AircraftLockManager(ITrackedAircraftWriter writer, int timeToLockMs)
         {
             _writer = writer;
             _timeToLock = timeToLockMs;

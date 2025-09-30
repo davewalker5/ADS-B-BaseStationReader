@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Attributes;
 
-namespace BaseStationReader.Entities.Lookup
+namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
     public class ExportableFlight

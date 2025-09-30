@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
@@ -8,7 +8,8 @@ using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Simulator.Logic;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Simulator;
 
 namespace BaseStationReader.Simulator
 {

@@ -1,19 +1,24 @@
 ﻿using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Entities.Config;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
     public class QueuedWriter : IQueuedWriter
     {
-        private readonly IAircraftWriter _aircraftWriter;
+        private readonly ITrackedAircraftWriter _aircraftWriter;
         private readonly IPositionWriter _positionWriter;
         private readonly IAircraftLockManager _locker;
-        private readonly IApiWrapper _apiWrapper;
+        private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
@@ -25,10 +30,10 @@ namespace BaseStationReader.BusinessLogic.Database
         public event EventHandler<BatchWrittenEventArgs> BatchWritten;
 
         public QueuedWriter(
-            IAircraftWriter aircraftWriter,
+            ITrackedAircraftWriter aircraftWriter,
             IPositionWriter positionWriter,
             IAircraftLockManager locker,
-            IApiWrapper apiWrapper,
+            IExternalApiWrapper apiWrapper,
             ITrackerLogger logger,
             ITrackerTimer timer,
             IEnumerable<string> departureAirportCodes,
@@ -243,6 +248,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
         /// <returns></returns>
+        [ExcludeFromCodeCoverage]
         private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
         {
             _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an API lookup request");
@@ -266,8 +272,8 @@ namespace BaseStationReader.BusinessLogic.Database
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
                     if (_apiWrapper != null)
                     {
-                        var result = await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-                        if (result.IsSuccessful)
+                        var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+                        if (result)
                         {
                             _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");
                             await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);

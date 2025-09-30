@@ -1,9 +1,9 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {

@@ -1,6 +1,6 @@
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Interfaces.DataExchange;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Export
 {

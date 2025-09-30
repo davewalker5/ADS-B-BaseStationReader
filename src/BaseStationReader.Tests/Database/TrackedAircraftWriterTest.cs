@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Diagnostics.CodeAnalysis;
@@ -24,7 +24,7 @@ namespace BaseStationReader.Tests.Database
         private readonly DateTime FirstSeen = DateTime.ParseExact("2023-08-22 17:51:59.551", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
-        private IAircraftWriter _writer = null;
+        private ITrackedAircraftWriter _writer = null;
 
         [TestInitialize]
         public void TestInitialise()

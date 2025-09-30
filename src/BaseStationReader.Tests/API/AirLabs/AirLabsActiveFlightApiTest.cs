@@ -1,7 +1,8 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -12,14 +13,24 @@ namespace BaseStationReader.Tests.API.AirLabs
         private const string Response = "{ \"response\": [ { \"hex\": \"4005C1\", \"flag\": \"UK\", \"lat\": 54.001557, \"lng\": -15.078022, \"alt\": 12516, \"dir\": 93, \"speed\": 900, \"flight_number\": \"172\", \"flight_icao\": \"BAW172\", \"flight_iata\": \"BA172\", \"dep_icao\": \"KJFK\", \"dep_iata\": \"JFK\", \"arr_icao\": \"EGLL\", \"arr_iata\": \"LHR\", \"airline_icao\": \"BAW\", \"airline_iata\": \"BA\", \"aircraft_icao\": \"B772\", \"updated\": 1758434637, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
 
         private MockTrackerHttpClient _client = null;
-        private IActiveFlightApi _api = null;
+        private IActiveFlightsApi _api = null;
+
+        private readonly ExternalApiSettings _settings = new()
+        {
+            ApiServices = [
+                new ApiService() { Service = ApiServiceType.AirLabs, Key = "an-api-key"}
+            ],
+            ApiEndpoints = [
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.ActiveFlights, Url = "http://some.host.com/endpoint"}
+            ]
+        };
 
         [TestInitialize]
         public void Initialise()
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsActiveFlightApi(logger, _client, "", "");
+            _api = new AirLabsActiveFlightApi(logger, _client, _settings);
         }
 
         [TestMethod]

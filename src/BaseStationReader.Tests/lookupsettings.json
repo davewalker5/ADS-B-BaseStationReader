@@ -37,6 +37,11 @@
         "EndpointType": "METAR",
         "Service": "CheckWXApi",
         "Url": "https://api.checkwx.com/metar"
+      },
+      {
+        "EndpointType": "METAR",
+        "Service": "CheckWXApi",
+        "Url": "https://api.checkwx.com/metar"
       }
     ],
     "ApiServices": [

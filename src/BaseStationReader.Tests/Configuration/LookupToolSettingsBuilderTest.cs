@@ -1,7 +1,7 @@
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Interfaces.Config;
 
 namespace BaseStationReader.Tests.Configuration
 {

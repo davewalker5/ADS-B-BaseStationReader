@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.DataExchange;
 using ClosedXML.Excel;
 
 namespace BaseStationReader.BusinessLogic.DataExchange

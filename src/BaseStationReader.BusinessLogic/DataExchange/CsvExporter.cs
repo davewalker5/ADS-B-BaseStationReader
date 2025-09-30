@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Interfaces;
+﻿using BaseStationReader.Interfaces.DataExchange;
 using System.Text;
 
 namespace BaseStationReader.BusinessLogic.DataExchange

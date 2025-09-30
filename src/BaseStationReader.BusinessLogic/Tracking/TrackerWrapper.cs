@@ -1,7 +1,7 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
@@ -11,6 +11,9 @@ using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Messages;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -96,8 +99,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
 
                 // Configure the external API wrapper
-                var client = TrackerHttpClient.Instance;
-                var apiWrapper = ApiWrapperBuilder.GetInstance(_logger, _settings, context, client, _settings.LiveApi);
+                var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
+                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, TrackerHttpClient.Instance, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);

@@ -1,10 +1,10 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
 using BaseStationReader.Entities.Logging;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {

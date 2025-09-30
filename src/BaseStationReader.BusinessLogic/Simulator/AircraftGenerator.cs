@@ -1,10 +1,11 @@
 ﻿using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Simulator;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Text;
 using System.Text.RegularExpressions;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {

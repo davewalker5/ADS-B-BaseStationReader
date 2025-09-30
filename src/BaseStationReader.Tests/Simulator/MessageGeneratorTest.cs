@@ -1,7 +1,8 @@
-﻿using BaseStationReader.Entities.Interfaces;
-using BaseStationReader.Entities.Messages;
+﻿using BaseStationReader.Entities.Messages;
 using BaseStationReader.BusinessLogic.Simulator;
 using BaseStationReader.Tests.Mocks;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Simulator;
 
 namespace BaseStationReader.Tests.Simulator
 {

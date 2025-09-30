@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;

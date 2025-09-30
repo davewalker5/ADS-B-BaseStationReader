@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;

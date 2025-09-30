@@ -1,9 +1,9 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
-using BaseStationReader.BusinessLogic;
 using BaseStationReader.BusinessLogic.Database;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Simulator
 {
@@ -12,7 +12,7 @@ namespace BaseStationReader.Tests.Simulator
     public class AircraftLockManagerTest
     {
         private BaseStationReaderDbContext _context = null;
-        private IAircraftWriter _aircraftWriter = null;
+        private ITrackedAircraftWriter _aircraftWriter = null;
         private IAircraftLockManager _aircraftLocker = null;
         private const int TimeToLockMs = 600000;
 

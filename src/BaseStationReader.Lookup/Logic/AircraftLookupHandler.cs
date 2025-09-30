@@ -2,7 +2,7 @@ using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Lookup.Logic
@@ -29,19 +29,16 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Configure the API wrapper
-            var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
-            if (wrapper != null)
-            {
-                // Extract the lookup parameters from the command line
-                var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
-                var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
-                var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
+            // Configure the external API wrapper
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
 
-                // Perform the lookup
-                await wrapper.LookupAsync(address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
-            }
+            // Extract the lookup parameters from the command line
+            var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
+            var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
+            var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
+
+            // Perform the lookup
+            await wrapper.LookupAsync(ApiEndpointType.ActiveFlights, address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
         }
     }
 }

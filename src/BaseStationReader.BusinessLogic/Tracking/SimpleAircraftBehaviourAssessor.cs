@@ -1,4 +1,4 @@
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Tracking

@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Messages;
+using BaseStationReader.Interfaces.Logging;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 

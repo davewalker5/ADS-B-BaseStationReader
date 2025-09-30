@@ -3,7 +3,7 @@ using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Interfaces;
+using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Lookup.Logic
 {

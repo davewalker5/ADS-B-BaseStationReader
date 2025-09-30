@@ -17,12 +17,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Simulator
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Lookup", "BaseStationReader.Lookup\BaseStationReader.Lookup.csproj", "{B1DF203B-770F-469F-9D2F-55EC9DF925D2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Interfaces", "BaseStationReader.Interfaces\BaseStationReader.Interfaces.csproj", "{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9010B8E8-0B18-4741-B5E1-113EC76BD5D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9010B8E8-0B18-4741-B5E1-113EC76BD5D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9010B8E8-0B18-4741-B5E1-113EC76BD5D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
