@@ -9,6 +9,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -247,6 +248,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
         /// <returns></returns>
+        [ExcludeFromCodeCoverage]
         private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
         {
             _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an API lookup request");
@@ -271,7 +273,7 @@ namespace BaseStationReader.BusinessLogic.Database
                     if (_apiWrapper != null)
                     {
                         var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-                        if (result.IsSuccessful)
+                        if (result)
                         {
                             _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");
                             await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);

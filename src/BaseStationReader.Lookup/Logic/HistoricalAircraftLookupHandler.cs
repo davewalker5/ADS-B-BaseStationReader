@@ -49,7 +49,7 @@ namespace BaseStationReader.Lookup.Logic
             {
                 // Look this one up and, if successful, set the timestamp so it won't be considered again
                 var result = await wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
-                if (result.IsSuccessful)
+                if (result)
                 {
                     await _writer.SetLookupTimestamp(a.Id);
                 }

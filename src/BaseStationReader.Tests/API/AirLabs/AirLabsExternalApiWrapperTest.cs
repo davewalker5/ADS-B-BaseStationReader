@@ -10,7 +10,7 @@ namespace BaseStationReader.Tests.API
 {
     [ExcludeFromCodeCoverage]
     [TestClass]
-    public class ExternalApiWrapperTest
+    public class AirLabsExternalApiWrapperTest
     {
         private const string AirlineICAO = "KLM";
         private const string AirlineIATA = "KL";
@@ -60,6 +60,17 @@ namespace BaseStationReader.Tests.API
             var trackedAircraftWriter = new TrackedAircraftWriter(_context);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
                 _logger, _client, _context, trackedAircraftWriter, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
+        }
+
+        [TestMethod]
+        public async Task LookupAsyncTest()
+        {
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            _client.AddResponse(AircraftResponse);
+            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, null, null, true);
+
+            Assert.IsTrue(result);
         }
 
         [TestMethod]
@@ -212,6 +223,32 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+        }
+
+        [TestMethod]
+        public async Task LookupActiveFlightsInBoundingBoxTest()
+        {
+            _client.AddResponse(FlightsInBoundingBoxResponse);
+            var flights = await _wrapper.LookupActiveFlightsInBoundingBox(0, 0, 0);
+
+            Assert.IsNotNull(flights);
+            Assert.HasCount(2, flights);
+
+            var flight = flights.Where(x => x.AircraftAddress == "4CAA59").First();
+            Assert.IsNotNull(flight);
+            Assert.AreEqual("RYR5552", flight.ICAO);
+            Assert.AreEqual("FR5552", flight.IATA);
+            Assert.AreEqual("FR5552", flight.Number);
+            Assert.AreEqual("STN", flight.Embarkation);
+            Assert.AreEqual("GRO", flight.Destination);
+
+            flight = flights.Where(x => x.AircraftAddress == "4BAA8A").First();
+            Assert.IsNotNull(flight);
+            Assert.AreEqual("THY1869", flight.ICAO);
+            Assert.AreEqual("TK1869", flight.IATA);
+            Assert.AreEqual("TK1869", flight.Number);
+            Assert.AreEqual("LGW", flight.Embarkation);
+            Assert.AreEqual("IST", flight.Destination);
         }
     }
 }

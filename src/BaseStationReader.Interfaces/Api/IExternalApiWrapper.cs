@@ -12,7 +12,7 @@ namespace BaseStationReader.Interfaces.Api
         Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO);
         Task<IEnumerable<string>> LookupAirportWeather(string icao);
 
-        Task<LookupResult> LookupAsync(
+        Task<bool> LookupAsync(
             ApiEndpointType type,
             string address,
             IEnumerable<string> departureAirportCodes,

@@ -59,7 +59,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <param name="departureAirports"></param>
         /// <param name="arrivalAirports"></param>
         /// <returns></returns>
-        public async Task<LookupResult> LookupAsync(
+        public async Task<bool> LookupAsync(
             ApiEndpointType type,
             string address,
             IEnumerable<string> departureAirportCodes,
@@ -67,7 +67,6 @@ namespace BaseStationReader.BusinessLogic.Api
             bool createSighting)
         {
             Aircraft aircraft = null;
-            Sighting sighting = null;
 
             // Lookup the flight
             Flight flight = type == ApiEndpointType.ActiveFlights ?
@@ -81,17 +80,12 @@ namespace BaseStationReader.BusinessLogic.Api
                 if (createSighting && (aircraft != null))
                 {
                     // Save the relationship between the flight and the aircraft as a sighting on this date
-                    sighting = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+                    _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
                 }
             }
 
-            return new()
-            {
-                FlightId = flight?.Id,
-                AircraftId = aircraft?.Id,
-                SightingId = sighting?.Id,
-                CreateSighting = createSighting
-            };
+            // The lookup was successful if we've got as far as getting a valid aircraft
+            return aircraft != null;
         }
 
         /// <summary>
@@ -159,7 +153,7 @@ namespace BaseStationReader.BusinessLogic.Api
             IEnumerable<string> arrivalAirportCodes)
         {
             // Get the API instance
-            if (GetInstance(ApiEndpointType.ActiveFlights) is not IHistoricalFlightsApi api) return null;
+            if (GetInstance(ApiEndpointType.HistoricalFlights) is not IHistoricalFlightsApi api) return null;
 
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
