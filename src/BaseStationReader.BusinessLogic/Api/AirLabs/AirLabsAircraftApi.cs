@@ -1,18 +1,30 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
     public class AirLabsAircraftApi : ExternalApiBase, IAircraftApi
     {
+        private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
 
-        public AirLabsAircraftApi(ITrackerLogger logger, ITrackerHttpClient client, string url, string key) : base(logger, client)
+        public AirLabsAircraftApi(
+            ITrackerLogger logger,
+            ITrackerHttpClient client,
+            ExternalApiSettings settings) : base(logger, client)
         {
-            _baseAddress = $"{url}?api_key={key}";
+            // Get the API configuration properties
+            var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
+
+            // Get the endpoint URL and set up the base address for requests
+            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
+            _baseAddress = $"{url}?api_key={definition?.Key}";
+
+            // Set the rate limit for this service on the HTTP client
+            client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);
         }
 
         /// <summary>

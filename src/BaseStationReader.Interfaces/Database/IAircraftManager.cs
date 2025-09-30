@@ -1,4 +1,4 @@
-﻿using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Api;
 using System.Linq.Expressions;
 
 namespace BaseStationReader.Interfaces.Database

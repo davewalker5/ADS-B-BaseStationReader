@@ -1,7 +1,7 @@
 using BaseStationReader.Entities.Import;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.DataExchange;
 

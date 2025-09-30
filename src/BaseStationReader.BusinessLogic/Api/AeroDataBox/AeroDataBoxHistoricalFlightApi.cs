@@ -1,14 +1,15 @@
 using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    public class AeroDataBoxHistoricalFlightApi : ExternalApiBase, IHistoricalFlightApi
+    public class AeroDataBoxHistoricalFlightApi : ExternalApiBase, IHistoricalFlightsApi
     {
+        private const ApiServiceType ServiceType = ApiServiceType.AeroDataBox;
         private readonly string _baseAddress;
         private readonly string _host;
         private readonly string _key;
@@ -16,15 +17,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public AeroDataBoxHistoricalFlightApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            string url,
-            string key) : base(logger, client)
+            ExternalApiSettings settings) : base(logger, client)
         {
-            _baseAddress = $"{url}/icao24/";
-            _key = key;
+            // Get the API configuration properties and store the key
+            var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
+            _key = definition?.Key;
 
-            // Extract the host from the url
-            var uri = new Uri(url);
-            _host = uri.Host;
+            // Get the endpoint URL, set up the base address for requests and extract the host name
+            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == ServiceType)?.Url;
+            _baseAddress = $"{url}/icao24/";
+            _host = new Uri(url).Host;
+
+            // Set the rate limit for this service on the HTTP client
+            client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);
         }
 
         /// <summary>

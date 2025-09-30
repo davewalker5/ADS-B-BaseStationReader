@@ -33,25 +33,25 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Configure the API wrapper
-            var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
-            if (wrapper != null)
-            {
-                // Extract the lookup parameters from the command line
-                var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
-                var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
+            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-                // Retrieve a list of aircraft that haven't been looked up yet
-                var aircraft = await _writer.ListAsync(x => x.LookupTimestamp == null);
-                foreach (var a in aircraft)
+            // Configure the external API wrapper
+            var trackedAircraftWriter = new TrackedAircraftWriter(Context);
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.HistoricalFlights, Settings);
+
+            // Extract the lookup parameters from the command line
+            var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
+            var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
+
+            // Retrieve a list of aircraft that haven't been looked up yet
+            var aircraft = await _writer.ListAsync(x => x.LookupTimestamp == null);
+            foreach (var a in aircraft)
+            {
+                // Look this one up and, if successful, set the timestamp so it won't be considered again
+                var result = await wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+                if (result.IsSuccessful)
                 {
-                    // Look this one up and, if successful, set the timestamp so it won't be considered again
-                    var result = await wrapper.LookupAsync(a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
-                    if (result.IsSuccessful)
-                    {
-                        await _writer.SetLookupTimestamp(a.Id);
-                    }
+                    await _writer.SetLookupTimestamp(a.Id);
                 }
             }
         }

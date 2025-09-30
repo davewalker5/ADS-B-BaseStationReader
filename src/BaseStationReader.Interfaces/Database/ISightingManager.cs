@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.Interfaces.Database
 {

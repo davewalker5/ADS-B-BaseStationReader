@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BaseStationReader.Entities.Lookup
+namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
     public class Sighting
@@ -11,11 +11,11 @@ namespace BaseStationReader.Entities.Lookup
         public int Id { get; set; }
 
         [Required]
-        [ForeignKey(nameof(Lookup.Aircraft))]
+        [ForeignKey(nameof(Api.Aircraft))]
         public int AircraftId { get; set; }
 
         [Required]
-        [ForeignKey(nameof(Lookup.Flight))]
+        [ForeignKey(nameof(Api.Flight))]
         public int FlightId { get; set; }
 
         [Required]

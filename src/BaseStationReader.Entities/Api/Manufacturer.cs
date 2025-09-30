@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BaseStationReader.Entities.Lookup
+namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
     public class Manufacturer

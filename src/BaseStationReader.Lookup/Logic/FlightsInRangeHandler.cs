@@ -37,20 +37,19 @@ namespace BaseStationReader.Lookup.Logic
                 return;
             }
 
-            // Configure the API wrapper
-            var client = TrackerHttpClient.Instance;
-            var wrapper = ApiWrapperBuilder.GetInstance(Logger, Settings, Context, client, _serviceType);
-            if (wrapper != null)
-            {
-                // Perform the lookup
-                var flights = await wrapper.LookupFlightsInBoundingBox(
-                    Settings.ReceiverLatitude.Value,
-                    Settings.ReceiverLongitude.Value,
-                    rangeNm);
+            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-                // Export the data
-                new FlightExporter().Export(flights, filePath);
-            }
+            // Configure the external API wrappe
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+
+            // Perform the lookup
+            var flights = await wrapper.LookupActiveFlightsInBoundingBox(
+                Settings.ReceiverLatitude.Value,
+                Settings.ReceiverLongitude.Value,
+                rangeNm);
+
+            // Export the data
+            new FlightExporter().Export(flights, filePath);
         }
     }
 }

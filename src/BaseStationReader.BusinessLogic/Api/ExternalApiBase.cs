@@ -1,6 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -127,20 +127,6 @@ namespace BaseStationReader.BusinessLogic.Api
             {
                 // Log the fact that the properties dictionary is NULL
                 Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
-            }
-        }
-
-        /// <summary>
-        /// Log a set of debug messages, with prefix
-        /// </summary>
-        /// <param name="prefix"></param>
-        /// <param name="messages"></param>
-        [ExcludeFromCodeCoverage]
-        protected void LogMessages(string prefix, IEnumerable<string> messages)
-        {
-            foreach (var message in messages)
-            {
-                Logger.LogMessage(Severity.Debug, $"{prefix} : {message}");
             }
         }
     }

@@ -1,7 +1,8 @@
-﻿using BaseStationReader.Entities.Lookup;
+﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -19,12 +20,24 @@ namespace BaseStationReader.Tests.API.AirLabs
         private MockTrackerHttpClient _client = null;
         private IAircraftApi _api = null;
 
+        private readonly ExternalApiSettings _settings = new()
+        {
+            ApiServices = [
+                new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
+            ],
+            ApiEndpoints = [
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"},
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.ActiveFlights, Url = "http://some.host.com/endpoint"}
+            ]
+        };
+
         [TestInitialize]
         public void Initialise()
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsAircraftApi(logger, _client, "", "");
+            _api = new AirLabsAircraftApi(logger, _client, _settings);
         }
 
         [TestMethod]

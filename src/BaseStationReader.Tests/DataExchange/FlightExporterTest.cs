@@ -1,6 +1,6 @@
 using System.Globalization;
 using BaseStationReader.BusinessLogic.Export;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using CsvHelper;
 
 namespace BaseStationReader.Tests.DataExchange

@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -16,7 +17,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly ITrackedAircraftWriter _aircraftWriter;
         private readonly IPositionWriter _positionWriter;
         private readonly IAircraftLockManager _locker;
-        private readonly IApiWrapper _apiWrapper;
+        private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTimer _timer;
@@ -31,7 +32,7 @@ namespace BaseStationReader.BusinessLogic.Database
             ITrackedAircraftWriter aircraftWriter,
             IPositionWriter positionWriter,
             IAircraftLockManager locker,
-            IApiWrapper apiWrapper,
+            IExternalApiWrapper apiWrapper,
             ITrackerLogger logger,
             ITrackerTimer timer,
             IEnumerable<string> departureAirportCodes,
@@ -269,7 +270,7 @@ namespace BaseStationReader.BusinessLogic.Database
                     _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
                     if (_apiWrapper != null)
                     {
-                        var result = await _apiWrapper.LookupAsync(request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+                        var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
                         if (result.IsSuccessful)
                         {
                             _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");

@@ -58,7 +58,10 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
                     results = apiResponse!.Select(x => x!.ToString());
 
                     // Log the properties dictionary
-                    LogMessages($"METAR for {parameters}", results);
+                    foreach (var metar in results)
+                    {
+                        Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
+                    }
                 }
             }
             catch (Exception ex)

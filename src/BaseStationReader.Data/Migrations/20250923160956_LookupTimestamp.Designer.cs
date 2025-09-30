@@ -20,7 +20,7 @@ namespace BaseStationReader.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Aircraft", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Aircraft", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,7 +55,7 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("AIRCRAFT", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Airline", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Airline", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -82,7 +82,7 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("AIRLINE", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Flight", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Flight", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -124,7 +124,7 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("FLIGHT", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Manufacturer", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Manufacturer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -141,7 +141,7 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("MANUFACTURER", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Model", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Model", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -287,9 +287,9 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("TRACKED_AIRCRAFT", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Aircraft", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Aircraft", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Lookup.Model", "Model")
+                    b.HasOne("BaseStationReader.Entities.Api.Model", "Model")
                         .WithMany()
                         .HasForeignKey("ModelId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -298,9 +298,9 @@ namespace BaseStationReader.Data.Migrations
                     b.Navigation("Model");
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Flight", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Flight", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Lookup.Airline", "Airline")
+                    b.HasOne("BaseStationReader.Entities.Api.Airline", "Airline")
                         .WithMany()
                         .HasForeignKey("AirlineId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -309,9 +309,9 @@ namespace BaseStationReader.Data.Migrations
                     b.Navigation("Airline");
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Lookup.Model", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Model", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Lookup.Manufacturer", "Manufacturer")
+                    b.HasOne("BaseStationReader.Entities.Api.Manufacturer", "Manufacturer")
                         .WithMany()
                         .HasForeignKey("ManufacturerId")
                         .OnDelete(DeleteBehavior.Restrict)

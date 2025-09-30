@@ -1,4 +1,4 @@
-﻿namespace BaseStationReader.Entities.Lookup
+﻿namespace BaseStationReader.Entities.Api
 {
     public enum ApiProperty
     {

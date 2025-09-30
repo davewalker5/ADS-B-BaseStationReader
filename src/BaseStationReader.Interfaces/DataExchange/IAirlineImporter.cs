@@ -1,5 +1,5 @@
 using BaseStationReader.Entities.Import;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.Interfaces.DataExchange
 {

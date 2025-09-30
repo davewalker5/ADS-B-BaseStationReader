@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using BaseStationReader.Interfaces.Database;

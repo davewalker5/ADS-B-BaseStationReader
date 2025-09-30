@@ -12,8 +12,8 @@ using Spectre.Console;
 using System.Diagnostics;
 using System.Reflection;
 using BaseStationReader.Data;
-using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.BusinessLogic.Api;
 
 namespace BaseStationReader.Terminal
 {
@@ -66,7 +66,7 @@ namespace BaseStationReader.Terminal
                 var arrivalAirports = GetAirportCodeList(CommandLineOptionType.Arrival);
 
                 // Initialise the tracker wrapper
-                var serviceType = ApiWrapperBuilder.GetServiceTypeFromString(_settings.LiveApi);
+                var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
                 _wrapper = new TrackerWrapper(_logger, _settings, departureAirports, arrivalAirports, serviceType);
                 await _wrapper.InitialiseAsync();
                 _wrapper.AircraftAdded += OnAircraftAdded;

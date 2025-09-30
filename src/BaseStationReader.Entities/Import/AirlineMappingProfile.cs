@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.Entities.Lookup;
+using BaseStationReader.Entities.Api;
 using CsvHelper.Configuration;
 
 namespace BaseStationReader.Entities.Import

@@ -99,8 +99,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
 
                 // Configure the external API wrapper
-                var client = TrackerHttpClient.Instance;
-                var apiWrapper = ApiWrapperBuilder.GetInstance(_logger, _settings, context, client, _settings.LiveApi);
+                var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
+                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
