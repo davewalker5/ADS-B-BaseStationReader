@@ -13,14 +13,19 @@
 
 ![Application Schematic](Diagrams/application-schematic.png)
 
-- An RTL2832/R820T2 USB Dongle is plugged into the Raspberry Pi
-- The Raspberry Pi is running the [dump1090-mutability](https://github.com/adsb-related-code/dump1090-mutability) service to decode the data from the dongle
+- An RTL2832/R820T2 USB Dongle is plugged into the dump1090 host machine
+- The host is running the [dump1090-mutability](https://github.com/adsb-related-code/dump1090-mutability) service to decode the data from the dongle
 - One of the outputs is a decoded stream of messages in "[Basestation](http://woodair.net/sbs/article/barebones42_socket_data.htm)" format, that is exposed on a TCP port on the Pi
 - This stream is read by the MessageReader, that exposes an event used to notify subscribers when a new message arrives
 - The AircraftTracker subscribes to these events and passes each new message to the message parsers to have the information it contains extracted into an aircraft tracking object
 - The AircraftTracker enqueues each new tracking object for asynchronous writing to the SQLite database
 - It also exposes events to notify subscribers when aircraft are added, updated and removed
 - On a timed interval, the QueuedWriter processes pending writes from the the queue
+- External API integrations are supported for automatic/manual lookup of:
+  - Live and historical flight details
+  - Airline details
+  - Aircraft details
+  - METAR reporting
 
 ## Getting Started
 
@@ -28,7 +33,7 @@ Please see the [Wiki](https://github.com/davewalker5/ADS-B-BaseStationReader/wik
 
 ## Authors
 
-- **Dave Walker** - _Initial work_
+- **Dave Walker** - _Initial work_ - [LinkedIn](https://www.linkedin.com/in/davewalker5/)
 
 ## Feedback
 
