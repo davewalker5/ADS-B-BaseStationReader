@@ -1,5 +1,6 @@
 using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.BusinessLogic.Api.CheckWXApi;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
@@ -29,6 +30,7 @@ namespace BaseStationReader.BusinessLogic.Api
             {(ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights), typeof(AirLabsActiveFlightApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Airlines), typeof(AirLabsAirlinesApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Aircraft), typeof(AirLabsAircraftApi) },
+            {(ApiServiceType.CheckWXApi, ApiEndpointType.METAR), typeof(CheckWXMetarApi) },
         };
 
         /// <summary>
@@ -112,6 +114,19 @@ namespace BaseStationReader.BusinessLogic.Api
                 wrapper.RegisterExternalApi(ApiEndpointType.Aircraft, airlinesApi);
             }
 
+            // Get an instance of the metar API and register it
+            var metarApi = GetApiInstance(
+                service,
+                ApiEndpointType.METAR,
+                logger,
+                client,
+                settings);
+
+            if (metarApi != null)
+            {
+                wrapper.RegisterExternalApi(ApiEndpointType.METAR, metarApi);
+            }
+
             return wrapper;
         }
 
@@ -134,18 +149,26 @@ namespace BaseStationReader.BusinessLogic.Api
             // Get the type for the service
             if (!_map.TryGetValue((service, endpoint), out Type type))
             {
-                logger.LogMessage(Severity.Error, $"{endpoint} API for service {service} is not registered");
+                logger.LogMessage(Severity.Warning, $"{endpoint} API for service {service} is not registered");
                 return null;
             }
 
             // Create an instance of the type
-            if (Activator.CreateInstance(type, logger, client, settings) is not IExternalApi instance)
+            var instance = Activator.CreateInstance(type, logger, client, settings);
+            if (instance == null)
             {
                 logger.LogMessage(Severity.Error, $"Failed to create instance of {type.Name}");
                 return null;
             }
 
-            return instance;
+            // Check the type of the instance is as expected
+            if (instance is not IExternalApi typed)
+            {
+                logger.LogMessage(Severity.Error, $"Created instance is of type {instance.GetType().Name}, expected {typeof(IExternalApi).Name}");
+                return null;
+            }
+
+            return typed;
         }
 
         /// <summary>

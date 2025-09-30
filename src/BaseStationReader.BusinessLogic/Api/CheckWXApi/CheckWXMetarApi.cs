@@ -7,17 +7,24 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 {
     public class CheckWXMetarApi : ExternalApiBase, IMetarApi
     {
+        private const ApiServiceType ServiceType = ApiServiceType.CheckWXApi;
         private readonly string _baseAddress;
         private readonly string _key;
 
         public CheckWXMetarApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            string url,
-            string key) : base(logger, client)
+            ExternalApiSettings settings) : base(logger, client)
         {
-            _baseAddress = url;
-            _key = key;
+            // Get the API configuration properties and capture the API key
+            var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
+            _key = definition?.Key;
+
+            // Get the endpoint URL and set up the base address for requests
+            _baseAddress = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.METAR && x.Service == ServiceType)?.Url;
+
+            // Set the rate limit for this service on the HTTP client
+            client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);            
         }
 
         /// <summary>

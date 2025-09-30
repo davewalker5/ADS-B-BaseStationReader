@@ -56,6 +56,7 @@
         TimeToStale,
         TrackedBehaviours,
         TrackPosition,
+        Weather,
         WriterBatchSize,
         WriterInterval
     }

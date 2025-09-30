@@ -92,6 +92,12 @@ namespace BaseStationReader.Lookup
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
                     await new FlightsInRangeHandler(settings, _parser, _logger, context, serviceType).Handle();
                 }
+
+                // Look up the weather at a given airport
+                if (_parser.IsPresent(CommandLineOptionType.Weather))
+                {
+                    await new AirportWeatherLookupHandler(settings, _parser, _logger, context, ApiServiceType.CheckWXApi).Handle();
+                }
             }
         }
     }

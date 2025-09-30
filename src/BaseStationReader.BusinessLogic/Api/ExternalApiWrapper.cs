@@ -119,7 +119,7 @@ namespace BaseStationReader.BusinessLogic.Api
             // Use the API to look-up the flight
             Flight flight = null;
             var properties = await api.LookupFlightByAircraftAsync(address);
-            if (properties != null)
+            if (properties?.Count > 0)
             {
                 // Extract the departure and arrival airport codes
                 var departure = properties[ApiProperty.EmbarkationIATA];
@@ -504,7 +504,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <returns></returns>
         private IExternalApi GetInstance(ApiEndpointType type)
         {
-            if (!_apis.TryGetValue(ApiEndpointType.ActiveFlights, out var api))
+            if (!_apis.TryGetValue(type, out var api))
             {
                 _logger.LogMessage(Severity.Error, $"{type} API not registered");
             }
