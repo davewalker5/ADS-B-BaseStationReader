@@ -100,7 +100,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 // Configure the external API wrapper
                 var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
-                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
+                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, TrackerHttpClient.Instance, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);

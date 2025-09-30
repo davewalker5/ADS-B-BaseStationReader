@@ -37,7 +37,7 @@ namespace BaseStationReader.Lookup.Logic
 
             // Configure the external API wrapper
             var trackedAircraftWriter = new TrackedAircraftWriter(Context);
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.HistoricalFlights, Settings);
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.HistoricalFlights, Settings);
 
             // Extract the lookup parameters from the command line
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);

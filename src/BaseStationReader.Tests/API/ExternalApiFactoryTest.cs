@@ -1,7 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api;
-using BaseStationReader.BusinessLogic.Api.AeroDatabox;
-using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Api;
@@ -20,8 +18,8 @@ namespace BaseStationReader.Tests.API
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServices = [
-                new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "Some API Key"},
-                new ApiService() { Service = ApiServiceType.AirLabs, Key = "Some API Key"}
+                new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "an-api-key"},
+                new ApiService() { Service = ApiServiceType.AirLabs, Key = "an-api-key"}
             ],
             ApiEndpoints = [
                 new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
@@ -81,7 +79,7 @@ namespace BaseStationReader.Tests.API
         public void GetAeroDataBoxApiWrapperInstanceTest()
         {
             var wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _context, null, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings);
             Assert.IsNotNull(wrapper);
         }
 
@@ -89,7 +87,7 @@ namespace BaseStationReader.Tests.API
         public void GetAirLabsApiWrapperInstanceTest()
         {
             var wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _context, null, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
             Assert.IsNotNull(wrapper);
         }
     }

@@ -29,8 +29,8 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Configure the external API wrappe
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+            // Configure the external API wrapper
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
 
             // Extract the lookup parameters from the command line
             var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];

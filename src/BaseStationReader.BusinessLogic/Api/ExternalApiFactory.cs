@@ -38,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// and flights API type
         /// </summary>
         /// <param name="logger"></param>
+        /// <param name="client"></param>
         /// <param name="context"></param>
         /// <param name="trackedAircraftWriter"></param>
         /// <param name="service"></param>
@@ -46,6 +47,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <returns></returns>
         public static IExternalApiWrapper GetWrapperInstance(
             ITrackerLogger logger,
+            ITrackerHttpClient client,
             BaseStationReaderDbContext context,
             ITrackedAircraftWriter trackedAircraftWriter,
             ApiServiceType service,
@@ -59,9 +61,6 @@ namespace BaseStationReader.BusinessLogic.Api
             var modelManager = new ModelManager(context);
             var flightManager = new FlightManager(context);
             var sightingManager = new SightingManager(context);
-
-            // Get an HTTP client instance
-            var client = TrackerHttpClient.Instance;
 
             // Create an instance of the wrapper
             var wrapper = new ExternalApiWrapper(
@@ -111,7 +110,7 @@ namespace BaseStationReader.BusinessLogic.Api
 
             if (aircraftApi != null)
             {
-                wrapper.RegisterExternalApi(ApiEndpointType.Aircraft, airlinesApi);
+                wrapper.RegisterExternalApi(ApiEndpointType.Aircraft, aircraftApi);
             }
 
             // Get an instance of the metar API and register it

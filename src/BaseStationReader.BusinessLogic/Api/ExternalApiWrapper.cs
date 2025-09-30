@@ -504,7 +504,11 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <returns></returns>
         private IExternalApi GetInstance(ApiEndpointType type)
         {
-            if (!_apis.TryGetValue(type, out var api))
+            if (_apis.TryGetValue(type, out var api))
+            {
+                _logger.LogMessage(Severity.Debug, $"{type} API is of type {api.GetType().Name}");
+            }
+            else
             {
                 _logger.LogMessage(Severity.Error, $"{type} API not registered");
             }
