@@ -59,10 +59,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             try
             {
                 // Conver the date to UTC and generate a representation in the required format
-                var dateString = date.ToUniversalTime().ToString("yyyy-MM-dd");
+                var fromDate = date.ToUniversalTime().AddDays(-1).ToString("yyyy-MM-dd");
+                var toDate = date.ToUniversalTime().AddDays(1).ToString("yyyy-MM-dd");
 
                 // Make a request for the data from the API
-                var url = $"{_baseAddress}{address}/{dateString}";
+                var url = $"{_baseAddress}{address}/{fromDate}/{toDate}";
                 var node = await GetAsync(Logger, ApiServiceType.AeroDataBox, url, new Dictionary<string, string>()
                 {
                     { "X-RapidAPI-Key", _key },
@@ -132,7 +133,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var airport = node?["departure"]?["airport"];
             var time = node?["departure"]?["runwayTime"];
             time ??= node?["departure"]?["revisedTime"];
-            time ??= node?["departure"]?["revisedTime"];
+            time ??= node?["departure"]?["scheduledTime"];
 
             Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
             Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
@@ -189,11 +190,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private void ExtractAircraft(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airline node
-            var airline = node?["aircraft"];
-            Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {airline?.ToJsonString()}");
+            var aircraft = node?["aircraft"];
+            Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {aircraft?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.AircraftAddress, airline?["modeS"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AircraftRegistration, aircraft?["reg"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AircraftAddress, aircraft?["modeS"]?.GetValue<string>() ?? "");
         }
     }
 }

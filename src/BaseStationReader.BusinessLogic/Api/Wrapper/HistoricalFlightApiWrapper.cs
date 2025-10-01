@@ -61,8 +61,13 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             Flight flight = null;
             LogMessage(Severity.Info, address, $"Looking up historical flights using the API");
             var properties = await api.LookupFlightsByAircraftAsync(address, aircraft.LastSeen);
+
+            var numberOfFlights = properties?.Count;
+            LogMessage(Severity.Info, address, $"{numberOfFlights} flight(s) found");
+
             if (properties?.Count > 0)
             {
+                // Iterate over the retrieved flight details
                 foreach (var flightProperties in properties)
                 {
                     // See if this one matches the filtering criteria
@@ -82,7 +87,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         }
                         else
                         {
-                            LogMessage(Severity.Info, address, $"Unable to identify the airline - flight cannot be saved");
+                            LogMessage(Severity.Debug, address, $"Unable to identify the airline - flight cannot be saved");
                             return null;
                         }
                     }
@@ -92,7 +97,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // If we fall through to here, no matching flight's been found
             return null;
         }
-        
 
         /// <summary>
         /// Determine if a property collection representing a flight matches a set of filtering criteria
@@ -123,30 +127,35 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Extract the address and check it matches
-            var address = properties[ApiProperty.AircraftAddress];
-            if (address != aircraft.Address)
-            {
-                LogMessage(Severity.Info, address, $"Route {departure} - {arrival} has non-matching address {address}");
-                return false;
-            }
+            // Update: The response doesn't always contain the address but as the request has been made for a specific
+            // 24-bit ICAO address the assumption is that only matching flights are returned
+            // var address = properties[ApiProperty.AircraftAddress];
+            // if (address != aircraft.Address)
+            // {
+            //     LogMessage(Severity.Info, address, $"Address for route {departure} - {arrival} is {address} and does not match the expected address ({aircraft.Address})");
+            //     return false;
+            // }
+
+            // Convert the last seen date on the aircraft to UTC
+            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
 
             // Extract the departure time and check it could have been the flight
             var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);
-            if (!departureTime.HasValue || (departureTime.Value > aircraft.LastSeen))
+            if (!departureTime.HasValue || (departureTime.Value > lastSeenUtc))
             {
-                LogMessage(Severity.Info, address, $"Departure time of {departureTime} is later than the observed time {aircraft.LastSeen}");
+                LogMessage(Severity.Info, aircraft.Address, $"Departure time of {departureTime} is later than the observed time {lastSeenUtc} UTC");
                 return false;
             }
 
             // Check the flight times include the last seen date on the aircraft
             var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
-            if (!arrivalTime.HasValue || (arrivalTime.Value < aircraft.LastSeen))
+            if (!arrivalTime.HasValue || (arrivalTime.Value < lastSeenUtc))
             {
-                LogMessage(Severity.Info, address, $"Arrival time of {departureTime} is earlier than the observed time {aircraft.LastSeen}");
+                LogMessage(Severity.Info, aircraft.Address, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeenUtc} UTC");
                 return false;
             }
 
-            LogMessage(Severity.Info, address, $"Flight with route {departure} - {arrival} matches filters");
+            LogMessage(Severity.Info, aircraft.Address, $"Flight with route {departure} - {arrival} matches filters");
             return true;
         }
 
@@ -156,6 +165,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="value"></param>
         /// <returns></returns>
         private static DateTime? ExtractTimestamp(string value)
-            => DateTime.TryParse(value, null, DateTimeStyles.AdjustToUniversal, out DateTime utc) ? utc.ToLocalTime() : null;
+            => DateTime.TryParse(value, null, DateTimeStyles.AdjustToUniversal, out DateTime utc) ? utc : null;
     }
 }
