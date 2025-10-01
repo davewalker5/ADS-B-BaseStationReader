@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    public class AirLabsAircraftApi : ExternalApiBase, IAircraftApi
+    internal class AirLabsAircraftApi : ExternalApiBase, IAircraftApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -57,23 +57,26 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 if (node != null)
                 {
                     // Extract the response element from the JSON DOM
-                    var apiResponse = node!["response"]![0];
+                    var apiResponse = node?["response"]?[0];
+
+                    // Extract the year the aircraft was built and use it to determine the age
+                    int? manufactured = apiResponse?["built"]?.GetValue<int?>();
+                    int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
 
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AircraftRegistration, apiResponse!["reg_number"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AircraftManufactured, apiResponse!["built"]?.GetValue<int?>()?.ToString() ?? "" },
-                        { ApiProperty.AircraftAge, apiResponse!["age"]?.GetValue<int?>()?.ToString() ?? "" },
-                        { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelIATA, apiResponse!["iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelName, apiResponse!["model"]?.GetValue<string>() ?? "" }
+                        { ApiProperty.AircraftRegistration, apiResponse?["reg_number"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
+                        { ApiProperty.AircraftAge, age?.ToString() ?? "" },
+                        { ApiProperty.ManufacturerName, apiResponse?["manufacturer"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelICAO, apiResponse?["icao"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelIATA, apiResponse?["iata"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelName, apiResponse?["model"]?.GetValue<string>() ?? "" }
                     };
 
                     // Log the properties dictionary
                     LogProperties("Aircraft", properties);
-
                 }
             }
             catch (Exception ex)
@@ -83,7 +86,15 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 properties = null;
             }
 
-            return properties;
+            return HaveValidProperties(properties) ? properties : null;
         }
+
+        /// <summary>
+        /// Return true if we have sufficient properties to constitute a valid response
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        private static bool HaveValidProperties(Dictionary<ApiProperty, string> properties)
+            => HaveValue(properties, ApiProperty.AircraftRegistration);
     }
 }

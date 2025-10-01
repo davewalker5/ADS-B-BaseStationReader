@@ -7,7 +7,7 @@ using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
-    public class ExternalApiWrapper : IExternalApiWrapper
+    internal class ExternalApiWrapper : IExternalApiWrapper
     {
         private readonly IExternalApiRegister _register;
         private readonly IActiveFlightApiWrapper _activeFlightWrapper;
@@ -29,9 +29,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ITrackedAircraftWriter trackedAircraftWriter)
         {
             _register = new ExternalApiRegister(logger);
-            _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, airlineManager, flightManager);
-            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, airlineManager, flightManager, trackedAircraftWriter);
             _airlineApiWrapper = new AirlineApiWrapper(logger, _register, airlineManager);
+            _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, flightManager);
+            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, flightManager, trackedAircraftWriter);
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, aircraftManager, modelManager, manufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
             _sightingManager = sightingManager;
@@ -59,26 +59,23 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IEnumerable<string> arrivalAirportCodes,
             bool createSighting)
         {
-            Aircraft aircraft = null;
-
             // Lookup the flight
-            Flight flight = type == ApiEndpointType.ActiveFlights ?
+            var flight = type == ApiEndpointType.ActiveFlights ?
                 await LookupActiveFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
                 await LookupHistoricalFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
 
-            if (flight != null)
+            // Lookup the aircraft
+            var aircraft = await LookupAircraftAsync(address, flight?.ModelICAO);
+
+            // If we have a flight and and aircraft, create a sighting
+            if (createSighting && (aircraft != null) && (flight != null))
             {
-                // Lookup the aircraft
-                aircraft = await LookupAircraftAsync(address, flight.ModelICAO);
-                if (createSighting && (aircraft != null))
-                {
-                    // Save the relationship between the flight and the aircraft as a sighting on this date
-                    _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
-                }
+                // Save the relationship between the flight and the aircraft as a sighting on this date
+                _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
             }
 
-            // The lookup was successful if we've got as far as getting a valid aircraft
-            return aircraft != null;
+            // The lookup was successful if both aircraft and flight were looked up successfully
+            return (aircraft != null) && (flight != null);
         }
 
         /// <summary>
@@ -125,9 +122,10 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// </summary>
         /// <param name="icao"></param>
         /// <param name="iata"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<Airline> LookupAirlineAsync(string icao, string iata)
-            => await _airlineApiWrapper.LookupAirlineAsync(icao, iata);
+        public async Task<Airline> LookupAirlineAsync(string icao, string iata, string name)
+            => await _airlineApiWrapper.LookupAirlineAsync(icao, iata, name);
 
         /// <summary>
         /// Look up an aircraft and save it locally

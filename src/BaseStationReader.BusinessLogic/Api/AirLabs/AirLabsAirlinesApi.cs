@@ -3,10 +3,11 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
+using DocumentFormat.OpenXml.CustomProperties;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    public class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
+    internal class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -67,14 +68,14 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 if (node != null)
                 {
                     // Extract the response element from the JSON DOM
-                    var apiResponse = node!["response"]![0];
+                    var apiResponse = node?["response"]?[0];
 
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AirlineIATA, apiResponse!["iata_code"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineICAO, apiResponse!["icao_code"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AirlineName, apiResponse!["name"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineIATA, apiResponse?["iata_code"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineICAO, apiResponse?["icao_code"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AirlineName, apiResponse?["name"]?.GetValue<string>() ?? "" },
                     };
 
                     // Log the properties dictionary
@@ -88,7 +89,15 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 properties = null;
             }
 
-            return properties;
+            return HaveValidProperties(properties) ? properties : null;
         }
+
+        /// <summary>
+        /// Return true if we have sufficient properties to constitute a valid response
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        private static bool HaveValidProperties(Dictionary<ApiProperty, string> properties)
+            => HaveValue(properties, ApiProperty.AirlineName);
     }
 }

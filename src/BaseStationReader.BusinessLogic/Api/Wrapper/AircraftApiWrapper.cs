@@ -38,9 +38,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO)
         {
-            // Get the API instance
-            if (_register.GetInstance(ApiEndpointType.Aircraft) is not IAircraftApi api) return null;
-
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
             {
@@ -52,6 +49,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
+                // Get the API instance
+                if (_register.GetInstance(ApiEndpointType.Aircraft) is not IAircraftApi api) return null;
+
                 _logger.LogMessage(Severity.Info, $"Aircraft {address} is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up

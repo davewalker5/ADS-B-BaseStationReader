@@ -22,6 +22,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="BaseStationReader.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
   </ItemGroup>
 

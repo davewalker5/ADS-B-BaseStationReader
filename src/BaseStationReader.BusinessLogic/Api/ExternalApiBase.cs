@@ -80,9 +80,15 @@ namespace BaseStationReader.BusinessLogic.Api
                     {
                         // Read the response, parse to a JSON DOM
                         var json = await response.Content.ReadAsStringAsync();
-                        node = JsonNode.Parse(json);
-
-                        Logger.LogMessage(Severity.Debug, $"Received response {json}");
+                        if (!string.IsNullOrEmpty(json))
+                        {
+                            Logger.LogMessage(Severity.Debug, $"Received response {json}");
+                            node = JsonNode.Parse(json);
+                        }
+                        else
+                        {
+                            Logger.LogMessage(Severity.Warning, "Received empty response");
+                        }
                     }
                     else
                     {
@@ -128,6 +134,18 @@ namespace BaseStationReader.BusinessLogic.Api
                 // Log the fact that the properties dictionary is NULL
                 Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
             }
+        }
+
+        /// <summary>
+        /// Return true if we have a valid value for an API property
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected static bool HaveValue(Dictionary<ApiProperty, string> properties, ApiProperty key)
+        {
+            var value = properties?.ContainsKey(key) == true ? properties[key] : null;
+            return !string.IsNullOrEmpty(value);
         }
     }
 }

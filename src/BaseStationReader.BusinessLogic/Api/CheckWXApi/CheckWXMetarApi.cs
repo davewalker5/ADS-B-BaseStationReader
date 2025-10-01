@@ -5,7 +5,7 @@ using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 {
-    public class CheckWXMetarApi : ExternalApiBase, IMetarApi
+    internal class CheckWXMetarApi : ExternalApiBase, IMetarApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.CheckWXApi;
         private readonly string _baseAddress;
@@ -61,7 +61,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
                 {
                     // Extract the response element, which is an array of strings, from the JSON DOM and
                     // convert to a list of strings
-                    var apiResponse = node!["data"]!.AsArray();
+                    var apiResponse = node?["data"]?.AsArray();
                     results = apiResponse!.Select(x => x!.ToString());
 
                     // Log the properties dictionary

@@ -42,8 +42,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void GetAirlineByIATACodeTest()
         {
-            _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAirlineByIATACodeAsync("LS")).Result;
+            _client.AddResponse(Response);
+            var properties = Task.Run(() => _api.LookupAirlineByIATACodeAsync("LS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -55,8 +55,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void GetAirlineByICAOCodeTest()
         {
-            _client!.AddResponse(Response);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse(Response);
+            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -68,8 +68,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void NoIATACodeTest()
         {
-            _client!.AddResponse(NoIATACode);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse(NoIATACode);
+            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -81,8 +81,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void NoICAOCodeTest()
         {
-            _client!.AddResponse(NoICAOCode);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse(NoICAOCode);
+            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -94,8 +94,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void InvalidJsonResponseTest()
         {
-            _client!.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse("{}");
+            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNull(properties);
         }
@@ -103,8 +103,8 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void ClientExceptionTest()
         {
-            _client!.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse(null);
+            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
 
             Assert.IsNull(properties);
         }

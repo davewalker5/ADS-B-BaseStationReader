@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task AddAndGetTest()
         {
-            await _writer!.WriteAsync(new AircraftPosition
+            await _writer.WriteAsync(new AircraftPosition
             {
                 AircraftId = _aircraftId,
                 Latitude = Latitude,
@@ -62,7 +62,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task ListTest()
         {
-            await _writer!.WriteAsync(new AircraftPosition
+            await _writer.WriteAsync(new AircraftPosition
             {
                 AircraftId = _aircraftId,
                 Latitude = Latitude,
@@ -82,7 +82,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task UpdateTest()
         {
-            var initial = await _writer!.WriteAsync(new AircraftPosition
+            var initial = await _writer.WriteAsync(new AircraftPosition
             {
                 AircraftId = _aircraftId,
                 Latitude = Latitude,
@@ -90,7 +90,7 @@ namespace BaseStationReader.Tests.Database
                 Timestamp = DateTime.Now
             });
 
-            await _writer!.WriteAsync(new AircraftPosition
+            await _writer.WriteAsync(new AircraftPosition
             {
                 Id = initial.Id,
                 Latitude = Latitude,
@@ -110,7 +110,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task AddSecondTest()
         {
-            var writtenFirst = await _writer!.WriteAsync(new AircraftPosition
+            var writtenFirst = await _writer.WriteAsync(new AircraftPosition
             {
                 AircraftId = _aircraftId,
                 Latitude = Latitude,
@@ -118,7 +118,7 @@ namespace BaseStationReader.Tests.Database
                 Timestamp = DateTime.Now
             });
 
-            var writtenSecond = await _writer!.WriteAsync(new AircraftPosition
+            var writtenSecond = await _writer.WriteAsync(new AircraftPosition
             {
                 Latitude = Latitude,
                 Longitude = SecondLongitude,

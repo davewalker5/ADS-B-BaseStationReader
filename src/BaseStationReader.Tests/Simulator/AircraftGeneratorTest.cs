@@ -16,7 +16,7 @@ namespace BaseStationReader.Tests.Simulator
 
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(6, aircraft.Address.Length);
-            Assert.AreEqual(7, aircraft.Callsign!.Length);
+            Assert.AreEqual(7, aircraft.Callsign.Length);
             Assert.AreEqual(4, aircraft.Squawk?.Length);
             Assert.IsNotNull(aircraft.FirstSeen);
             Assert.IsNotNull(aircraft.LastSeen);
