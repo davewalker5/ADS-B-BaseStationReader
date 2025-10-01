@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;

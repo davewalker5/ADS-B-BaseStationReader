@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.BusinessLogic.Api.Wrapper;
 
 namespace BaseStationReader.Terminal
 {
