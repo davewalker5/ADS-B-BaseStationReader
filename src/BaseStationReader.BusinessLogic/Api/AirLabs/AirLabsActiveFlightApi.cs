@@ -9,7 +9,7 @@ using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    internal class AirLabsActiveFlightApi : ExternalApiBase, IActiveFlightsApi
+    internal class AirLabsActiveFlightApi : AirLabsApiBase, IActiveFlightsApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -81,34 +81,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             try
             {
-                // Check we have a node
-                if (node == null)
+                // Get the response array
+                var flightList = GetResponseObjectList(node);
+                if (flightList == null)
                 {
-                    Logger.LogMessage(Severity.Warning, $"API request returned a NULL response");
-                    return properties;
-                }
-
-                // Extract the response element from the JSON DOM as a JSON array
-                var apiResponse = node?["response"] as JsonArray;
-                if (apiResponse?.Count == 0)
-                {
-                    Logger.LogMessage(Severity.Warning, "API request returned an empty response");
                     return properties;
                 }
 
                 // Iterate over each (presumed) flight in the response
-                foreach (var flight in apiResponse)
+                foreach (var flight in flightList)
                 {
-                    // Extract the first element of the response as a JSON object
-                    if (flight is not JsonObject details)
-                    {
-                        Logger.LogMessage(Severity.Warning, "Unexpected API response format");
-                        return properties;
-                    }
-
                     // Extract the flight properties into a dictionary and add them to the collection
                     // of flight property dictionaries
-                    var flightProperties = ExtractSingleFlight(details);
+                    var flightProperties = ExtractSingleFlight(flight);
                     properties.Add(flightProperties);
                 }
             }

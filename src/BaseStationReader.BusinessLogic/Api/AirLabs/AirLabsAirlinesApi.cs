@@ -3,12 +3,10 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
-using DocumentFormat.OpenXml.CustomProperties;
-using System.Text.Json.Nodes;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    internal class AirLabsAirlinesApi : ExternalApiBase, IAirlinesApi
+    internal class AirLabsAirlinesApi : AirLabsApiBase, IAirlinesApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -66,26 +64,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var url = $"{_baseAddress}{parameters}";
                 var node = await GetAsync(Logger, ApiServiceType.AirLabs, url, []);
 
-                // Check we have a node
-                if (node == null)
+                // Get the aircraft object from the response
+                var airline = GetResponseObject(node);
+                if (airline == null)
                 {
-                    Logger.LogMessage(Severity.Warning, $"API request returned a NULL response");
-                    return properties;
-                }
-
-                // Extract the response element from the JSON DOM as a JSON array
-                var response = node?["response"] as JsonArray;
-                if (response?.Count == 0)
-                {
-                    Logger.LogMessage(Severity.Warning, "API request returned an empty response");
-                    return properties;
-                }
-
-                // Extract the first element of the response as a JSON object
-                if (response[0] is not JsonObject airline)
-                {
-                    Logger.LogMessage(Severity.Warning, "Unexpected API response format");
-                    return properties;
+                    return null;
                 }
 
                 // Extract the values into a dictionary
