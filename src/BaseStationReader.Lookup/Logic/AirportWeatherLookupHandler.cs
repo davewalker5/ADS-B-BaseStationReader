@@ -4,6 +4,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.BusinessLogic.Api.Wrapper;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -41,16 +42,12 @@ namespace BaseStationReader.Lookup.Logic
             {
                 foreach (var result in results)
                 {
-                    var message = $"Weather for {icao} : {result}";
-                    Logger.LogMessage(Severity.Info, message);
-                    Console.WriteLine(message);
+                    Console.WriteLine($"Weather for {icao} : {result}");
                 }
             }
             else
             {
-                var message = $"No weather results returned for {icao}";
-                Logger.LogMessage(Severity.Warning, message);
-                Console.WriteLine(message);
+                Console.WriteLine($"No weather results returned for {icao}");
             }
         }
     }

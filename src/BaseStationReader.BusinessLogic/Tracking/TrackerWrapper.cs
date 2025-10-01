@@ -14,6 +14,7 @@ using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
+using BaseStationReader.BusinessLogic.Api.Wrapper;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {

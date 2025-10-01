@@ -5,6 +5,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.BusinessLogic.Api.Wrapper;
 
 namespace BaseStationReader.Lookup.Logic
 {

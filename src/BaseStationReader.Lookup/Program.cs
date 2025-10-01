@@ -1,4 +1,4 @@
-﻿using BaseStationReader.BusinessLogic.Api;
+﻿using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;

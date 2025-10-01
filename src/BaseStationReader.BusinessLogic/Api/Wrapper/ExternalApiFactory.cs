@@ -9,7 +9,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Tracking;
 
-namespace BaseStationReader.BusinessLogic.Api
+namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     public static class ExternalApiFactory
     {
