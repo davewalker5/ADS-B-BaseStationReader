@@ -9,7 +9,7 @@ using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    public class AirLabsActiveFlightApi : ExternalApiBase, IActiveFlightsApi
+    internal class AirLabsActiveFlightApi : ExternalApiBase, IActiveFlightsApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -81,20 +81,35 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             try
             {
-                if (node != null)
+                // Check we have a node
+                if (node == null)
                 {
-                    // Extract the response element from the JSON DOM as a JSON array
-                    var apiResponse = node!["response"] as JsonArray;
+                    Logger.LogMessage(Severity.Warning, $"API request returned a NULL response");
+                    return properties;
+                }
 
-                    // Iterate over each (presumed) flight in the response
-                    foreach (var flight in apiResponse)
+                // Extract the response element from the JSON DOM as a JSON array
+                var apiResponse = node?["response"] as JsonArray;
+                if (apiResponse?.Count == 0)
+                {
+                    Logger.LogMessage(Severity.Warning, "API request returned an empty response");
+                    return properties;
+                }
+
+                // Iterate over each (presumed) flight in the response
+                foreach (var flight in apiResponse)
+                {
+                    // Extract the first element of the response as a JSON object
+                    if (flight is not JsonObject details)
                     {
-                        // Extract the flight properties into a dictionary and add them to the collection
-                        // of flight property dictionaries
-                        var flightProperties = ExtractSingleFlight(flight);
-                        properties.Add(flightProperties);
+                        Logger.LogMessage(Severity.Warning, "Unexpected API response format");
+                        return properties;
                     }
 
+                    // Extract the flight properties into a dictionary and add them to the collection
+                    // of flight property dictionaries
+                    var flightProperties = ExtractSingleFlight(details);
+                    properties.Add(flightProperties);
                 }
             }
             catch (Exception ex)
@@ -112,28 +127,28 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
+        private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonObject node)
         {
             // Get the flight number and airline IATA code and combine them to produce a recognisable flight
             // number (this is also the flight IATA)
-            var flightNumberOnly = node!["flight_number"]?.GetValue<string>() ?? "";
-            var airlineIATA = node!["airline_iata"]?.GetValue<string>() ?? "";
+            var flightNumberOnly = node?["flight_number"]?.GetValue<string>() ?? "";
+            var airlineIATA = node?["airline_iata"]?.GetValue<string>() ?? "";
             var flightNumber = ((flightNumberOnly != "") && (airlineIATA != "") && !flightNumberOnly.StartsWith(airlineIATA)) ?
                 $"{airlineIATA}{flightNumberOnly}" : flightNumberOnly;
 
             // Extract the properties of interest from the node
             Dictionary<ApiProperty, string> properties = new()
             {
-                { ApiProperty.EmbarkationIATA, node!["dep_iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.DestinationIATA, node!["arr_iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.FlightIATA, node!["flight_iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.FlightICAO, node!["flight_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.EmbarkationIATA, node?["dep_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.DestinationIATA, node?["arr_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightIATA, node?["flight_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightICAO, node?["flight_icao"]?.GetValue<string>() ?? "" },
                 { ApiProperty.FlightNumber, flightNumber },
                 { ApiProperty.AirlineIATA, airlineIATA },
-                { ApiProperty.AirlineICAO, node!["airline_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineICAO, node?["airline_icao"]?.GetValue<string>() ?? "" },
                 { ApiProperty.AirlineName, "" },
-                { ApiProperty.ModelICAO, node!["aircraft_icao"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AircraftAddress, node!["hex"]?.GetValue<string>() ?? "" },
+                { ApiProperty.ModelICAO, node?["aircraft_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AircraftAddress, node?["hex"]?.GetValue<string>() ?? "" },
             };
 
             // Log the properties dictionary

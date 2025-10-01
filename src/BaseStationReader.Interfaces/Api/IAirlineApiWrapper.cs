@@ -4,6 +4,6 @@ namespace BaseStationReader.Interfaces.Api
 {
     public interface IAirlineApiWrapper
     {
-        Task<Airline> LookupAirlineAsync(string icao, string iata);
+        Task<Airline> LookupAirlineAsync(string icao, string iata, string name);
     }
 }

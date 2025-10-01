@@ -9,16 +9,14 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class ActiveFlightApiWrapper : FlightApiWrapperBase, IActiveFlightApiWrapper
     {
-        private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
 
         public ActiveFlightApiWrapper(
             ITrackerLogger logger,
             IExternalApiRegister register,
-            IAirlineManager airlineManager,
-            IFlightManager flightManager) : base(airlineManager, flightManager)
+            IAirlineApiWrapper airlineWrapper,
+            IFlightManager flightManager) : base(logger, airlineWrapper, flightManager)
         {
-            _logger = logger;
             _register = register;
         }
 
@@ -40,37 +38,46 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
             {
-                _logger.LogMessage(Severity.Warning, $"Unable to look up flight details : Invalid aircraft address");
+                LogMessage(Severity.Warning, address, "Invalid aircraft address for lookup");
                 return null;
             }
 
             // Use the API to look-up the flight
-            Flight flight = null;
             var properties = await api.LookupFlightByAircraftAsync(address);
-            if (properties?.Count > 0)
+            if ((properties?.Count ?? 0) == 0)
             {
-                // Extract the departure and arrival airport codes
-                var departure = properties[ApiProperty.EmbarkationIATA];
-                var arrival = properties[ApiProperty.DestinationIATA];
-
-                _logger.LogMessage(Severity.Info, $"Found flight with route {departure} - {arrival} for aircraft {address}");
-
-                // Check the codes against the filters
-                var departureAllowed = departureAirportCodes?.Count() > 0 ? departureAirportCodes.Contains(departure) : true;
-                var arrivalAllowed = arrivalAirportCodes?.Count() > 0 ? arrivalAirportCodes.Contains(arrival) : true;
-
-                // Check both airports are found in the "allowed" lists
-                if (departureAllowed && arrivalAllowed)
-                {
-                    // Create a new flight object containing the details returned by the API
-                    flight = await SaveFlight(properties);
-                }
-                else
-                {
-                    _logger.LogMessage(Severity.Info, $"Route {departure} - {arrival} for aircraft {address} excluded by the airport filters");
-                }
+                return null;
             }
 
+            // Extract the departure airport code and see if the flight is filtered out
+            var departure = properties[ApiProperty.EmbarkationIATA];
+            if (!IsAirportAllowed(address, AirportType.Departure, departure, departureAirportCodes))
+            {
+                return null;
+            }
+
+            // Extract the arrival airport code and see if the flight is filtered out
+            var arrival = properties[ApiProperty.DestinationIATA];
+            if (!IsAirportAllowed(address, AirportType.Arrival, departure, departureAirportCodes))
+            {
+                return null;
+            }
+
+            LogMessage(Severity.Info, address, $"Route {departure} - {arrival} passes the airport filters");
+
+            // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
+            properties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
+            properties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);
+            properties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
+            var airline = await _airlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
+            if (airline == null)
+            {
+                LogMessage(Severity.Info, address, $"Unable to identify the airline - flight cannot be saved");
+                return null;
+            }
+
+            // Create a new flight object containing the details returned by the API
+            Flight flight = await SaveFlight(properties, airline.Id);
             return flight;
         }
 
@@ -93,7 +100,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // Use the API to look-up the flights
             var properties = await api.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
-            if (properties?.Count > 0)
+            if ((properties?.Count ?? 0) > 0)
             {
                 // Iterate over the collection of flight properties
                 foreach (var flightDetails in properties)
@@ -106,6 +113,19 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             return flights;
         }
+
+        /// <summary>
+        /// Return true if we have a valid value for an API property
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected static bool HaveValue(Dictionary<ApiProperty, string> properties, ApiProperty key)
+        {
+            var value = properties?.ContainsKey(key) == true ? properties[key] : null;
+            return !string.IsNullOrEmpty(value);
+        }
+
         /// <summary>
         /// Create a flight object from a dictionary of properties returned from the API
         /// </summary>

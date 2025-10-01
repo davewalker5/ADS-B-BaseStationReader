@@ -77,7 +77,7 @@ namespace BaseStationReader.Tests.API
         public async Task LookupAirlineByICAOAsyncTest()
         {
             _client.AddResponse(AirlineResponse);
-            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, null);
+            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, null, null);
 
             Assert.IsNotNull(airline);
             Assert.AreEqual(AirlineICAO, airline.ICAO);
@@ -89,7 +89,7 @@ namespace BaseStationReader.Tests.API
         public async Task LookupAirlineByIATAAsyncTest()
         {
             _client.AddResponse(AirlineResponse);
-            var airline = await _wrapper.LookupAirlineAsync(null, AirlineIATA);
+            var airline = await _wrapper.LookupAirlineAsync(null, AirlineIATA, null);
 
             Assert.IsNotNull(airline);
             Assert.AreEqual(AirlineICAO, airline.ICAO);
@@ -101,14 +101,14 @@ namespace BaseStationReader.Tests.API
         public async Task LookupAirlineWithNullCodesAsyncTest()
         {
             _client.AddResponse(AirlineResponse);
-            var airline = await _wrapper.LookupAirlineAsync(null, null);
+            var airline = await _wrapper.LookupAirlineAsync(null, null, null);
             Assert.IsNull(airline);
         }
 
         [TestMethod]
         public async Task LookupAirlineWithSimulatedEmptyResponseAsyncTest()
         {
-            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, AirlineIATA);
+            var airline = await _wrapper.LookupAirlineAsync(AirlineICAO, AirlineIATA, null);
             Assert.IsNull(airline);
         }
 
@@ -116,7 +116,7 @@ namespace BaseStationReader.Tests.API
         public async Task LookupAirlineWithEmptyCodesAsyncTest()
         {
             _client.AddResponse(AirlineResponse);
-            var airline = await _wrapper.LookupAirlineAsync("", "");
+            var airline = await _wrapper.LookupAirlineAsync("", "", null);
             Assert.IsNull(airline);
         }
 

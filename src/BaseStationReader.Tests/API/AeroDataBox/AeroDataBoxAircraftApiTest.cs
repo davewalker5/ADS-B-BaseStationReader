@@ -60,7 +60,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api!.LookupAircraftAsync(Address)).Result;
+            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
 
             Assert.IsNull(properties);
         }
@@ -69,7 +69,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api!.LookupAircraftAsync(Address)).Result;
+            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
 
             Assert.IsNull(properties);
         }

@@ -8,7 +8,7 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
-    public class AeroDataBoxAircraftApi : ExternalApiBase, IAircraftApi
+    internal class AeroDataBoxAircraftApi : ExternalApiBase, IAircraftApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AeroDataBox;
         private readonly string _baseAddress;
@@ -67,18 +67,18 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                 if (node != null)
                 {
                     // Extract the delivery date and use it to determine year of manufacture and age
-                    int? manufactured = GetYearOfManufacture(node);
+                    int? manufactured = GetYearOfManufacture(node as JsonObject);
                     int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
 
                     // Extract the values into a dictionary
                     properties = new()
                     {
-                        { ApiProperty.AircraftRegistration, node!["reg"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.AircraftRegistration, node?["reg"]?.GetValue<string>() ?? "" },
                         { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
                         { ApiProperty.AircraftAge, age?.ToString() ?? "" },
-                        { ApiProperty.ModelICAO, node!["icaoCode"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelIATA, node!["iataCodeShort"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelName, node!["typeName"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelICAO, node?["icaoCode"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelIATA, node?["iataCodeShort"]?.GetValue<string>() ?? "" },
+                        { ApiProperty.ModelName, node?["typeName"]?.GetValue<string>() ?? "" },
                         { ApiProperty.ManufacturerName, "" }
                     };
 
@@ -92,22 +92,28 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                 Logger.LogException(ex);
             }
 
-            // Check there are some non-empty values
-            var nonEmptyValueCount = properties.Values.Where(x => !string.IsNullOrEmpty(x)).Count();
-            return nonEmptyValueCount > 0 ? properties : null;
+            return HaveValidProperties(properties) ? properties : null;
         }
+
+        /// <summary>
+        /// Return true if we have sufficient properties to constitute a valid response
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        private static bool HaveValidProperties(Dictionary<ApiProperty, string> properties)
+            => HaveValue(properties, ApiProperty.AircraftRegistration);
 
         /// <summary>
         /// Extract the year of manufacture from the response
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static int? GetYearOfManufacture(JsonNode node)
+        private static int? GetYearOfManufacture(JsonObject node)
         {
             int? year = null;
 
             // Extract the delivery date from the response and attempt to parse it as a date
-            var deliveryDate = node!["deliveryDate"]?.GetValue<string>() ?? "";
+            var deliveryDate = node?["deliveryDate"]?.GetValue<string>() ?? "";
             if (!string.IsNullOrEmpty(deliveryDate) &&
                 DateTime.TryParseExact(deliveryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime delivered))
             {

@@ -29,14 +29,14 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public async Task GetActiveAircraftTest()
         {
-            var added = await _aircraftWriter!.WriteAsync(new TrackedAircraft
+            var added = await _aircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
             });
 
-            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
+            var active = await _aircraftLocker.GetActiveAircraftAsync(Address);
             Assert.IsNotNull(active);
             Assert.AreEqual(added.Id, active.Id);
         }
@@ -44,21 +44,21 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public async Task GetInactiveAircraftTest()
         {
-            await _aircraftWriter!.WriteAsync(new TrackedAircraft
+            await _aircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
                 LastSeen = DateTime.Now.AddMinutes(-15)
             });
 
-            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
+            var active = await _aircraftLocker.GetActiveAircraftAsync(Address);
             Assert.IsNull(active);
         }
 
         [TestMethod]
         public async Task InactiveAircraftIsLockedTest()
         {
-            var aircraft = await _aircraftWriter!.WriteAsync(new TrackedAircraft
+            var aircraft = await _aircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
@@ -68,7 +68,7 @@ namespace BaseStationReader.Tests.Simulator
             Assert.IsTrue(aircraft.Id > 0);
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
-            var active = await _aircraftLocker!.GetActiveAircraftAsync(Address);
+            var active = await _aircraftLocker.GetActiveAircraftAsync(Address);
             Assert.IsNull(active);
 
             var retrieved = await _aircraftWriter.GetAsync(x => x.Address == Address);
@@ -80,7 +80,7 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public async Task GetMissingAircraftTest()
         {
-            var active = await _aircraftLocker!.GetActiveAircraftAsync("000000");
+            var active = await _aircraftLocker.GetActiveAircraftAsync("000000");
             Assert.IsNull(active);
         }
     }

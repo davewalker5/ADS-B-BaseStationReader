@@ -20,8 +20,8 @@ namespace BaseStationReader.Tests.Configuration
         [TestMethod]
         public void DefaultConfigTest()
         {
-            _parser!.Parse([]);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse([]);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
 
             Assert.AreEqual(30003, settings?.Port);
             Assert.AreEqual(100, settings?.SendInterval);
@@ -36,8 +36,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverridePortTest()
         {
             var args = new string[] { "--port", "12345" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(12345, settings?.Port);
         }
 
@@ -45,8 +45,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideSendIntervalTest()
         {
             var args = new string[] { "--send-interval", "33456" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(33456, settings?.SendInterval);
         }
 
@@ -54,8 +54,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideNumberOfAircraftTest()
         {
             var args = new string[] { "--number", "126" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(126, settings?.NumberOfAircraft);
         }
 
@@ -63,8 +63,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideMinimumAircraftLifespanTest()
         {
             var args = new string[] { "--min-lifespan", "543" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(543, settings?.MinimumAircraftLifespan);
         }
 
@@ -72,8 +72,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideMaximumAircraftLifespanTest()
         {
             var args = new string[] { "--max-lifespan", "213234" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(213234, settings?.MaximumAircraftLifespan);
         }
 
@@ -81,8 +81,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideLogFileTest()
         {
             var args = new string[] { "--log-file", "MyLog.log" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual("MyLog.log", settings?.LogFile);
         }
 
@@ -90,8 +90,8 @@ namespace BaseStationReader.Tests.Configuration
         public void OverrideMinimumLogLevelTest()
         {
             var args = new string[] { "--log-level", "Debug" };
-            _parser!.Parse(args);
-            var settings = _builder!.BuildSettings(_parser, "simulatorsettings.json");
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "simulatorsettings.json");
             Assert.AreEqual(Severity.Debug, settings?.MinimumLogLevel);
         }
     }

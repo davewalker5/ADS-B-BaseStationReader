@@ -12,18 +12,16 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class HistoricalFlightApiWrapper : FlightApiWrapperBase, IHistoricalFlightApiWrapper
     {
-        private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public HistoricalFlightApiWrapper(
             ITrackerLogger logger,
             IExternalApiRegister register,
-            IAirlineManager airlineManager,
+            IAirlineApiWrapper airlineWrapper,
             IFlightManager flightManager,
-            ITrackedAircraftWriter trackedAircraftWriter) : base(airlineManager, flightManager)
+            ITrackedAircraftWriter trackedAircraftWriter) : base(logger, airlineWrapper, flightManager)
         {
-            _logger = logger;
             _register = register;
             _trackedAircraftWriter = trackedAircraftWriter;
         }
@@ -32,6 +30,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// Identify and save historical flight details for a tracked aircraft
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="date"></param>
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
@@ -46,39 +45,51 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
             {
-                _logger.LogMessage(Severity.Warning, $"Unable to look up flight details : Invalid aircraft address");
+                LogMessage(Severity.Warning, address, "Invalid aircraft address for lookup");
                 return null;
             }
 
             // Retrieve the tracked aircraft record 
-            var aircraft = await _trackedAircraftWriter.GetAsync(x => x.Address == address);
+            var aircraft = await _trackedAircraftWriter.GetAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Unable to look up flight details : Aircraft with address '{address}' is not being tracked");
+                LogMessage(Severity.Warning, address, $"Aircraft is not in the tracking table");
                 return null;
             }
 
-            _logger.LogMessage(Severity.Info, $"Looking up historical flights for aircraft with address '{address}'");
-
             // Use the API to look-up details for historical flights by the aircraft
             Flight flight = null;
-            var properties = await api.LookupFlightsByAircraftAsync(address);
-            if (properties?.Count > 0)
+            LogMessage(Severity.Info, address, $"Looking up historical flights using the API");
+            var properties = await api.LookupFlightsByAircraftAsync(address, aircraft.LastSeen);
+
+            var numberOfFlights = properties?.Count;
+            LogMessage(Severity.Info, address, $"{numberOfFlights} flight(s) found");
+
+            if ((properties?.Count ?? 0) > 0)
             {
+                // Iterate over the retrieved flight details
                 foreach (var flightProperties in properties)
                 {
                     // See if this one matches the filtering criteria
                     var matches = FilterFlight(aircraft, flightProperties, departureAirportCodes, arrivalAirportCodes);
                     if (matches)
                     {
-                        // Save the airline and the flight
-                        var airline = await _airlineManager.AddAsync(
-                            flightProperties[ApiProperty.AirlineIATA], flightProperties[ApiProperty.AirlineICAO], flightProperties[ApiProperty.AirlineName]);
-
-                        flight = await SaveFlight(flightProperties);
-
-                        // And as we now have a matching flight, return it
-                        return flight;
+                        // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
+                        flightProperties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
+                        flightProperties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);
+                        flightProperties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
+                        var airline = await _airlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
+                        if (airline != null)
+                        {
+                            // Save and return this flight as the matching flight
+                            flight = await SaveFlight(flightProperties, airline.Id);
+                            return flight;
+                        }
+                        else
+                        {
+                            LogMessage(Severity.Debug, address, $"Unable to identify the airline - flight cannot be saved");
+                            return null;
+                        }
                     }
                 }
             }
@@ -86,7 +97,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // If we fall through to here, no matching flight's been found
             return null;
         }
-        
 
         /// <summary>
         /// Determine if a property collection representing a flight matches a set of filtering criteria
@@ -102,43 +112,50 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
-            // Extract the departure and arrival airport codes
+            // Extract the departure airport code and see if the flight is filtered out
             var departure = properties[ApiProperty.EmbarkationIATA];
+            if (!IsAirportAllowed(aircraft.Address, AirportType.Departure, departure, departureAirportCodes))
+            {
+                return false;
+            }
+    
+            // Extract the arrival airport code and see if the flight is filtered out
             var arrival = properties[ApiProperty.DestinationIATA];
-
-            _logger.LogMessage(Severity.Info, $"Checking flight with route {departure} - {arrival} against the filters for aircraft {aircraft.Address}");
+            if (!IsAirportAllowed(aircraft.Address, AirportType.Arrival, arrival, arrivalAirportCodes))
+            {
+                return false;
+            }
 
             // Extract the address and check it matches
-            var address = properties[ApiProperty.AircraftAddress];
-            if (address != aircraft.Address)
-            {
-                _logger.LogMessage(Severity.Info, $"Route {departure} - {arrival} for aircraft {address} does not have the correct aircraft address");
-                return false;
-            }
+            // Update: The response doesn't always contain the address but as the request has been made for a specific
+            // 24-bit ICAO address the assumption is that only matching flights are returned
+            // var address = properties[ApiProperty.AircraftAddress];
+            // if (address != aircraft.Address)
+            // {
+            //     LogMessage(Severity.Info, address, $"Address for route {departure} - {arrival} is {address} and does not match the expected address ({aircraft.Address})");
+            //     return false;
+            // }
 
-            // Check the airport codes against the filters
-            var departureAllowed = !(departureAirportCodes?.Count() > 0) || departureAirportCodes.Contains(departure);
-            var arrivalAllowed = !(arrivalAirportCodes?.Count() > 0) || arrivalAirportCodes.Contains(arrival);
+            // Convert the last seen date on the aircraft to UTC
+            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
 
-            if (!departureAllowed || !arrivalAllowed)
-            {
-                _logger.LogMessage(Severity.Info, $"Route {departure} - {arrival} for aircraft {aircraft.Address} excluded by the airport filters");
-                return false;
-            }
-
-            // Extract the departure and arrival times
+            // Extract the departure time and check it could have been the flight
             var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);
-            var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
+            if (!departureTime.HasValue || (departureTime.Value > lastSeenUtc))
+            {
+                LogMessage(Severity.Info, aircraft.Address, $"Departure time of {departureTime} is later than the observed time {lastSeenUtc} UTC");
+                return false;
+            }
 
             // Check the flight times include the last seen date on the aircraft
-            if (!departureTime.HasValue || (departureTime.Value > aircraft.LastSeen) ||
-                !arrivalTime.HasValue || (arrivalTime.Value < aircraft.LastSeen))
+            var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
+            if (!arrivalTime.HasValue || (arrivalTime.Value < lastSeenUtc))
             {
-                _logger.LogMessage(Severity.Info, $"Route {departure} - {arrival} for aircraft {aircraft.Address} excluded by the flight time filters");
+                LogMessage(Severity.Info, aircraft.Address, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeenUtc} UTC");
                 return false;
             }
 
-            _logger.LogMessage(Severity.Info, $"Flight with route {departure} - {arrival} matches filters for aircraft {aircraft.Address}");
+            LogMessage(Severity.Info, aircraft.Address, $"Flight with route {departure} - {arrival} matches filters");
             return true;
         }
 
@@ -148,6 +165,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="value"></param>
         /// <returns></returns>
         private static DateTime? ExtractTimestamp(string value)
-            => DateTime.TryParse(value, null, DateTimeStyles.AdjustToUniversal, out DateTime utc) ? utc.ToLocalTime() : null;
+            => DateTime.TryParse(value, null, DateTimeStyles.AdjustToUniversal, out DateTime utc) ? utc : null;
     }
 }

@@ -3,10 +3,11 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
+using System.Text.Json.Nodes;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
-    public class AirLabsAircraftApi : ExternalApiBase, IAircraftApi
+    internal class AirLabsAircraftApi : ExternalApiBase, IAircraftApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
@@ -54,27 +55,46 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var url = $"{_baseAddress}{parameters}";
                 var node = await GetAsync(Logger, ApiServiceType.AirLabs, url, []);
 
-                if (node != null)
+                // Check we have a node
+                if (node == null)
                 {
-                    // Extract the response element from the JSON DOM
-                    var apiResponse = node!["response"]![0];
-
-                    // Extract the values into a dictionary
-                    properties = new()
-                    {
-                        { ApiProperty.AircraftRegistration, apiResponse!["reg_number"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AircraftManufactured, apiResponse!["built"]?.GetValue<int?>()?.ToString() ?? "" },
-                        { ApiProperty.AircraftAge, apiResponse!["age"]?.GetValue<int?>()?.ToString() ?? "" },
-                        { ApiProperty.ManufacturerName, apiResponse!["manufacturer"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelICAO, apiResponse!["icao"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelIATA, apiResponse!["iata"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelName, apiResponse!["model"]?.GetValue<string>() ?? "" }
-                    };
-
-                    // Log the properties dictionary
-                    LogProperties("Aircraft", properties);
-
+                    Logger.LogMessage(Severity.Warning, $"API request returned a NULL response");
+                    return properties;
                 }
+
+                // Extract the response element from the JSON DOM as a JSON array
+                var response = node?["response"] as JsonArray;
+                if (response?.Count == 0)
+                {
+                    Logger.LogMessage(Severity.Warning, "API request returned an empty response");
+                    return properties;
+                }
+
+                // Extract the first element of the response as a JSON object
+                if (response[0] is not JsonObject aircraft)
+                {
+                    Logger.LogMessage(Severity.Warning, "Unexpected API response format");
+                    return properties;
+                }
+
+                // Extract the year the aircraft was built and use it to determine the age
+                int? manufactured = aircraft?["built"]?.GetValue<int?>();
+                int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
+
+                // Extract the values into a dictionary
+                properties = new()
+                {
+                    { ApiProperty.AircraftRegistration, aircraft?["reg_number"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
+                    { ApiProperty.AircraftAge, age?.ToString() ?? "" },
+                    { ApiProperty.ManufacturerName, aircraft?["manufacturer"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelICAO, aircraft?["icao"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelIATA, aircraft?["iata"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelName, aircraft?["model"]?.GetValue<string>() ?? "" }
+                };
+
+                // Log the properties dictionary
+                LogProperties("Aircraft", properties);
             }
             catch (Exception ex)
             {
@@ -83,7 +103,15 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 properties = null;
             }
 
-            return properties;
+            return HaveValidProperties(properties) ? properties : null;
         }
+
+        /// <summary>
+        /// Return true if we have sufficient properties to constitute a valid response
+        /// </summary>
+        /// <param name="properties"></param>
+        /// <returns></returns>
+        private static bool HaveValidProperties(Dictionary<ApiProperty, string> properties)
+            => HaveValue(properties, ApiProperty.AircraftRegistration);
     }
 }
