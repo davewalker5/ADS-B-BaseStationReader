@@ -40,18 +40,22 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // See if the airline is stored locally, first. Search by IATA and ICAO code and if that doesn't
-            // produce a result search by name
-            LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database");
+            // produce a result search by name, assuming one has been provided
+            LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database using ICAO and IATA codes");
             var airline = await _airlineManager.GetByCodeAsync(iata, icao);
-            airline ??= await _airlineManager.GetAsync(x => x.Name == name);
             if ((airline == null) && !string.IsNullOrEmpty(name))
             {
-                // The minimum criterion for saving an airline is to have the name. If it's not already there
-                // and we have the name, save the airline
-                LogMessage(Severity.Info, icao, iata, name, "Not stored locally, adding to the database");
-                airline = await _airlineManager.AddAsync(iata, icao, name);
+                LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database by name");
+                airline = await _airlineManager.GetAsync(x => x.Name == name);
+                if (airline == null)
+                {
+                    LogMessage(Severity.Info, icao, iata, name, "Not stored locally, adding to the database");
+                    airline = await _airlineManager.AddAsync(iata, icao, name);
+                }
             }
 
+            // If we've only got the codes, the airline could still be unidentified at this point, in which
+            // case we need to use the API to look it up
             if (airline == null)
             {
                 LogMessage(Severity.Info, icao, iata, name, "Not stored locally, using the API");
@@ -64,7 +68,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                     await api.LookupAirlineByICAOCodeAsync(icao) :
                     await api.LookupAirlineByICAOCodeAsync(iata);
 
-                if (properties?.Count > 0)
+                if ((properties?.Count ?? 0) > 0)
                 {
                     // Extract the airline properties from the response
                     properties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);

@@ -56,7 +56,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
                 // Not stored locally, so use the API to look it up
                 var properties = await api.LookupAircraftAsync(address);
-                if (properties?.Count > 0)
+                if ((properties?.Count ?? 0) > 0)
                 {
                     // If the aircraft is returned without a model and we have and alternative ICAO for the
                     // model (often from the flight), then use that

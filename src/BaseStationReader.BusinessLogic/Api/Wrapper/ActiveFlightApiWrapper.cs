@@ -44,7 +44,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // Use the API to look-up the flight
             var properties = await api.LookupFlightByAircraftAsync(address);
-            if (properties?.Count == 0)
+            if ((properties?.Count ?? 0) == 0)
             {
                 return null;
             }
@@ -100,7 +100,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // Use the API to look-up the flights
             var properties = await api.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
-            if (properties?.Count > 0)
+            if ((properties?.Count ?? 0) > 0)
             {
                 // Iterate over the collection of flight properties
                 foreach (var flightDetails in properties)

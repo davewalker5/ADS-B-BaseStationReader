@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var numberOfFlights = properties?.Count;
             LogMessage(Severity.Info, address, $"{numberOfFlights} flight(s) found");
 
-            if (properties?.Count > 0)
+            if ((properties?.Count ?? 0) > 0)
             {
                 // Iterate over the retrieved flight details
                 foreach (var flightProperties in properties)
