@@ -86,7 +86,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
             else
             {
-                LogMessage(Severity.Info, icao, iata, name, "Retrieved from the database");
+                LogMessage(Severity.Info, airline.ICAO, airline.IATA, airline.Name, "Retrieved from the database");
             }
 
             return airline;

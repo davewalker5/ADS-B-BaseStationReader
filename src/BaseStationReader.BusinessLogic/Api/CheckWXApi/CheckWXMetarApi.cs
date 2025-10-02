@@ -62,7 +62,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
                     // Extract the response element, which is an array of strings, from the JSON DOM and
                     // convert to a list of strings
                     var apiResponse = node?["data"]?.AsArray();
-                    results = apiResponse!.Select(x => x!.ToString());
+                    results = apiResponse?.Select(x => x?.ToString());
 
                     // Log the properties dictionary
                     foreach (var metar in results)

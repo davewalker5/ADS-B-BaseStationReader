@@ -19,6 +19,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(900000, settings.TimeToLock);
             Assert.AreEqual("AircraftTracker.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
+            Assert.IsFalse(settings.VerboseLogging);
             Assert.IsTrue(settings.EnableSqlWriter);
             Assert.IsFalse(settings.ClearDown);
             Assert.IsFalse(settings.AutoLookup);

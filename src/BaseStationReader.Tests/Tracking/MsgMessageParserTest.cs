@@ -5,7 +5,6 @@ using System.Globalization;
 
 namespace BaseStationReader.Tests.Tracking
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class MsgMessageParserTest
     {

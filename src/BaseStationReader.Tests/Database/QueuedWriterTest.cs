@@ -10,7 +10,6 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class QueuedWriterTest
     {

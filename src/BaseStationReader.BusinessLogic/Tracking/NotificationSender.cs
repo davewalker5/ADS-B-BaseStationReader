@@ -181,7 +181,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             EventHandler<AircraftNotificationEventArgs> handler,
             AircraftNotificationType type)
         {
-            _logger.LogMessage(Severity.Debug, $"Sending {type} message for aircraft {aircraft.Address} {aircraft.Behaviour}");
+            _logger.LogMessage(Severity.Verbose, $"Sending {type} message for aircraft {aircraft.Address} {aircraft.Behaviour}");
 
             try
             {

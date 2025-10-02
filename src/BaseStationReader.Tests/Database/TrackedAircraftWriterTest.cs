@@ -7,7 +7,6 @@ using System.Globalization;
 
 namespace BaseStationReader.Tests.Database
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class AircraftWriterTest
     {

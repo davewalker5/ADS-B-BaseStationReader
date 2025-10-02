@@ -7,7 +7,6 @@ using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.API
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class ExternalApiFactoryTest
     {

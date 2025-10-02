@@ -68,7 +68,7 @@ namespace BaseStationReader.BusinessLogic.Api
             var delay = _interCallDelay[type];
             if (delay > 0)
             {
-                logger.LogMessage(Severity.Debug, $"Inter-call delay for {type} is {delay} ms");
+                logger.LogMessage(Severity.Verbose, $"Inter-call delay for {type} is {delay} ms");
     
                 // There is, so find out how long ago it was last called (ms)
                 var interval = (int)Math.Round((DateTime.Now - _lastCallTimestamp[type]).TotalMilliseconds, MidpointRounding.ToZero);
@@ -81,7 +81,7 @@ namespace BaseStationReader.BusinessLogic.Api
             }
             else
             {
-                logger.LogMessage(Severity.Debug, $"{type} does not have a rate limit");
+                logger.LogMessage(Severity.Verbose, $"{type} does not have a rate limit");
             }
 
             // Send the response and capture the "last called" timestamp

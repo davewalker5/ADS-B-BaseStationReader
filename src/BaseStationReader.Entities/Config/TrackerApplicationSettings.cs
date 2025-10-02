@@ -18,6 +18,7 @@ namespace BaseStationReader.Entities.Config
         public int TimeToRemoval { get; set; }
         public int TimeToLock { get; set; }
         public string LogFile { get; set; } = "";
+        public bool VerboseLogging { get; set; }
         public bool EnableSqlWriter { get; set; }
         public bool ClearDown { get; set; }
         public bool AutoLookup { get; set; }

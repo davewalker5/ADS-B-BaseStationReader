@@ -132,13 +132,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// Start reading messages
         /// </summary>
         public void Start()
-            => _tracker!.Start();
+            => _tracker.Start();
 
         /// <summary>
         /// Stop reading messages
         /// </summary>
         public void Stop()
-            => _tracker!.Stop();
+            => _tracker.Stop();
 
         /// <summary>
         /// Set up a distance calculator, if the receiver co-ordinates have been specified
@@ -165,18 +165,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Push the aircraft, a lookup request and the aircraft position to the SQL writer, if enabled
             if (_writer != null)
             {
-                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                _logger.LogMessage(Severity.Verbose, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
                 if (_settings.AutoLookup)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
+                    _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
                     _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
                 }
 
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                    _logger.LogMessage(Severity.Verbose, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }
@@ -207,20 +207,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_writer != null)
             {
                 // Push the aircraft to the queued writer queue
-                _logger.LogMessage(Severity.Debug, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                _logger.LogMessage(Severity.Verbose, $"Queueing aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                 _writer.Push(e.Aircraft);
 
                 // If this is a new aircraft, push a lookup request to the queued writer queue
                 if (!existingAircraft && _settings.AutoLookup)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
+                    _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
                     _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
                 }
 
                 // Push the aircraft position to the queued writer queue
                 if (e.Position != null)
                 {
-                    _logger.LogMessage(Severity.Debug, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
+                    _logger.LogMessage(Severity.Verbose, $"Queueing position with ID {e.Position.Id} for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour} for writing");
                     _writer.Push(e.Position);
                 }
             }
@@ -249,6 +249,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
-            => _logger!.LogMessage(Severity.Info, $"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
+            => _logger.LogMessage(Severity.Info, $"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
     }
 }

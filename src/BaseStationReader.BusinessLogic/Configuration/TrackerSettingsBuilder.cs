@@ -63,6 +63,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.MinimumLogLevel = minimumLogLevel;
             }
 
+            values = parser.GetValues(CommandLineOptionType.VerboseLogging);
+            if (values != null) settings.VerboseLogging = bool.Parse(values[0]);
+
             values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
             if (values != null) settings.EnableSqlWriter = bool.Parse(values[0]);
 

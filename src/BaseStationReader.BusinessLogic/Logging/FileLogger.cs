@@ -12,13 +12,15 @@ namespace BaseStationReader.BusinessLogic.Logging
     public class FileLogger : ITrackerLogger
     {
         private bool _configured = false;
+        private bool _verbose = false;
 
         /// <summary>
         /// Configure logging using Serilog
         /// </summary>
         /// <param name="logFile"></param>
         /// <param name="minimumSeverityToLog"></param>
-        public void Initialise(string logFile, Severity minimumSeverityToLog)
+        /// <param name="verbose"></param>
+        public void Initialise(string logFile, Severity minimumSeverityToLog, bool verbose)
         {
             // If the log file's empty, return now without configuring a logger
             if (string.IsNullOrEmpty(logFile))
@@ -59,8 +61,9 @@ namespace BaseStationReader.BusinessLogic.Logging
                 .CreateLogger();
 #pragma warning restore CS8602, S4792
 
-            // Set the "configured" flag
+            // Set the "configured" flag and store the verbose logging level flag
             _configured = true;
+            _verbose = verbose;
         }
 
         /// <summary>
@@ -87,6 +90,12 @@ namespace BaseStationReader.BusinessLogic.Logging
                     break;
                 case Severity.Error:
                     Log.Error(message);
+                    break;
+                case Severity.Verbose:
+                    if (_verbose)
+                    {
+                        Log.Debug(message);
+                    }
                     break;
                 default:
                     break;

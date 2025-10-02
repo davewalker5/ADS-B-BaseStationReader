@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
@@ -9,7 +8,6 @@ using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.API
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class AeroDataBoxExternalApiWrapperTest
     {

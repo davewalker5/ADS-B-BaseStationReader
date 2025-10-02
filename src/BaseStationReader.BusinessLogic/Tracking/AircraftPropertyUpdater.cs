@@ -84,7 +84,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 // Assess the aircraft behaviour using the history
                 aircraft.Behaviour = _assessor.Assess(aircraft);
-                _logger.LogMessage(Severity.Debug, $"Aircraft {aircraft.Address} : {aircraft.Behaviour}");
+                _logger.LogMessage(Severity.Verbose, $"Behaviour for aircraft {aircraft.Address} : {aircraft.Behaviour}");
             }
         }
     }

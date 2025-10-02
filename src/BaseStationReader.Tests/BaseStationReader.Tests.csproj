@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="simulatorsettings.json" />
     <None Remove="trackersettings.json" />
     <None Remove="alternatesettings.json" />

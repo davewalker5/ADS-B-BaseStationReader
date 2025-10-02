@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Configuration
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class CommandLineParserTest
     {

@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Config;
+using DocumentFormat.OpenXml.Office2010.CustomUI;
 
 namespace BaseStationReader.BusinessLogic.Configuration
 {
@@ -35,6 +36,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
             Add(CommandLineOptionType.AutoLookup, false, "--auto-lookup", "-al", "Automatically lookup aircraft and flights via the external APIs", 1, 1);
             Add(CommandLineOptionType.LiveApi, false, "--live-api", "-lapi", "Specify the name of an API to use for lookups", 1, 1);
+            Add(CommandLineOptionType.VerboseLogging, false, "--verbose", "-v", "Enable verbose logging at debug log level", 1, 1);
         }
     }
 }

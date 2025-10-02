@@ -7,7 +7,6 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Simulator
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class AircraftLockManagerTest
     {
