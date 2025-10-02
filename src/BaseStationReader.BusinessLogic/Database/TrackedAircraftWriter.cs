@@ -76,18 +76,24 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="address"></param>
         /// <param name="successful"></param>
+        /// <param name="maximumLookups"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> UpdateLookupProperties(string address, bool successful)
+        public async Task<TrackedAircraft> UpdateLookupProperties(string address, bool successful, int maximumLookups)
         {
             var aircraft = await _context.TrackedAircraft.FirstOrDefaultAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
 
             if (aircraft != null)
             {
+                // Increment the lookup attempt count
                 aircraft.LookupAttempts += 1;
-                if (successful)
+
+                // If the lookup was successful or the lookup attempt limit's been hit, set the lookup timestamp
+                // to suppress further lookups
+                if (successful || (aircraft.LookupAttempts >= maximumLookups))
                 {
                     aircraft.LookupTimestamp = DateTime.Now;
                 }
+
                 await _context.SaveChangesAsync();
             }
 
