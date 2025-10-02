@@ -60,6 +60,9 @@ namespace BaseStationReader.Entities.Tracking
 
         public DateTime? LookupTimestamp { get; set; }
 
+        [Required]
+        public int LookupAttempts { get; set; } = 0;
+
         [NotMapped]
         public AircraftBehaviour Behaviour { get; set; }
 

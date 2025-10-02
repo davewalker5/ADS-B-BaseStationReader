@@ -64,6 +64,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // Create an instance of the wrapper
             var wrapper = new ExternalApiWrapper(
+                settings.MaximumLookups,
                 logger,
                 airlineManager,
                 aircraftManager,

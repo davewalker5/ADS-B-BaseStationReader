@@ -150,7 +150,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _writer.SetLookupTimestamp(Address);
+            _ = await _writer.UpdateLookupProperties(Address, true, 5);
 
             var aircraft = await _writer.ListAsync(x => true);
             Assert.IsNotNull(aircraft);

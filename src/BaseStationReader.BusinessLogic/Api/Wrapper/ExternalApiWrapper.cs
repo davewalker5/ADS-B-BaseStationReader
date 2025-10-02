@@ -1,6 +1,7 @@
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -10,6 +11,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class ExternalApiWrapper : IExternalApiWrapper
     {
+        private readonly int _maximumLookupAttempts;
+        private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
         private readonly IActiveFlightApiWrapper _activeFlightWrapper;
         private readonly IHistoricalFlightApiWrapper _historicalFlightWrapper;
@@ -20,6 +23,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public ExternalApiWrapper(
+            int maximumLookupAttempts,
             ITrackerLogger logger,
             AirlineManager airlineManager,
             IAircraftManager aircraftManager,
@@ -29,6 +33,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ISightingManager sightingManager,
             ITrackedAircraftWriter trackedAircraftWriter)
         {
+            _maximumLookupAttempts = maximumLookupAttempts;
+            _logger = logger;
             _register = new ExternalApiRegister(logger);
             _airlineApiWrapper = new AirlineApiWrapper(logger, _register, airlineManager);
             _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, flightManager);
@@ -61,6 +67,25 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IEnumerable<string> arrivalAirportCodes,
             bool createSighting)
         {
+            // Check the maximum number of attempts hasn't been reached. A maximum of 0 indicates unlimited attempts
+            if (_maximumLookupAttempts > 0)
+            {
+                // Look for a tracked aircraft with the specified address, no lookup timestamp and a number of attempts
+                // less than the maximum
+                var trackedAircraft = await _trackedAircraftWriter.GetAsync(x =>
+                    (x.Address == address) &&
+                    (x.LookupTimestamp == null) &&
+                    (x.LookupAttempts < _maximumLookupAttempts));
+
+                // If the result is NULL, either the aircraft isn't there at all, it's already been successfully looked
+                // up or the maximum attempts have been reached
+                if (trackedAircraft == null)
+                {
+                    _logger.LogMessage(Severity.Warning, $"Aircraft {address} is not tracked, has already been lookup up or has reached the maximum lookup attempts");
+                    return false;
+                }
+            }
+            
             // Lookup the flight
             var flight = type == ApiEndpointType.ActiveFlights ?
                 await LookupActiveFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
@@ -71,10 +96,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
-            if (successful)
-            {
-                await _trackedAircraftWriter.SetLookupTimestamp(address);
-            }
+
+            // Update the lookup properties on the tracked aircraft record
+            await _trackedAircraftWriter.UpdateLookupProperties(address, successful, _maximumLookupAttempts);
 
             // If the lookup was successful and sighting creation is requested, save the relationship
             // between the flight and the aircraft as a sighting on this date
@@ -84,7 +108,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // The lookup was successful if both aircraft and flight were looked up successfully
-            return (aircraft != null) && (flight != null);
+            return successful;
         }
 
         /// <summary>
