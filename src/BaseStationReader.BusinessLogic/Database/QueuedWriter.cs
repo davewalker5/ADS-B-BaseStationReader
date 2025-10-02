@@ -10,6 +10,7 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -275,15 +276,8 @@ namespace BaseStationReader.BusinessLogic.Database
             // Perform the API lookup
             _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
             var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-            if (result)
-            {
-                _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");
-                await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
-            }
-            else
-            {
-                _logger.LogMessage(Severity.Error, $"Lookup for aircraft {request.Address} was not successful");
-            }
+            var outcome = result ? "was" : "was not";
+            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.Address} {outcome} successful");
 
             return true;
         }

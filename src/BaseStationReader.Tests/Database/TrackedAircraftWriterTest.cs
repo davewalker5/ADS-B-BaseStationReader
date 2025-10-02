@@ -2,7 +2,6 @@
 using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace BaseStationReader.Tests.Database
@@ -151,7 +150,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _writer.SetLookupTimestamp(initial.Id);
+            _ = await _writer.SetLookupTimestamp(Address);
 
             var aircraft = await _writer.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
