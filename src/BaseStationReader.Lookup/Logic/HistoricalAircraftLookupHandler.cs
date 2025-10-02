@@ -52,7 +52,7 @@ namespace BaseStationReader.Lookup.Logic
                 var result = await wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
                 if (result)
                 {
-                    await _writer.SetLookupTimestamp(a.Address);
+                    await _writer.UpdateLookupProperties(a.Address, result);
                 }
             }
         }

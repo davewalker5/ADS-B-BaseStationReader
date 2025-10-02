@@ -62,19 +62,18 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             bool createSighting)
         {
             // Lookup the flight
-            var flight = type == ApiEndpointType.ActiveFlights ?
+            Flight flight = type == ApiEndpointType.ActiveFlights ?
                 await LookupActiveFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
                 await LookupHistoricalFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
 
             // Lookup the aircraft
-            var aircraft = await LookupAircraftAsync(address, flight?.ModelICAO);
+            Aircraft aircraft = await LookupAircraftAsync(address, flight?.ModelICAO);
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
-            if (successful)
-            {
-                await _trackedAircraftWriter.SetLookupTimestamp(address);
-            }
+
+            // Update the lookup properties on the tracked aircraft record
+            await _trackedAircraftWriter.UpdateLookupProperties(address, successful);
 
             // If the lookup was successful and sighting creation is requested, save the relationship
             // between the flight and the aircraft as a sighting on this date
@@ -84,7 +83,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // The lookup was successful if both aircraft and flight were looked up successfully
-            return (aircraft != null) && (flight != null);
+            return successful;
         }
 
         /// <summary>

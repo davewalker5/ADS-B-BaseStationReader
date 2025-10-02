@@ -50,9 +50,10 @@ namespace BaseStationReader.BusinessLogic.Database
             var aircraft = await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id);
             if (aircraft != null)
             {
-                // The lookup timestamp may be set on the database but not in the incoming template
+                // The lookup properties may be set on the database but not in the incoming template
                 // so make sure the value from the database is retained
                 template.LookupTimestamp ??= aircraft.LookupTimestamp;
+                template.LookupAttempts = aircraft.LookupAttempts;
 
                 // Record found, so update its properties
                 UpdateProperties(template, aircraft);
@@ -74,14 +75,19 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Set the lookup timestamp on a tracked aircraft
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="successful"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> SetLookupTimestamp(string address)
+        public async Task<TrackedAircraft> UpdateLookupProperties(string address, bool successful)
         {
             var aircraft = await _context.TrackedAircraft.FirstOrDefaultAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
 
             if (aircraft != null)
             {
-                aircraft.LookupTimestamp = DateTime.Now;
+                aircraft.LookupAttempts += 1;
+                if (successful)
+                {
+                    aircraft.LookupTimestamp = DateTime.Now;
+                }
                 await _context.SaveChangesAsync();
             }
 
