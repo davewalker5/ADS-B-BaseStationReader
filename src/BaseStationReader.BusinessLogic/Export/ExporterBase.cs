@@ -15,7 +15,7 @@ namespace BaseStationReader.BusinessLogic.Export
             IEnumerable<PropertyInfo> properties = typeof(T)
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Where(x => Attribute.IsDefined(x, typeof(ExportAttribute)))
-                .OrderBy(x => x.GetCustomAttribute<ExportAttribute>()!.Order);
+                .OrderBy(x => x.GetCustomAttribute<ExportAttribute>().Order);
 
             // Build a dictionary of properties where the key is the column name and the value is
             // the corresponding property information instance

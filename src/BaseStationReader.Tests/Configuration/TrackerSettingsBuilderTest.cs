@@ -271,5 +271,14 @@ namespace BaseStationReader.Tests.Configuration
             var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
             Assert.AreEqual("Missing", settings.LiveApi);
         }
+
+        [TestMethod]
+        public void OverrideVerboseLoggingTest()
+        {
+            var args = new string[] { "--verbose", "true" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.IsTrue(settings.VerboseLogging);
+        }
     }
 }

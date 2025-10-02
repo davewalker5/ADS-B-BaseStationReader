@@ -76,7 +76,7 @@ namespace BaseStationReader.Terminal.Logic
             {
                 // Find the row number for the aircraft's ICAO address
                 rowNumber = _indexManager.FindAircraft(aircraft.Address);
-                if ((rowNumber >= 0) && (rowNumber < Table!.Rows.Count))
+                if ((rowNumber >= 0) && (rowNumber < Table.Rows.Count))
                 {
                     // Found, so a new row with updated row data, remove the old row and insert the new one
                     var rowData = GetAircraftRowData(aircraft);
@@ -105,7 +105,7 @@ namespace BaseStationReader.Terminal.Logic
             {
                 // Find the row number for the aircraft's ICAO address
                 var rowNumber = _indexManager.RemoveAircraft(aircraft.Address);
-                if ((rowNumber >= 0) && (rowNumber < Table!.Rows.Count))
+                if ((rowNumber >= 0) && (rowNumber < Table.Rows.Count))
                 {
                     // Found, so remove that row from the table
                     Table.RemoveRow(rowNumber);
@@ -126,12 +126,12 @@ namespace BaseStationReader.Terminal.Logic
             var rowNumber = -1;
 
             // Check we've not exceeded the row limit
-            if ((_maximumRows == 0) || (Table!.Rows.Count < _maximumRows))
+            if ((_maximumRows == 0) || (Table.Rows.Count < _maximumRows))
             {
                 // Add the aircraft to the table
                 rowNumber = 0;
                 var rowData = GetAircraftRowData(aircraft);
-                Table!.InsertRow(0, rowData);
+                Table.InsertRow(0, rowData);
 
                 // Update the address/row index
                 _indexManager.AddAircraft(aircraft.Address, rowNumber);
@@ -178,27 +178,27 @@ namespace BaseStationReader.Terminal.Logic
                 var valueString = "";
                 if (column.TypeName.Equals("Decimal", StringComparison.OrdinalIgnoreCase))
                 {
-                    decimal? value = (decimal?)column.Info!.GetValue(aircraft);
+                    decimal? value = (decimal?)column.Info.GetValue(aircraft);
                     valueString = value?.ToString(column.Format) ?? "";
                 }
                 else if (column.TypeName.Equals("double", StringComparison.OrdinalIgnoreCase))
                 {
-                    double? value = (double?)column.Info!.GetValue(aircraft);
+                    double? value = (double?)column.Info.GetValue(aircraft);
                     valueString = value?.ToString(column.Format) ?? "";
                 }
                 else if (column.TypeName.Equals("bool", StringComparison.OrdinalIgnoreCase))
                 {
-                    bool value = (bool?)column.Info!.GetValue(aircraft) ?? false;
+                    bool value = (bool?)column.Info.GetValue(aircraft) ?? false;
                     valueString = value ? "Yes" : "No";
                 }
                 else if (column.TypeName.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
                 {
-                    DateTime? value = (DateTime?)column.Info!.GetValue(aircraft);
+                    DateTime? value = (DateTime?)column.Info.GetValue(aircraft);
                     valueString = value?.ToString(column.Format) ?? "";
                 }
                 else
                 {
-                    valueString = column.Info!.GetValue(aircraft)?.ToString() ?? "";
+                    valueString = column.Info.GetValue(aircraft)?.ToString() ?? "";
                 }
 
                 // Determine the ascent/descent behaviour indicator

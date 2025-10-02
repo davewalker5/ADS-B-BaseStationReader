@@ -31,12 +31,12 @@ namespace BaseStationReader.Simulator
 
                 // Configure the log file
                 ITrackerLogger logger = new FileLogger();
-                logger.Initialise(settings!.LogFile, settings.MinimumLogLevel);
+                logger.Initialise(settings.LogFile, settings.MinimumLogLevel, false);
 
                 // Get the version number and application title
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-                var title = $"Receiver Simulator v{info.FileVersion}: Port: {settings!.Port}";
+                var title = $"Receiver Simulator v{info.FileVersion}: Port: {settings.Port}";
 
                 // Log the startup messages
                 logger.LogMessage(Severity.Info, new string('=', 80));

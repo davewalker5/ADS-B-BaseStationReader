@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Mocks
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class MockMessageReaderTest
     {

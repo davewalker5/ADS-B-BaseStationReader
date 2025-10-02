@@ -1,3 +1,4 @@
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Api;
@@ -15,12 +16,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IAirlineApiWrapper _airlineApiWrapper;
         private readonly IAircraftApiWrapper _aircraftApiWrapper;
         private readonly IAirportWeatherApiWrapper _airportWeatherApiWrapper;
-
         private readonly ISightingManager _sightingManager;
+        private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public ExternalApiWrapper(
             ITrackerLogger logger,
-            IAirlineManager airlineManager,
+            AirlineManager airlineManager,
             IAircraftManager aircraftManager,
             IManufacturerManager manufacturerManager,
             IModelManager modelManager,
@@ -35,6 +36,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, aircraftManager, modelManager, manufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
             _sightingManager = sightingManager;
+            _trackedAircraftWriter = trackedAircraftWriter;
         }
 
         /// <summary>
@@ -67,10 +69,17 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // Lookup the aircraft
             var aircraft = await LookupAircraftAsync(address, flight?.ModelICAO);
 
-            // If we have a flight and and aircraft, create a sighting
-            if (createSighting && (aircraft != null) && (flight != null))
+            // The lookup is considered successful if the aircraft and flight are valid
+            var successful = (aircraft != null) && (flight != null);
+            if (successful)
             {
-                // Save the relationship between the flight and the aircraft as a sighting on this date
+                await _trackedAircraftWriter.SetLookupTimestamp(address);
+            }
+
+            // If the lookup was successful and sighting creation is requested, save the relationship
+            // between the flight and the aircraft as a sighting on this date
+            if (createSighting && successful)
+            {
                 _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
             }
 

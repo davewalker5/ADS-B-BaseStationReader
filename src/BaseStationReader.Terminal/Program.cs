@@ -44,7 +44,7 @@ namespace BaseStationReader.Terminal
 
                 // Configure the log file
                 _logger = new FileLogger();
-                _logger.Initialise(_settings!.LogFile, _settings.MinimumLogLevel);
+                _logger.Initialise(_settings.LogFile, _settings.MinimumLogLevel, _settings.VerboseLogging);
 
                 // Get the version number and application title
                 Assembly assembly = Assembly.GetExecutingAssembly();
@@ -77,7 +77,7 @@ namespace BaseStationReader.Terminal
                 {
                     // Configure the table
                     var trackerIndexManager = new TrackerIndexManager();
-                    _tableManager = new TrackerTableManager(trackerIndexManager, _settings!.Columns, _settings!.MaximumRows);
+                    _tableManager = new TrackerTableManager(trackerIndexManager, _settings.Columns, _settings.MaximumRows);
                     _tableManager.CreateTable(title);
 
                     // Construct the live view
@@ -90,7 +90,7 @@ namespace BaseStationReader.Terminal
                             await ShowTrackingTable(ctx);
                         });
                 }
-                while (_settings!.RestartOnTimeout);
+                while (_settings.RestartOnTimeout);
             }
         }
 
@@ -106,8 +106,8 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Start the wrapper and continuously update the table
-            _wrapper!.Start();
-            while (elapsed <= _settings!.ApplicationTimeout)
+            _wrapper.Start();
+            while (elapsed <= _settings.ApplicationTimeout)
             {
                 // Refresh and wait for a while
                 ctx.Refresh();
@@ -132,10 +132,10 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Add the aircraft to the bottom of the table
-            var rowNumber = _tableManager!.AddAircraft(e.Aircraft);
+            var rowNumber = _tableManager.AddAircraft(e.Aircraft);
             if (rowNumber != -1)
             {
-                _logger!.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowNumber}");
+                _logger.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowNumber}");
             }
         }
 
@@ -150,8 +150,8 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Update the row
-            var rowNumber = _tableManager!.UpdateAircraft(e.Aircraft);
-            _logger!.LogMessage(Severity.Debug, $"Updated aircraft {e.Aircraft.Address} at row {rowNumber}");
+            var rowNumber = _tableManager.UpdateAircraft(e.Aircraft);
+            _logger.LogMessage(Severity.Verbose, $"Updated aircraft {e.Aircraft.Address} at row {rowNumber}");
         }
 
         /// <summary>
@@ -165,8 +165,8 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Remove the aircraft from the index
-            var rowNumber = _tableManager!.RemoveAircraft(e.Aircraft);
-            _logger!.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
+            var rowNumber = _tableManager.RemoveAircraft(e.Aircraft);
+            _logger.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
         }
 
         /// <summary>

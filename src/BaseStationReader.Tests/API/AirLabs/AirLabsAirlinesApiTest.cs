@@ -6,11 +6,6 @@ using BaseStationReader.Entities.Config;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
-    /// <summary>
-    /// These tests can't test authentication/authorisation at the service end, the lookup of data at the
-    /// service end or network transport. They're design to test the downstream logic once a response has
-    /// been received
-    /// </summary>
     [TestClass]
     public class AirLabsAirlinesApiTest
     {

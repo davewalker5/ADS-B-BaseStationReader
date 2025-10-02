@@ -56,6 +56,7 @@
         TimeToStale,
         TrackedBehaviours,
         TrackPosition,
+        VerboseLogging,
         Weather,
         WriterBatchSize,
         WriterInterval

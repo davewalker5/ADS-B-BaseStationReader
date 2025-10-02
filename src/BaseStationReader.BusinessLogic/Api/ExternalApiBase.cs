@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
+using System.Text.Json;
 
 namespace BaseStationReader.BusinessLogic.Api
 {
@@ -59,10 +60,10 @@ namespace BaseStationReader.BusinessLogic.Api
                 Logger.LogMessage(Severity.Debug, $"Making request to {endpoint}");
 
                 // Construct a request object, including the headers
-                var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                var request = new HttpRequestMessage(method, endpoint);
                 foreach (var header in headers)
                 {
-                    Logger.LogMessage(Severity.Debug, $"Adding header {header.Key}: {header.Value}");
+                    Logger.LogMessage(Severity.Verbose, $"Adding header {header.Key}: {header.Value}");
                     request.Headers.Add(header.Key, header.Value);
                 }
 
@@ -76,23 +77,48 @@ namespace BaseStationReader.BusinessLogic.Api
                 using (var response = await _client.SendAsync(logger, type, request))
                 {
                     // Check the request was successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Read the response, parse to a JSON DOM
-                        var json = await response.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(json))
-                        {
-                            Logger.LogMessage(Severity.Debug, $"Received response {json}");
-                            node = JsonNode.Parse(json);
-                        }
-                        else
-                        {
-                            Logger.LogMessage(Severity.Warning, "Received empty response");
-                        }
-                    }
-                    else
+                    if (!response.IsSuccessStatusCode)
                     {
                         Logger.LogMessage(Severity.Error, $"Response was not successful - code = {response.StatusCode}");
+                        return null;
+                    }
+    
+                    // Read the response as a JSON string
+                    var json = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrEmpty(json))
+                    {
+                        Logger.LogMessage(Severity.Warning, "Received empty response");
+                        return null;
+                    }
+
+                    Logger.LogMessage(Severity.Debug, $"Received response {json}");
+
+                    // Parse the response JSON using lenient options, allowing trailing commas, skipping comments
+                    try
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(json);
+                        node = JsonNode.Parse(
+                            bytes,
+                            nodeOptions: default,
+                            documentOptions: new JsonDocumentOptions
+                            {
+                                AllowTrailingCommas = true,
+                                CommentHandling = JsonCommentHandling.Skip
+                            }
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogMessage(Severity.Error, ex.Message);
+                        Logger.LogException(ex);
+                        return null;
+                    }
+
+                    // It's possible it may have not produced a parsing error but is still not valid. If so,
+                    // log the fact
+                    if (node == null)
+                    {
+                        Logger.LogMessage(Severity.Warning, "JSON response did not parse to a valid JSON node");
                     }
                 }
             }
@@ -126,7 +152,7 @@ namespace BaseStationReader.BusinessLogic.Api
                     var message = $"{type} API property {property.Key.ToString()} = {value}";
 
                     // Log the message for this property
-                    Logger.LogMessage(Severity.Debug, message);
+                    Logger.LogMessage(Severity.Verbose, message);
                 }
             }
             else

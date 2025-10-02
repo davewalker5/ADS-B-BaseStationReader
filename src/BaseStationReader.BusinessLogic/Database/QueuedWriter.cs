@@ -10,6 +10,7 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -172,33 +173,28 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task<bool> WriteTrackedAircraft(object queued, int objectId)
         {
-            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as a tracked aircraft");
+            _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as a tracked aircraft");
 
-            // Attempt to cast the queued object as a tracked aircraft and identify if that's
-            // what it is
-            var aircraft = queued as TrackedAircraft;
-            bool isTrackedAircraft = aircraft != null;
-
-            if (isTrackedAircraft)
+            // Attempt to cast the queued object as a tracked aircraft and identify if that's what it is
+            if (queued is not TrackedAircraft aircraft)
             {
+                _logger.LogMessage(Severity.Verbose, $"Queued object {objectId} is not a tracked aircraft");
+                return false;
+            }
+
                 // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
-                // ID so that record will be updated rather than a new one created
-                var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
-                if (activeAircraft != null)
-                {
-                    aircraft.Id = activeAircraft.Id;
-                }
-
-                // Write the tracked aircraft
-                _logger.LogMessage(Severity.Debug, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
-                await _aircraftWriter.WriteAsync(aircraft);
-            }
-            else
+            // ID so that record will be updated rather than a new one created
+            var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
+            if (activeAircraft != null)
             {
-                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not a tracked aircraft");
+                aircraft.Id = activeAircraft.Id;
             }
 
-            return isTrackedAircraft;
+            // Write the tracked aircraft
+            _logger.LogMessage(Severity.Verbose, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
+            await _aircraftWriter.WriteAsync(aircraft);
+
+            return true;
         }
 
         /// <summary>
@@ -209,36 +205,30 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task<bool> WriteAircraftPosition(object queued, int objectId)
         {
-            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an aircraft position");
+            _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an aircraft position");
 
             // Attempt to cast the queued object as a position and identify if that's what it is
-            var position = queued as AircraftPosition;
-            bool isPosition = position != null;
-
-            if (isPosition)
+            if (queued is not AircraftPosition position)
             {
-                // Find the associated tracked aircraft
-                var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
-                if (activeAircraft != null)
-                {
-                    // Assign the aircraft ID, for the foreign key relationship, and write the position
-                    position.AircraftId = activeAircraft.Id;
-
-                    _logger.LogMessage(Severity.Debug, $"Writing position for aircraft {position.Address} with ID {position.AircraftId}");
-                    await _positionWriter.WriteAsync(position);
-                }
-                else
-                {
-                    _logger.LogMessage(Severity.Debug, $"Active aircraft with address {position.Address} has not been saved. Re-queueing position");
-                    _queue.Enqueue(position);
-                }
-            }
-            else
-            {
-                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not an aircraft position");
+                _logger.LogMessage(Severity.Verbose, $"Queued object {objectId} is not an aircraft position");
+                return false;
             }
 
-            return isPosition;
+            // Find the associated tracked aircraft
+            var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
+            if (activeAircraft == null)
+            {
+                _logger.LogMessage(Severity.Debug, $"Aircraft with address {position.Address} is not active - API lookup will not be performed");
+                _queue.Enqueue(position);
+                return true;
+            }
+
+            // Assign the aircraft ID, for the foreign key relationship, and write the position
+            position.AircraftId = activeAircraft.Id;
+            _logger.LogMessage(Severity.Verbose, $"Writing position for aircraft {position.Address} with ID {position.AircraftId}");
+            await _positionWriter.WriteAsync(position);
+
+            return true;
         }
 
         /// <summary>
@@ -251,54 +241,45 @@ namespace BaseStationReader.BusinessLogic.Database
         [ExcludeFromCodeCoverage]
         private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
         {
-            _logger.LogMessage(Severity.Debug, $"Attempting to process queued object {objectId} as an API lookup request");
+            _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an API lookup request");
 
             // Attempt to cast the queued object as a lookup request and identify if that's what it is
-            var request = queued as APILookupRequest;
-            bool isLookupRequest = request != null;
-
-            if (isLookupRequest)
+            if (queued is not APILookupRequest request)
             {
-                // Find the associated tracked aircraft
-                var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
-                if (activeAircraft == null)
-                {
-                    _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not active - API lookup will not be performed");
-                    _queue.Enqueue(request);
-                }
-
-                if (activeAircraft.LookupTimestamp == null)
-                {
-                    _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-                    if (_apiWrapper != null)
-                    {
-                        var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-                        if (result)
-                        {
-                            _logger.LogMessage(Severity.Debug, $"Lookup for aircraft {request.Address} was successful");
-                            await _aircraftWriter.SetLookupTimestamp(activeAircraft.Id);
-                        }
-                        else
-                        {
-                            _logger.LogMessage(Severity.Error, $"Lookup for aircraft {request.Address} was not successful");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.Address} not done");
-                    }
-                }
-                else
-                {
-                    _logger.LogMessage(Severity.Debug, $"Lookup for aircraft with address {request.Address} was completed at {activeAircraft.LookupTimestamp} - API lookup will not be performed");
-                }
-            }
-            else
-            {
-                _logger.LogMessage(Severity.Debug, $"Queued object {objectId} is not an API lookup request");
+                _logger.LogMessage(Severity.Verbose, $"Queued object {objectId} is not an API lookup request");
+                return false;
             }
 
-            return isLookupRequest;
+            // Find the associated tracked aircraft
+            var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
+            if (activeAircraft == null)
+            {
+                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not active - API lookup will not be performed");
+                _queue.Enqueue(request);
+                return true;
+            }
+
+            // Check it's not already been looked up
+            if (activeAircraft.LookupTimestamp != null)
+            {
+                _logger.LogMessage(Severity.Debug, $"Lookup for aircraft with address {request.Address} was completed at {activeAircraft.LookupTimestamp} - API lookup will not be performed");
+                return true;
+            }
+
+            // Check the API wrapper has been initialised
+            if (_apiWrapper == null)
+            {
+                _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.Address} not done");
+                return true;
+            }
+
+            // Perform the API lookup
+            _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
+            var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+            var outcome = result ? "was" : "was not";
+            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.Address} {outcome} successful");
+
+            return true;
         }
     }
 }

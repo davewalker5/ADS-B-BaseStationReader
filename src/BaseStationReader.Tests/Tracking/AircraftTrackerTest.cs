@@ -11,7 +11,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Tracking
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class AircraftTrackerTest
     {

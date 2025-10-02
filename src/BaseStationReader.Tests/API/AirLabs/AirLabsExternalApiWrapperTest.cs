@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
@@ -8,7 +7,6 @@ using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.API
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public class AirLabsExternalApiWrapperTest
     {

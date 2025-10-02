@@ -6,10 +6,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Mocks
 {
-    [ExcludeFromCodeCoverage]
     public class MockFileLogger : ITrackerLogger
     {
-        public void Initialise(string logFile, Severity minimumSeverityToLog)
+        public void Initialise(string logFile, Severity minimumSeverityToLog, bool verbose)
         {
         }
 

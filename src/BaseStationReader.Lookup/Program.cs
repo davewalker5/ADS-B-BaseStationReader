@@ -31,7 +31,7 @@ namespace BaseStationReader.Lookup
                 var settings = new LookupToolSettingsBuilder().BuildSettings(_parser, "appsettings.json");
 
                 // Configure the log file
-                _logger.Initialise(settings.LogFile, settings.MinimumLogLevel);
+                _logger.Initialise(settings.LogFile, settings.MinimumLogLevel, false);
 
                 // Get the version number and application title
                 Assembly assembly = Assembly.GetExecutingAssembly();
