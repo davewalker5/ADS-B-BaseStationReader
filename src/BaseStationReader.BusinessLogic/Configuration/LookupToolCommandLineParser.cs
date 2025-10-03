@@ -22,6 +22,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.FlightsInRange, false, "--export-in-range", "-eir", "Export flights within the specified range (Nm) of the receiver to a CSV file", 2, 2);
             Add(CommandLineOptionType.HistoricalLookup, false, "--historical-lookup", "-hl", "Lookup all tracked aircraft that have not already been looked up", 0, 0);
             Add(CommandLineOptionType.Weather, false, "--weather", "-w", "Lookup the weather for a given airport ICAO code", 1, 1);
+            Add(CommandLineOptionType.WeatherApi, false, "--weather-api", "-wapi", "Specify the name of an API to use for live weather lookups", 1, 1);
         }
     }
 }

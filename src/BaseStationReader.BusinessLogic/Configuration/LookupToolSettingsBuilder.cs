@@ -35,6 +35,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.HistoricalApi);
             if (values != null) settings.HistoricalApi = values[0];
 
+            values = parser.GetValues(CommandLineOptionType.WeatherApi);
+            if (values != null) settings.WeatherApi = values[0];
+
             values = parser.GetValues(CommandLineOptionType.ReceiverLatitude);
             if (values != null) settings.ReceiverLatitude = double.Parse(values[0]);
 

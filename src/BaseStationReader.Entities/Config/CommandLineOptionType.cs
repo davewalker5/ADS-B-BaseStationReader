@@ -58,6 +58,7 @@
         TrackPosition,
         VerboseLogging,
         Weather,
+        WeatherApi,
         WriterBatchSize,
         WriterInterval
     }

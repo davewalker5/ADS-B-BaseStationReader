@@ -6,6 +6,7 @@
         Aircraft,
         ActiveFlights,
         HistoricalFlights,
-        METAR
+        METAR,
+        TAF
     }
 }

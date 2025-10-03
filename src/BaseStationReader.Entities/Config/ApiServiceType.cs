@@ -5,6 +5,7 @@
         None,
         AeroDataBox,
         AirLabs,
-        CheckWXApi
+        CheckWXApi,
+        SkyLink
     }
 }
