@@ -136,26 +136,69 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             //     return false;
             // }
 
-            // Convert the last seen date on the aircraft to UTC
-            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
-
-            // Extract the departure time and check it could have been the flight
+            // Get the flight times from the properties collection
             var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);
-            if (!departureTime.HasValue || (departureTime.Value > lastSeenUtc))
-            {
-                LogMessage(Severity.Info, aircraft.Address, $"Departure time of {departureTime} is later than the observed time {lastSeenUtc} UTC");
-                return false;
-            }
-
-            // Check the flight times include the last seen date on the aircraft
             var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
-            if (!arrivalTime.HasValue || (arrivalTime.Value < lastSeenUtc))
+
+            // Convert the last seen date on the aircraft to UTC and see if it passes the filters
+            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
+            if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, lastSeenUtc))
             {
-                LogMessage(Severity.Info, aircraft.Address, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeenUtc} UTC");
-                return false;
+                // The dates may have been returned as local time, marked as UTC in the response. Given the
+                // difference can be a maximum of 1 hour and seeing the same aircraft on two flights in that
+                // timeframe is unlikely, compare using local time as well
+                if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, aircraft.LastSeen))
+                {
+                    return false;
+                }
             }
 
             LogMessage(Severity.Info, aircraft.Address, $"Flight with route {departure} - {arrival} matches filters");
+            return true;
+        }
+
+        /// <summary>
+        /// Compare a last seen timestamp to the departure and arrival times for a flight
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="departureTime"></param>
+        /// <param name="arrivalTime"></param>
+        /// <param name="lastSeen"></param>
+        /// <returns></returns>
+        private bool CompareFlightTimes(
+            string address,
+            DateTime? departureTime,
+            DateTime? arrivalTime,
+            DateTime lastSeen)
+        {
+            // Check the departure time has a value
+            if (!departureTime.HasValue)
+            {
+                LogMessage(Severity.Info, address, $"Departure time is not specified");
+                return false;
+            }
+
+            // Departure time should be <= last seen
+            if (departureTime.Value > lastSeen)
+            {
+                LogMessage(Severity.Info, address, $"Departure time of {departureTime} is later than the observed time {lastSeen} {lastSeen.Kind}");
+                return false;
+            }
+
+            // Check the arrival time has a value
+            if (!arrivalTime.HasValue)
+            {
+                LogMessage(Severity.Info, address, $"Arrival time is not specified");
+                return false;
+            }
+
+            // Arrival time should be >= lastSeen
+            if (arrivalTime.Value < lastSeen)
+            {
+                LogMessage(Severity.Info, address, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeen} {lastSeen.Kind}");
+                return false;
+            }
+
             return true;
         }
 
