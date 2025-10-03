@@ -51,8 +51,13 @@ namespace BaseStationReader.BusinessLogic.Database
             string destination,
             int airlineId)
         {
-            // Check the flight doesn't exist
-            var flight = await GetAsync(x => (x.AirlineId == airlineId) && ((x.IATA == iata) || (x.ICAO == icao)));
+            // Check the flight doesn't exist based on the airline, number and route
+            var flight = await GetAsync(x =>
+                (x.AirlineId == airlineId) &&
+                (x.Number == number) &&
+                (x.Embarkation == embarkation) &&
+                (x.Destination == destination));
+
             if (flight == null)
             {
                 flight = new Flight
@@ -64,6 +69,7 @@ namespace BaseStationReader.BusinessLogic.Database
                     Destination = destination,
                     AirlineId = airlineId
                 };
+
                 await _context.Flights.AddAsync(flight);
                 await _context.SaveChangesAsync();
             }

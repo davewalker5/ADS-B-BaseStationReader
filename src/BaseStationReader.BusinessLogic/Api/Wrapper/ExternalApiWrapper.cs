@@ -67,32 +67,20 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IEnumerable<string> arrivalAirportCodes,
             bool createSighting)
         {
-            // Check the maximum number of attempts hasn't been reached. A maximum of 0 indicates unlimited attempts
-            if (_maximumLookupAttempts > 0)
+            // Check the aircraft is eligible for lookup
+            var eligible = await IsEligibleForLookup(address);
+            if (!eligible)
             {
-                // Look for a tracked aircraft with the specified address, no lookup timestamp and a number of attempts
-                // less than the maximum
-                var trackedAircraft = await _trackedAircraftWriter.GetAsync(x =>
-                    (x.Address == address) &&
-                    (x.LookupTimestamp == null) &&
-                    (x.LookupAttempts < _maximumLookupAttempts));
-
-                // If the result is NULL, either the aircraft isn't there at all, it's already been successfully looked
-                // up or the maximum attempts have been reached
-                if (trackedAircraft == null)
-                {
-                    _logger.LogMessage(Severity.Warning, $"Aircraft {address} is not tracked, has already been lookup up or has reached the maximum lookup attempts");
-                    return false;
-                }
+                return false;
             }
-            
+
             // Lookup the flight
             var flight = type == ApiEndpointType.ActiveFlights ?
-                await LookupActiveFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
-                await LookupHistoricalFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
+                await _activeFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
+                await _historicalFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
 
             // Lookup the aircraft
-            var aircraft = await LookupAircraftAsync(address, flight?.ModelICAO);
+            var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(address, flight?.ModelICAO);
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
@@ -112,32 +100,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
-        /// Look up an active flight and store it locally
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="departureAirports"></param>
-        /// <param name="arrivalAirports"></param>
-        /// <returns></returns>
-        public async Task<Flight> LookupActiveFlightAsync(
-            string address,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
-            => await _activeFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
-
-        /// <summary>
-        /// Identify and save historical flight details for a tracked aircraft
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="departureAirportCodes"></param>
-        /// <param name="arrivalAirportCodes"></param>
-        /// <returns></returns>
-        public async Task<Flight> LookupHistoricalFlightAsync(
-            string address,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
-            => await _historicalFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
-
-        /// <summary>
         /// Lookup all active flights within a bounding box around a central point
         /// </summary>
         /// <param name="centreLatitude"></param>
@@ -151,30 +113,36 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             => await _activeFlightWrapper.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
 
         /// <summary>
-        /// Look up an airline and save it locally
-        /// </summary>
-        /// <param name="icao"></param>
-        /// <param name="iata"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public async Task<Airline> LookupAirlineAsync(string icao, string iata, string name)
-            => await _airlineApiWrapper.LookupAirlineAsync(icao, iata, name);
-
-        /// <summary>
-        /// Look up an aircraft and save it locally
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="alternateModelICAO"></param>
-        /// <returns></returns>
-        public async Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO)
-            => await _aircraftApiWrapper.LookupAircraftAsync(address, alternateModelICAO);
-
-        /// <summary>
         /// Lookup the current weather for an airport
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupAirportWeather(string icao)
             => await _airportWeatherApiWrapper.LookupAirportWeather(icao);
+
+        /// <summary>
+        /// Check that an aircraft is eligible for lookup
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        private async Task<bool> IsEligibleForLookup(string address)
+        {
+            // Look for a tracked aircraft with the specified address and  no lookup timestamp
+            var aircraft = await _trackedAircraftWriter.GetAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
+            if (aircraft == null)
+            {
+                _logger.LogMessage(Severity.Warning, $"Aircraft {address} is not tracked or has already been looked up");
+                return false;
+            }
+
+            // Check the maximum number of attempts hasn't been reached. A maximum of 0 indicates unlimited attempts
+            if ((_maximumLookupAttempts > 0) && (aircraft.LookupAttempts >= _maximumLookupAttempts))
+            {
+                _logger.LogMessage(Severity.Warning, $"Aircraft {address} has reached the maximum lookup attempts");
+                return false;
+            }
+
+            return true;
+        }
     }
 }
