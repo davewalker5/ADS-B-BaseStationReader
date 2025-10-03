@@ -14,12 +14,12 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         {
         }
 
-        public Task<Dictionary<ApiProperty, string>> LookupFlightByAircraftAsync(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByAircraftAsync(string address)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBox(double centreLatitude, double centreLongitude, double rangeNm)
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBox(double centreLatitude, double centreLongitude, double rangeNm)
         {
             throw new NotImplementedException();
         }

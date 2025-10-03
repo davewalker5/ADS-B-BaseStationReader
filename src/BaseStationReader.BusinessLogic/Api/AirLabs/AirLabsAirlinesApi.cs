@@ -62,7 +62,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             {
                 // Make a request for the data from the API
                 var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ApiServiceType.AirLabs, url, []);
+                var node = await GetAsync(Logger, ServiceType, url, []);
 
                 // Get the aircraft object from the response
                 var airline = GetFirstResponseObject(node);

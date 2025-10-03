@@ -25,7 +25,6 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
             // Get the endpoint URL, set up the base address for requests and extract the host name
             var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
-            logger.LogMessage(Severity.Info, $">>>> URL = {url}");
             _baseAddress = $"{url}";
             _host = new Uri(url).Host;
 
@@ -59,7 +58,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             {
                 // Make a request for the data from the API
                 var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ApiServiceType.AeroDataBox, url, new Dictionary<string, string>()
+                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
                 {
                     { "X-RapidAPI-Key", _key },
                     { "X-RapidAPI-Host", _host },

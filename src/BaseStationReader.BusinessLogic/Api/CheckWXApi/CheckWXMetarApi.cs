@@ -52,7 +52,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
             {
                 // Make a request for the data from the API
                 var url = $"{_baseAddress}/{parameters}";
-                var node = await GetAsync(Logger, ApiServiceType.CheckWXApi, url, new()
+                var node = await GetAsync(Logger, ServiceType, url, new()
                 {
                     { "X-API-Key", _key }
                 });
