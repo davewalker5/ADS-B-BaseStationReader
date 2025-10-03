@@ -37,7 +37,7 @@ namespace BaseStationReader.Lookup.Logic
             var icao = Parser.GetValues(CommandLineOptionType.Weather)[0];
 
             // Perform the lookup
-            var results = await wrapper.LookupAirportWeather(icao);
+            var results = await wrapper.LookupCurrentAirportWeather(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)

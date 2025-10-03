@@ -117,8 +117,16 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupAirportWeather(string icao)
-            => await _airportWeatherApiWrapper.LookupAirportWeather(icao);
+        public async Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao)
+            => await _airportWeatherApiWrapper.LookupCurrentAirportWeather(icao);
+
+        /// <summary>
+        /// Lookup the weather forecast for an airport
+        /// </summary>
+        /// <param name="icao"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao)
+            => await _airportWeatherApiWrapper.LookupAirportWeatherForecast(icao);
 
         /// <summary>
         /// Check that an aircraft is eligible for lookup

@@ -5,14 +5,14 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
-    internal class SkyLinkMetarApi : SkyLinkApiBase, IMetarApi
+    internal class SkyLinkTafApi : SkyLinkApiBase, ITafApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.SkyLink;
         private readonly string _baseAddress;
         private readonly string _host;
         private readonly string _key;
 
-        public SkyLinkMetarApi(
+        public SkyLinkTafApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
             ExternalApiSettings settings) : base(logger, client)
@@ -22,7 +22,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             _key = definition?.Key;
 
             // Get the endpoint URL, set up the base address for requests and extract the host name
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.METAR && x.Service == ServiceType)?.Url;
+            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.TAF && x.Service == ServiceType)?.Url;
             _baseAddress = $"{url}";
             _host = new Uri(url).Host;
 
@@ -31,13 +31,13 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         }
 
         /// <summary>
-        /// Return a collection of METAR strings for the specified airport
+        /// Return a collection of TAF strings for the specified airport
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao)
+        public async Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
+            Logger.LogMessage(Severity.Info, $"Looking up weather forecast for airport with ICAO code {icao}");
             var result = await MakeApiRequestAsync(icao);
             IEnumerable<string> results = string.IsNullOrEmpty(result) ? null : [result];
             return results;
@@ -71,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
                 // Extract the report and log it
                 metar = report?["raw"]?.GetValue<string>() ?? "";
-                Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
+                Logger.LogMessage(Severity.Debug, $"TAF for {parameters} : {metar}");
             }
             catch (Exception ex)
             {

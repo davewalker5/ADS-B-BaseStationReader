@@ -35,6 +35,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             {(ApiServiceType.SkyLink, ApiEndpointType.Airlines), typeof(SkyLinkAirlinesApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Aircraft), typeof(SkyLinkAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.METAR), typeof(SkyLinkMetarApi) },
+            {(ApiServiceType.SkyLink, ApiEndpointType.TAF), typeof(SkyLinkTafApi) },
             {(ApiServiceType.CheckWXApi, ApiEndpointType.METAR), typeof(CheckWXMetarApi) },
         };
 
