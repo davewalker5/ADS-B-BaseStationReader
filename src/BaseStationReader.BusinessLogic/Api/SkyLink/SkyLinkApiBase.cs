@@ -3,11 +3,11 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 
-namespace BaseStationReader.BusinessLogic.Api.AirLabs
+namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
-    internal abstract class AirLabsApiBase : ExternalApiBase
+    internal abstract class SkyLinkApiBase : ExternalApiBase
     {
-        public AirLabsApiBase(ITrackerLogger logger, ITrackerHttpClient client) : base(logger, client)
+        public SkyLinkApiBase(ITrackerLogger logger, ITrackerHttpClient client) : base(logger, client)
         {
         }
 
@@ -26,7 +26,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             }
 
             // Check we have a response array
-            var response = node["response"] as JsonArray;
+            var response = node as JsonArray;
             if (response == null)
             {
                 Logger.LogMessage(Severity.Warning, $"API response array is NULL");

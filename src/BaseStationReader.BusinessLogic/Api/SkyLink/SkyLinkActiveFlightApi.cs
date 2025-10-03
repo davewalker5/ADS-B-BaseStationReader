@@ -5,7 +5,7 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
-    internal class SkyLinkActiveFlightApi : ExternalApiBase, IActiveFlightsApi
+    internal class SkyLinkActiveFlightApi : SkyLinkApiBase, IActiveFlightsApi
     {
         public SkyLinkActiveFlightApi(
             ITrackerLogger logger,
