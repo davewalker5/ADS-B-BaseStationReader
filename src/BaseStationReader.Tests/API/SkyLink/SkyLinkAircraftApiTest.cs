@@ -1,0 +1,68 @@
+using BaseStationReader.Entities.Api;
+using BaseStationReader.Tests.Mocks;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Entities.Config;
+using BaseStationReader.BusinessLogic.Api.SkyLink;
+
+namespace BaseStationReader.Tests.API.SkyLink
+{
+    [TestClass]
+    public class SkyLinkAircraftApiTest
+    {
+        private const string Address = "485785";
+        private const string Registration = "PH-BHN";
+        private const string ModelICAO = "B789";
+        private const string Response = "{ \"aircraft\": [ { \"icao24\": \"485785\", \"callsign\": \"KLM701\", \"latitude\": 51.453003, \"longitude\": -1.185181, \"altitude\": 31975.0, \"ground_speed\": 451.677979, \"track\": 258.117859, \"vertical_rate\": 0.0, \"is_on_ground\": false, \"last_seen\": \"2025-10-02T19:45:46.299839\", \"first_seen\": \"2025-09-29T08:37:58.880856\", \"registration\": \"PH-BHN\", \"aircraft_type\": \"B789\", \"airline\": \"KLM\" } ], \"total_count\": 1, \"timestamp\": \"2025-10-02T19:45:50.299652\" }";
+
+        private MockTrackerHttpClient _client = null;
+        private IAircraftApi _api = null;
+
+        private readonly ExternalApiSettings _settings = new()
+        {
+            ApiServices = [
+                new ApiService() { Service = ApiServiceType.SkyLink, Key = "an-api-key"}
+            ],
+            ApiEndpoints = [
+                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"}
+            ]
+        };
+
+        [TestInitialize]
+        public void Initialise()
+        {
+            var logger = new MockFileLogger();
+            _client = new MockTrackerHttpClient();
+            _api = new SkyLinkAircraftApi(logger, _client, _settings);
+        }
+
+        [TestMethod]
+        public void GetAircraftByAddressTest()
+        {
+            _client.AddResponse(Response);
+            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+
+            Assert.IsNotNull(properties);
+            Assert.HasCount(2, properties);
+            Assert.AreEqual(Registration, properties[ApiProperty.AircraftRegistration]);
+            Assert.AreEqual(ModelICAO, properties[ApiProperty.ModelICAO]);
+        }
+
+        [TestMethod]
+        public void InvalidJsonResponseTest()
+        {
+            _client.AddResponse("{}");
+            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public void ClientExceptionTest()
+        {
+            _client.AddResponse(null);
+            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+
+            Assert.IsNull(properties);
+        }
+    }
+}

@@ -16,7 +16,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        protected IEnumerable<JsonObject> GetResponseObjectList(JsonNode node)
+        protected IEnumerable<JsonObject> GetResponseAsObjectList(JsonNode node)
         {
             // Check we have a response
             if (node == null)
@@ -49,12 +49,12 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        protected JsonObject GetResponseObject(JsonNode node)
+        protected JsonObject GetFirstResponseObject(JsonNode node)
         {
             JsonObject responseObject = null;
 
             // Extract the response array from the response
-            var response = GetResponseObjectList(node);
+            var response = GetResponseAsObjectList(node);
             if (response != null)
             {
                 // Extract the first element of the response as a JSON object
@@ -66,6 +66,32 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             }
 
             return responseObject;
+        }
+
+        /// <summary>
+        /// Return a response object from the API response
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        protected JsonObject GetResponseAsObject(JsonNode node)
+        {
+            // Check we have a response
+            if (node == null)
+            {
+                Logger.LogMessage(Severity.Warning, $"API returned NULL");
+                return null;
+            }
+
+            // Check we have a response array
+            var response = node as JsonObject;
+            if (response == null)
+            {
+                Logger.LogMessage(Severity.Warning, $"API response object is NULL");
+                return null;
+            }
+
+            // Return elements of the array that are JSON objects
+            return response;
         }
     }
 }

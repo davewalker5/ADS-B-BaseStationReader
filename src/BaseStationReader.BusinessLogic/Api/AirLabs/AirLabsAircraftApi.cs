@@ -55,7 +55,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 var node = await GetAsync(Logger, ApiServiceType.AirLabs, url, []);
 
                 // Get the aircraft object from the response
-                var aircraft = GetResponseObject(node);
+                var aircraft = GetFirstResponseObject(node);
                 if (aircraft == null)
                 {
                     return null;

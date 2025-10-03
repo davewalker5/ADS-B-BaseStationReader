@@ -73,7 +73,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                 });
 
                 // Get the airline object from the response
-                var airline = GetResponseObject(node);
+                var airline = GetFirstResponseObject(node);
                 if (airline == null)
                 {
                     return null;

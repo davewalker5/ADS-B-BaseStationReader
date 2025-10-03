@@ -82,7 +82,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             try
             {
                 // Get the response array
-                var flightList = GetResponseObjectList(node);
+                var flightList = GetResponseAsObjectList(node);
                 if (flightList == null)
                 {
                     return properties;
