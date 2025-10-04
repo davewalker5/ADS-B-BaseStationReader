@@ -23,15 +23,5 @@ namespace BaseStationReader.Lookup.Logic
             Logger = logger;
             Context = context;
         }
-
-        /// <summary>
-        /// Handle the command
-        /// </summary>
-        /// <returns></returns>
-#pragma warning disable CS1998
-        public virtual async Task Handle()
-        {
-        }
-#pragma warning restore CS1998
     }
 }

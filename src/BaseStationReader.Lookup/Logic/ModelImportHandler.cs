@@ -22,7 +22,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the model import command
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportModels)[0];
             var manufacturerManager = new ManufacturerManager(Context);

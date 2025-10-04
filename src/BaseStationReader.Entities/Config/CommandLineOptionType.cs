@@ -32,6 +32,7 @@
         MaximumTakeOffSpeed,
         MaximumTrackedAltitude,
         MaximumTrackedDistance,
+        METAR,
         MinimumAircraftLifespan,
         MinimumAltitude,
         MinimumApproachSpeed,
@@ -50,6 +51,7 @@
         SendInterval,
         SettingsFile,
         SocketReadTimeout,
+        TAF,
         TimeToLock,
         TimeToRecent,
         TimeToRemoval,
@@ -57,7 +59,6 @@
         TrackedBehaviours,
         TrackPosition,
         VerboseLogging,
-        Weather,
         WeatherApi,
         WriterBatchSize,
         WriterInterval

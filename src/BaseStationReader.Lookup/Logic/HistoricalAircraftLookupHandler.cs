@@ -30,7 +30,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the airline import command
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 

@@ -120,7 +120,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 wrapper.RegisterExternalApi(ApiEndpointType.Aircraft, aircraftApi);
             }
 
-            // Get an instance of the metar API and register it
+            // Get an instance of the METAR API and register it
             var metarApi = GetApiInstance(
                 service,
                 ApiEndpointType.METAR,
@@ -131,6 +131,19 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             if (metarApi != null)
             {
                 wrapper.RegisterExternalApi(ApiEndpointType.METAR, metarApi);
+            }
+
+            // Get an instance of the TAF API and register it
+            var tafApi = GetApiInstance(
+                service,
+                ApiEndpointType.TAF,
+                logger,
+                client,
+                settings);
+
+            if (tafApi != null)
+            {
+                wrapper.RegisterExternalApi(ApiEndpointType.TAF, tafApi);
             }
 
             return wrapper;

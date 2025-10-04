@@ -27,7 +27,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the command to lookup flights within a defined bounding box
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             // Get the search parameters from the command line
             var filePath = Parser.GetValues(CommandLineOptionType.FlightsInRange)[1];

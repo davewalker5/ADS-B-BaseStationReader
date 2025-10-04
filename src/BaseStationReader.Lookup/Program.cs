@@ -93,10 +93,18 @@ namespace BaseStationReader.Lookup
                     await new FlightsInRangeHandler(settings, _parser, _logger, context, serviceType).Handle();
                 }
 
-                // Look up the weather at a given airport
-                if (_parser.IsPresent(CommandLineOptionType.Weather))
+                // Look up the current weather at a given airport
+                if (_parser.IsPresent(CommandLineOptionType.METAR))
                 {
-                    await new AirportWeatherLookupHandler(settings, _parser, _logger, context, ApiServiceType.CheckWXApi).Handle();
+                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
+                    await new AirportWeatherLookupHandler(settings, _parser, _logger, context, serviceType).HandleMETAR();
+                }
+
+                // Look up the weather forecast at a given airport
+                if (_parser.IsPresent(CommandLineOptionType.TAF))
+                {
+                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
+                    await new AirportWeatherLookupHandler(settings, _parser, _logger, context, serviceType).HandleTAF();
                 }
             }
         }
