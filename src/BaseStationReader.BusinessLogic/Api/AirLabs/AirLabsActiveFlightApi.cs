@@ -6,6 +6,7 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -17,7 +18,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public AirLabsActiveFlightApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -35,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightByAircraftAsync(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlight(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
             var properties = await MakeApiRequestAsync($"&hex={address}");

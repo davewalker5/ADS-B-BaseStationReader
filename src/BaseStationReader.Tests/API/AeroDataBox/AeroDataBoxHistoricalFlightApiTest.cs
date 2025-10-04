@@ -38,7 +38,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxHistoricalFlightApi(logger, _client, _settings);
+            _api = new AeroDataBoxHistoricalFlightApi(logger, _client, null, _settings);
         }
         
         [TestMethod]

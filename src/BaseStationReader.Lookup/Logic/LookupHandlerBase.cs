@@ -1,8 +1,8 @@
 using BaseStationReader.BusinessLogic.Configuration;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -14,7 +14,7 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context) : base(settings, parser, logger, context)
+            IDatabaseManagementFactory factory) : base(settings, parser, logger, factory)
         {
 
         }

@@ -2,6 +2,7 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 {
@@ -14,7 +15,8 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
         public CheckWXMetarApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties and capture the API key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);

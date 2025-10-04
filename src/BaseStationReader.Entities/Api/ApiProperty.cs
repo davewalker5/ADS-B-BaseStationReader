@@ -10,6 +10,7 @@
         AirlineICAO,
         AirlineName,
         ArrivalTime,
+        Callsign,
         DepartureTime,
         DestinationIATA,
         EmbarkationIATA,

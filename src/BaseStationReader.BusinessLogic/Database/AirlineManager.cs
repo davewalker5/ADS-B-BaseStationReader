@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class AirlineManager : IAirlineManager
+    internal class AirlineManager : IAirlineManager
     {
         private readonly BaseStationReaderDbContext _context;
 

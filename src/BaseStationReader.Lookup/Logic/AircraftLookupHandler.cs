@@ -1,10 +1,10 @@
 using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.BusinessLogic.Configuration;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -16,8 +16,8 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context,
-            ApiServiceType serviceType) : base(settings, parser, logger, context)
+            IDatabaseManagementFactory factory,
+            ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
             _serviceType = serviceType;
         }

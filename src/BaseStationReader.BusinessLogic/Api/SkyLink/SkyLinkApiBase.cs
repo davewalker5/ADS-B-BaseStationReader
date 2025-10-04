@@ -1,13 +1,17 @@
 using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
     internal abstract class SkyLinkApiBase : ExternalApiBase
     {
-        public SkyLinkApiBase(ITrackerLogger logger, ITrackerHttpClient client) : base(logger, client)
+        public SkyLinkApiBase(
+            ITrackerLogger logger,
+            ITrackerHttpClient client,
+            IDatabaseManagementFactory factory) : base(logger, client, factory)
         {
         }
 

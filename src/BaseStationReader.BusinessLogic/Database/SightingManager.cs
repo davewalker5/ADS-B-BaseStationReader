@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class SightingManager : ISightingManager
+    internal class SightingManager : ISightingManager
     {
         private readonly BaseStationReaderDbContext _context;
 

@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
@@ -18,7 +19,8 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         public AeroDataBoxAircraftApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);

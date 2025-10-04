@@ -31,7 +31,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new SkyLinkAirlinesApi(logger, _client, _settings);
+            _api = new SkyLinkAirlinesApi(logger, _client, null, _settings);
         }
 
         [TestMethod]

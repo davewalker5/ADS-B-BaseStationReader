@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class ManufacturerManager : IManufacturerManager
+    internal class ManufacturerManager : IManufacturerManager
     {
         private readonly BaseStationReaderDbContext _context;
 

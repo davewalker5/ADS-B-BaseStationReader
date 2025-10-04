@@ -2,6 +2,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
@@ -16,7 +17,8 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         public SkyLinkAirlinesApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);

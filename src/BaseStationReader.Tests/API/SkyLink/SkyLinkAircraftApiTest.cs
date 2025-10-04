@@ -12,6 +12,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         private const string Address = "485785";
         private const string Registration = "PH-BHN";
         private const string ModelICAO = "B789";
+        private const string Callsign = "KLM701";
         private const string Response = "{ \"aircraft\": [ { \"icao24\": \"485785\", \"callsign\": \"KLM701\", \"latitude\": 51.453003, \"longitude\": -1.185181, \"altitude\": 31975.0, \"ground_speed\": 451.677979, \"track\": 258.117859, \"vertical_rate\": 0.0, \"is_on_ground\": false, \"last_seen\": \"2025-10-02T19:45:46.299839\", \"first_seen\": \"2025-09-29T08:37:58.880856\", \"registration\": \"PH-BHN\", \"aircraft_type\": \"B789\", \"airline\": \"KLM\" } ], \"total_count\": 1, \"timestamp\": \"2025-10-02T19:45:50.299652\" }";
 
         private MockTrackerHttpClient _client = null;
@@ -32,7 +33,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new SkyLinkAircraftApi(logger, _client, _settings);
+            _api = new SkyLinkAircraftApi(logger, _client, null, _settings);
         }
 
         [TestMethod]
@@ -42,9 +43,10 @@ namespace BaseStationReader.Tests.API.SkyLink
             var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
 
             Assert.IsNotNull(properties);
-            Assert.HasCount(2, properties);
+            Assert.HasCount(3, properties);
             Assert.AreEqual(Registration, properties[ApiProperty.AircraftRegistration]);
             Assert.AreEqual(ModelICAO, properties[ApiProperty.ModelICAO]);
+            Assert.AreEqual(Callsign, properties[ApiProperty.Callsign]);
         }
 
         [TestMethod]

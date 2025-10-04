@@ -7,6 +7,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Tracking;
 
@@ -60,24 +61,14 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ApiEndpointType flightsEndpointType,
             ExternalApiSettings settings)
         {
-            // Create the database management objects
-            var airlineManager = new AirlineManager(context);
-            var aircraftManager = new AircraftManager(context);
-            var manufacturerManager = new ManufacturerManager(context);
-            var modelManager = new ModelManager(context);
-            var flightManager = new FlightManager(context);
-            var sightingManager = new SightingManager(context);
+            // Create the database management factory
+            var factory = new DatabaseManagementFactory(context);
 
             // Create an instance of the wrapper
             var wrapper = new ExternalApiWrapper(
                 settings.MaximumLookups,
                 logger,
-                airlineManager,
-                aircraftManager,
-                manufacturerManager,
-                modelManager,
-                flightManager,
-                sightingManager,
+                factory,
                 trackedAircraftWriter);
 
             // Get an instance of the flights API and register it
@@ -86,6 +77,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 flightsEndpointType,
                 logger,
                 client,
+                factory,
                 settings);
 
             if (flightsApi != null)
@@ -100,6 +92,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 ApiEndpointType.Airlines,
                 logger,
                 client,
+                factory,
                 settings);
 
             if (airlinesApi != null)
@@ -113,6 +106,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 ApiEndpointType.Aircraft,
                 logger,
                 client,
+                factory,
                 settings);
 
             if (aircraftApi != null)
@@ -126,6 +120,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 ApiEndpointType.METAR,
                 logger,
                 client,
+                factory,
                 settings);
 
             if (metarApi != null)
@@ -139,6 +134,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 ApiEndpointType.TAF,
                 logger,
                 client,
+                factory,
                 settings);
 
             if (tafApi != null)
@@ -156,6 +152,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="endpoint"></param>
         /// <param name="logger"></param>
         /// <param name="client"></param>
+        /// <param name="factory"></param>
         /// <param name="settings"></param>
         /// <returns></returns>
         public static IExternalApi GetApiInstance(
@@ -163,6 +160,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ApiEndpointType endpoint,
             ITrackerLogger logger,
             ITrackerHttpClient client,
+            IDatabaseManagementFactory factory,
             ExternalApiSettings settings)
         {
             // Get the type for the service
@@ -173,7 +171,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Create an instance of the type
-            var instance = Activator.CreateInstance(type, logger, client, settings);
+            var instance = Activator.CreateInstance(type, logger, client, factory, settings);
             if (instance == null)
             {
                 logger.LogMessage(Severity.Error, $"Failed to create instance of {type.Name}");

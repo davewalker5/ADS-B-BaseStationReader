@@ -1,6 +1,7 @@
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
@@ -15,7 +16,8 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         public SkyLinkTafApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -62,7 +64,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                     { "X-RapidAPI-Host", _host },
                 });
 
-                // Get the airline object from the response
+                // Get the weather report object from the response
                 var report = GetResponseAsObject(node);
                 if (report == null)
                 {

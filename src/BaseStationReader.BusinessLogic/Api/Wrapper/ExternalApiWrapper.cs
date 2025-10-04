@@ -1,4 +1,3 @@
-using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
@@ -19,29 +18,24 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IAirlineApiWrapper _airlineApiWrapper;
         private readonly IAircraftApiWrapper _aircraftApiWrapper;
         private readonly IAirportWeatherApiWrapper _airportWeatherApiWrapper;
-        private readonly ISightingManager _sightingManager;
+        private readonly IDatabaseManagementFactory _factory;
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public ExternalApiWrapper(
             int maximumLookupAttempts,
             ITrackerLogger logger,
-            AirlineManager airlineManager,
-            IAircraftManager aircraftManager,
-            IManufacturerManager manufacturerManager,
-            IModelManager modelManager,
-            IFlightManager flightManager,
-            ISightingManager sightingManager,
+            IDatabaseManagementFactory factory,
             ITrackedAircraftWriter trackedAircraftWriter)
         {
             _maximumLookupAttempts = maximumLookupAttempts;
             _logger = logger;
+            _factory = factory;
             _register = new ExternalApiRegister(logger);
-            _airlineApiWrapper = new AirlineApiWrapper(logger, _register, airlineManager);
-            _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, flightManager);
-            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, flightManager, trackedAircraftWriter);
-            _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, aircraftManager, modelManager, manufacturerManager);
+            _airlineApiWrapper = new AirlineApiWrapper(logger, _register, _factory.AirlineManager);
+            _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager);
+            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
+            _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
-            _sightingManager = sightingManager;
             _trackedAircraftWriter = trackedAircraftWriter;
         }
 
@@ -92,7 +86,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // between the flight and the aircraft as a sighting on this date
             if (createSighting && successful)
             {
-                _ = await _sightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+                _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
             }
 
             // The lookup was successful if both aircraft and flight were looked up successfully

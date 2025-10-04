@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
@@ -17,7 +18,8 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         public SkyLinkAircraftApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -99,10 +101,11 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                 {
                     { ApiProperty.AircraftRegistration, aircraft?["registration"]?.GetValue<string>() ?? "" },
                     { ApiProperty.ModelICAO, aircraft?["aircraft_type"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.Callsign, aircraft?["callsign"]?.GetValue<string>() ?? "" },
                 };
 
                 // Log the properties dictionary
-                LogProperties("Airline", properties);
+                LogProperties("Aircraft", properties);
             }
             catch (Exception ex)
             {

@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new SkyLinkMetarApi(logger, _client, _settings);
+            _api = new SkyLinkMetarApi(logger, _client, null, _settings);
         }
 
         [TestMethod]

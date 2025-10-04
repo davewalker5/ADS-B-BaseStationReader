@@ -43,7 +43,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Use the API to look-up the flight
-            var properties = await api.LookupFlightByAircraftAsync(address);
+            var properties = await api.LookupFlight(address);
             if ((properties?.Count ?? 0) == 0)
             {
                 return null;
