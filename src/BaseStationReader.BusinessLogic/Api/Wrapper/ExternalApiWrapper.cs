@@ -94,14 +94,17 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var successful = (aircraft != null) && (flight != null);
 
             // Update the lookup properties on the tracked aircraft record
-            await _trackedAircraftWriter.UpdateLookupProperties(address, successful, _maximumLookupAttempts);
+            if (_trackedAircraftWriter != null)
+            {
+                await _trackedAircraftWriter.UpdateLookupProperties(address, successful, _maximumLookupAttempts);
+            }
 
             // If the lookup was successful and sighting creation is requested, save the relationship
-            // between the flight and the aircraft as a sighting on this date
-            if (createSighting && successful)
-            {
-                _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
-            }
+                // between the flight and the aircraft as a sighting on this date
+                if (createSighting && successful)
+                {
+                    _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+                }
 
             // The lookup was successful if both aircraft and flight were looked up successfully
             return successful;
@@ -176,6 +179,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         private async Task<bool> IsEligibleForLookup(string address)
         {
+            // If the tracked aircraft writer isn't specified, just allow the lookup
+            if (_trackedAircraftWriter == null)
+            {
+                return true;
+            }
+
             // Look for a tracked aircraft with the specified address and  no lookup timestamp
             var aircraft = await _trackedAircraftWriter.GetAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
             if (aircraft == null)

@@ -101,7 +101,11 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                 {
                     { ApiProperty.AircraftRegistration, aircraft?["registration"]?.GetValue<string>() ?? "" },
                     { ApiProperty.ModelICAO, aircraft?["aircraft_type"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelIATA, "" },
+                    { ApiProperty.ModelName, "" },
                     { ApiProperty.Callsign, aircraft?["callsign"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.AircraftManufactured, "" },
+                    { ApiProperty.ManufacturerName, "" }
                 };
 
                 // Log the properties dictionary
