@@ -1,4 +1,3 @@
-using System.Globalization;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
@@ -57,9 +56,9 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupAsyncTest()
         {
+            _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            _client.AddResponse(AircraftResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, null, null, true);
 
             Assert.IsTrue(result);
@@ -68,9 +67,9 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupWithAcceptingAirportFiltersAsyncTest()
         {
+            _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            _client.AddResponse(AircraftResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
 
             Assert.IsTrue(result);
@@ -79,9 +78,9 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupWithExcludingAirportFiltersAsyncTest()
         {
+            _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            _client.AddResponse(AircraftResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
 
             Assert.IsFalse(result);

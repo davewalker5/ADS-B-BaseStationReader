@@ -74,6 +74,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         properties[ApiProperty.ModelIATA], modelICAO, properties[ApiProperty.ModelName], manufacturer.Id);
                     aircraft = await _aircraftManager.AddAsync(
                         address, properties[ApiProperty.AircraftRegistration], manufactured, age, model.Id);
+
+                    // If the properties contain an active flight callsign, pass it back to the caller
+                    if (properties.TryGetValue(ApiProperty.FlightNumber, out string callsign))
+                    {
+                        aircraft.Callsign = callsign;
+                    } 
                 }
                 else
                 {

@@ -4,6 +4,11 @@ namespace BaseStationReader.Interfaces.Api
 {
     public interface IFlightApiWrapper
     {
-        Task<Flight> LookupFlightAsync(string address, IEnumerable<string> departureAirportCodes, IEnumerable<string> arrivalAirportCodes);
+        Task<Flight> LookupFlightAsync(
+            ApiProperty propertyType,
+            string propertyValue,
+            string aircraftAddress,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalAirportCodes);
     }
 }

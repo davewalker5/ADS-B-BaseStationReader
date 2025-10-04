@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         public void GetActiveFlightTest()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupFlight(Number)).Result;
+            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.FlightNumber, Number)).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(4, properties);
@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupFlight(Number)).Result;
+            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.FlightNumber, Number)).Result;
 
             Assert.IsNull(properties);
         }
@@ -60,7 +60,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupFlight(Number)).Result;
+            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.FlightNumber, Number)).Result;
 
             Assert.IsNull(properties);
         }

@@ -170,6 +170,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return null;
             }
 
+            logger.LogMessage(Severity.Debug, $"{endpoint} API for service {service} is of type {type.Name}");
+
             // Create an instance of the type
             var instance = Activator.CreateInstance(type, logger, client, factory, settings);
             if (instance == null)

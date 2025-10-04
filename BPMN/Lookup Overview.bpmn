@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0itoe7r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.7.0">
+  <bpmn:process id="Process_1coczl0" isExecutable="true">
+    <bpmn:task id="Activity_0ufoq6y" name="Lookup Aircraft">
+      <bpmn:incoming>Flow_0wmoqn9</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ny11hw</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0wmoqn9" sourceRef="StartEvent_1" targetRef="Activity_0ufoq6y" />
+    <bpmn:exclusiveGateway id="Gateway_10kzkmn" name="Aircraft Includes Callsign">
+      <bpmn:incoming>Flow_0ny11hw</bpmn:incoming>
+      <bpmn:outgoing>Flow_03szrk0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1fjqowu</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0ny11hw" sourceRef="Activity_0ufoq6y" targetRef="Gateway_10kzkmn" />
+    <bpmn:task id="Activity_06qqneg" name="Lookup Airline">
+      <bpmn:incoming>Flow_1s9ixpt</bpmn:incoming>
+      <bpmn:outgoing>Flow_1wv6agv</bpmn:outgoing>
+      <bpmn:property id="Property_10apo42" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0eb6535">
+        <bpmn:sourceRef>DataObjectReference_1nfceds</bpmn:sourceRef>
+        <bpmn:targetRef>Property_10apo42</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:task>
+    <bpmn:task id="Activity_1einwd4" name="Lookup Flight">
+      <bpmn:incoming>Flow_1wv6agv</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fcc5pc</bpmn:outgoing>
+      <bpmn:property id="Property_0vumevq" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_1avldi5">
+        <bpmn:sourceRef>DataObjectReference_106lhrl</bpmn:sourceRef>
+        <bpmn:targetRef>Property_0vumevq</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_1wv6agv" sourceRef="Activity_06qqneg" targetRef="Activity_1einwd4" />
+    <bpmn:task id="Activity_032pz7f" name="Lookup Flight">
+      <bpmn:incoming>Flow_03szrk0</bpmn:incoming>
+      <bpmn:outgoing>Flow_0m841ss</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1pif4yg">
+        <bpmn:targetRef>DataObjectReference_0wssg0a</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_03szrk0" name="No" sourceRef="Gateway_10kzkmn" targetRef="Activity_032pz7f" />
+    <bpmn:task id="Activity_0og2mq6" name="Lookup Airline">
+      <bpmn:incoming>Flow_0m841ss</bpmn:incoming>
+      <bpmn:outgoing>Flow_0k124y8</bpmn:outgoing>
+      <bpmn:property id="Property_19qh3c2" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_03qo5tc">
+        <bpmn:sourceRef>DataObjectReference_0wssg0a</bpmn:sourceRef>
+        <bpmn:targetRef>Property_19qh3c2</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0m841ss" sourceRef="Activity_032pz7f" targetRef="Activity_0og2mq6" />
+    <bpmn:sequenceFlow id="Flow_0fcc5pc" sourceRef="Activity_1einwd4" targetRef="Event_0f7ocqr" />
+    <bpmn:sequenceFlow id="Flow_0k124y8" sourceRef="Activity_0og2mq6" targetRef="Event_0f7ocqr" />
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0wmoqn9</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_13xmvba" />
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0f7ocqr">
+      <bpmn:incoming>Flow_0fcc5pc</bpmn:incoming>
+      <bpmn:incoming>Flow_0k124y8</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_0t9sh1d" />
+    </bpmn:endEvent>
+    <bpmn:task id="Activity_0rjhmdh" name="Parse Callsign">
+      <bpmn:incoming>Flow_1fjqowu</bpmn:incoming>
+      <bpmn:outgoing>Flow_1s9ixpt</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_0p0thqs">
+        <bpmn:targetRef>DataObjectReference_1nfceds</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_16qq2u0">
+        <bpmn:targetRef>DataObjectReference_106lhrl</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:task>
+    <bpmn:dataObjectReference id="DataObjectReference_1nfceds" name="Airline ICAO" dataObjectRef="DataObject_1s4fe0z" />
+    <bpmn:dataObject id="DataObject_1s4fe0z" />
+    <bpmn:dataObjectReference id="DataObjectReference_106lhrl" name="Flight Number" dataObjectRef="DataObject_1261xyv" />
+    <bpmn:dataObject id="DataObject_1261xyv" />
+    <bpmn:sequenceFlow id="Flow_1fjqowu" name="Yes" sourceRef="Gateway_10kzkmn" targetRef="Activity_0rjhmdh" />
+    <bpmn:sequenceFlow id="Flow_1s9ixpt" sourceRef="Activity_0rjhmdh" targetRef="Activity_06qqneg" />
+    <bpmn:dataObjectReference id="DataObjectReference_0wssg0a" name="Airline ICAO/IATA" dataObjectRef="DataObject_17il34a" />
+    <bpmn:dataObject id="DataObject_17il34a" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1coczl0">
+      <bpmndi:BPMNShape id="Activity_0rjhmdh_di" bpmnElement="Activity_0rjhmdh">
+        <dc:Bounds x="530" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_1nfceds_di" bpmnElement="DataObjectReference_1nfceds">
+        <dc:Bounds x="562" y="335" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="551" y="392" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06qqneg_di" bpmnElement="Activity_06qqneg">
+        <dc:Bounds x="670" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1einwd4_di" bpmnElement="Activity_1einwd4">
+        <dc:Bounds x="810" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_106lhrl_di" bpmnElement="DataObjectReference_106lhrl">
+        <dc:Bounds x="562" y="115" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="545" y="85" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ufoq6y_di" bpmnElement="Activity_0ufoq6y">
+        <dc:Bounds x="270" y="440" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_10kzkmn_di" bpmnElement="Gateway_10kzkmn" isMarkerVisible="true">
+        <dc:Bounds x="425" y="455" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="487" y="466" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_06zps00_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0hsjqzz_di" bpmnElement="Event_0f7ocqr">
+        <dc:Bounds x="1062" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_032pz7f_di" bpmnElement="Activity_032pz7f">
+        <dc:Bounds x="670" y="540" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0og2mq6_di" bpmnElement="Activity_0og2mq6">
+        <dc:Bounds x="820" y="540" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_0wssg0a_di" bpmnElement="DataObjectReference_0wssg0a">
+        <dc:Bounds x="702" y="665" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="677" y="722" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1fjqowu_di" bpmnElement="Flow_1fjqowu">
+        <di:waypoint x="450" y="455" />
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="530" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="456" y="351" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_0p0thqs_di" bpmnElement="DataOutputAssociation_0p0thqs">
+        <di:waypoint x="581" y="290" />
+        <di:waypoint x="582" y="335" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_16qq2u0_di" bpmnElement="DataOutputAssociation_16qq2u0">
+        <di:waypoint x="581" y="210" />
+        <di:waypoint x="582" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1s9ixpt_di" bpmnElement="Flow_1s9ixpt">
+        <di:waypoint x="630" y="250" />
+        <di:waypoint x="670" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0eb6535_di" bpmnElement="DataInputAssociation_0eb6535">
+        <di:waypoint x="598" y="360" />
+        <di:waypoint x="720" y="360" />
+        <di:waypoint x="720" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wv6agv_di" bpmnElement="Flow_1wv6agv">
+        <di:waypoint x="770" y="250" />
+        <di:waypoint x="810" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_1avldi5_di" bpmnElement="DataInputAssociation_1avldi5">
+        <di:waypoint x="598" y="140" />
+        <di:waypoint x="860" y="140" />
+        <di:waypoint x="860" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fcc5pc_di" bpmnElement="Flow_0fcc5pc">
+        <di:waypoint x="910" y="250" />
+        <di:waypoint x="1031" y="250" />
+        <di:waypoint x="1031" y="480" />
+        <di:waypoint x="1062" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wmoqn9_di" bpmnElement="Flow_0wmoqn9">
+        <di:waypoint x="218" y="480" />
+        <di:waypoint x="270" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ny11hw_di" bpmnElement="Flow_0ny11hw">
+        <di:waypoint x="370" y="480" />
+        <di:waypoint x="425" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03szrk0_di" bpmnElement="Flow_03szrk0">
+        <di:waypoint x="450" y="505" />
+        <di:waypoint x="450" y="580" />
+        <di:waypoint x="670" y="580" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="458" y="540" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0k124y8_di" bpmnElement="Flow_0k124y8">
+        <di:waypoint x="920" y="580" />
+        <di:waypoint x="1031" y="580" />
+        <di:waypoint x="1031" y="480" />
+        <di:waypoint x="1062" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m841ss_di" bpmnElement="Flow_0m841ss">
+        <di:waypoint x="770" y="580" />
+        <di:waypoint x="820" y="580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1pif4yg_di" bpmnElement="DataOutputAssociation_1pif4yg">
+        <di:waypoint x="721" y="620" />
+        <di:waypoint x="722" y="665" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_03qo5tc_di" bpmnElement="DataInputAssociation_03qo5tc">
+        <di:waypoint x="738" y="690" />
+        <di:waypoint x="870" y="690" />
+        <di:waypoint x="870" y="620" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -68,13 +68,27 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return false;
             }
 
-            // Lookup the flight
-            var flight = type == ApiEndpointType.ActiveFlights ?
-                await _activeFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes) :
-                await _historicalFlightWrapper.LookupFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
-
             // Lookup the aircraft
-            var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(address, flight?.ModelICAO);
+            var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(address, "");
+
+            // Look up the flight
+            Flight flight = null;
+            if (type == ApiEndpointType.HistoricalFlights)
+            {
+                // If it's a historical flight, use the historical API instance and the aircraft address
+                flight = await _historicalFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
+            }
+            else if (!string.IsNullOrEmpty(aircraft.Callsign))
+            {
+                // If it's an active flight and we have a callsign, use the callsign to build a flight number
+                // and lookup by flight number
+                flight = await LookupFlightByNumber(address, aircraft.Callsign, departureAirportCodes, arrivalAirportCodes);
+            }
+            else
+            {
+                // If it's an active flight and we don't a flight number, lookup the flight by aircraft address
+                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
+            }
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
@@ -121,6 +135,38 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao)
             => await _airportWeatherApiWrapper.LookupAirportWeatherForecast(icao);
+
+        /// <summary>
+        /// Extract an airline ICAO from the callsign, look up the airline and then use the IATA code and the
+        /// callsign to construct a flight number to use to lookup the flight
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="callsign"></param>
+        /// <param name="departureAirportCodes"></param>
+        /// <param name="arrivalAirportCodes"></param>
+        /// <returns></returns>
+        private async Task<Flight> LookupFlightByNumber(
+            string address,
+            string callsign,
+            IEnumerable<string> departureAirportCodes,
+            IEnumerable<string> arrivalAirportCodes)
+        {
+            Flight flight = null;
+
+            // Extract the airline ICAO code and look up the airline
+            var airlineICAO = callsign[..3];
+            var airline = await _airlineApiWrapper.LookupAirlineAsync(airlineICAO, null, null);
+
+            // To construct a flight number, the airline must have been found and it must have a valid IATA code
+            if ((airline != null) && !string.IsNullOrEmpty(airline.IATA))
+            {
+                // The flight number is then airline IATA code plus the tail of the callsign
+                var flightNumber = $"{airline.IATA}{callsign[3..]}";
+                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber, address, departureAirportCodes, arrivalAirportCodes);
+            }
+
+            return flight;
+        }
 
         /// <summary>
         /// Check that an aircraft is eligible for lookup

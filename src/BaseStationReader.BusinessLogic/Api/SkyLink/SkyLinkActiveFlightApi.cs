@@ -11,6 +11,11 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
     internal class SkyLinkActiveFlightApi : SkyLinkApiBase, IActiveFlightsApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.SkyLink;
+
+        private readonly List<ApiProperty> _supportedProperties = [
+            ApiProperty.FlightNumber
+        ];
+
         private readonly string _baseAddress;
         private readonly string _host;
         private readonly string _key;
@@ -35,15 +40,24 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         }
 
         /// <summary>
+        /// Return true if this implementation supports flight lookup by the specified property
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        public bool SupportsLookupBy(ApiProperty propertyType)
+            => _supportedProperties.Contains(propertyType);
+
+        /// <summary>
         /// Look up a flight given the flight number
         /// </summary>
-        /// <param name="number"></param>
+        /// <param name="propertyType"></param>
+        /// <param name="propertyValue"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlight(string number)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlight(ApiProperty propertyType, string propertyValue)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with number {number}");
-            var properties = await MakeApiRequestAsync($"/{number}");
+            Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
+            var properties = await MakeApiRequestAsync($"/{propertyValue}");
             return properties?.Count > 0 ? properties : null;
         }
 

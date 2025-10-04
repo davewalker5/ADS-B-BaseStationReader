@@ -13,6 +13,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
     internal class AirLabsActiveFlightApi : AirLabsApiBase, IActiveFlightsApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
+
+        private readonly List<ApiProperty> _supportedProperties = [
+            ApiProperty.AircraftAddress
+        ];
+
         private readonly string _baseAddress;
 
         public AirLabsActiveFlightApi(
@@ -33,14 +38,23 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         }
 
         /// <summary>
+        /// Return true if this implementation supports flight lookup by the specified property
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        public bool SupportsLookupBy(ApiProperty propertyType)
+            => _supportedProperties.Contains(propertyType);
+
+        /// <summary>
         /// Lookup an active flight's details using the aircraft's ICAO 24-bit address
         /// </summary>
-        /// <param name="address"></param>
+        /// <param name="propertyType"></param>
+        /// <param name="propertyValue"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlight(string address)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlight(ApiProperty propertyType, string propertyValue)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up active flight for aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"&hex={address}");
+            Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
+            var properties = await MakeApiRequestAsync($"&hex={propertyValue}");
             return properties.Count > 0 ? properties.First() : null;
         }
 
