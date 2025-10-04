@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.API
@@ -10,18 +11,31 @@ namespace BaseStationReader.Tests.API
     // [TestClass]
     public class ASkyLinkExternalApiWrapperTest
     {
-        private const string AircraftAddress = "4851F6";
+        private const string AircraftAddress = "4CA216";
+        private const string AircraftRegistration = "EI-DEH";
         private const int AircraftManufactured = 2018;
-        private const string Embarkation = "AMS";
-        private const string Destination = "LIM";
-        private const string FlightResponse = "{ \"flight_number\": \"BA2277\", \"status\": \"Estimated 17:04\", \"airline\": \"British Airways\", \"departure\": { \"airport\": \"LGW • London\", \"airport_full\": \"London Gatwick Airport\", \"scheduled_time\": \"13:00\", \"scheduled_date\": \"04 Oct\", \"actual_time\": \"17:04\", \"actual_date\": \"04 Oct\", \"terminal\": \"S\", \"gate\": \"25\", \"checkin\": \"--\" }, \"arrival\": { \"airport\": \"LAS • Las Vegas\", \"airport_full\": \"Las Vegas Harry Reid International Airport\", \"scheduled_time\": \"16:00\", \"scheduled_date\": \"04 Oct\", \"estimated_time\": \"--:--\", \"estimated_date\": \"\", \"terminal\": \"3\", \"gate\": \"--\", \"baggage\": \"--\" } }";
-        private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
-        private const string AircraftResponse = "{ \"aircraft\": [ { \"icao24\": \"4007EE\", \"callsign\": \"BAW2277\", \"latitude\": 51.569641, \"longitude\": 0.058866, \"altitude\": 21625.0, \"ground_speed\": 396.913086, \"track\": 299.92392, \"vertical_rate\": 1472.0, \"is_on_ground\": false, \"last_seen\": \"2025-10-04T12:33:15.270322\", \"first_seen\": \"2025-09-28T13:43:11.068109\", \"registration\": \"G-YMMC\", \"aircraft_type\": \"B772\", \"airline\": \"British Airways\" } ], \"total_count\": 1, \"timestamp\": \"2025-10-04T12:33:18.014179\" }";
+        private const string ModelICAO = "A320";
+        private const string ModelIATA = "32A";
+        private const string ModelName = "Airbus A320 (sharklets)";
+        private const string ManufacturerName = "Airbus";
+        private const string Embarkation = "CDG";
+        private const string Destination = "DUB";
+        private const string AirlineIATA = "EI";
+        private const string AirlineICAO = "EIN";
+        private const string AirlineName = "Aer Lingus";
+        private const string FlightNumber = "EI527";
+        private const string AirportICAO = "EGLL";
+        private const string METAR = "METAR EGLL 031150Z COR AUTO 19011KT 150V240 9999 BKN005 OVC009 17/16 Q1009 NOSIG";
+        private const string TAF = "TAF EGLL 021702Z 0218/0324 19012KT 9999 FEW025 PROB30 TEMPO 0220/0303 18015G25KT TEMPO 0223/0305 7000 RA PROB40 TEMPO 0300/0305 3000 +RA BKN012 BECMG 0302/0306 BKN005 TEMPO 0305/0312 6000 -RADZ PROB30 TEMPO 0305/0310 3000 DZ BKN002 BECMG 0312/0315 SCT020 PROB40 TEMPO 0312/0318 20015G25KT 8000 -RA BKN009 BECMG 0318/0320 21018G28KT TEMPO 0318/0324 4000 RADZ BKN009";
+        private const string FlightResponse = "{ \"flight_number\": \"EI527\", \"status\": \"Departed 17:14\", \"airline\": \"Aer Lingus\", \"departure\": { \"airport\": \"CDG • Paris\", \"airport_full\": \"Paris Charles de Gaulle Airport\", \"scheduled_time\": \"16:55\", \"scheduled_date\": \"04 Oct\", \"actual_time\": \"17:14\", \"actual_date\": \"04 Oct\", \"terminal\": \"1\", \"gate\": \"--\", \"checkin\": \"--\" }, \"arrival\": { \"airport\": \"DUB • Dublin\", \"airport_full\": \"Dublin  International Airport\", \"scheduled_time\": \"17:40\", \"scheduled_date\": \"04 Oct\", \"estimated_time\": \"17:35\", \"estimated_date\": \"04 Oct\", \"terminal\": \"2\", \"gate\": \"--\", \"baggage\": \"--\" } }";
+        private const string AirlineResponse = "[ { \"id\": 837, \"name\": \"Aer Lingus\", \"alias\": null, \"iata\": \"EI\", \"icao\": \"EIN\", \"callsign\": \"SHAMROCK\", \"country\": \"Ireland\", \"active\": \"Y\", \"logo\": \"https://media.skylinkapi.com/logos/EI.png\" } ]";
+        private const string AircraftResponse = "{ \"aircraft\": [ { \"icao24\": \"4CA216\", \"callsign\": \"EIN5KM\", \"latitude\": 51.407776, \"longitude\": -0.606781, \"altitude\": 36000.0, \"ground_speed\": 399.889984, \"track\": 297.718506, \"vertical_rate\": -64.0, \"is_on_ground\": false, \"last_seen\": \"2025-10-04T15:48:39.731534\", \"first_seen\": \"2025-10-04T15:14:33.662057\", \"registration\": \"EI-DEH\", \"aircraft_type\": \"A320\", \"airline\": \"Aer Lingus\" } ], \"total_count\": 1, \"timestamp\": \"2025-10-04T15:48:44.717122\" }";
+        private const string MetarResponse = "{ \"raw\": \"METAR EGLL 031150Z COR AUTO 19011KT 150V240 9999 BKN005 OVC009 17/16 Q1009 NOSIG\", \"icao\": \"EGLL\", \"airport_name\": \"London Heathrow Airport\", \"timestamp\": \"2025-10-03T12:23:39.122722Z\" }";
+        private const string TafResponse = "{ \"raw\": \"TAF EGLL 021702Z 0218/0324 19012KT 9999 FEW025 PROB30 TEMPO 0220/0303 18015G25KT TEMPO 0223/0305 7000 RA PROB40 TEMPO 0300/0305 3000 +RA BKN012 BECMG 0302/0306 BKN005 TEMPO 0305/0312 6000 -RADZ PROB30 TEMPO 0305/0310 3000 DZ BKN002 BECMG 0312/0315 SCT020 PROB40 TEMPO 0312/0318 20015G25KT 8000 -RA BKN009 BECMG 0318/0320 21018G28KT TEMPO 0318/0324 4000 RADZ BKN009\", \"icao\": \"EGLL\", \"airport_name\": \"London Heathrow Airport\", \"timestamp\": \"2025-10-02T19:48:58.316421Z\" }";
 
-        private MockFileLogger _logger;
-        private BaseStationReaderDbContext _context;
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
+        private IDatabaseManagementFactory _factory;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -38,18 +52,26 @@ namespace BaseStationReader.Tests.API
         [TestInitialize]
         public async Task Initialise()
         {
-            _logger = new();
+            var logger = new MockFileLogger();
             _client = new();
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var trackedAircraftWriter = new TrackedAircraftWriter(_context);
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var trackedAircraftWriter = new TrackedAircraftWriter(context);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, trackedAircraftWriter, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings);
+                logger, _client, context, trackedAircraftWriter, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await trackedAircraftWriter.WriteAsync(new()
             {
                 Address = AircraftAddress
             });
+
+            // Create a factory that can be used to query the objects that are created during lookup
+            _factory = new DatabaseManagementFactory(context);
+
+            // Create the model and manufacturer in the database so they'll be picked up during the aircraft
+            // lookup
+            var manufacturer = await _factory.ManufacturerManager.AddAsync(ManufacturerName);
+            await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
         }
 
         [TestMethod]
@@ -83,6 +105,68 @@ namespace BaseStationReader.Tests.API
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
 
             Assert.IsFalse(result);
+        }
+
+        [TestMethod]
+        public void GetCurrentWeatherTest()
+        {
+            _client.AddResponse(MetarResponse);
+            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeather(AirportICAO)).Result;
+
+            Assert.IsNotNull(results);
+            Assert.HasCount(1, results);
+            Assert.AreEqual(METAR, results.First());
+        }
+
+        [TestMethod]
+        public void GetWeatherForecastTest()
+        {
+            _client.AddResponse(TafResponse);
+            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeather(AirportICAO)).Result;
+
+            Assert.IsNotNull(results);
+            Assert.HasCount(1, results);
+            Assert.AreEqual(TAF, results.First());
+        }
+
+        private async Task AssertExpectedAircraftCreated()
+        {
+            var aircraft = await _factory.AircraftManager.ListAsync(x => true);
+            var expectedAge = DateTime.Now.Year - AircraftManufactured;
+
+            Assert.IsNotNull(aircraft);
+            Assert.HasCount(1, aircraft);
+            Assert.AreEqual(AircraftAddress, aircraft[0].Address);
+            Assert.AreEqual(AircraftRegistration, aircraft[0].Registration);
+            Assert.AreEqual(AircraftManufactured, aircraft[0].Manufactured);
+            Assert.AreEqual(expectedAge, aircraft[0].Age);
+            Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
+            Assert.AreEqual(ModelICAO, aircraft[0].Model.ICAO);
+            Assert.AreEqual(ModelName, aircraft[0].Model.Name);
+            Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
+        }
+
+        private async Task AssertExpectedAirlineCreated()
+        {
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
+
+            Assert.IsNotNull(airlines);
+            Assert.HasCount(1, airlines);
+            Assert.AreEqual(AirlineIATA, airlines[0].IATA);
+            Assert.AreEqual(AirlineICAO, airlines[0].ICAO);
+            Assert.AreEqual(AirlineName, airlines[0].Name);
+        }
+
+        private async Task AssertExpectedFlightCreated()
+        {
+            var flights = await _factory.FlightManager.ListAsync(x => true);
+
+            Assert.IsNotNull(flights);
+            Assert.HasCount(1, flights);
+            Assert.AreEqual(FlightNumber, flights[0].Number);
+            Assert.AreEqual(AirlineICAO, flights[0].Airline.ICAO);
+            Assert.AreEqual(AirlineIATA, flights[0].Airline.IATA);
+            Assert.AreEqual(AirlineName, flights[0].Airline.Name);
         }
     }
 }

@@ -160,7 +160,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // To construct a flight number, the airline must have been found and it must have a valid IATA code
             if ((airline != null) && !string.IsNullOrEmpty(airline.IATA))
             {
-                // The flight number is then airline IATA code plus the tail of the callsign
+                // The flight number is then airline IATA code plus the tail of the callsign - for some airlines, but
+                // not all so this won't find all flights
                 var flightNumber = $"{airline.IATA}{callsign[3..]}";
                 flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber, address, departureAirportCodes, arrivalAirportCodes);
             }
