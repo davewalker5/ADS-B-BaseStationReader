@@ -43,9 +43,13 @@ namespace BaseStationReader.Tests.API.SkyLink
             var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
 
             Assert.IsNotNull(properties);
-            Assert.HasCount(3, properties);
+            Assert.HasCount(7, properties);
             Assert.AreEqual(Registration, properties[ApiProperty.AircraftRegistration]);
+            Assert.IsEmpty(properties[ApiProperty.AircraftManufactured]);
             Assert.AreEqual(ModelICAO, properties[ApiProperty.ModelICAO]);
+            Assert.IsEmpty(properties[ApiProperty.ModelName]);
+            Assert.IsEmpty(properties[ApiProperty.ManufacturerName]);
+            Assert.IsEmpty(properties[ApiProperty.ManufacturerName]);
             Assert.AreEqual(Callsign, properties[ApiProperty.Callsign]);
         }
 
