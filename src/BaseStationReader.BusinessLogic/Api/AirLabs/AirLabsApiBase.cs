@@ -1,16 +1,17 @@
-using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using Serilog.Core;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
     internal abstract class AirLabsApiBase : ExternalApiBase
     {
-        public AirLabsApiBase(ITrackerLogger logger, ITrackerHttpClient client) : base(logger, client)
+        public AirLabsApiBase(
+            ITrackerLogger logger,
+            ITrackerHttpClient client,
+            IDatabaseManagementFactory factory) : base(logger, client, factory)
         {
         }
 
@@ -19,7 +20,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        protected IEnumerable<JsonObject> GetResponseObjectList(JsonNode node)
+        protected IEnumerable<JsonObject> GetResponseAsObjectList(JsonNode node)
         {
             // Check we have a response
             if (node == null)
@@ -52,12 +53,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        protected JsonObject GetResponseObject(JsonNode node)
+        protected JsonObject GetFirstResponseObject(JsonNode node)
         {
             JsonObject responseObject = null;
 
             // Extract the response array from the response
-            var response = GetResponseObjectList(node);
+            var response = GetResponseAsObjectList(node);
             if (response != null)
             {
                 // Extract the first element of the response as a JSON object

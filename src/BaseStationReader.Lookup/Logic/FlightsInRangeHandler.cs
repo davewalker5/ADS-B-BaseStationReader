@@ -1,11 +1,11 @@
 using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Export;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -17,8 +17,8 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context,
-            ApiServiceType serviceType) : base(settings, parser, logger, context)
+            DatabaseManagementFactory factory,
+            ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
             _serviceType = serviceType;
         }
@@ -27,7 +27,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the command to lookup flights within a defined bounding box
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             // Get the search parameters from the command line
             var filePath = Parser.GetValues(CommandLineOptionType.FlightsInRange)[1];

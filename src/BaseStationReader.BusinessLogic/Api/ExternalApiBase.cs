@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 using System.Text.Json;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api
 {
@@ -15,11 +16,13 @@ namespace BaseStationReader.BusinessLogic.Api
         private readonly ITrackerHttpClient _client;
 
         protected ITrackerLogger Logger { get; private set; }
+        protected IDatabaseManagementFactory _factory;
 
-        protected ExternalApiBase(ITrackerLogger logger, ITrackerHttpClient client)
+        protected ExternalApiBase(ITrackerLogger logger, ITrackerHttpClient client, IDatabaseManagementFactory factory)
         {
             Logger = logger;
             _client = client;
+            _factory = factory;
         }
 
         /// <summary>

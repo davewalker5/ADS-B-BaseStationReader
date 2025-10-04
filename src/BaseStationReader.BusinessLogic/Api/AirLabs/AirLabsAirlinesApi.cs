@@ -3,6 +3,7 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -14,7 +15,8 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public AirLabsAirlinesApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            ExternalApiSettings settings) : base(logger, client)
+            IDatabaseManagementFactory factory,
+            ExternalApiSettings settings) : base(logger, client, factory)
         {
             // Get the API configuration properties
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -62,10 +64,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             {
                 // Make a request for the data from the API
                 var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ApiServiceType.AirLabs, url, []);
+                var node = await GetAsync(Logger, ServiceType, url, []);
 
                 // Get the aircraft object from the response
-                var airline = GetResponseObject(node);
+                var airline = GetFirstResponseObject(node);
                 if (airline == null)
                 {
                     return null;

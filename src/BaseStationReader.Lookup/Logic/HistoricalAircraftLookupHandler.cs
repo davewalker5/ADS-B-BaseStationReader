@@ -1,7 +1,6 @@
 using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Database;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
@@ -18,9 +17,9 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context,
+            DatabaseManagementFactory factory,
             TrackedAircraftWriter writer,
-            ApiServiceType serviceType) : base(settings, parser, logger, context)
+            ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
             _writer = writer;
             _serviceType = serviceType;
@@ -30,7 +29,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the airline import command
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 

@@ -29,6 +29,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.IsFalse(settings.CreateSightings);
             Assert.AreEqual("AirLabs", settings.LiveApi);
             Assert.AreEqual("AeroDataBox", settings.HistoricalApi);
+            Assert.AreEqual("CheckWXApi", settings.WeatherApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
 
@@ -78,6 +79,15 @@ namespace BaseStationReader.Tests.Configuration
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
             Assert.AreEqual("Missing", settings.HistoricalApi);
+        }
+
+        [TestMethod]
+        public void OverrideWeatherApiTest()
+        {
+            var args = new string[] { "--weather-api", "Missing" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
+            Assert.AreEqual("Missing", settings.WeatherApi);
         }
 
         [TestMethod]

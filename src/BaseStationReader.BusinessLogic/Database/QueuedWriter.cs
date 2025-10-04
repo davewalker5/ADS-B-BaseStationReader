@@ -10,7 +10,6 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Database
 {

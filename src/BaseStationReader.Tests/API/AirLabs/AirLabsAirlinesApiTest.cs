@@ -31,7 +31,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsAirlinesApi(logger, _client, _settings);
+            _api = new AirLabsAirlinesApi(logger, _client, null, _settings);
         }
 
         [TestMethod]

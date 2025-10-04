@@ -25,5 +25,8 @@ namespace BaseStationReader.Entities.Api
         public int ModelId { get; set; }
 
         public Model Model { get; set; }
+
+        [NotMapped]
+        public string Callsign { get; set; }
     }
 }

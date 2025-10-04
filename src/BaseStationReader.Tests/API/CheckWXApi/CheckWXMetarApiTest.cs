@@ -30,14 +30,14 @@ namespace BaseStationReader.Tests.API.AirLabs
         {
             var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new CheckWXMetarApi(logger, _client, _settings);
+            _api = new CheckWXMetarApi(logger, _client, null, _settings);
         }
 
         [TestMethod]
         public void GetWeatherTest()
         {
             _client.AddResponse(Response);
-            var results = Task.Run(() => _api.LookupAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);
@@ -48,7 +48,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var results = Task.Run(() => _api.LookupAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
 
             Assert.IsNull(results);
         }
@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAirportWeather(AirportICAO)).Result;
+            var properties = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
 
             Assert.IsNull(properties);
         }

@@ -1,7 +1,6 @@
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 
@@ -13,7 +12,7 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            BaseStationReaderDbContext context) : base (settings, parser, logger, context)
+            DatabaseManagementFactory factory) : base (settings, parser, logger, factory)
         {
 
         }
@@ -22,11 +21,10 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the manufacturer import command
         /// </summary>
         /// <returns></returns>
-        public override async Task Handle()
+        public async Task Handle()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportManufacturers)[0];
-            var manufacturerManager = new ManufacturerManager(Context);
-            var manufacturerImporter = new ManufacturerImporter(manufacturerManager, Logger);
+            var manufacturerImporter = new ManufacturerImporter(Factory.ManufacturerManager, Logger);
             await manufacturerImporter.Import(filePath);
         }
     }

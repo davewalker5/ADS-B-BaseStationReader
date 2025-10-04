@@ -14,6 +14,7 @@ namespace BaseStationReader.Interfaces.Api
 
         Task<List<Flight>> LookupActiveFlightsInBoundingBox(double centreLatitude, double centreLongitude, double rangeNm);
 
-        Task<IEnumerable<string>> LookupAirportWeather(string icao);
+        Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao);
+        Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao);
     }
 }
