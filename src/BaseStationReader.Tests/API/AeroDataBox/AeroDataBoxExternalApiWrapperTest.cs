@@ -13,6 +13,8 @@ namespace BaseStationReader.Tests.API
     public class AeroDataBoxExternalApiWrapperTest
     {
         private const string AircraftAddress = "4074B6";
+        private const string AircraftRegistration = "G-UZHF";
+        private const int AircraftManufactured = 2018;
         private const string ModelICAO = "A320";
         private const string ModelIATA = "32A";
         private const string ModelName = "320-251N";
@@ -118,8 +120,8 @@ namespace BaseStationReader.Tests.API
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
             Assert.AreEqual(AircraftAddress, aircraft[0].Address);
-            Assert.AreEqual("G-UZHF", aircraft[0].Registration);
-            Assert.AreEqual(2018, aircraft[0].Manufactured);
+            Assert.AreEqual(AircraftRegistration, aircraft[0].Registration);
+            Assert.AreEqual(AircraftManufactured, aircraft[0].Manufactured);
             Assert.AreEqual(expectedAge, aircraft[0].Age);
             Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
             Assert.AreEqual(ModelICAO, aircraft[0].Model.ICAO);
