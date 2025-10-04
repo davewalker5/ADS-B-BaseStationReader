@@ -63,26 +63,26 @@ namespace BaseStationReader.Tests.API
             Assert.IsTrue(result);
         }
 
-        // [TestMethod]
-        // public async Task LookupWithAcceptingAirportFiltersAsyncTest()
-        // {
-        //     _client.AddResponse(AircraftResponse);
-        //     _client.AddResponse(FlightResponse);
-        //     _client.AddResponse(AirlineResponse);
-        //     var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
+        [TestMethod]
+        public async Task LookupWithAcceptingAirportFiltersAsyncTest()
+        {
+            _client.AddResponse(AircraftResponse);
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
 
-        //     Assert.IsTrue(result);
-        // }
+            Assert.IsTrue(result);
+        }
 
-        // [TestMethod]
-        // public async Task LookupWithExcludingAirportFiltersAsyncTest()
-        // {
-        //     _client.AddResponse(AircraftResponse);
-        //     _client.AddResponse(FlightResponse);
-        //     _client.AddResponse(AirlineResponse);
-        //     var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
+        [TestMethod]
+        public async Task LookupWithExcludingAirportFiltersAsyncTest()
+        {
+            _client.AddResponse(AircraftResponse);
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
 
-        //     Assert.IsFalse(result);
-        // }
+            Assert.IsFalse(result);
+        }
     }
 }
