@@ -8,6 +8,7 @@
         Arrival,
         AutoLookup,
         ClearDown,
+        ConvertCallsigns,
         CreateSightings,
         Departure,
         EnableSqlWriter,
