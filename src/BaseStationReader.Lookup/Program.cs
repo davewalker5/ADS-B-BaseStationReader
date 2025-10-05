@@ -109,6 +109,13 @@ namespace BaseStationReader.Lookup
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
                     await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleTAF();
                 }
+
+                // Export callsign to flight number conversions for tracked aircraft, for testing purposes
+                if (_parser.IsPresent(CommandLineOptionType.ConvertCallsigns))
+                {
+                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
+                    await new FlightNumberExportHandler(settings, _parser, _logger, factory, serviceType).Handle();
+                }
             }
         }
     }

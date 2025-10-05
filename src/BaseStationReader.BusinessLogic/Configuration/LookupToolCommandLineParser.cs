@@ -24,6 +24,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.METAR, false, "--metar", "-m", "Lookup the weather for a given airport ICAO code", 1, 1);
             Add(CommandLineOptionType.TAF, false, "--taf", "-t", "Lookup the weather for a given airport ICAO code", 1, 1);
             Add(CommandLineOptionType.WeatherApi, false, "--weather-api", "-wapi", "Specify the name of an API to use for live weather lookups", 1, 1);
+            Add(CommandLineOptionType.ConvertCallsigns, false, "--convert-callsigns", "-cc", "Convert tracked aircraft callsigns to flight numbers and export to a CSV file", 1, 1);
         }
     }
 }

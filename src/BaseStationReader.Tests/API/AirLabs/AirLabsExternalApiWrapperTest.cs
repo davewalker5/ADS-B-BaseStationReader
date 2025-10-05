@@ -2,6 +2,7 @@ using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
@@ -31,6 +32,7 @@ namespace BaseStationReader.Tests.API
 
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
+        private BaseStationReaderDbContext _context;
         private IDatabaseManagementFactory _factory;
 
         private readonly ExternalApiSettings _settings = new()
@@ -50,10 +52,10 @@ namespace BaseStationReader.Tests.API
         {
             var logger = new MockFileLogger();
             _client = new();
-            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var trackedAircraftWriter = new TrackedAircraftWriter(context);
+            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var trackedAircraftWriter = new TrackedAircraftWriter(_context);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, context, trackedAircraftWriter, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
+                logger, _client, _context, trackedAircraftWriter, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await trackedAircraftWriter.WriteAsync(new()
@@ -62,7 +64,7 @@ namespace BaseStationReader.Tests.API
             });
 
             // Create a factory that can be used to query the objects that are created during lookup
-            _factory = new DatabaseManagementFactory(context);
+            _factory = new DatabaseManagementFactory(_context);
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup
@@ -138,6 +140,105 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual("TK1869", flight.Number);
             Assert.AreEqual("LGW", flight.Embarkation);
             Assert.AreEqual("IST", flight.Destination);
+        }
+
+        [TestMethod]
+        public async Task GetFlightNumberForCallsignTest()
+        {
+            _client.AddResponse(AirlineResponse);
+            var today = DateTime.Today;
+            var number = await _wrapper.GetFlightNumberFromCallsignAsync("KLM123XY", today);
+
+            Assert.IsNotNull(number);
+            Assert.AreEqual("KLM123XY", number.Callsign);
+            Assert.AreEqual("KL123", number.Number);
+            Assert.AreEqual(today, number.Date);
+        }
+
+        [TestMethod]
+        public async Task GetFlightNumbersForTrackedAircraft()
+        {
+            _client.AddResponse(AirlineResponse);
+
+            var today = DateTime.Today;
+            await _context.TrackedAircraft.AddAsync(new()
+            {
+                Callsign = "KLM123XY",
+                LastSeen = today,
+                Status = TrackingStatus.Active
+            });
+            await _context.SaveChangesAsync();
+
+            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([]);
+
+            Assert.IsNotNull(numbers);
+            Assert.HasCount(1, numbers);
+            Assert.AreEqual("KLM123XY", numbers[0].Callsign);
+            Assert.AreEqual("KL123", numbers[0].Number);
+            Assert.AreEqual(today, numbers[0].Date);
+        }
+
+        [TestMethod]
+        public async Task GetFlightNumbersForTrackedAircraftWithAcceptingStatusFilters()
+        {
+            _client.AddResponse(AirlineResponse);
+
+            var today = DateTime.Today;
+            await _context.TrackedAircraft.AddAsync(new()
+            {
+                Callsign = "KLM123XY",
+                LastSeen = today,
+                Status = TrackingStatus.Active
+            });
+            await _context.SaveChangesAsync();
+
+            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Active]);
+
+            Assert.IsNotNull(numbers);
+            Assert.HasCount(1, numbers);
+            Assert.AreEqual("KLM123XY", numbers[0].Callsign);
+            Assert.AreEqual("KL123", numbers[0].Number);
+            Assert.AreEqual(today, numbers[0].Date);
+        }
+
+        [TestMethod]
+        public async Task GetFlightNumbersForTrackedAircraftWithExcludingStatusFilters()
+        {
+            _client.AddResponse(AirlineResponse);
+
+            var today = DateTime.Today;
+            await _context.TrackedAircraft.AddAsync(new()
+            {
+                Callsign = "KLM123XY",
+                LastSeen = today,
+                Status = TrackingStatus.Active
+            });
+            await _context.SaveChangesAsync();
+
+            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Inactive]);
+
+            Assert.IsNotNull(numbers);
+            Assert.IsEmpty(numbers);
+        }
+
+        [TestMethod]
+        public async Task GetFlightNumbersForTrackedAircraftWithUnknownAirlineFilters()
+        {
+            _client.AddResponse("{}");
+
+            var today = DateTime.Today;
+            await _context.TrackedAircraft.AddAsync(new()
+            {
+                Callsign = "KLM123XY",
+                LastSeen = today,
+                Status = TrackingStatus.Active
+            });
+            await _context.SaveChangesAsync();
+
+            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([]);
+
+            Assert.IsNotNull(numbers);
+            Assert.IsEmpty(numbers);
         }
 
         private async Task AssertExpectedAircraftCreated()

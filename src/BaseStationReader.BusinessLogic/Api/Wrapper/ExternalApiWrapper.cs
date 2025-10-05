@@ -1,6 +1,7 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -20,6 +21,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IAirportWeatherApiWrapper _airportWeatherApiWrapper;
         private readonly IDatabaseManagementFactory _factory;
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
+        private readonly IFlightNumberApiWrapper _flightNumberApiWrapper;
 
         public ExternalApiWrapper(
             int maximumLookupAttempts,
@@ -36,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
+            _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, _airlineApiWrapper, trackedAircraftWriter);
             _trackedAircraftWriter = trackedAircraftWriter;
         }
 
@@ -46,6 +49,23 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="api"></param>
         public void RegisterExternalApi(ApiEndpointType type, IExternalApi api)
             => _register.RegisterExternalApi(type, api);
+
+        /// <summary>
+        /// Return a flight number given a callsign
+        /// </summary>
+        /// <param name="callsign"></param>
+        /// <param name="timestamp"></param>
+        /// <returns></returns>
+        public async Task<FlightNumber> GetFlightNumberFromCallsignAsync(string callsign, DateTime? timestamp = null)
+            => await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign, timestamp);
+
+        /// <summary>
+        /// Get flight numbers for aircraft that are currently being tracked
+        /// </summary>
+        /// <param name="statuses"></param>
+        /// <returns></returns>
+        public async Task<List<FlightNumber>> GetFlightNumbersForTrackedAircraftAsync(IEnumerable<TrackingStatus> statuses)
+            => await _flightNumberApiWrapper.GetFlightNumbersForTrackedAircraftAsync(statuses);
 
         /// <summary>
         /// Lookup a flight and aircraft given a 24-bit aircraft ICAO address and filtering parameters
@@ -100,11 +120,11 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // If the lookup was successful and sighting creation is requested, save the relationship
-                // between the flight and the aircraft as a sighting on this date
-                if (createSighting && successful)
-                {
-                    _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
-                }
+            // between the flight and the aircraft as a sighting on this date
+            if (createSighting && successful)
+            {
+                _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
+            }
 
             // The lookup was successful if both aircraft and flight were looked up successfully
             return successful;
@@ -156,17 +176,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         {
             Flight flight = null;
 
-            // Extract the airline ICAO code and look up the airline
-            var airlineICAO = callsign[..3];
-            var airline = await _airlineApiWrapper.LookupAirlineAsync(airlineICAO, null, null);
-
-            // To construct a flight number, the airline must have been found and it must have a valid IATA code
-            if ((airline != null) && !string.IsNullOrEmpty(airline.IATA))
+            // Build the flight number
+            var flightNumber = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign);
+            if (flightNumber != null)
             {
-                // The flight number is then airline IATA code plus the tail of the callsign - for some airlines, but
-                // not all so this won't find all flights
-                var flightNumber = $"{airline.IATA}{callsign[3..]}";
-                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber, address, departureAirportCodes, arrivalAirportCodes);
+                // Lookup the flight
+                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber.Number, address, departureAirportCodes, arrivalAirportCodes);
             }
 
             return flight;
