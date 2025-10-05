@@ -1,4 +1,5 @@
 ﻿using BaseStationReader.Entities.Api;
+using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
@@ -16,6 +17,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
+        public virtual DbSet<ConfirmedMapping> ConfirmedMappings { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -187,6 +189,18 @@ namespace BaseStationReader.Data
                     .WithMany()
                     .HasForeignKey(e => e.FlightId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ConfirmedMapping>(entity =>
+            {
+                entity.ToTable("CONFIRMED_MAPPING");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AirlineICAO).IsRequired().HasColumnName("AirlineICAO");
+                entity.Property(e => e.AirlineIATA).IsRequired().HasColumnName("AirlineIATA");
+                entity.Property(e => e.FlightIATA).IsRequired().HasColumnName("FlightIATA");
+                entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
+                entity.Property(e => e.Digits).IsRequired().HasColumnName("Digits");
             });
         }
     }

@@ -68,6 +68,12 @@ namespace BaseStationReader.Lookup
                     await new ManufacturerImportHandler(settings, _parser, _logger, factory).Handle();
                 }
 
+                // If a CSV file containing confirmed flight number mappings has been supplied, import it
+                if (_parser.IsPresent(CommandLineOptionType.ImportConfirmedMappings))
+                {
+                    await new ConfirmedMappingImportHandler(settings, _parser, _logger, factory).Handle();
+                }
+
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {

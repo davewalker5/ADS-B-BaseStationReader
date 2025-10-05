@@ -9,5 +9,6 @@ namespace BaseStationReader.Interfaces.Database
         IManufacturerManager ManufacturerManager { get; }
         IModelManager ModelManager { get; }
         ISightingManager SightingManager { get; }
+        IConfirmedMappingManager ConfirmedMappingManager { get; }
     }
 }

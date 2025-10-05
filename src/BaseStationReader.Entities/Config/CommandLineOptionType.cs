@@ -18,6 +18,7 @@
         HistoricalLookup,
         Host,
         ImportAirlines,
+        ImportConfirmedMappings,
         ImportManufacturers,
         ImportModels,
         LiveApi,
