@@ -50,6 +50,20 @@ namespace BaseStationReader.Data
         }
 
         /// <summary>
+        /// Truncate the confirmed flight number mappings table
+        /// </summary>
+        /// <returns></returns>
+        public async Task TruncateConfirmedMappings()
+            => await TruncateTable("CONFIRMED_MAPPING");
+
+        /// <summary>
+        /// Truncate the confirmed flight number mappings table
+        /// </summary>
+        /// <returns></returns>
+        public async Task TruncateNumberSuffixes()
+            => await TruncateTable("NUMBER_SUFFIX");
+
+        /// <summary>
         /// Initialise the aircraft tracker model
         /// </summary>
         /// <param name="modelBuilder"></param>
@@ -72,7 +86,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Status).HasColumnName("Status");
                 entity.Property(e => e.Messages).HasColumnName("Messages");
                 entity.Property(e => e.Distance).HasColumnName("Distance");
-                
+
                 entity.Property(e => e.FirstSeen)
                     .HasColumnName("LookupTimestamp")
                     .HasColumnType("DATETIME");
@@ -132,7 +146,7 @@ namespace BaseStationReader.Data
                     .HasForeignKey(e => e.AirlineId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-    
+
             modelBuilder.Entity<Aircraft>(entity =>
             {
                 entity.ToTable("AIRCRAFT");
@@ -171,7 +185,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
             });
-    
+
             modelBuilder.Entity<Sighting>(entity =>
             {
                 entity.ToTable("SIGHTING");

@@ -26,6 +26,13 @@ namespace BaseStationReader.BusinessLogic.Logging
         }
 
         /// <summary>
+        /// Truncate the target table to remove existing entries
+        /// </summary>
+        /// <returns></returns>
+        public async Task Truncate()
+            => await _numberSuffixManager.Truncate();
+
+        /// <summary>
         /// Save a collection of number suffix rules to the database
         /// </summary>
         /// <param name="rules"></param>

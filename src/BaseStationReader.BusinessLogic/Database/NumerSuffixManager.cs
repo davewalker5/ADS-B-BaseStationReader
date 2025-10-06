@@ -12,6 +12,13 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Truncate the confirmed mappings table to remove all existing entries
+        /// </summary>
+        /// <returns></returns>
+        public async Task Truncate()
+            => await _context.TruncateNumberSuffixes();
         
         /// <summary>
         /// Add a number/suffix rule

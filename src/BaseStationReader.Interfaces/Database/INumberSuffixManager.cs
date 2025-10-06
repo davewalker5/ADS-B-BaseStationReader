@@ -4,6 +4,7 @@ namespace BaseStationReader.Interfaces.Database
 {
     public interface INumberSuffixManager
     {
+        Task Truncate();
         Task<NumberSuffix> AddAsync(
             string airlineICAO,
             string airlineIATA,

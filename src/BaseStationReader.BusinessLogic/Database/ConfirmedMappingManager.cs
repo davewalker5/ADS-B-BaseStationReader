@@ -12,6 +12,13 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Truncate the confirmed mappings table to remove all existing entries
+        /// </summary>
+        /// <returns></returns>
+        public async Task Truncate()
+            => await _context.TruncateConfirmedMappings();
         
         /// <summary>
         /// Add a confirmed mapping between callsign and flight number

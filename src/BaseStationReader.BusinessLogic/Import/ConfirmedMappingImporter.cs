@@ -26,11 +26,19 @@ namespace BaseStationReader.BusinessLogic.Logging
         }
 
         /// <summary>
+        /// Truncate the target table to remove existing entries
+        /// </summary>
+        /// <returns></returns>
+        public async Task Truncate()
+            => await _confirmedMappingManager.Truncate();
+
+        /// <summary>
         /// Save a collection of confirmed mappings to the database
         /// </summary>
         /// <param name="mappings"></param>
+        /// <param name="truncate"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<ConfirmedMapping> mappings)
+        public override async Task Save(IEnumerable<ConfirmedMapping> mappings, bool truncate)
         {
             if (mappings?.Any() == true)
             {
