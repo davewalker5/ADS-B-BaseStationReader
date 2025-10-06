@@ -4,47 +4,51 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    internal class NumberSuffixRuleManager : INumberSuffixRuleManager
+    internal class SuffixDeltaRuleManager : ISuffixDeltaRuleManager
     {
         private readonly BaseStationReaderDbContext _context;
 
-        public NumberSuffixRuleManager(BaseStationReaderDbContext context)
+        public SuffixDeltaRuleManager(BaseStationReaderDbContext context)
         {
             _context = context;
         }
 
         /// <summary>
-        /// Truncate the number/suffix rules table to remove all existing entries
+        /// Truncate the suffix/delta rules table to remove all existing entries
         /// </summary>
         /// <returns></returns>
         public async Task Truncate()
-            => await _context.TruncateNumberSuffixRules();
+            => await _context.TruncateSuffixDeltaRules();
         
         /// <summary>
-        /// Add a number/suffix rule
+        /// Add a suffix delta rule
         /// </summary>
+        /// <param name="airlineICAO"></param>
+        /// <param name="airlineIATA"></param>
+        /// <param name="suffix"></param>
+        /// <param name="delta"></param>
+        /// <param name="support"></param>
+        /// <param name="purity"></param>
         /// <returns></returns>
-        public async Task<NumberSuffixRule> AddAsync(
+        public async Task<SuffixDeltaRule> AddAsync(
             string airlineICAO,
             string airlineIATA,
-            string numeric,
             string suffix,
-            string digits,
+            int delta,
             int support,
             decimal purity)
         {
-            var rule = new NumberSuffixRule()
+            var rule = new SuffixDeltaRule()
             {
                 AirlineICAO = airlineICAO,
                 AirlineIATA = airlineIATA,
-                Numeric = numeric,
                 Suffix = suffix,
-                Digits = digits,
+                Delta = delta,
                 Support = support,
                 Purity = purity
             };
 
-            await _context.NumberSuffixRules.AddAsync(rule);
+            await _context.SuffixDeltaRules.AddAsync(rule);
             await _context.SaveChangesAsync();
             return rule;
         }

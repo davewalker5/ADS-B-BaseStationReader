@@ -19,6 +19,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Sighting> Sightings { get; set; }
         public virtual DbSet<ConfirmedMapping> ConfirmedMappings { get; set; }
         public virtual DbSet<NumberSuffixRule> NumberSuffixRules { get; set; }
+        public virtual DbSet<SuffixDeltaRule> SuffixDeltaRules { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -57,11 +58,18 @@ namespace BaseStationReader.Data
             => await TruncateTable("CONFIRMED_MAPPING");
 
         /// <summary>
-        /// Truncate the confirmed flight number mappings table
+        /// Truncate the number/suffix rules table
         /// </summary>
         /// <returns></returns>
-        public async Task TruncateNumberSuffixes()
+        public async Task TruncateNumberSuffixRules()
             => await TruncateTable("NUMBER_SUFFIX");
+
+        /// <summary>
+        /// Truncate the suffix/delta rules table
+        /// </summary>
+        /// <returns></returns>
+        public async Task TruncateSuffixDeltaRules()
+            => await TruncateTable("SUFFIX_DELTA");
 
         /// <summary>
         /// Initialise the aircraft tracker model
@@ -228,6 +236,19 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Numeric).IsRequired().HasColumnName("Numeric");
                 entity.Property(e => e.Suffix).IsRequired().HasColumnName("Suffix");
                 entity.Property(e => e.Digits).IsRequired().HasColumnName("Digits");
+                entity.Property(e => e.Support).IsRequired().HasColumnName("Support");
+                entity.Property(e => e.Purity).IsRequired().HasColumnName("Purity");
+            });
+
+            modelBuilder.Entity<SuffixDeltaRule>(entity =>
+            {
+                entity.ToTable("SUFFIX_DELTA");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AirlineICAO).IsRequired().HasColumnName("AirlineICAO");
+                entity.Property(e => e.AirlineIATA).IsRequired().HasColumnName("AirlineIATA");
+                entity.Property(e => e.Suffix).IsRequired().HasColumnName("Suffix");
+                entity.Property(e => e.Delta).IsRequired().HasColumnName("Delta");
                 entity.Property(e => e.Support).IsRequired().HasColumnName("Support");
                 entity.Property(e => e.Purity).IsRequired().HasColumnName("Purity");
             });

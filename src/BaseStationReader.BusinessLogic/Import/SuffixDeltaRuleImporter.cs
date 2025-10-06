@@ -7,11 +7,11 @@ using BaseStationReader.Entities.Heuristics;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
-    public class NumberSuffixRuleImporter : CsvImporter<NumberSuffixRuleMappingProfile, NumberSuffixRule>, INumberSuffixRuleImporter
+    public class SuffixDeltaRuleImporter : CsvImporter<SuffixDeltaRuleMappingProfile, SuffixDeltaRule>, ISuffixDeltaRuleImporter
     {
-        private readonly INumberSuffixRuleManager _numberSuffixManager;
+        private readonly ISuffixDeltaRuleManager _numberSuffixManager;
 
-        public NumberSuffixRuleImporter(INumberSuffixRuleManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
+        public SuffixDeltaRuleImporter(ISuffixDeltaRuleManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
             => _numberSuffixManager = NumberSuffixManager;
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        public override List<NumberSuffixRule> Read(string filePath)
+        public override List<SuffixDeltaRule> Read(string filePath)
         {
             var mappings = base.Read(filePath);
             return mappings;
@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="rules"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<NumberSuffixRule> rules)
+        public override async Task Save(IEnumerable<SuffixDeltaRule> rules)
         {
             if (rules?.Any() == true)
             {
@@ -45,22 +45,21 @@ namespace BaseStationReader.BusinessLogic.Logging
 
                 foreach (var rule in rules)
                 {
-                    Logger.LogMessage(Severity.Debug, $"Saving number/suffix rule : " +
-                        $"{rule.AirlineICAO}, {rule.AirlineIATA}, {rule.Numeric}, {rule.Digits}, {rule.Support}, {rule.Purity}");
+                    Logger.LogMessage(Severity.Debug, $"Saving flight number suffix delta rule : " +
+                        $"{rule.AirlineICAO}, {rule.AirlineIATA}, {rule.Delta}, {rule.Support}, {rule.Purity}");
 
                     await _numberSuffixManager.AddAsync(
                         rule.AirlineICAO,
                         rule.AirlineIATA,
-                        rule.Numeric,
                         rule.Suffix,
-                        rule.Digits,
+                        rule.Delta,
                         rule.Support,
                         rule.Purity);
                 }
             }
             else
             {
-                Logger.LogMessage(Severity.Warning, $"No number/suffix rules to save");
+                Logger.LogMessage(Severity.Warning, $"No flight number suffix delta rules to save");
             }
         }
     }

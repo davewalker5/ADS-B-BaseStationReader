@@ -13,22 +13,18 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IModelManager> _modelManager = null;
         private readonly Lazy<ISightingManager> _sightingManager = null;
         private readonly Lazy<IConfirmedMappingManager> _confirmedMappingManager = null;
-        private readonly Lazy<INumberSuffixRuleManager> _numberSuffixManager = null;
+        private readonly Lazy<INumberSuffixRuleManager> _numberSuffixRuleManager = null;
+        private readonly Lazy<ISuffixDeltaRuleManager> _suffixDeltaRuleManager = null;
 
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
-
         public IAirlineManager AirlineManager { get { return _airlineManager.Value; } }
-
         public IFlightManager FlightManager { get { return _flightManager.Value; } }
-
         public IManufacturerManager ManufacturerManager { get { return _manufacturerManager.Value; } }
-
         public IModelManager ModelManager { get { return _modelManager.Value; } }
-
         public ISightingManager SightingManager { get { return _sightingManager.Value; } }
-
         public IConfirmedMappingManager ConfirmedMappingManager { get { return _confirmedMappingManager.Value; } }
-        public INumberSuffixRuleManager NumberSuffixRuleManager { get { return _numberSuffixManager.Value; } }
+        public INumberSuffixRuleManager NumberSuffixRuleManager { get { return _numberSuffixRuleManager.Value; } }
+        public ISuffixDeltaRuleManager SuffixDeltaRuleManager { get { return _suffixDeltaRuleManager.Value; } }
 
         public DatabaseManagementFactory(BaseStationReaderDbContext context)
         {
@@ -41,7 +37,8 @@ namespace BaseStationReader.BusinessLogic.Database
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
             _confirmedMappingManager = new Lazy<IConfirmedMappingManager>(() => new ConfirmedMappingManager(context));
-            _numberSuffixManager = new Lazy<INumberSuffixRuleManager>(() => new NumberSuffixRuleManager(context));
+            _numberSuffixRuleManager = new Lazy<INumberSuffixRuleManager>(() => new NumberSuffixRuleManager(context));
+            _suffixDeltaRuleManager = new Lazy<ISuffixDeltaRuleManager>(() => new SuffixDeltaRuleManager(context));
         }
 
         /// <summary>

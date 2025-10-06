@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Import;
 
 namespace BaseStationReader.Interfaces.DataExchange
 {
-    public interface INumberSuffixImporter : ICsvImporter<NumberSuffixRuleMappingProfile, NumberSuffixRule>
+    public interface INumberSuffixRuleImporter : ICsvImporter<NumberSuffixRuleMappingProfile, NumberSuffixRule>
     {
         Task Truncate();
     }

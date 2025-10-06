@@ -6,9 +6,9 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Lookup.Logic
 {
-    internal class ConfirmedMappingImportHandler : CommandHandlerBase
+    internal class SuffixDeltaRuleImportHandler : CommandHandlerBase
     {
-        public ConfirmedMappingImportHandler(
+        public SuffixDeltaRuleImportHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
@@ -18,15 +18,15 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the confirmed flight number mapping import command
+        /// Handle the suffix delta rule import command
         /// </summary>
         /// <returns></returns>
         public async Task Handle()
         {
-            var filePath = Parser.GetValues(CommandLineOptionType.ImportConfirmedMappings)[0];
-            var confirmedMappingImporter = new ConfirmedMappingImporter(Factory.ConfirmedMappingManager, Logger);
-            await confirmedMappingImporter.Truncate();
-            await confirmedMappingImporter.Import(filePath);
+            var filePath = Parser.GetValues(CommandLineOptionType.ImportSuffixDeltaRules)[0];
+            var numberSuffixImporter = new SuffixDeltaRuleImporter(Factory.SuffixDeltaRuleManager, Logger);
+            await numberSuffixImporter.Truncate();
+            await numberSuffixImporter.Import(filePath);
         }
     }
 }

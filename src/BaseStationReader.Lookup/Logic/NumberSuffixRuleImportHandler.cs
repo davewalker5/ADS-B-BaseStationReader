@@ -6,9 +6,9 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Lookup.Logic
 {
-    internal class NumberSuffixImportHandler : CommandHandlerBase
+    internal class NumberSuffixRuleImportHandler : CommandHandlerBase
     {
-        public NumberSuffixImportHandler(
+        public NumberSuffixRuleImportHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
@@ -18,13 +18,13 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the airline import command
+        /// Handle the numer/suffix rule import command
         /// </summary>
         /// <returns></returns>
         public async Task Handle()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportNumberSuffixRules)[0];
-            var numberSuffixImporter = new NumberSuffixImporter(Factory.NumberSuffixRuleManager, Logger);
+            var numberSuffixImporter = new NumberSuffixRuleImporter(Factory.NumberSuffixRuleManager, Logger);
             await numberSuffixImporter.Truncate();
             await numberSuffixImporter.Import(filePath);
         }

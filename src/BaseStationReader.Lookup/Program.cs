@@ -77,7 +77,13 @@ namespace BaseStationReader.Lookup
                 // If a CSV file containing number/suffix rules has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportNumberSuffixRules))
                 {
-                    await new NumberSuffixImportHandler(settings, _parser, _logger, factory).Handle();
+                    await new NumberSuffixRuleImportHandler(settings, _parser, _logger, factory).Handle();
+                }
+
+                // If a CSV file containing suffix delta rules has been supplied, import it
+                if (_parser.IsPresent(CommandLineOptionType.ImportSuffixDeltaRules))
+                {
+                    await new SuffixDeltaRuleImportHandler(settings, _parser, _logger, factory).Handle();
                 }
 
                 // If a CSV file containing model details has been supplied, import it
