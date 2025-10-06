@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Interfaces.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -12,6 +14,25 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Return the first confirmed mapping matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<ConfirmedMapping> GetAsync(Expression<Func<ConfirmedMapping, bool>> predicate)
+        {
+            List<ConfirmedMapping> mappings = await ListAsync(predicate);
+            return mappings.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Get a list of confirmed mappings matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<List<ConfirmedMapping>> ListAsync(Expression<Func<ConfirmedMapping, bool>> predicate)
+            => await _context.ConfirmedMappings.Where(predicate).ToListAsync();
 
         /// <summary>
         /// Truncate the confirmed mappings table to remove all existing entries

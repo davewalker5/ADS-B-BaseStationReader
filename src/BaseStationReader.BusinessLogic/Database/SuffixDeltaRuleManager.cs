@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Interfaces.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -12,6 +14,25 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Return the first suffix/delta rule matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<SuffixDeltaRule> GetAsync(Expression<Func<SuffixDeltaRule, bool>> predicate)
+        {
+            List<SuffixDeltaRule> rules = await ListAsync(predicate);
+            return rules.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Get a list of suffix/delta rules matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<List<SuffixDeltaRule>> ListAsync(Expression<Func<SuffixDeltaRule, bool>> predicate)
+            => await _context.SuffixDeltaRules.Where(predicate).ToListAsync();
 
         /// <summary>
         /// Truncate the suffix/delta rules table to remove all existing entries

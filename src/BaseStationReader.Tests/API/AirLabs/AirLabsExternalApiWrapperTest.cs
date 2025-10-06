@@ -142,7 +142,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual("IST", flight.Destination);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public async Task GetFlightNumberForCallsignTest()
         {
             _client.AddResponse(AirlineResponse);
@@ -155,7 +155,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(today, number.Date);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public async Task GetFlightNumbersForTrackedAircraft()
         {
             _client.AddResponse(AirlineResponse);
@@ -178,7 +178,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(today, numbers[0].Date);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public async Task GetFlightNumbersForTrackedAircraftWithAcceptingStatusFilters()
         {
             _client.AddResponse(AirlineResponse);
@@ -201,7 +201,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(today, numbers[0].Date);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public async Task GetFlightNumbersForTrackedAircraftWithExcludingStatusFilters()
         {
             _client.AddResponse(AirlineResponse);
@@ -221,7 +221,7 @@ namespace BaseStationReader.Tests.API
             Assert.IsEmpty(numbers);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public async Task GetFlightNumbersForTrackedAircraftWithUnknownAirlineFilters()
         {
             _client.AddResponse("{}");

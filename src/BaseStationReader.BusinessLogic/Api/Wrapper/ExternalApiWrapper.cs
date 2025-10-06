@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
@@ -38,7 +39,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
-            _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, _airlineApiWrapper, trackedAircraftWriter);
+            _flightNumberApiWrapper = new FlightNumberApiWrapper(new(), _logger, factory, trackedAircraftWriter);
             _trackedAircraftWriter = trackedAircraftWriter;
         }
 

@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Interfaces.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -12,6 +14,25 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Return the first set of airline constants matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<AirlineConstants> GetAsync(Expression<Func<AirlineConstants, bool>> predicate)
+        {
+            List<AirlineConstants> constants = await ListAsync(predicate);
+            return constants.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Get a list of airline constants matching the specified criteria
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        public async Task<List<AirlineConstants>> ListAsync(Expression<Func<AirlineConstants, bool>> predicate)
+            => await _context.AirlineConstants.Where(predicate).ToListAsync();
 
         /// <summary>
         /// Truncate the airline constants table to remove all existing entries
