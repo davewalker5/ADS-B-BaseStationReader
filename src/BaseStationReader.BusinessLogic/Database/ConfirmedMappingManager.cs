@@ -1,5 +1,5 @@
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database

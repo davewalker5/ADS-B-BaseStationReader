@@ -1,11 +1,11 @@
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 
 namespace BaseStationReader.Interfaces.Database
 {
-    public interface INumberSuffixManager
+    public interface INumberSuffixRuleManager
     {
         Task Truncate();
-        Task<NumberSuffix> AddAsync(
+        Task<NumberSuffixRule> AddAsync(
             string airlineICAO,
             string airlineIATA,
             string numeric,

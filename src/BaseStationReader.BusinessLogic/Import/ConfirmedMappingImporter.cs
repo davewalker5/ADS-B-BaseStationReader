@@ -2,8 +2,8 @@ using BaseStationReader.Entities.Import;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Entities.Messages;
 using BaseStationReader.Interfaces.DataExchange;
+using BaseStationReader.Entities.Heuristics;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
@@ -38,7 +38,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="mappings"></param>
         /// <param name="truncate"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<ConfirmedMapping> mappings, bool truncate)
+        public override async Task Save(IEnumerable<ConfirmedMapping> mappings)
         {
             if (mappings?.Any() == true)
             {

@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 using CsvHelper.Configuration;
 
 namespace BaseStationReader.Entities.Import
 {
     [ExcludeFromCodeCoverage]
-    public sealed class NumberSuffixMappingProfile : ClassMap<NumberSuffix>
+    public sealed class NumberSuffixRuleMappingProfile : ClassMap<NumberSuffixRule>
     {
-        public NumberSuffixMappingProfile()
+        public NumberSuffixRuleMappingProfile()
         {
             Map(m => m.AirlineICAO).Name("airline_icao");
             Map(m => m.AirlineIATA).Name("airline_iata");

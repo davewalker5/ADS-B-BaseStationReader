@@ -1,4 +1,4 @@
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 
 namespace BaseStationReader.Interfaces.Database
 {

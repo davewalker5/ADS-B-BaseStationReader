@@ -2,16 +2,16 @@ using BaseStationReader.Entities.Import;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Entities.Messages;
 using BaseStationReader.Interfaces.DataExchange;
+using BaseStationReader.Entities.Heuristics;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
-    public class NumberSuffixImporter : CsvImporter<NumberSuffixMappingProfile, NumberSuffix>, INumberSuffixImporter
+    public class NumberSuffixImporter : CsvImporter<NumberSuffixRuleMappingProfile, NumberSuffixRule>, INumberSuffixImporter
     {
-        private readonly INumberSuffixManager _numberSuffixManager;
+        private readonly INumberSuffixRuleManager _numberSuffixManager;
 
-        public NumberSuffixImporter(INumberSuffixManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
+        public NumberSuffixImporter(INumberSuffixRuleManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
             => _numberSuffixManager = NumberSuffixManager;
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        public override List<NumberSuffix> Read(string filePath)
+        public override List<NumberSuffixRule> Read(string filePath)
         {
             var mappings = base.Read(filePath);
             return mappings;
@@ -37,11 +37,11 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="rules"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<NumberSuffix> rules)
+        public override async Task Save(IEnumerable<NumberSuffixRule> rules)
         {
             if (rules?.Any() == true)
             {
-                Logger.LogMessage(Severity.Info, $"Saving {rules.Count()} flight number mappings to the database");
+                Logger.LogMessage(Severity.Info, $"Saving {rules.Count()} flight number/suffix rules to the database");
 
                 foreach (var rule in rules)
                 {

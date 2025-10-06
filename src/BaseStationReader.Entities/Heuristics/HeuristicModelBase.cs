@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BaseStationReader.Entities.Messages
+namespace BaseStationReader.Entities.Heuristics
 {
     [ExcludeFromCodeCoverage]
     public class HeuristicModelBase

@@ -10,6 +10,6 @@ namespace BaseStationReader.Interfaces.Database
         IModelManager ModelManager { get; }
         ISightingManager SightingManager { get; }
         IConfirmedMappingManager ConfirmedMappingManager { get; }
-        INumberSuffixManager NumberSuffixManager { get; }
+        INumberSuffixRuleManager NumberSuffixRuleManager { get; }
     }
 }

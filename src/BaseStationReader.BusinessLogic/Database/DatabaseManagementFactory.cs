@@ -13,7 +13,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IModelManager> _modelManager = null;
         private readonly Lazy<ISightingManager> _sightingManager = null;
         private readonly Lazy<IConfirmedMappingManager> _confirmedMappingManager = null;
-        private readonly Lazy<INumberSuffixManager> _numberSuffixManager = null;
+        private readonly Lazy<INumberSuffixRuleManager> _numberSuffixManager = null;
 
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
 
@@ -28,7 +28,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public ISightingManager SightingManager { get { return _sightingManager.Value; } }
 
         public IConfirmedMappingManager ConfirmedMappingManager { get { return _confirmedMappingManager.Value; } }
-        public INumberSuffixManager NumberSuffixManager { get { return _numberSuffixManager.Value; } }
+        public INumberSuffixRuleManager NumberSuffixRuleManager { get { return _numberSuffixManager.Value; } }
 
         public DatabaseManagementFactory(BaseStationReaderDbContext context)
         {
@@ -41,7 +41,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
             _confirmedMappingManager = new Lazy<IConfirmedMappingManager>(() => new ConfirmedMappingManager(context));
-            _numberSuffixManager = new Lazy<INumberSuffixManager>(() => new NumberSuffixManager(context));
+            _numberSuffixManager = new Lazy<INumberSuffixRuleManager>(() => new NumberSuffixRuleManager(context));
         }
 
         /// <summary>

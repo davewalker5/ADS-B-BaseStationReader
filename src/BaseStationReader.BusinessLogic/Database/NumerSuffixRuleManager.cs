@@ -1,14 +1,14 @@
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    internal class NumberSuffixManager : INumberSuffixManager
+    internal class NumberSuffixRuleManager : INumberSuffixRuleManager
     {
         private readonly BaseStationReaderDbContext _context;
 
-        public NumberSuffixManager(BaseStationReaderDbContext context)
+        public NumberSuffixRuleManager(BaseStationReaderDbContext context)
         {
             _context = context;
         }
@@ -24,7 +24,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Add a number/suffix rule
         /// </summary>
         /// <returns></returns>
-        public async Task<NumberSuffix> AddAsync(
+        public async Task<NumberSuffixRule> AddAsync(
             string airlineICAO,
             string airlineIATA,
             string numeric,
@@ -33,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Database
             int support,
             decimal purity)
         {
-            var rule = new NumberSuffix()
+            var rule = new NumberSuffixRule()
             {
                 AirlineICAO = airlineICAO,
                 AirlineIATA = airlineIATA,
@@ -44,7 +44,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 Purity = purity
             };
 
-            await _context.NumberSuffixes.AddAsync(rule);
+            await _context.NumberSuffixRules.AddAsync(rule);
             await _context.SaveChangesAsync();
             return rule;
         }

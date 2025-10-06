@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Api;
-using BaseStationReader.Entities.Messages;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
@@ -18,7 +18,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
         public virtual DbSet<ConfirmedMapping> ConfirmedMappings { get; set; }
-        public virtual DbSet<NumberSuffix> NumberSuffixes { get; set; }
+        public virtual DbSet<NumberSuffixRule> NumberSuffixRules { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -218,7 +218,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Digits).IsRequired().HasColumnName("Digits");
             });
 
-            modelBuilder.Entity<NumberSuffix>(entity =>
+            modelBuilder.Entity<NumberSuffixRule>(entity =>
             {
                 entity.ToTable("NUMBER_SUFFIX");
 
