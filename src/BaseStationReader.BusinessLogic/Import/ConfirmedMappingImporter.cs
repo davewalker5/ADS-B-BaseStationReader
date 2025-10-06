@@ -15,7 +15,7 @@ namespace BaseStationReader.BusinessLogic.Logging
             => _confirmedMappingManager = confirmedMappingManager;
 
         /// <summary>
-        /// Read a set of airline instances from a CSV file
+        /// Read a set of confirmed mapping instances from a CSV file
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
@@ -26,7 +26,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         }
 
         /// <summary>
-        /// Save a collection of airlines to the database
+        /// Save a collection of confirmed mappings to the database
         /// </summary>
         /// <param name="mappings"></param>
         /// <returns></returns>
@@ -38,7 +38,9 @@ namespace BaseStationReader.BusinessLogic.Logging
 
                 foreach (var mapping in mappings)
                 {
-                    Logger.LogMessage(Severity.Debug, $"Saving flight number mapping : Callsign = '{mapping.Callsign}', Flight Number = '{mapping.FlightIATA}'");
+                    Logger.LogMessage(Severity.Debug, $"Saving flight number mapping : " +
+                    $"{mapping.AirlineICAO}, {mapping.AirlineIATA}, {mapping.FlightIATA}, {mapping.Callsign}, {mapping.Digits}");
+
                     await _confirmedMappingManager.AddAsync(
                         mapping.AirlineICAO,
                         mapping.AirlineIATA,

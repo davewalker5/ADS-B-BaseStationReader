@@ -18,6 +18,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
         public virtual DbSet<ConfirmedMapping> ConfirmedMappings { get; set; }
+        public virtual DbSet<NumberSuffix> NumberSuffixes { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -201,6 +202,20 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.FlightIATA).IsRequired().HasColumnName("FlightIATA");
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
                 entity.Property(e => e.Digits).IsRequired().HasColumnName("Digits");
+            });
+
+            modelBuilder.Entity<NumberSuffix>(entity =>
+            {
+                entity.ToTable("NUMBER_SUFFIX");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AirlineICAO).IsRequired().HasColumnName("AirlineICAO");
+                entity.Property(e => e.AirlineIATA).IsRequired().HasColumnName("AirlineIATA");
+                entity.Property(e => e.Numeric).IsRequired().HasColumnName("Numeric");
+                entity.Property(e => e.Suffix).IsRequired().HasColumnName("Suffix");
+                entity.Property(e => e.Digits).IsRequired().HasColumnName("Digits");
+                entity.Property(e => e.Support).IsRequired().HasColumnName("Support");
+                entity.Property(e => e.Purity).IsRequired().HasColumnName("Purity");
             });
         }
     }

@@ -19,6 +19,7 @@
         Host,
         ImportAirlines,
         ImportConfirmedMappings,
+        ImportNumberSuffixRules,
         ImportManufacturers,
         ImportModels,
         LiveApi,

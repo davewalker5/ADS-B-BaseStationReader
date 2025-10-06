@@ -74,6 +74,12 @@ namespace BaseStationReader.Lookup
                     await new ConfirmedMappingImportHandler(settings, _parser, _logger, factory).Handle();
                 }
 
+                // If a CSV file containing number/suffix rules has been supplied, import it
+                if (_parser.IsPresent(CommandLineOptionType.ImportNumberSuffixRules))
+                {
+                    await new NumberSuffixImportHandler(settings, _parser, _logger, factory).Handle();
+                }
+
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {

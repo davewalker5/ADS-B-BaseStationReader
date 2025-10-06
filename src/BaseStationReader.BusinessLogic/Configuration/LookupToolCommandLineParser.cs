@@ -26,6 +26,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.WeatherApi, false, "--weather-api", "-wapi", "Specify the name of an API to use for weather lookups", 1, 1);
             Add(CommandLineOptionType.ConvertCallsigns, false, "--convert-callsigns", "-cc", "Convert tracked aircraft callsigns to flight numbers and export to a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportConfirmedMappings, false, "--import-mappings", "-im", "Import confirmed callsign/flight number mappings from a CSV file", 1, 1);
+            Add(CommandLineOptionType.ImportNumberSuffixRules, false, "--import-number-suffix", "-ins", "Import number/suffix rules from a CSV file", 1, 1);
         }
     }
 }
