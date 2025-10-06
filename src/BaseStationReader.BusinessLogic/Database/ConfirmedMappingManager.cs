@@ -23,6 +23,11 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <summary>
         /// Add a confirmed mapping between callsign and flight number
         /// </summary>
+        /// <param name="airlineICAO"></param>
+        /// <param name="airlineIATA"></param>
+        /// <param name="flightIATA"></param>
+        /// <param name="callsign"></param>
+        /// <param name="digits"></param>
         /// <returns></returns>
         public async Task<ConfirmedMapping> AddAsync(
             string airlineICAO,

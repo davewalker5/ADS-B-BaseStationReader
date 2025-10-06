@@ -15,6 +15,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IConfirmedMappingManager> _confirmedMappingManager = null;
         private readonly Lazy<INumberSuffixRuleManager> _numberSuffixRuleManager = null;
         private readonly Lazy<ISuffixDeltaRuleManager> _suffixDeltaRuleManager = null;
+        private readonly Lazy<IAirlineConstantsManager> _airlineConstantsManager = null;
 
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
         public IAirlineManager AirlineManager { get { return _airlineManager.Value; } }
@@ -25,6 +26,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public IConfirmedMappingManager ConfirmedMappingManager { get { return _confirmedMappingManager.Value; } }
         public INumberSuffixRuleManager NumberSuffixRuleManager { get { return _numberSuffixRuleManager.Value; } }
         public ISuffixDeltaRuleManager SuffixDeltaRuleManager { get { return _suffixDeltaRuleManager.Value; } }
+        public IAirlineConstantsManager AirlineConstantsManager { get { return _airlineConstantsManager.Value; } }
 
         public DatabaseManagementFactory(BaseStationReaderDbContext context)
         {
@@ -39,6 +41,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _confirmedMappingManager = new Lazy<IConfirmedMappingManager>(() => new ConfirmedMappingManager(context));
             _numberSuffixRuleManager = new Lazy<INumberSuffixRuleManager>(() => new NumberSuffixRuleManager(context));
             _suffixDeltaRuleManager = new Lazy<ISuffixDeltaRuleManager>(() => new SuffixDeltaRuleManager(context));
+            _airlineConstantsManager = new Lazy<IAirlineConstantsManager>(() => new AirlineConstantsManager(context));
         }
 
         /// <summary>

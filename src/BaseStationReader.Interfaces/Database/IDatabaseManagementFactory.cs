@@ -12,5 +12,6 @@ namespace BaseStationReader.Interfaces.Database
         IConfirmedMappingManager ConfirmedMappingManager { get; }
         INumberSuffixRuleManager NumberSuffixRuleManager { get; }
         ISuffixDeltaRuleManager SuffixDeltaRuleManager { get; }
+        IAirlineConstantsManager AirlineConstantsManager { get; }
     }
 }

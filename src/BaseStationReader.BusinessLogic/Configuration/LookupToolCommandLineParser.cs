@@ -28,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.ImportConfirmedMappings, false, "--import-mappings", "-im", "Import confirmed callsign/flight number mappings from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportNumberSuffixRules, false, "--import-number-suffix", "-ins", "Import number/suffix rules from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportSuffixDeltaRules, false, "--import-suffix-delta", "-isd", "Import suffix delta rules from a CSV file", 1, 1);
+            Add(CommandLineOptionType.ImportAirlineConstants, false, "--import-constants", "-ic", "Import airline constants from a CSV file", 1, 1);
         }
     }
 }

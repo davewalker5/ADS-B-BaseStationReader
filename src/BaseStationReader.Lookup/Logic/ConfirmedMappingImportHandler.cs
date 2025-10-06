@@ -24,9 +24,9 @@ namespace BaseStationReader.Lookup.Logic
         public async Task Handle()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportConfirmedMappings)[0];
-            var confirmedMappingImporter = new ConfirmedMappingImporter(Factory.ConfirmedMappingManager, Logger);
-            await confirmedMappingImporter.Truncate();
-            await confirmedMappingImporter.Import(filePath);
+            var importer = new ConfirmedMappingImporter(Factory.ConfirmedMappingManager, Logger);
+            await importer.Truncate();
+            await importer.Import(filePath);
         }
     }
 }

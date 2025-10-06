@@ -9,10 +9,10 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class SuffixDeltaRuleImporter : CsvImporter<SuffixDeltaRuleMappingProfile, SuffixDeltaRule>, ISuffixDeltaRuleImporter
     {
-        private readonly ISuffixDeltaRuleManager _numberSuffixManager;
+        private readonly ISuffixDeltaRuleManager _suffixDeltaRuleManager;
 
-        public SuffixDeltaRuleImporter(ISuffixDeltaRuleManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
-            => _numberSuffixManager = NumberSuffixManager;
+        public SuffixDeltaRuleImporter(ISuffixDeltaRuleManager suffixDeltaRuleManager, ITrackerLogger logger) : base(logger)
+            => _suffixDeltaRuleManager = suffixDeltaRuleManager;
 
         /// <summary>
         /// Read a set of numer suffix rules from a CSV file
@@ -30,7 +30,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <returns></returns>
         public async Task Truncate()
-            => await _numberSuffixManager.Truncate();
+            => await _suffixDeltaRuleManager.Truncate();
 
         /// <summary>
         /// Save a collection of number suffix rules to the database
@@ -48,7 +48,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                     Logger.LogMessage(Severity.Debug, $"Saving flight number suffix delta rule : " +
                         $"{rule.AirlineICAO}, {rule.AirlineIATA}, {rule.Delta}, {rule.Support}, {rule.Purity}");
 
-                    await _numberSuffixManager.AddAsync(
+                    await _suffixDeltaRuleManager.AddAsync(
                         rule.AirlineICAO,
                         rule.AirlineIATA,
                         rule.Suffix,

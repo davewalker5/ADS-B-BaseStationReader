@@ -23,6 +23,13 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <summary>
         /// Add a number/suffix rule
         /// </summary>
+        /// <param name="airlineICAO"></param>
+        /// <param name="airlineIATA"></param>
+        /// <param name="numeric"></param>
+        /// <param name="suffix"></param>
+        /// <param name="digits"></param>
+        /// <param name="support"></param>
+        /// <param name="purity"></param>
         /// <returns></returns>
         public async Task<NumberSuffixRule> AddAsync(
             string airlineICAO,

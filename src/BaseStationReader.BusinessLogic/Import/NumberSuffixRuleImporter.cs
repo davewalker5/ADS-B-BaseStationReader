@@ -9,10 +9,10 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class NumberSuffixRuleImporter : CsvImporter<NumberSuffixRuleMappingProfile, NumberSuffixRule>, INumberSuffixRuleImporter
     {
-        private readonly INumberSuffixRuleManager _numberSuffixManager;
+        private readonly INumberSuffixRuleManager _numberSuffixRuleManager;
 
-        public NumberSuffixRuleImporter(INumberSuffixRuleManager NumberSuffixManager, ITrackerLogger logger) : base(logger)
-            => _numberSuffixManager = NumberSuffixManager;
+        public NumberSuffixRuleImporter(INumberSuffixRuleManager numberSuffixManager, ITrackerLogger logger) : base(logger)
+            => _numberSuffixRuleManager = numberSuffixManager;
 
         /// <summary>
         /// Read a set of numer suffix rules from a CSV file
@@ -30,7 +30,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <returns></returns>
         public async Task Truncate()
-            => await _numberSuffixManager.Truncate();
+            => await _numberSuffixRuleManager.Truncate();
 
         /// <summary>
         /// Save a collection of number suffix rules to the database
@@ -48,7 +48,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                     Logger.LogMessage(Severity.Debug, $"Saving number/suffix rule : " +
                         $"{rule.AirlineICAO}, {rule.AirlineIATA}, {rule.Numeric}, {rule.Digits}, {rule.Support}, {rule.Purity}");
 
-                    await _numberSuffixManager.AddAsync(
+                    await _numberSuffixRuleManager.AddAsync(
                         rule.AirlineICAO,
                         rule.AirlineIATA,
                         rule.Numeric,

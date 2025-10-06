@@ -20,6 +20,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<ConfirmedMapping> ConfirmedMappings { get; set; }
         public virtual DbSet<NumberSuffixRule> NumberSuffixRules { get; set; }
         public virtual DbSet<SuffixDeltaRule> SuffixDeltaRules { get; set; }
+        public virtual DbSet<AirlineConstants> AirlineConstants { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -70,6 +71,13 @@ namespace BaseStationReader.Data
         /// <returns></returns>
         public async Task TruncateSuffixDeltaRules()
             => await TruncateTable("SUFFIX_DELTA");
+
+        /// <summary>
+        /// Truncate the airline constants table
+        /// </summary>
+        /// <returns></returns>
+        public async Task TruncateAirlineConstants()
+            => await TruncateTable("AIRLINE_CONSTANTS");
 
         /// <summary>
         /// Initialise the aircraft tracker model
@@ -251,6 +259,19 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Delta).IsRequired().HasColumnName("Delta");
                 entity.Property(e => e.Support).IsRequired().HasColumnName("Support");
                 entity.Property(e => e.Purity).IsRequired().HasColumnName("Purity");
+            });
+
+            modelBuilder.Entity<AirlineConstants>(entity =>
+            {
+                entity.ToTable("AIRLINE_CONSTANTS");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.AirlineICAO).IsRequired().HasColumnName("AirlineICAO");
+                entity.Property(e => e.AirlineIATA).IsRequired().HasColumnName("AirlineIATA");
+                entity.Property(e => e.ConstantDelta).HasColumnName("ConstantDelta");
+                entity.Property(e => e.ConstantDeltaPurity).IsRequired().HasColumnName("ConstantDeltaPurity");
+                entity.Property(e => e.ConstantPrefix).HasColumnName("ConstantPrefix");
+                entity.Property(e => e.IdentityRate).IsRequired().HasColumnName("IdentityRate");
             });
         }
     }

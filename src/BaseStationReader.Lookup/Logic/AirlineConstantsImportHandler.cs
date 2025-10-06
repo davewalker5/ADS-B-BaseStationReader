@@ -6,9 +6,9 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Lookup.Logic
 {
-    internal class SuffixDeltaRuleImportHandler : CommandHandlerBase
+    internal class AirlineConstantsImportHandler : CommandHandlerBase
     {
-        public SuffixDeltaRuleImportHandler(
+        public AirlineConstantsImportHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
@@ -18,13 +18,13 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the suffix delta rule import command
+        /// Handle the numer/suffix rule import command
         /// </summary>
         /// <returns></returns>
         public async Task Handle()
         {
-            var filePath = Parser.GetValues(CommandLineOptionType.ImportSuffixDeltaRules)[0];
-            var importer = new SuffixDeltaRuleImporter(Factory.SuffixDeltaRuleManager, Logger);
+            var filePath = Parser.GetValues(CommandLineOptionType.ImportAirlineConstants)[0];
+            var importer = new AirlineConstantsImporter(Factory.AirlineConstantsManager, Logger);
             await importer.Truncate();
             await importer.Import(filePath);
         }

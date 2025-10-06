@@ -24,9 +24,9 @@ namespace BaseStationReader.Lookup.Logic
         public async Task Handle()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportNumberSuffixRules)[0];
-            var numberSuffixImporter = new NumberSuffixRuleImporter(Factory.NumberSuffixRuleManager, Logger);
-            await numberSuffixImporter.Truncate();
-            await numberSuffixImporter.Import(filePath);
+            var importer = new NumberSuffixRuleImporter(Factory.NumberSuffixRuleManager, Logger);
+            await importer.Truncate();
+            await importer.Import(filePath);
         }
     }
 }

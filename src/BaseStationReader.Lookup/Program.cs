@@ -86,6 +86,12 @@ namespace BaseStationReader.Lookup
                     await new SuffixDeltaRuleImportHandler(settings, _parser, _logger, factory).Handle();
                 }
 
+                // If a CSV file containing airline constants has been supplied, import it
+                if (_parser.IsPresent(CommandLineOptionType.ImportAirlineConstants))
+                {
+                    await new AirlineConstantsImportHandler(settings, _parser, _logger, factory).Handle();
+                }
+
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {

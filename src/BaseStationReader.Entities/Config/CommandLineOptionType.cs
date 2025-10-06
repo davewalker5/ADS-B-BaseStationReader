@@ -18,6 +18,7 @@
         HistoricalLookup,
         Host,
         ImportAirlines,
+        ImportAirlineConstants,
         ImportConfirmedMappings,
         ImportManufacturers,
         ImportModels,
