@@ -10,6 +10,7 @@ def normalize_for_key(s: str) -> str:
     return " ".join(str(s).split()).upper()
 
 def read_json(path: Path):
+    """Read a json file"""
     try:
         with path.open("r", encoding="utf-8") as f:
             return json.load(f)
@@ -17,46 +18,30 @@ def read_json(path: Path):
         print(f"Warning: could not read {path}: {e}")
         return None
 
-def clean_flight_number(number):
-    """Remove all internal spaces from the flight number."""
-    if not number:
-        return ""
-    return str(number).replace(" ", "").strip()
-
 def extract_entries(payload: dict):
     """Yield dicts with number, callsign, iata, icao from departures and arrivals."""
-    if not isinstance(payload, dict):
+    if not isinstance(payload, list):
         return
 
-    for section in ("departures", "arrivals"):
-        items = payload.get(section) or []
-        if not isinstance(items, list):
+    for rec in payload:
+        if not isinstance(rec, dict):
             continue
-        for rec in items:
-            if not isinstance(rec, dict):
-                continue
 
-            number = clean_flight_number(rec.get("number"))
-            # accept 'callSign' or possible variant 'call_sign'
-            call_sign = rec.get("callSign", rec.get("call_sign"))
-            airline = rec.get("airline") or {}
+        number = rec["number"]
+        call_sign = rec["callsign"]
+        iata = rec["iata"]
+        icao = rec["icao"]
 
-            iata = None
-            icao = None
-            if isinstance(airline, dict):
-                iata = airline.get("iata")
-                icao = airline.get("icao")
+        # Discard if call sign or airline ICAO is missing/blank
+        if not call_sign or not str(call_sign).strip() or not icao or not str(icao).strip():
+            continue
 
-            # Discard if call sign or airline ICAO is missing/blank
-            if not call_sign or not str(call_sign).strip() or not icao or not str(icao).strip():
-                continue
-
-            yield {
-                "number": number,
-                "callsign": str(call_sign).strip(),
-                "airline_iata": (str(iata).strip() if iata is not None else ""),
-                "airline_icao": (str(icao).strip() if icao is not None else ""),
-            }
+        yield {
+            "number": number,
+            "callsign": str(call_sign).strip(),
+            "airline_iata": (str(iata).strip() if iata is not None else ""),
+            "airline_icao": (str(icao).strip() if icao is not None else ""),
+        }
 
 def main():
     parser = argparse.ArgumentParser(
