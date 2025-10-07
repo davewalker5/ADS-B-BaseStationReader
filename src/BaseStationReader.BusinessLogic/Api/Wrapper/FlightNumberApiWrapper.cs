@@ -10,7 +10,7 @@ using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api
 {
-    internal class FlightNumberApiWrapper: IFlightNumberApiWrapper
+    internal class FlightNumberApiWrapper : IFlightNumberApiWrapper
     {
         private static readonly Regex Rx = new(@"^([A-Z]{3})(\d+)([A-Z]*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
@@ -32,30 +32,40 @@ namespace BaseStationReader.BusinessLogic.Api
         }
 
         /// <summary>
-        /// Return a flight number given a callsign
+        /// Infer a flight number given a callsign
         /// </summary>
         /// <param name="callsign"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
         public async Task<FlightNumber> GetFlightNumberFromCallsignAsync(string callsign, DateTime? timestamp = null)
         {
-            // Attempt to build a flight number from the callsign
             var flightNumber = await InferFlightNumberAsync(callsign);
-
-            // If successful, construct a flight number object
-            FlightNumber number = !string.IsNullOrEmpty(flightNumber) ?
-                new()
-                {
-                    Callsign = callsign,
-                    Number = flightNumber,
-                    Date = timestamp
-                } : null;
-
-            return number;
+            return flightNumber;
         }
 
         /// <summary>
-        /// Get flight numbers for aircraft that are currently being tracked
+        /// Infer a flight number for each callsign in the supplied list
+        /// </summary>
+        /// <param name="callsigns"></param>
+        /// <param name="timestamp"></param>
+        /// <returns></returns>
+        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsigns(IEnumerable<string> callsigns, DateTime? timestamp = null)
+        {
+            List<FlightNumber> numbers = [];
+
+            // Iterate over the list of callsigns
+            foreach (var callsign in callsigns)
+            {
+                // Infer a flight number from this callsign and add the result to the list
+                var number = await GetFlightNumberFromCallsignAsync(callsign, timestamp);
+                numbers.Add(number);
+            }
+
+            return numbers;
+        }
+
+        /// <summary>
+        /// Infer flight numbers for aircraft that are currently being tracked
         /// </summary>
         /// <param name="statuses"></param>
         /// <returns></returns>
@@ -73,12 +83,9 @@ namespace BaseStationReader.BusinessLogic.Api
                 // Iterate over the list of tracked aircraft
                 foreach (var aircraft in trackedAircraft)
                 {
-                    // Build a flight number for this aircraft and, if successful, add it to the list
+                    // Infer a flight number from this callsign and add the result to the list
                     var number = await GetFlightNumberFromCallsignAsync(aircraft.Callsign, aircraft.LastSeen);
-                    if (number != null)
-                    {
-                        numbers.Add(number);
-                    }
+                    numbers.Add(number);
                 }
             }
             else
@@ -93,8 +100,9 @@ namespace BaseStationReader.BusinessLogic.Api
         /// Use the flight number heuristics to infer the flight number from the callsign
         /// </summary>
         /// <param name="callsign"></param>
+        /// <param name="timestamp"></param>
         /// <returns></returns>
-        private async Task<string> InferFlightNumberAsync(string callsign)
+        private async Task<FlightNumber> InferFlightNumberAsync(string callsign, DateTime? timestamp = null)
         {
             // Check the callsign contains some information
             if (string.IsNullOrEmpty(callsign))
@@ -108,7 +116,7 @@ namespace BaseStationReader.BusinessLogic.Api
             if (mapping != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Confirmed mapping found for {callsign} => {mapping.FlightIATA}");
-                return mapping.FlightIATA;
+                return new(callsign, mapping.FlightIATA, timestamp, HeuristicLayer.ConfirmedMapping);
             }
 
             // Parse the callsign:
@@ -127,7 +135,7 @@ namespace BaseStationReader.BusinessLogic.Api
             if (!int.TryParse(numericString, out int numeric))
             {
                 _logger.LogMessage(Severity.Debug, $"Numeric part of the callsign is not a valid integer: {numericString}");
-                return null;
+                return new(callsign, null, timestamp, HeuristicLayer.None);
             }
 
             // Load the airline constants
@@ -135,7 +143,7 @@ namespace BaseStationReader.BusinessLogic.Api
             if (constants == null)
             {
                 _logger.LogMessage(Severity.Debug, $"No airline constants found for airline with ICAO code {icao}");
-                return null;
+                return new(callsign, null, timestamp, HeuristicLayer.None);
             }
 
             // Look for a number/suffix rule
@@ -149,7 +157,7 @@ namespace BaseStationReader.BusinessLogic.Api
             {
                 var flightIATA = $"{numberSuffixRule.AirlineIATA}{numberSuffixRule.Numeric}";
                 _logger.LogMessage(Severity.Debug, $"Number/suffix rule found for {callsign} => {flightIATA}");
-                return flightIATA;
+                return new(callsign, flightIATA, timestamp, HeuristicLayer.NumberSuffixRule);
             }
 
             // Look for a suffix delta rule
@@ -163,7 +171,7 @@ namespace BaseStationReader.BusinessLogic.Api
                 var flightNumber = numeric + suffixDeltaRule.Delta;
                 var flightIATA = $"{suffixDeltaRule.AirlineIATA}{flightNumber}";
                 _logger.LogMessage(Severity.Debug, $"Suffix/delta rule found for {callsign} => {flightIATA}");
-                return flightIATA;
+                return new(callsign, flightIATA, timestamp, HeuristicLayer.SuffixDeltaRule);
             }
 
             // Attempt to construct the flight number using the airline constant prefix
@@ -174,7 +182,7 @@ namespace BaseStationReader.BusinessLogic.Api
                 {
                     var flightIATA = $"{constants.AirlineIATA}{flightNumber}";
                     _logger.LogMessage(Severity.Debug, $"Constant prefix rule found for {callsign} => {flightIATA}");
-                    return flightIATA;
+                    return new(callsign, flightIATA, timestamp, HeuristicLayer.ConstantPrefix);
                 }
             }
 
@@ -186,7 +194,7 @@ namespace BaseStationReader.BusinessLogic.Api
                 {
                     var flightIATA = $"{constants.AirlineIATA}{flightNumber}";
                     _logger.LogMessage(Severity.Debug, $"Constant delta rule found for {callsign} => {flightIATA}");
-                    return flightIATA;
+                    return new(callsign, flightIATA, timestamp, HeuristicLayer.ConstantDelta);
                 }
             }
 
@@ -195,11 +203,12 @@ namespace BaseStationReader.BusinessLogic.Api
             {
                 var flightIATA = $"{constants.AirlineIATA}{numericString}";
                 _logger.LogMessage(Severity.Debug, $"Identity mapping rule found for {callsign} => {flightIATA}");
-                return flightIATA;
+                return new(callsign, flightIATA, timestamp, HeuristicLayer.IdentityMapping);
             }
 
             // Can't construct a flight number with any confidence
-            return null;
+            _logger.LogMessage(Severity.Debug, $"Cannot infer the flight number for callsign {callsign}");
+            return new(callsign, null, timestamp, HeuristicLayer.None);
         }
     }
 }

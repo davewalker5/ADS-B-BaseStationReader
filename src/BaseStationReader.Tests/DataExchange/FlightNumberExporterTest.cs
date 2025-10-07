@@ -26,12 +26,7 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public void ExportTest()
         {
-            List<FlightNumber> flightNumbers = [new()
-            {
-                Callsign = Callsign,
-                Number = FlightNumber,
-                Date = _date
-            }];
+            List<FlightNumber> flightNumbers = [new(Callsign, FlightNumber, _date, HeuristicLayer.ConfirmedMapping)];
 
             _filePath = Path.ChangeExtension(Path.GetTempFileName(), "csv");
             new FlightNumberExporter().Export(flightNumbers, _filePath);
@@ -50,6 +45,7 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.AreEqual(Callsign, records[0].Callsign);
             Assert.AreEqual(FlightNumber, records[0].Number);
             Assert.AreEqual(_date.ToShortDateString(), records[0].Date.Value.ToShortDateString());
+            Assert.AreEqual(HeuristicLayer.ConfirmedMapping, records[0].Layer);
         }
     }
 }

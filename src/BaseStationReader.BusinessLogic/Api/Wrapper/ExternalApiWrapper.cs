@@ -1,6 +1,5 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
@@ -59,6 +58,15 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<FlightNumber> GetFlightNumberFromCallsignAsync(string callsign, DateTime? timestamp = null)
             => await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign, timestamp);
+
+        /// <summary>
+        /// Return a flight number for each callsign in the supplied list
+        /// </summary>
+        /// <param name="callsigns"></param>
+        /// <param name="timestamp"></param>
+        /// <returns></returns>
+        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsigns(IEnumerable<string> callsigns, DateTime? timestamp = null)
+            => await _flightNumberApiWrapper.GetFlightNumbersFromCallsigns(callsigns);
 
         /// <summary>
         /// Get flight numbers for aircraft that are currently being tracked

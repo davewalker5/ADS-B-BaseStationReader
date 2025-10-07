@@ -17,12 +17,16 @@ namespace BaseStationReader.Entities.Api
         [Export("Date", 3)]
         public string Date { get; set; } = "";
 
+        [Export("Layer", 4)]
+        public string Layer { get; set; } = "";
+
         public static ExportableFlightNumber FromFlight(FlightNumber flight)
             => new()
             {
                 Callsign = flight.Callsign,
                 Number = flight.Number,
-                Date = flight.Date != null ? flight.Date.Value.ToString(DateTimeFormat) : ""
+                Date = flight.Date != null ? flight.Date.Value.ToString(DateTimeFormat) : "",
+                Layer = flight.Layer.ToString()
             };
     }
 }
