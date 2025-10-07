@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>BaseStationReader.Interfaces</PackageId>
+    <PackageVersion>1.55.0.0</PackageVersion>
+    <Authors>Dave Walker</Authors>
+    <Copyright>Copyright (c) 2023 - 2025 Dave Walker</Copyright>
+    <Owners>Dave Walker</Owners>
+    <Summary>Base Station Reader Interface Definitions</Summary>
+    <PackageTags>BaseStationReader interfaces</PackageTags>
+    <Title>Base Station Reader Interface Definitions</Title>
+    <Description>Base Station Reader Interface Definitions</Description>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageProjectUrl>https://github.com/davewalker5/ADS-B-BaseStationReader</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <ReleaseVersion>1.55.0.0</ReleaseVersion>
+    <WarningsAsErrors>CS4014</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1900</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BaseStationReader.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
+  </ItemGroup>
+
+</Project>
