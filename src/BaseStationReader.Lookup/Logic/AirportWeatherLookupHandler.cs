@@ -5,12 +5,14 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal class AirportWeatherLookupHandler : LookupHandlerBase
     {
         private readonly ApiServiceType _serviceType;
+        private readonly IExternalApiWrapper _wrapper;
 
         public AirportWeatherLookupHandler(
             LookupToolApplicationSettings settings,
@@ -20,6 +22,8 @@ namespace BaseStationReader.Lookup.Logic
             ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
             _serviceType = serviceType;
+            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings, null);
+
         }
 
         /// <summary>
@@ -30,14 +34,11 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Configure the external API wrappe
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
-
             // Extract the lookup parameters from the command line
             var icao = Parser.GetValues(CommandLineOptionType.METAR)[0];
 
             // Perform the lookup
-            var results = await wrapper.LookupCurrentAirportWeather(icao);
+            var results = await _wrapper.LookupCurrentAirportWeather(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)
@@ -59,14 +60,11 @@ namespace BaseStationReader.Lookup.Logic
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
-            // Configure the external API wrappe
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
-
             // Extract the lookup parameters from the command line
             var icao = Parser.GetValues(CommandLineOptionType.TAF)[0];
 
             // Perform the lookup
-            var results = await wrapper.LookupAirportWeatherForecast(icao);
+            var results = await _wrapper.LookupAirportWeatherForecast(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)

@@ -5,6 +5,7 @@ using BaseStationReader.BusinessLogic.Api.SkyLink;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
@@ -59,7 +60,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ITrackedAircraftWriter trackedAircraftWriter,
             ApiServiceType service,
             ApiEndpointType flightsEndpointType,
-            ExternalApiSettings settings)
+            ExternalApiSettings settings,
+            InferenceOptions flightNumberInferenceOptions)
         {
             // Create the database management factory
             var factory = new DatabaseManagementFactory(context);
@@ -69,7 +71,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 settings.MaximumLookups,
                 logger,
                 factory,
-                trackedAircraftWriter);
+                trackedAircraftWriter,
+                flightNumberInferenceOptions);
 
             // Get an instance of the flights API and register it
             var flightsApi = GetApiInstance(

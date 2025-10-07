@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
@@ -27,7 +28,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             int maximumLookupAttempts,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            ITrackedAircraftWriter trackedAircraftWriter)
+            ITrackedAircraftWriter trackedAircraftWriter,
+            InferenceOptions flightNumberInferenceOptions)
         {
             _maximumLookupAttempts = maximumLookupAttempts;
             _logger = logger;
@@ -38,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
-            _flightNumberApiWrapper = new FlightNumberApiWrapper(new(), _logger, factory, trackedAircraftWriter);
+            _flightNumberApiWrapper = new FlightNumberApiWrapper(flightNumberInferenceOptions ?? new(), _logger, factory, trackedAircraftWriter);
             _trackedAircraftWriter = trackedAircraftWriter;
         }
 

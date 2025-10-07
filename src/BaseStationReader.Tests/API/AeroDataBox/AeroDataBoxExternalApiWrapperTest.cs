@@ -52,7 +52,7 @@ namespace BaseStationReader.Tests.API
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var trackedAircraftWriter = new TrackedAircraftWriter(context);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, context, trackedAircraftWriter, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings);
+                logger, _client, context, trackedAircraftWriter, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings, null);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             DateTime.TryParse(DepartureTime, null, DateTimeStyles.AdjustToUniversal, out DateTime utc);

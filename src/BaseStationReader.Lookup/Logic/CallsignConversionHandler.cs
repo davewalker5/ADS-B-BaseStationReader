@@ -4,6 +4,7 @@ using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Export;
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Heuristics;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
@@ -25,7 +26,8 @@ namespace BaseStationReader.Lookup.Logic
         {
             _serviceType = serviceType;
             var trackedAircraftWriter = new TrackedAircraftWriter(Context);
-            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+            var options = new InferenceOptions() { AllowConfirmedMappings = false };
+            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.ActiveFlights, Settings, options);
         }
 
         /// <summary>

@@ -112,21 +112,24 @@ namespace BaseStationReader.BusinessLogic.Api
             }
 
             // Look for a confirmed mapping between the callsign and flight number and it one is found return it
-            var mapping = await _factory.ConfirmedMappingManager.GetAsync(x => x.Callsign == callsign);
-            if (mapping != null)
+            if (_options.AllowConfirmedMappings)
             {
-                _logger.LogMessage(Severity.Debug, $"Confirmed mapping found for {callsign} => {mapping.FlightIATA}");
-                return new(callsign, mapping.FlightIATA, timestamp, HeuristicLayer.ConfirmedMapping);
+                var mapping = await _factory.ConfirmedMappingManager.GetAsync(x => x.Callsign == callsign);
+                if (mapping != null)
+                {
+                    _logger.LogMessage(Severity.Debug, $"Confirmed mapping found for {callsign} => {mapping.FlightIATA}");
+                    return new(callsign, mapping.FlightIATA, timestamp, HeuristicLayer.ConfirmedMapping);
+                }
             }
 
             // Parse the callsign:
-            //
-            // Group 0 - the entire match
-            // Group 1 - the airline ICAO code
-            // Group 2 - the numeric section of the callsign
-            // Group 3 - the suffix (if present
-            //
-            var matches = Rx.Match(callsign);
+                //
+                // Group 0 - the entire match
+                // Group 1 - the airline ICAO code
+                // Group 2 - the numeric section of the callsign
+                // Group 3 - the suffix (if present
+                //
+                var matches = Rx.Match(callsign);
             var icao = matches.Groups[1].Value;
             var numericString = matches.Groups[2].Value;
             var suffix = matches.Groups[3].Value;

@@ -78,7 +78,7 @@ namespace BaseStationReader.Tests.API
         public void GetAeroDataBoxApiWrapperInstanceTest()
         {
             var wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, null, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings, null);
             Assert.IsNotNull(wrapper);
         }
 
@@ -86,7 +86,7 @@ namespace BaseStationReader.Tests.API
         public void GetAirLabsApiWrapperInstanceTest()
         {
             var wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, null, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, null);
             Assert.IsNotNull(wrapper);
         }
 
@@ -94,7 +94,7 @@ namespace BaseStationReader.Tests.API
         public void GetCheckWXApiWrapperInstanceTest()
         {
             var wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, null, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, null);
             Assert.IsNotNull(wrapper);
         }
     }

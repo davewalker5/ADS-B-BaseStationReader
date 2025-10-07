@@ -11,6 +11,7 @@ namespace BaseStationReader.Tests.DataExchange
         private const string Callsign = "KLM123XY";
         private const string FlightNumber = "KLM123";
         private readonly DateTime _date = DateTime.Now;
+        private const HeuristicLayer Layer = HeuristicLayer.ConfirmedMapping;
 
         private string _filePath;
 
@@ -31,12 +32,12 @@ namespace BaseStationReader.Tests.DataExchange
             _filePath = Path.ChangeExtension(Path.GetTempFileName(), "csv");
             new FlightNumberExporter().Export(flightNumbers, _filePath);
 
-            List<FlightNumber> records;
+            List<dynamic> records;
             using (var reader = new StreamReader(_filePath))
             {
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    records = [.. csv.GetRecords<FlightNumber>()];
+                    records = [.. csv.GetRecords<dynamic>()];
                 }
             }
 
@@ -44,8 +45,8 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.HasCount(1, records);
             Assert.AreEqual(Callsign, records[0].Callsign);
             Assert.AreEqual(FlightNumber, records[0].Number);
-            Assert.AreEqual(_date.ToShortDateString(), records[0].Date.Value.ToShortDateString());
-            Assert.AreEqual(HeuristicLayer.ConfirmedMapping, records[0].Layer);
+            Assert.AreEqual(_date.ToString("yyyy-MMM-dd HH:mm:ss"), records[0].Date);
+            Assert.AreEqual(HeuristicLayer.ConfirmedMapping.ToString(), records[0].Layer);
         }
     }
 }

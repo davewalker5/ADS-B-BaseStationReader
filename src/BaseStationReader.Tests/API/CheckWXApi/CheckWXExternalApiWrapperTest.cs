@@ -35,7 +35,7 @@ namespace BaseStationReader.Tests.API
             _client = new();
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, null, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings);
+                _logger, _client, _context, null, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, null);
         }
 
         [TestMethod]

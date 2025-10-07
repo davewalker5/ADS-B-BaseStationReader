@@ -5,6 +5,7 @@ namespace BaseStationReader.Entities.Heuristics
     [ExcludeFromCodeCoverage]
     public class InferenceOptions
     {
+        public bool AllowConfirmedMappings { get; set; } = true;
         public int NumericSuffixMinimumSupport { get; set; } = 3;
         public decimal NumericSuffixMinimumPurity { get; set; } = 0.9M;
         public int SuffixDeltaMinimumSupport { get; set; } = 3;

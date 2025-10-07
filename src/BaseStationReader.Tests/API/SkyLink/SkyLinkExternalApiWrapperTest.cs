@@ -59,7 +59,7 @@ namespace BaseStationReader.Tests.API
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var trackedAircraftWriter = new TrackedAircraftWriter(_context);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, _context, trackedAircraftWriter, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings);
+                logger, _client, _context, trackedAircraftWriter, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings, null);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await trackedAircraftWriter.WriteAsync(new()
