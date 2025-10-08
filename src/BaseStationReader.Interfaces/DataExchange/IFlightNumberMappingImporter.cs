@@ -5,6 +5,5 @@ namespace BaseStationReader.Interfaces.DataExchange
 {
     public interface IFlightNumberMappingImporter : ICsvImporter<FlightNumberMappingProfile, FlightNumberMapping>
     {
-        Task Truncate();
     }
 }

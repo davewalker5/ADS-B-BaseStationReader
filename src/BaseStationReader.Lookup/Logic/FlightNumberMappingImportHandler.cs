@@ -25,7 +25,6 @@ namespace BaseStationReader.Lookup.Logic
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportFlightNumberMappings)[0];
             var importer = new FlightNumberMappingImporter(Factory.ConfirmedMappingManager, Logger);
-            await importer.Truncate();
             await importer.Import(filePath);
         }
     }

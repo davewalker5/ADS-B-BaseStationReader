@@ -26,13 +26,6 @@ namespace BaseStationReader.BusinessLogic.Logging
         }
 
         /// <summary>
-        /// Truncate the target table to remove existing entries
-        /// </summary>
-        /// <returns></returns>
-        public async Task Truncate()
-            => await _confirmedMappingManager.Truncate();
-
-        /// <summary>
         /// Save a collection of confirmed mappings to the database
         /// </summary>
         /// <param name="mappings"></param>
@@ -47,13 +40,21 @@ namespace BaseStationReader.BusinessLogic.Logging
                 foreach (var mapping in mappings)
                 {
                     Logger.LogMessage(Severity.Debug, $"Saving flight number mapping : " +
-                    $"{mapping.AirlineICAO}, {mapping.AirlineIATA}, {mapping.FlightIATA}, {mapping.Callsign}");
+                    $"{mapping.AirlineICAO}, {mapping.AirlineIATA}, {mapping.AirlineName}, " +
+                    $"{mapping.AirportICAO}, {mapping.AirportIATA}, {mapping.AirportName}, {mapping.AirportType}, " +
+                    $"{mapping.FlightIATA}, {mapping.Callsign}, {mapping.FileName}");
 
                     await _confirmedMappingManager.AddAsync(
                         mapping.AirlineICAO,
                         mapping.AirlineIATA,
+                        mapping.AirlineName,
+                        mapping.AirportICAO,
+                        mapping.AirportIATA,
+                        mapping.AirportName,
+                        mapping.AirportType,
                         mapping.FlightIATA,
-                        mapping.Callsign);
+                        mapping.Callsign,
+                        mapping.FileName);
                 }
             }
             else

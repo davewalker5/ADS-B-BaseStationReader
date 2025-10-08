@@ -10,6 +10,8 @@ namespace BaseStationReader.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("PRAGMA foreign_keys = ON;");
+
             migrationBuilder.AddColumn<int>(
                 name: "LookupAttempts",
                 table: "TRACKED_AIRCRAFT",

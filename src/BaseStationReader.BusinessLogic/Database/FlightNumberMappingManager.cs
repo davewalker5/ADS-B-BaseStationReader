@@ -32,38 +32,70 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="predicate"></param>
         /// <returns></returns>
         public async Task<List<FlightNumberMapping>> ListAsync(Expression<Func<FlightNumberMapping, bool>> predicate)
-            => await _context.ConfirmedMappings.Where(predicate).ToListAsync();
-
-        /// <summary>
-        /// Truncate the confirmed mappings table to remove all existing entries
-        /// </summary>
-        /// <returns></returns>
-        public async Task Truncate()
-            => await _context.TruncateConfirmedMappings();
+            => await _context.FlightNumberMappings.Where(predicate).ToListAsync();
         
         /// <summary>
         /// Add a confirmed mapping between callsign and flight number
         /// </summary>
         /// <param name="airlineICAO"></param>
         /// <param name="airlineIATA"></param>
+        /// <param name="airlineName"></param>
+        /// <param name="airportICAO"></param>
+        /// <param name="airportIATA"></param>
+        /// <param name="airportName"></param>
+        /// <param name="airportType"></param>
         /// <param name="flightIATA"></param>
         /// <param name="callsign"></param>
+        /// <param name="filename"></param>
         /// <returns></returns>
         public async Task<FlightNumberMapping> AddAsync(
             string airlineICAO,
             string airlineIATA,
+            string airlineName,
+            string airportICAO,
+            string airportIATA,
+            string airportName,
+            AirportType airportType,
             string flightIATA,
-            string callsign)
+            string callsign,
+            string filename)
         {
-            var mapping = new FlightNumberMapping()
+            // See if the mapping already exists, based on the callsign
+            var mapping = await _context.FlightNumberMappings.FirstOrDefaultAsync(x => x.Callsign == callsign);
+            if (mapping != null)
             {
-                AirlineICAO = airlineICAO,
-                AirlineIATA = airlineIATA,
-                FlightIATA = flightIATA,
-                Callsign = callsign
-            };
+                // Already exists, so just update its properties
+                mapping.AirlineICAO = airlineICAO;
+                mapping.AirlineIATA = airlineIATA;
+                mapping.AirlineName = airlineName;
+                mapping.AirportICAO = airportICAO;
+                mapping.AirportIATA = airportIATA;
+                mapping.AirportName = airportName;
+                mapping.AirportType = airportType;
+                mapping.FlightIATA = flightIATA;
+                mapping.FileName = filename;
+            }
+            else
+            {
+                // Doesn't exist, so create a new mapping
+                mapping = new FlightNumberMapping()
+                {
+                    AirlineICAO = airlineICAO,
+                    AirlineIATA = airlineIATA,
+                    AirlineName = airlineName,
+                    AirportICAO = airportICAO,
+                    AirportIATA = airportIATA,
+                    AirportName = airportName,
+                    AirportType = airportType,
+                    FlightIATA = flightIATA,
+                    Callsign = callsign,
+                    FileName = filename
+                };
 
-            await _context.ConfirmedMappings.AddAsync(mapping);
+                // Add it to the database
+                await _context.FlightNumberMappings.AddAsync(mapping);
+            }
+
             await _context.SaveChangesAsync();
             return mapping;
         }

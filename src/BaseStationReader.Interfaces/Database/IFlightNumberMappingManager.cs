@@ -7,7 +7,16 @@ namespace BaseStationReader.Interfaces.Database
     {
         Task<FlightNumberMapping> GetAsync(Expression<Func<FlightNumberMapping, bool>> predicate);
         Task<List<FlightNumberMapping>> ListAsync(Expression<Func<FlightNumberMapping, bool>> predicate);
-        Task Truncate();
-        Task<FlightNumberMapping> AddAsync(string airlineICAO, string airlineIATA, string flightIATA, string callsign);
+        Task<FlightNumberMapping> AddAsync(
+            string airlineICAO,
+            string airlineIATA,
+            string airlineName,
+            string airportICAO,
+            string airportIATA,
+            string airportName,
+            AirportType airportType,
+            string flightIATA,
+            string callsign,
+            string filename);
     }
 }

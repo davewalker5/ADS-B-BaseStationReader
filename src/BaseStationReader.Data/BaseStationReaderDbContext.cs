@@ -16,7 +16,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
-        public virtual DbSet<FlightNumberMapping> ConfirmedMappings { get; set; }
+        public virtual DbSet<FlightNumberMapping> FlightNumberMappings { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -46,13 +46,6 @@ namespace BaseStationReader.Data
             await TruncateTable("POSITION");
             await TruncateTable("TRACKED_AIRCRAFT");
         }
-
-        /// <summary>
-        /// Truncate the confirmed flight number mappings table
-        /// </summary>
-        /// <returns></returns>
-        public async Task TruncateConfirmedMappings()
-            => await TruncateTable("FLIGHT_NUMBER_MAPPING");
 
         /// <summary>
         /// Initialise the aircraft tracker model
@@ -201,11 +194,18 @@ namespace BaseStationReader.Data
             {
                 entity.ToTable("FLIGHT_NUMBER_MAPPING");
 
+
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.AirlineICAO).IsRequired().HasColumnName("AirlineICAO");
-                entity.Property(e => e.AirlineIATA).IsRequired().HasColumnName("AirlineIATA");
+                entity.Property(e => e.AirlineICAO).HasColumnName("AirlineICAO");
+                entity.Property(e => e.AirlineIATA).HasColumnName("AirlineIATA");
+                entity.Property(e => e.AirlineName).HasColumnName("AirlineName");
+                entity.Property(e => e.AirportICAO).HasColumnName("AirportICAO");
+                entity.Property(e => e.AirportIATA).HasColumnName("AirportIATA");
+                entity.Property(e => e.AirportName).HasColumnName("AirportName");
+                entity.Property(e => e.AirportType).IsRequired().HasColumnName("AirportType");
                 entity.Property(e => e.FlightIATA).IsRequired().HasColumnName("FlightIATA");
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
+                entity.Property(e => e.FileName).IsRequired().HasColumnName("Filename");
             });
         }
     }
