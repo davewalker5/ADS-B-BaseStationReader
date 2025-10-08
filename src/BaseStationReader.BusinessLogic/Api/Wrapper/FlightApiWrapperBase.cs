@@ -41,8 +41,10 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 airlineId);
 
             // There may be additional aircraft details in the flight properties
-            flight.AircraftAddress = properties[ApiProperty.AircraftAddress];
-            flight.ModelICAO = properties[ApiProperty.ModelICAO];
+            properties.TryGetValue(ApiProperty.AircraftAddress, out string address);
+            properties.TryGetValue(ApiProperty.ModelICAO, out string modelICAO);
+            flight.AircraftAddress = address;
+            flight.ModelICAO = modelICAO;
 
             // And as we now have a matching flight, return it
             return flight;

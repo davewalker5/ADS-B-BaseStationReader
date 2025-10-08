@@ -92,6 +92,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IEnumerable<string> arrivalAirportCodes,
             bool createSighting)
         {
+            _logger.LogMessage(Severity.Info, $"Performing aircraft lookup : API={type}, Address={address}, Create Sighting={createSighting}");
+
             // Check the aircraft is eligible for lookup
             var eligible = await _lookupEligibilityAssessor.IsEligibleForLookup(type, address);
             if (!eligible.Eligible)
@@ -114,26 +116,25 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // Lookup the flight. The eligibility criteria mean we'll only get to this point if it *should* be
             // possible to get a successful response here
             var flight = await LookupFlightAsync(type, address, departureAirportCodes, arrivalAirportCodes);
-
-            // The lookup is considered successful if the aircraft and flight are valid
-            var successful = (aircraft != null) && (flight != null);
+            var haveFlight = flight != null;
 
             // Update the lookup properties on the tracked aircraft record
             if (_trackedAircraftWriter != null)
             {
-                await _trackedAircraftWriter.UpdateLookupProperties(address, successful, _maximumLookupAttempts);
+                await _trackedAircraftWriter.UpdateLookupProperties(address, haveFlight, _maximumLookupAttempts);
             }
 
             // If the lookup was successful and sighting creation is requested, save the relationship
             // between the flight and the aircraft as a sighting on this date
-            if (createSighting && successful)
+            if (createSighting && haveFlight)
             {
+                _logger.LogMessage(Severity.Debug, $"Creating sighting for aircraft {aircraft.Id}, flight {flight.IATA}");
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
             }
 
             // If we reach here the API's done everything possible to get the details so there's no point
             // re-queueing the request
-            return new(successful, false);
+            return new(haveFlight, false);
         }
 
         /// <summary>
