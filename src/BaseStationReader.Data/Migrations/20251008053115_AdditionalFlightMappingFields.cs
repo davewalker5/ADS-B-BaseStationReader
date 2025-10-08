@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BaseStationReader.Data.Migrations
 {
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public partial class AdditionalFlightMappingFields : Migration
     {
         /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
