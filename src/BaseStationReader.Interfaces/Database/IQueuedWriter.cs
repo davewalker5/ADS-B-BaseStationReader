@@ -8,5 +8,7 @@ namespace BaseStationReader.Interfaces.Database
         void Push(object entity);
         Task StartAsync();
         void Stop();
+        void ClearQueue();
+        Task FlushQueue();
     }
 }

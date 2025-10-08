@@ -73,6 +73,7 @@ namespace BaseStationReader.Terminal
                 _wrapper.AircraftUpdated += OnAircraftUpdated;
                 _wrapper.AircraftRemoved += OnAircraftRemoved;
 
+                var cancelled = false;
                 do
                 {
                     // Configure the table
@@ -87,10 +88,10 @@ namespace BaseStationReader.Terminal
                         .Cropping(VerticalOverflowCropping.Bottom)
                         .StartAsync(async ctx =>
                         {
-                            await ShowTrackingTable(ctx);
+                            cancelled = await ShowTrackingTable(ctx);
                         });
                 }
-                while (_settings.RestartOnTimeout);
+                while (_settings.RestartOnTimeout && !cancelled);
             }
         }
 
@@ -99,16 +100,33 @@ namespace BaseStationReader.Terminal
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        private static async Task ShowTrackingTable(LiveDisplayContext ctx)
+        private static async Task<bool> ShowTrackingTable(LiveDisplayContext ctx)
         {
+            // If CTRL-C is pressed, capture the keypress
+            bool cancelled = false;
+            Console.CancelKeyPress += (s, e) => { e.Cancel = true; cancelled = true; };
+
             // Reset the elapsed time since the last update
             int elapsed = 0;
             _lastUpdate = DateTime.Now;
 
             // Start the wrapper and continuously update the table
             _wrapper.Start();
-            while (elapsed <= _settings.ApplicationTimeout)
+            while ((elapsed <= _settings.ApplicationTimeout) && !cancelled)
             {
+                // See if there's a keypress available
+                if (Console.KeyAvailable)
+                {
+                    // There is, so read it
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Escape)
+                    {
+                        // It's the ESC key so set the cancelled flag and break out
+                        cancelled = true;
+                        break;
+                    }
+                }
+
                 // Refresh and wait for a while
                 ctx.Refresh();
                 await Task.Delay(100);
@@ -119,6 +137,11 @@ namespace BaseStationReader.Terminal
 
             // Stop the wrapper
             _wrapper.Stop();
+
+            // Process all pending requests in the queued writer queue
+            await _wrapper.FlushQueue();
+
+            return cancelled;
         }
 
         /// <summary>
