@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Api;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -5,6 +6,7 @@ using CsvHelper.TypeConversion;
 
 namespace BaseStationReader.Entities.Import
 {
+    [ExcludeFromCodeCoverage]
     public class AirportTypeConverter : ITypeConverter
     {
         public object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
