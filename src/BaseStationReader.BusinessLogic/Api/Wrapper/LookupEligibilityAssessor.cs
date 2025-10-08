@@ -65,12 +65,18 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return new(true, true);
             }
 
-            // To proceed, we need a tracked aircraft writer and need to load the tracked aircraft record
-            // for further validation
-            var aircraft = await _trackedAircraftWriter?.GetAsync(x => x.Address == address);
+            // To proceed, we need a tracked aircraft writer
+            if (_trackedAircraftWriter == null)
+            {
+                _logger.LogMessage(Severity.Warning, $"No tracked aircraft writer available");
+                return new(false, false);
+            }
+
+            // Load the tracked aircraft record for further validation
+            var aircraft = await _trackedAircraftWriter.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Warning, $"No tracked aircraft writer available or the aircraft is not tracked");
+                _logger.LogMessage(Severity.Warning, $"Aircraft is not tracked");
                 return new(false, false);
             }
 
