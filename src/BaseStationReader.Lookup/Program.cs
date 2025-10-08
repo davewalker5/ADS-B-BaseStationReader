@@ -68,6 +68,12 @@ namespace BaseStationReader.Lookup
                     await new ManufacturerImportHandler(settings, _parser, _logger, factory).Handle();
                 }
 
+                // If a CSV file containing confirmed flight number mappings has been supplied, import it
+                if (_parser.IsPresent(CommandLineOptionType.ImportFlightNumberMappings))
+                {
+                    await new FlightNumberMappingImportHandler(settings, _parser, _logger, factory).Handle();
+                }
+
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {
@@ -110,11 +116,25 @@ namespace BaseStationReader.Lookup
                     await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleTAF();
                 }
 
+                // Perform a single callsign to flight number conversion, for testing purposes
+                if (_parser.IsPresent(CommandLineOptionType.ConvertSingle))
+                {
+                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForSingleCallsign();
+                }
+
+                // Perform a callsign to flight number conversion for a list of callsigns, for testing purposes
+                if (_parser.IsPresent(CommandLineOptionType.ConvertList))
+                {
+                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForCallsignList();
+                }
+
                 // Export callsign to flight number conversions for tracked aircraft, for testing purposes
                 if (_parser.IsPresent(CommandLineOptionType.ConvertCallsigns))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new FlightNumberExportHandler(settings, _parser, _logger, factory, serviceType).Handle();
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForTrackedAircraft();
                 }
             }
         }

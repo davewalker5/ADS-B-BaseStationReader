@@ -66,7 +66,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 // Not stored locally, so use the API to look it up
                 var properties = !string.IsNullOrEmpty(icao) ?
                     await api.LookupAirlineByICAOCodeAsync(icao) :
-                    await api.LookupAirlineByICAOCodeAsync(iata);
+                    await api.LookupAirlineByIATACodeAsync(iata);
 
                 if ((properties?.Count ?? 0) > 0)
                 {

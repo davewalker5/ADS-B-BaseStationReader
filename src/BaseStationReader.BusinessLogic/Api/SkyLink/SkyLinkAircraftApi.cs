@@ -43,7 +43,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         public async Task<Dictionary<ApiProperty, string>> LookupAircraftAsync(string address)
         {
             Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"?icao={address}");
+            var properties = await MakeApiRequestAsync($"?icao24={address}");
             return properties;
         }
 
@@ -68,7 +68,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
                 // Extract the response as a JSON object
                 var response = GetResponseAsObject(node);
-                if (GetResponseAsObject == null)
+                if (response == null)
                 {
                     return null;
                 }

@@ -6,7 +6,7 @@ namespace BaseStationReader.Entities.Api
     [ExcludeFromCodeCoverage]
     public class ExportableFlightNumber
     {
-        private const string DateTimeFormat = "yyyy-MMM-dd hh:mm:ss";
+        private const string DateTimeFormat = "yyyy-MMM-dd HH:mm:ss";
 
         [Export("Callsign", 1)]
         public string Callsign { get; set; } = "";

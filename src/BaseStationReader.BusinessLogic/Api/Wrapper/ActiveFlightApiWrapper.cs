@@ -21,6 +21,17 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
+        /// Return true if the API implementation supports flight lookup by the specified property
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        public bool SupportsLookupBy(ApiProperty propertyType)
+        {
+            if (_register.GetInstance(ApiEndpointType.ActiveFlights) is not IActiveFlightsApi api) return false;
+            return api.SupportsLookupBy(propertyType);
+        }
+
+        /// <summary>
         /// Look up an active flight and store it locally
         /// </summary>
         /// <param name="propertyType"></param>

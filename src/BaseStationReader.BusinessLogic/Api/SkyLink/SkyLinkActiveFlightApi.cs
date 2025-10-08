@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
@@ -10,6 +11,8 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
     internal class SkyLinkActiveFlightApi : SkyLinkApiBase, IActiveFlightsApi
     {
+        private static readonly Regex _flightNumberRegex = new(@"^([A-Za-z]+)(\d+)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         private const ApiServiceType ServiceType = ApiServiceType.SkyLink;
 
         private readonly List<ApiProperty> _supportedProperties = [
@@ -100,11 +103,25 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                     return null;
                 }
 
+                // Extract the flight number and split out the airline IATA and the numeric part
+                var airlineIATA = "";
+                var flightNumber = "";
+                var flightIATA = flight?["flight_number"]?.GetValue<string>() ?? "";
+                var match = Regex.Match(flightIATA, @"^([A-Za-z]+)(\d+)$");
+                if (match.Success)
+                {
+                    airlineIATA = match.Groups[1].Value;
+                    flightNumber = match.Groups[2].Value;
+                }
+
                 // Extract the values into a dictionary
                 properties = new()
                 {
-                    { ApiProperty.FlightNumber, flight?["flight_number"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AirlineICAO, flight?["airline"]?.GetValue<string>() ?? "" }
+                    { ApiProperty.FlightNumber, flightNumber },
+                    { ApiProperty.FlightICAO, "" },
+                    { ApiProperty.FlightIATA, flightIATA },
+                    { ApiProperty.AirlineIATA, airlineIATA},
+                    { ApiProperty.AirlineICAO, ""}
                 };
 
                 // Extract the airport details
@@ -171,6 +188,6 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <param name="properties"></param>
         /// <returns></returns>
         private static bool HaveValidProperties(Dictionary<ApiProperty, string> properties)
-            => HaveValue(properties, ApiProperty.FlightNumber) && HaveValue(properties, ApiProperty.AirlineICAO);
+            => HaveValue(properties, ApiProperty.FlightIATA) && HaveValue(properties, ApiProperty.AirlineIATA);
     }
 }

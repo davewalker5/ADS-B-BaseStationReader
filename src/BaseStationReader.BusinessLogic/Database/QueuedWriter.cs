@@ -253,7 +253,7 @@ namespace BaseStationReader.BusinessLogic.Database
             var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
             if (activeAircraft == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not active - API lookup will not be performed");
+                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not being tracked yet - API lookup will not be performed");
                 _queue.Enqueue(request);
                 return true;
             }
@@ -275,8 +275,15 @@ namespace BaseStationReader.BusinessLogic.Database
             // Perform the API lookup
             _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
             var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
-            var outcome = result ? "was" : "was not";
+            var outcome = result.Successful ? "was" : "was not";
             _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.Address} {outcome} successful");
+
+            // Requeue the reques on unsuccessful lookups. The API wrapper will return false for the requeue indicator
+            // if there's no point
+            if (!result.Successful && result.Requeue)
+            {
+                _queue.Enqueue(request);
+            }
 
             return true;
         }

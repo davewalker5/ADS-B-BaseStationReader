@@ -26,22 +26,17 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public void ExportTest()
         {
-            List<FlightNumber> flightNumbers = [new()
-            {
-                Callsign = Callsign,
-                Number = FlightNumber,
-                Date = _date
-            }];
+            List<FlightNumber> flightNumbers = [new(Callsign, FlightNumber, _date)];
 
             _filePath = Path.ChangeExtension(Path.GetTempFileName(), "csv");
             new FlightNumberExporter().Export(flightNumbers, _filePath);
 
-            List<FlightNumber> records;
+            List<ExportableFlightNumber> records;
             using (var reader = new StreamReader(_filePath))
             {
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    records = [.. csv.GetRecords<FlightNumber>()];
+                    records = [.. csv.GetRecords<ExportableFlightNumber>()];
                 }
             }
 
@@ -49,7 +44,7 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.HasCount(1, records);
             Assert.AreEqual(Callsign, records[0].Callsign);
             Assert.AreEqual(FlightNumber, records[0].Number);
-            Assert.AreEqual(_date.ToShortDateString(), records[0].Date.Value.ToShortDateString());
+            Assert.AreEqual(_date.ToString("yyyy-MMM-dd HH:mm:ss"), records[0].Date);
         }
     }
 }

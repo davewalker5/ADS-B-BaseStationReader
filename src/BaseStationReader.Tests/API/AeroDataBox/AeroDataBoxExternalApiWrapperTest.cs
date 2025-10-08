@@ -78,7 +78,8 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(FlightResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, AircraftAddress, null, null, true);
 
-            Assert.IsTrue(result);
+            Assert.IsTrue(result.Successful);
+            Assert.IsFalse(result.Requeue);
             await AssertExpectedAircraftCreated();
             await AssertExpectedAirlineCreated();
             await AssertExpectedFlightCreated();
@@ -91,7 +92,8 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(FlightResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, AircraftAddress, [Embarkation], [Destination], true);
 
-            Assert.IsTrue(result);
+            Assert.IsTrue(result.Successful);
+            Assert.IsFalse(result.Requeue);
             await AssertExpectedAircraftCreated();
             await AssertExpectedAirlineCreated();
             await AssertExpectedFlightCreated();
@@ -106,7 +108,8 @@ namespace BaseStationReader.Tests.API
             var flights = await _factory.FlightManager.ListAsync(x => true);
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
-            Assert.IsFalse(result);
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
             await AssertExpectedAircraftCreated();
             Assert.IsEmpty(airlines);
             Assert.IsEmpty(flights);

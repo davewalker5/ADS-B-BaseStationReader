@@ -15,6 +15,10 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private readonly string _host;
         private readonly string _key;
 
+        private readonly List<ApiProperty> _supportedProperties = [
+            ApiProperty.AircraftAddress
+        ];
+
         public AeroDataBoxHistoricalFlightApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
@@ -33,6 +37,14 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             // Set the rate limit for this service on the HTTP client
             client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);
         }
+
+        /// <summary>
+        /// Return true if this implementation supports flight lookup by the specified property
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        public bool SupportsLookupBy(ApiProperty propertyType)
+            => _supportedProperties.Contains(propertyType);
 
         /// <summary>
         /// Lookup flight details using a date and time

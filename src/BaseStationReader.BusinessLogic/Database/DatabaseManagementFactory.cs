@@ -12,18 +12,15 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IManufacturerManager> _manufacturerManager = null;
         private readonly Lazy<IModelManager> _modelManager = null;
         private readonly Lazy<ISightingManager> _sightingManager = null;
+        private readonly Lazy<IFlightNumberMappingManager> _confirmedMappingManager = null;
 
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
-
         public IAirlineManager AirlineManager { get { return _airlineManager.Value; } }
-
         public IFlightManager FlightManager { get { return _flightManager.Value; } }
-
         public IManufacturerManager ManufacturerManager { get { return _manufacturerManager.Value; } }
-
         public IModelManager ModelManager { get { return _modelManager.Value; } }
-
         public ISightingManager SightingManager { get { return _sightingManager.Value; } }
+        public IFlightNumberMappingManager ConfirmedMappingManager { get { return _confirmedMappingManager.Value; } }
 
         public DatabaseManagementFactory(BaseStationReaderDbContext context)
         {
@@ -35,6 +32,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _manufacturerManager = new Lazy<IManufacturerManager>(() => new ManufacturerManager(context));
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
+            _confirmedMappingManager = new Lazy<IFlightNumberMappingManager>(() => new FlightNumberMappingManager(context));
         }
 
         /// <summary>
