@@ -100,24 +100,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // Lookup the aircraft
             var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(address, "");
 
-            // Look up the flight
-            Flight flight = null;
-            if (type == ApiEndpointType.HistoricalFlights)
-            {
-                // If it's a historical flight, use the historical API instance and the aircraft address
-                flight = await _historicalFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
-            }
-            else if (!string.IsNullOrEmpty(aircraft.Callsign))
-            {
-                // If it's an active flight and we have a callsign, use the callsign to build a flight number
-                // and lookup by flight number
-                flight = await LookupFlightByNumber(address, aircraft.Callsign, departureAirportCodes, arrivalAirportCodes);
-            }
-            else
-            {
-                // If it's an active flight and we don't a flight number, lookup the flight by aircraft address
-                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
-            }
+            // Lookup the flight
+            var flight = await LookupFlightAsync(type, address, aircraft.Callsign, departureAirportCodes, arrivalAirportCodes);
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
@@ -169,30 +153,54 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             => await _airportWeatherApiWrapper.LookupAirportWeatherForecast(icao);
 
         /// <summary>
-        /// Extract an airline ICAO from the callsign, look up the airline and then use the IATA code and the
-        /// callsign to construct a flight number to use to lookup the flight
+        /// Lookup a flight, detecting the right API instance and key for flight lookup
         /// </summary>
+        /// <param name="type"></param>
         /// <param name="address"></param>
         /// <param name="callsign"></param>
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        private async Task<Flight> LookupFlightByNumber(
+        private async Task<Flight> LookupFlightAsync(
+            ApiEndpointType type,
             string address,
             string callsign,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
-            Flight flight = null;
+            Flight flight;
 
-            // Build the flight number
+            // If it's a historical flight, use the historical API instance and the aircraft address
+            if (type == ApiEndpointType.HistoricalFlights)
+            {
+                flight = await _historicalFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
+                return flight;
+            }
+
+            // It's an active flight, so try lookup by aircraft address first. This will return immediately if aircraft
+            // address lookup isn't supported by the API instance
+            flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
+            if (flight != null)
+            {
+                return flight;
+            }
+
+            // Lookup by aircraft address isn't supported, so we need a valid callsign to do flight number to callsign
+            // mapping
+            if (string.IsNullOrEmpty(callsign))
+            {
+                return null;
+            }
+
+            // Lookup the flight number based on the callsign and check it's found
             var flightNumber = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign);
             if (flightNumber != null)
             {
-                // Lookup the flight
-                flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber.Number, address, departureAirportCodes, arrivalAirportCodes);
+                return null;
             }
 
+            // Lookup the flight by number
+            flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber.Number, address, departureAirportCodes, arrivalAirportCodes);
             return flight;
         }
 
