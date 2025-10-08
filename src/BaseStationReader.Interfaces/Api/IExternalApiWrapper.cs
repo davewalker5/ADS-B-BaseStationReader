@@ -10,7 +10,7 @@ namespace BaseStationReader.Interfaces.Api
         Task<List<FlightNumber>> GetFlightNumbersFromCallsigns(IEnumerable<string> callsigns, DateTime? timestamp = null);
         Task<List<FlightNumber>> GetFlightNumbersForTrackedAircraftAsync(IEnumerable<TrackingStatus> statuses);
 
-        Task<bool> LookupAsync(
+        Task<LookupResult> LookupAsync(
             ApiEndpointType type,
             string address,
             IEnumerable<string> departureAirportCodes,

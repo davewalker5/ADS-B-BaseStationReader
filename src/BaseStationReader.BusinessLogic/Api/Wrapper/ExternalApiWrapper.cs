@@ -14,7 +14,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly int _maximumLookupAttempts;
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
-        private readonly IActiveFlightApiWrapper _activeFlightWrapper;
+        private readonly IActiveFlightApiWrapper _activeFlightApiWrapper;
         private readonly IHistoricalFlightApiWrapper _historicalFlightWrapper;
         private readonly IAirlineApiWrapper _airlineApiWrapper;
         private readonly IAircraftApiWrapper _aircraftApiWrapper;
@@ -22,6 +22,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IDatabaseManagementFactory _factory;
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
         private readonly IFlightNumberApiWrapper _flightNumberApiWrapper;
+        private readonly ILookupEligibilityAssessor _lookupEligibilityAssessor;
 
         public ExternalApiWrapper(
             int maximumLookupAttempts,
@@ -34,12 +35,13 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _factory = factory;
             _register = new ExternalApiRegister(logger);
             _airlineApiWrapper = new AirlineApiWrapper(logger, _register, _factory.AirlineManager);
-            _activeFlightWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager);
+            _activeFlightApiWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager);
             _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
             _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
             _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, factory, trackedAircraftWriter);
             _trackedAircraftWriter = trackedAircraftWriter;
+            _lookupEligibilityAssessor = new LookupEligibilityAssessor(logger, _historicalFlightWrapper, _activeFlightApiWrapper, _factory, _trackedAircraftWriter, maximumLookupAttempts);
         }
 
         /// <summary>
@@ -83,7 +85,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="departureAirports"></param>
         /// <param name="arrivalAirports"></param>
         /// <returns></returns>
-        public async Task<bool> LookupAsync(
+        public async Task<LookupResult> LookupAsync(
             ApiEndpointType type,
             string address,
             IEnumerable<string> departureAirportCodes,
@@ -91,17 +93,27 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             bool createSighting)
         {
             // Check the aircraft is eligible for lookup
-            var eligible = await IsEligibleForLookup(address);
-            if (!eligible)
+            var eligible = await _lookupEligibilityAssessor.IsEligibleForLookup(type, address);
+            if (!eligible.Eligible)
             {
-                return false;
+                // An aircraft that's not eligible for lookup now may become eligible as more messages are
+                // received and its details are populated, so return a result with a "requeue" flag returned
+                // by the eligibility assessor
+                return new(false, eligible.Requeue);
             }
 
             // Lookup the aircraft
             var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(address, "");
+            if (aircraft == null)
+            {
+                // If the API can't find the aircraft, not only has this lookup failed but there's no point
+                // retrying
+                return new(false, false);
+            }
 
-            // Lookup the flight
-            var flight = await LookupFlightAsync(type, address, aircraft.Callsign, departureAirportCodes, arrivalAirportCodes);
+            // Lookup the flight. The eligibility criteria mean we'll only get to this point if it *should* be
+            // possible to get a successful response here
+            var flight = await LookupFlightAsync(type, address, departureAirportCodes, arrivalAirportCodes);
 
             // The lookup is considered successful if the aircraft and flight are valid
             var successful = (aircraft != null) && (flight != null);
@@ -119,8 +131,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, DateTime.Today);
             }
 
-            // The lookup was successful if both aircraft and flight were looked up successfully
-            return successful;
+            // If we reach here the API's done everything possible to get the details so there's no point
+            // re-queueing the request
+            return new(successful, false);
         }
 
         /// <summary>
@@ -134,7 +147,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             double centreLatitude,
             double centreLongitude,
             double rangeNm)
-            => await _activeFlightWrapper.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
+            => await _activeFlightApiWrapper.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
 
         /// <summary>
         /// Lookup the current weather for an airport
@@ -164,7 +177,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private async Task<Flight> LookupFlightAsync(
             ApiEndpointType type,
             string address,
-            string callsign,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
@@ -177,62 +189,35 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return flight;
             }
 
-            // It's an active flight, so try lookup by aircraft address first. This will return immediately if aircraft
-            // address lookup isn't supported by the API instance
-            flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
-            if (flight != null)
+            // It's an active flight. If the API supports flight lookup by address, use it
+            if (_activeFlightApiWrapper.SupportsLookupBy(ApiProperty.AircraftAddress))
             {
+                flight = await _activeFlightApiWrapper.LookupFlightAsync(ApiProperty.AircraftAddress, address, address, departureAirportCodes, arrivalAirportCodes);
                 return flight;
             }
 
-            // Lookup by aircraft address isn't supported, so we need a valid callsign to do flight number to callsign
-            // mapping
-            if (string.IsNullOrEmpty(callsign))
+            // Load the tracked aircraft record
+            var aircraft = await _trackedAircraftWriter?.GetAsync(x => x.Address == address);
+            if (aircraft == null)
             {
+                // This is an error as the eligibility criteria shouldn't allow us to get this far if there's aircraft record
+                _logger.LogMessage(Severity.Error, $"Unable to find tracked aircraft record for aicraft with address '{address}'");
                 return null;
             }
 
             // Lookup the flight number based on the callsign and check it's found
-            var flightNumber = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign);
-            if (flightNumber != null)
+                _logger.LogMessage(Severity.Debug, $"Looking up flight number for callsign '{aircraft.Callsign}'");
+            var flightNumber = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(aircraft.Callsign);
+            if (flightNumber == null)
             {
+                _logger.LogMessage(Severity.Warning, $"No flight number mapping for callsign '{aircraft.Callsign}' : Unable to look up flight by number");
                 return null;
             }
 
             // Lookup the flight by number
-            flight = await _activeFlightWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber.Number, address, departureAirportCodes, arrivalAirportCodes);
+            _logger.LogMessage(Severity.Info, $"Looking up flight by number {flightNumber.Number} for aircraft {address}");
+            flight = await _activeFlightApiWrapper.LookupFlightAsync(ApiProperty.FlightNumber, flightNumber.Number, address, departureAirportCodes, arrivalAirportCodes);
             return flight;
-        }
-
-        /// <summary>
-        /// Check that an aircraft is eligible for lookup
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        private async Task<bool> IsEligibleForLookup(string address)
-        {
-            // If the tracked aircraft writer isn't specified, just allow the lookup
-            if (_trackedAircraftWriter == null)
-            {
-                return true;
-            }
-
-            // Look for a tracked aircraft with the specified address and  no lookup timestamp
-            var aircraft = await _trackedAircraftWriter.GetAsync(x => (x.Address == address) && (x.LookupTimestamp == null));
-            if (aircraft == null)
-            {
-                _logger.LogMessage(Severity.Warning, $"Aircraft {address} is not tracked or has already been looked up");
-                return false;
-            }
-
-            // Check the maximum number of attempts hasn't been reached. A maximum of 0 indicates unlimited attempts
-            if ((_maximumLookupAttempts > 0) && (aircraft.LookupAttempts >= _maximumLookupAttempts))
-            {
-                _logger.LogMessage(Severity.Warning, $"Aircraft {address} has reached the maximum lookup attempts");
-                return false;
-            }
-
-            return true;
         }
     }
 }

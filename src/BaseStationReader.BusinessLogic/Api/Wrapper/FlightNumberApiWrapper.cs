@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
@@ -11,8 +10,6 @@ namespace BaseStationReader.BusinessLogic.Api
 {
     internal class FlightNumberApiWrapper : IFlightNumberApiWrapper
     {
-        private static readonly Regex Rx = new(@"^([A-Z]{3})(\d+)([A-Z]*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
         private readonly ITrackerLogger _logger;
         private readonly IDatabaseManagementFactory _factory;
         private readonly ITrackedAircraftWriter _trackedAircraftWriter;
@@ -46,7 +43,7 @@ namespace BaseStationReader.BusinessLogic.Api
             }
             else
             {
-                _logger.LogMessage(Severity.Debug, $"No flight number mapping found for {callsign}");
+                _logger.LogMessage(Severity.Debug, $"No flight number mapping found for '{callsign}'");
             }
 
             return flightNumber;

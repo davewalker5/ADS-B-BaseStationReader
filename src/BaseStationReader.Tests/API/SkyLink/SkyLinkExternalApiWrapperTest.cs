@@ -84,7 +84,8 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, null, null, true);
 
-            Assert.IsTrue(result);
+            Assert.IsTrue(result.Successful);
+            Assert.IsFalse(result.Requeue);
         }
 
         [TestMethod]
@@ -95,7 +96,8 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
 
-            Assert.IsTrue(result);
+            Assert.IsTrue(result.Successful);
+            Assert.IsFalse(result.Requeue);
         }
 
         [TestMethod]
@@ -106,7 +108,8 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
             var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
 
-            Assert.IsFalse(result);
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
         }
 
         [TestMethod]

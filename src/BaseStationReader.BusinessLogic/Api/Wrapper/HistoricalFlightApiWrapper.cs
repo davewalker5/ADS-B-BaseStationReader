@@ -27,6 +27,17 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
+        /// Return true if the API implementation supports flight lookup by the specified property
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        public bool SupportsLookupBy(ApiProperty propertyType)
+        {
+            if (_register.GetInstance(ApiEndpointType.HistoricalFlights) is not IHistoricalFlightsApi api) return false;
+            return api.SupportsLookupBy(propertyType);
+        }
+
+        /// <summary>
         /// Identify and save historical flight details for a tracked aircraft
         /// </summary>
         /// <param name="propertyType"></param>
