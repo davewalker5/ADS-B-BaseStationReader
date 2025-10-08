@@ -15,6 +15,7 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -139,6 +140,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public void Stop()
             => _tracker.Stop();
+
+        /// <summary>
+        /// Process all pending entries in the queued writer queue
+        /// </summary>
+        /// <returns></returns>
+        public async Task FlushQueue()
+            => await _writer.FlushQueue();
+
+        /// <summary>
+        /// Clear all pending entries from the queued writer queue
+        /// </summary>
+        /// <returns></returns>
+        public void ClearQueue()
+            => _writer.ClearQueue();
 
         /// <summary>
         /// Set up a distance calculator, if the receiver co-ordinates have been specified

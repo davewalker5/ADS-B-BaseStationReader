@@ -87,16 +87,34 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
-        /// Stop writing to the tracking database
+        /// Stop processing requests from the queue
         /// </summary>
         public void Stop()
         {
             _timer.Stop();
-            _queue.Clear();
         }
 
         /// <summary>
-        /// When the timer fires, write the next batch of records to the database
+        /// Flush all pending requests from the queue
+        /// </summary>
+        /// <returns></returns>
+        public async Task FlushQueue()
+        {
+            do
+            {
+                await ProcessBatch(int.MaxValue);
+            }
+            while (!_queue.IsEmpty);
+        }
+
+        /// <summary>
+        /// Clear all pending entries from the queue
+        /// </summary>
+        public void ClearQueue()
+            => _queue.Clear();
+
+        /// <summary>
+        /// When the timer fires, process the next batch from the queue
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -104,12 +122,25 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _timer.Stop();
 
-            // Time how long the update takes
+            // Process the next batch from the queue
+            Task.Run(() => ProcessBatch(_batchSize)).Wait();
+
+            _timer.Start();
+        }
+
+        /// <summary>
+        /// Process a batch from the queue
+        /// </summary>
+        /// <param name="batchSize"></param>
+        /// <returns></returns>
+        private async Task ProcessBatch(int batchSize)
+        {
+            // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Iterate over at most the current batch size entries in the queue
             var initialQueueSize = _queue.Count;
-            for (int i = 0; i < _batchSize; i++)
+            for (int i = 0; i < batchSize; i++)
             {
                 // Attempt to get the next item and if it's not there break out
                 if (!_queue.TryDequeue(out object queued))
@@ -118,7 +149,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 }
 
                 // Write the dequeued object to the database
-                Task.Run(() => WriteDequeuedObjectAsync(queued)).Wait();
+                await HandleDequeuedObjectAsync(queued);
             }
             stopwatch.Stop();
             var finalQueueSize = _queue.Count;
@@ -139,15 +170,13 @@ namespace BaseStationReader.BusinessLogic.Database
                 // subscriber callbacks or the application will stop updating
                 _logger.LogException(ex);
             }
-
-            _timer.Start();
         }
 
         /// <summary>
-        /// Receive a de-queued object, determine its type and use the appropriate writer to write it
+        /// Receive a de-queued object, determine its type and use the handler to handle it
         /// </summary>
         /// <param name="queued"></param>
-        private async Task WriteDequeuedObjectAsync(object queued)
+        private async Task HandleDequeuedObjectAsync(object queued)
         {
             try
             {
