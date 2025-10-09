@@ -116,7 +116,7 @@ namespace BaseStationReader.Tests.API
         public void GetCurrentWeatherTest()
         {
             _client.AddResponse(MetarResponse);
-            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);
@@ -127,7 +127,7 @@ namespace BaseStationReader.Tests.API
         public void GetWeatherForecastTest()
         {
             _client.AddResponse(TafResponse);
-            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);

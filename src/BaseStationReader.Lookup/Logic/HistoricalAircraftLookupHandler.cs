@@ -29,10 +29,8 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the airline import command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
-
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
             // Configure the external API wrapper

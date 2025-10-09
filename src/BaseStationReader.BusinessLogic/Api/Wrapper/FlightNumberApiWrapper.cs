@@ -55,7 +55,7 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <param name="callsigns"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsigns(IEnumerable<string> callsigns, DateTime? timestamp = null)
+        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsignsAsync(IEnumerable<string> callsigns, DateTime? timestamp = null)
         {
             List<FlightNumber> numbers = [];
 

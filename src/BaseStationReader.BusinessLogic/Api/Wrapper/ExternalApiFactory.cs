@@ -29,6 +29,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         {
             {(ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights), typeof(AeroDataBoxHistoricalFlightApi) },
             {(ApiServiceType.AeroDataBox, ApiEndpointType.Aircraft), typeof(AeroDataBoxAircraftApi) },
+            {(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules), typeof(AeroDataBoxSchedulesApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights), typeof(AirLabsActiveFlightApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Airlines), typeof(AirLabsAirlinesApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Aircraft), typeof(AirLabsAircraftApi) },
@@ -37,7 +38,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             {(ApiServiceType.SkyLink, ApiEndpointType.Aircraft), typeof(SkyLinkAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.METAR), typeof(SkyLinkMetarApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.TAF), typeof(SkyLinkTafApi) },
-            {(ApiServiceType.CheckWXApi, ApiEndpointType.METAR), typeof(CheckWXMetarApi) },
+            {(ApiServiceType.CheckWXApi, ApiEndpointType.METAR), typeof(CheckWXMetarApi) }
         };
 
         /// <summary>

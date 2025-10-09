@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Use the API to look-up the flight
-            var properties = await api.LookupFlight(propertyType, propertyValue);
+            var properties = await api.LookupFlightAsync(propertyType, propertyValue);
             if ((properties?.Count ?? 0) == 0)
             {
                 return null;
@@ -99,7 +99,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Create a new flight object containing the details returned by the API
-            Flight flight = await SaveFlight(properties, airline.Id);
+            Flight flight = await SaveFlightAsync(properties, airline.Id);
             return flight;
         }
 
@@ -110,7 +110,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="centreLongitude"></param>
         /// <param name="rangeNm"></param>
         /// <returns></returns>
-        public async Task<List<Flight>> LookupFlightsInBoundingBox(
+        public async Task<List<Flight>> LookupFlightsInBoundingBoxAsync(
             double centreLatitude,
             double centreLongitude,
             double rangeNm)
@@ -121,7 +121,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             List<Flight> flights = [];
 
             // Use the API to look-up the flights
-            var properties = await api.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
+            var properties = await api.LookupFlightsInBoundingBoxAsync(centreLatitude, centreLongitude, rangeNm);
             if ((properties?.Count ?? 0) > 0)
             {
                 // Iterate over the collection of flight properties

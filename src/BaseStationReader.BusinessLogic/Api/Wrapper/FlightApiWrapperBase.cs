@@ -29,7 +29,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="properties"></param>
         /// <param name="airlineId"></param>
         /// <returns></returns>
-        protected async Task<Flight> SaveFlight(Dictionary<ApiProperty, string> properties, int airlineId)
+        protected async Task<Flight> SaveFlightAsync(Dictionary<ApiProperty, string> properties, int airlineId)
         {
             // Save the flight
             Flight flight = await _flightManager.AddAsync(

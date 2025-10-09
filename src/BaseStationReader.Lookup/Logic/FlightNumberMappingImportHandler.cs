@@ -21,7 +21,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the confirmed flight number mapping import command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportFlightNumberMappings)[0];
             var importer = new FlightNumberMappingImporter(Factory.ConfirmedMappingManager, Logger);

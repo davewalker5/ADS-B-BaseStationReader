@@ -59,32 +59,32 @@ namespace BaseStationReader.Lookup
                 // If a CSV file containing airline details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportAirlines))
                 {
-                    await new AirlineImportHandler(settings, _parser, _logger, factory).Handle();
+                    await new AirlineImportHandler(settings, _parser, _logger, factory).HandleAsync();
                 }
 
                 // If a CSV file containing manufacturer details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportManufacturers))
                 {
-                    await new ManufacturerImportHandler(settings, _parser, _logger, factory).Handle();
+                    await new ManufacturerImportHandler(settings, _parser, _logger, factory).HandleAsync();
                 }
 
                 // If a CSV file containing confirmed flight number mappings has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportFlightNumberMappings))
                 {
-                    await new FlightNumberMappingImportHandler(settings, _parser, _logger, factory).Handle();
+                    await new FlightNumberMappingImportHandler(settings, _parser, _logger, factory).HandleAsync();
                 }
 
                 // If a CSV file containing model details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportModels))
                 {
-                    await new ModelImportHandler(settings, _parser, _logger, factory).Handle();
+                    await new ModelImportHandler(settings, _parser, _logger, factory).HandleAsync();
                 }
 
                 // If an aircraft address has been supplied, look it up and store the results
                 if (_parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new AircraftLookupHandler(settings, _parser, _logger, factory, serviceType).Handle();
+                    await new AircraftLookupHandler(settings, _parser, _logger, factory, serviceType).HandleAsync();
                 }
 
                 // Lookup historical flight details and store the results
@@ -92,49 +92,55 @@ namespace BaseStationReader.Lookup
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.HistoricalApi);
                     var aircraftWriter = new TrackedAircraftWriter(context);
-                    await new HistoricalAircraftLookupHandler(settings, _parser, _logger, factory, aircraftWriter, serviceType).Handle();
+                    await new HistoricalAircraftLookupHandler(settings, _parser, _logger, factory, aircraftWriter, serviceType).HandleAsync();
                 }
 
                 // Look up live flights within a given bounding box of the receiver
                 if (_parser.IsPresent(CommandLineOptionType.FlightsInRange))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new FlightsInRangeHandler(settings, _parser, _logger, factory, serviceType).Handle();
+                    await new FlightsInRangeHandler(settings, _parser, _logger, factory, serviceType).HandleAsync();
                 }
 
                 // Look up the current weather at a given airport
                 if (_parser.IsPresent(CommandLineOptionType.METAR))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleMETAR();
+                    await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleMetarAsync();
                 }
 
                 // Look up the weather forecast at a given airport
                 if (_parser.IsPresent(CommandLineOptionType.TAF))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleTAF();
+                    await new AirportWeatherLookupHandler(settings, _parser, _logger, factory, serviceType).HandleTafAsync();
                 }
 
                 // Perform a single callsign to flight number conversion, for testing purposes
                 if (_parser.IsPresent(CommandLineOptionType.ConvertSingle))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForSingleCallsign();
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForSingleCallsignAsync();
                 }
 
                 // Perform a callsign to flight number conversion for a list of callsigns, for testing purposes
                 if (_parser.IsPresent(CommandLineOptionType.ConvertList))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForCallsignList();
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForCallsignListAsync();
                 }
 
                 // Export callsign to flight number conversions for tracked aircraft, for testing purposes
                 if (_parser.IsPresent(CommandLineOptionType.ConvertCallsigns))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForTrackedAircraft();
+                    await new CallsignConversionHandler(settings, _parser, _logger, factory, serviceType).HandleForTrackedAircraftAsync();
+                }
+
+                // Export schedule information for a specified airport and, optionally, date range
+                if (_parser.IsPresent(CommandLineOptionType.ExportSchedule))
+                {
+                    await new ScheduleLookupHandler(settings, _parser, _logger, factory, ApiServiceType.AeroDataBox).HandleAsync();
                 }
             }
         }

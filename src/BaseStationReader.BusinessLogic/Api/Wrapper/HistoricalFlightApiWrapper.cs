@@ -97,7 +97,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         if (airline != null)
                         {
                             // Save and return this flight as the matching flight
-                            flight = await SaveFlight(flightProperties, airline.Id);
+                            flight = await SaveFlightAsync(flightProperties, airline.Id);
                             return flight;
                         }
                         else
