@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class TrackedAircraftWriter : ITrackedAircraftWriter
+    internal class TrackedAircraftWriter : ITrackedAircraftWriter
     {
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)

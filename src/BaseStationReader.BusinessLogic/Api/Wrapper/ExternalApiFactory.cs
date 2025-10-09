@@ -3,7 +3,6 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Api.CheckWXApi;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
 using BaseStationReader.BusinessLogic.Database;
-using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
@@ -47,30 +46,23 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="client"></param>
-        /// <param name="context"></param>
-        /// <param name="trackedAircraftWriter"></param>
+        /// <param name="factory"></param>
         /// <param name="service"></param>
         /// <param name="flightsEndpointType"></param>
         /// <param name="settings"></param>
+        /// <param name="ignoreTrackingStatus"></param>
         /// <returns></returns>
         public static IExternalApiWrapper GetWrapperInstance(
             ITrackerLogger logger,
             ITrackerHttpClient client,
-            BaseStationReaderDbContext context,
-            ITrackedAircraftWriter trackedAircraftWriter,
+            IDatabaseManagementFactory factory,
             ApiServiceType service,
             ApiEndpointType flightsEndpointType,
-            ExternalApiSettings settings)
+            ExternalApiSettings settings,
+            bool ignoreTrackingStatus)
         {
-            // Create the database management factory
-            var factory = new DatabaseManagementFactory(context);
-
             // Create an instance of the wrapper
-            var wrapper = new ExternalApiWrapper(
-                settings.MaximumLookups,
-                logger,
-                factory,
-                trackedAircraftWriter);
+            var wrapper = new ExternalApiWrapper(settings.MaximumLookups, ignoreTrackingStatus, logger, factory);
 
             // Get an instance of the flights API and register it
             var flightsApi = GetApiInstance(

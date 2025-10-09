@@ -35,7 +35,7 @@ namespace BaseStationReader.BusinessLogic.Api
             var flightNumber = new FlightNumber(callsign, null, timestamp);
 
             // Look for a flight number mapping for the callsign
-            var mapping = await _factory.ConfirmedMappingManager.GetAsync(x => x.Callsign == callsign);
+            var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == callsign);
             if (mapping != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Flight number mapping found for {callsign} => {mapping.FlightIATA}");

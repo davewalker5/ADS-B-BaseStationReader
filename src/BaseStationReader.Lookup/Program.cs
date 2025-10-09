@@ -54,7 +54,7 @@ namespace BaseStationReader.Lookup
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Create the database management factory
-                var factory = new DatabaseManagementFactory(context);
+                var factory = new DatabaseManagementFactory(context, 0);
 
                 // If a CSV file containing airline details has been supplied, import it
                 if (_parser.IsPresent(CommandLineOptionType.ImportAirlines))
@@ -91,8 +91,7 @@ namespace BaseStationReader.Lookup
                 if (_parser.IsPresent(CommandLineOptionType.HistoricalLookup))
                 {
                     var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.HistoricalApi);
-                    var aircraftWriter = new TrackedAircraftWriter(context);
-                    await new HistoricalAircraftLookupHandler(settings, _parser, _logger, factory, aircraftWriter, serviceType).HandleAsync();
+                    await new HistoricalAircraftLookupHandler(settings, _parser, _logger, factory, serviceType).HandleAsync();
                 }
 
                 // Look up live flights within a given bounding box of the receiver

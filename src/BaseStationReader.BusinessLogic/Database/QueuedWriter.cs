@@ -15,9 +15,7 @@ namespace BaseStationReader.BusinessLogic.Database
 {
     public class QueuedWriter : IQueuedWriter
     {
-        private readonly ITrackedAircraftWriter _aircraftWriter;
-        private readonly IPositionWriter _positionWriter;
-        private readonly IAircraftLockManager _locker;
+        private readonly IDatabaseManagementFactory _factory;
         private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
@@ -32,9 +30,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public int QueueSize { get => _queue.Count; }
 
         public QueuedWriter(
-            ITrackedAircraftWriter aircraftWriter,
-            IPositionWriter positionWriter,
-            IAircraftLockManager locker,
+            IDatabaseManagementFactory factory,
             IExternalApiWrapper apiWrapper,
             ITrackerLogger logger,
             ITrackerTimer timer,
@@ -43,9 +39,7 @@ namespace BaseStationReader.BusinessLogic.Database
             int batchSize,
             bool createSightings)
         {
-            _aircraftWriter = aircraftWriter;
-            _positionWriter = positionWriter;
-            _locker = locker;
+            _factory = factory;
             _apiWrapper = apiWrapper;
             _logger = logger;
             _timer = timer;
@@ -77,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // Set the locked flag on all unlocked records. This prevents confusing tracking of the same aircraft
             // on different flights
-            List<TrackedAircraft> unlocked = await _aircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
+            List<TrackedAircraft> unlocked = await _factory.TrackedAircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
             foreach (var aircraft in unlocked)
             {
                 aircraft.Status = TrackingStatus.Locked;
@@ -214,7 +208,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
             // ID so that record will be updated rather than a new one created
-            var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(aircraft.Address);
             if (activeAircraft != null)
             {
                 aircraft.Id = activeAircraft.Id;
@@ -222,7 +216,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Write the tracked aircraft
             _logger.LogMessage(Severity.Verbose, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
-            await _aircraftWriter.WriteAsync(aircraft);
+            await _factory.TrackedAircraftWriter.WriteAsync(aircraft);
 
             return true;
         }
@@ -245,7 +239,7 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             // Find the associated tracked aircraft
-            var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(position.Address);
             if (activeAircraft == null)
             {
                 _logger.LogMessage(Severity.Debug, $"Aircraft with address {position.Address} is not active - API lookup will not be performed");
@@ -256,7 +250,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // Assign the aircraft ID, for the foreign key relationship, and write the position
             position.AircraftId = activeAircraft.Id;
             _logger.LogMessage(Severity.Verbose, $"Writing position for aircraft {position.Address} with ID {position.AircraftId}");
-            await _positionWriter.WriteAsync(position);
+            await _factory.PositionWriter.WriteAsync(position);
 
             return true;
         }
@@ -281,7 +275,7 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             // Find the associated tracked aircraft
-            var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(request.Address);
             if (activeAircraft == null)
             {
                 _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not being tracked yet - API lookup will not be performed");

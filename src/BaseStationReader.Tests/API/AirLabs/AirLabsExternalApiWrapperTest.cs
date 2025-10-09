@@ -53,18 +53,18 @@ namespace BaseStationReader.Tests.API
             var logger = new MockFileLogger();
             _client = new();
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var trackedAircraftWriter = new TrackedAircraftWriter(_context);
+            var factory = new DatabaseManagementFactory(_context, 0);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, _context, trackedAircraftWriter, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings);
+                logger, _client, factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
 
             // Create a tracked aircraft that will match the first flight in the flights response
-            _ = await trackedAircraftWriter.WriteAsync(new()
+            _ = await factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = AircraftAddress
             });
 
             // Create a factory that can be used to query the objects that are created during lookup
-            _factory = new DatabaseManagementFactory(_context);
+            _factory = new DatabaseManagementFactory(_context, 0);
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup

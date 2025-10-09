@@ -1,8 +1,8 @@
 ﻿using BaseStationReader.Data;
-using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Globalization;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -22,26 +22,26 @@ namespace BaseStationReader.Tests.Database
         private readonly DateTime FirstSeen = DateTime.ParseExact("2023-08-22 17:51:59.551", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
-        private ITrackedAircraftWriter _writer = null;
+        private IDatabaseManagementFactory _factory = null;
 
         [TestInitialize]
         public void TestInitialise()
         {
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _writer = new TrackedAircraftWriter(context);
+            _factory = new DatabaseManagementFactory(context, 0);
         }
 
         [TestMethod]
         public async Task AddAndGetTest()
         {
-            await _writer.WriteAsync(new TrackedAircraft
+            await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            var aircraft = await _writer.GetAsync(x => x.Address == Address);
+            var aircraft = await _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address);
             Assert.IsNotNull(aircraft);
             Assert.IsGreaterThan(0, aircraft.Id);
             Assert.AreEqual(Address, aircraft.Address);
@@ -53,14 +53,14 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task ListTest()
         {
-            await _writer.WriteAsync(new TrackedAircraft
+            await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            var aircraft = await _writer.ListAsync(x => true);
+            var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
             Assert.IsGreaterThan(0, aircraft.First().Id);
@@ -72,14 +72,14 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task ListOrderingTest()
         {
-            var first = await _writer.WriteAsync(new TrackedAircraft
+            var first = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            var second = await _writer.WriteAsync(new TrackedAircraft
+            var second = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
@@ -88,7 +88,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.AreNotEqual(first.Id, second.Id);
 
-            var aircraft = await _writer.ListAsync(x => true);
+            var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
             Assert.HasCount(2, aircraft);
             Assert.AreEqual(second.Id, aircraft[0].Id);
@@ -99,14 +99,14 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task UpdateTest()
         {
-            var initial = await _writer.WriteAsync(new TrackedAircraft
+            var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            await _writer.WriteAsync(new TrackedAircraft
+            await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Id = initial.Id,
                 Address = Address,
@@ -122,7 +122,7 @@ namespace BaseStationReader.Tests.Database
                 LastSeen = LastSeen
             });
 
-            var aircraft = await _writer.ListAsync(x => true);
+            var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
             Assert.AreEqual(initial.Id, aircraft.First().Id);
@@ -141,7 +141,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task SetTrackedAircraftTimestampAsyncTest()
         {
-            var initial = await _writer.WriteAsync(new TrackedAircraft
+            var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
@@ -150,9 +150,9 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _writer.UpdateLookupProperties(Address, true, 5);
+            _ = await _factory.TrackedAircraftWriter.UpdateLookupProperties(Address, true, 5);
 
-            var aircraft = await _writer.ListAsync(x => true);
+            var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
             Assert.IsNotNull(initial.LookupTimestamp);
@@ -161,28 +161,28 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task AddSecondTest()
         {
-            await _writer.WriteAsync(new TrackedAircraft
+            await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            await _writer.WriteAsync(new TrackedAircraft
+            await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = SecondAddress,
                 FirstSeen = FirstSeen,
                 LastSeen = LastSeen
             });
 
-            var first = await _writer.GetAsync(x => x.Address == Address);
+            var first = await _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address);
             Assert.IsNotNull(first);
             Assert.IsGreaterThan(0, first.Id);
             Assert.AreEqual(Address, first.Address);
             Assert.AreEqual(FirstSeen, first.FirstSeen);
             Assert.AreEqual(LastSeen, first.LastSeen);
 
-            var second = await _writer.GetAsync(x => x.Address == SecondAddress);
+            var second = await _factory.TrackedAircraftWriter.GetAsync(x => x.Address == SecondAddress);
             Assert.IsNotNull(second);
             Assert.IsGreaterThan(0, second.Id);
             Assert.AreNotEqual(first.Id, second.Id);

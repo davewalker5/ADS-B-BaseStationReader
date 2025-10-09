@@ -1,4 +1,5 @@
 using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Api;
@@ -14,7 +15,6 @@ namespace BaseStationReader.Tests.API
         private const string Response = "{ \"results\": 1, \"data\": [ \"METAR EGLL 291150Z COR AUTO VRB03KT 9999 SCT028 16/09 Q1026 NOSIG\" ] }";
 
         private MockFileLogger _logger;
-        private BaseStationReaderDbContext _context;
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
 
@@ -33,9 +33,10 @@ namespace BaseStationReader.Tests.API
         {
             _logger = new();
             _client = new();
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var factory = new DatabaseManagementFactory(context, 0);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, _context, null, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings);
+                _logger, _client, factory, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, false);
         }
 
         [TestMethod]

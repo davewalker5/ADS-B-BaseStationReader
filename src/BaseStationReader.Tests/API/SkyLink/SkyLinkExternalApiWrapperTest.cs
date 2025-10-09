@@ -38,7 +38,6 @@ namespace BaseStationReader.Tests.API
 
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
-        private BaseStationReaderDbContext _context;
         private IDatabaseManagementFactory _factory;
 
         private readonly ExternalApiSettings _settings = new()
@@ -60,13 +59,16 @@ namespace BaseStationReader.Tests.API
         {
             var logger = new MockFileLogger();
             _client = new();
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var trackedAircraftWriter = new TrackedAircraftWriter(_context);
+
+            // Create a factory that can be used to query the objects that are created during lookup
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(context, 0);
+
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, _context, trackedAircraftWriter, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings);
+                logger, _client, _factory, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings, false);
 
             // Create a tracked aircraft that will match the first flight in the flights response
-            _ = await trackedAircraftWriter.WriteAsync(new()
+            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = AircraftAddress,
                 Callsign = Callsign,
@@ -74,11 +76,8 @@ namespace BaseStationReader.Tests.API
                 Status = TrackingStatus.Active
             });
 
-            // Create a factory that can be used to query the objects that are created during lookup
-            _factory = new DatabaseManagementFactory(_context);
-
             // Add the flight number mapping
-            _ = await _factory.ConfirmedMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, AirportICAO, null, null, AirportType.Unknown, FlightIATA, Callsign, "");
+            _ = await _factory.FlightNumberMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, AirportICAO, null, null, AirportType.Unknown, FlightIATA, Callsign, "");
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup

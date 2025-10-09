@@ -4,7 +4,7 @@ using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class AircraftLockManager : IAircraftLockManager
+    internal class AircraftLockManager : IAircraftLockManager
     {
         private readonly ITrackedAircraftWriter _writer;
         private readonly int _timeToLock;

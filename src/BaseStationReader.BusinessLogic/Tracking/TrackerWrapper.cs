@@ -94,21 +94,24 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_settings.EnableSqlWriter)
             {
                 // Configure the database context and management classes
-                BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var aircraftWriter = new TrackedAircraftWriter(context);
-                var positionWriter = new PositionWriter(context);
-                var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
+                var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
+                var factory = new DatabaseManagementFactory(context, _settings.TimeToLock);
 
                 // Configure the external API wrapper
                 var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
-                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, TrackerHttpClient.Instance, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
+                var apiWrapper = ExternalApiFactory.GetWrapperInstance(
+                    _logger,
+                    TrackerHttpClient.Instance,
+                    factory,
+                    serviceType,
+                    ApiEndpointType.ActiveFlights,
+                    _settings,
+                    false);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(
-                    aircraftWriter,
-                    positionWriter,
-                    aircraftLocker,
+                    factory,
                     apiWrapper,
                     _logger,
                     writerTimer,

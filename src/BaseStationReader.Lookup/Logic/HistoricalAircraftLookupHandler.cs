@@ -10,7 +10,6 @@ namespace BaseStationReader.Lookup.Logic
 {
     internal class HistoricalAircraftLookupHandler: LookupHandlerBase
     {
-        private readonly TrackedAircraftWriter _writer;
         private readonly ApiServiceType _serviceType;
 
         public HistoricalAircraftLookupHandler(
@@ -18,10 +17,8 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             DatabaseManagementFactory factory,
-            TrackedAircraftWriter writer,
             ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
-            _writer = writer;
             _serviceType = serviceType;
         }
 
@@ -34,15 +31,14 @@ namespace BaseStationReader.Lookup.Logic
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
             // Configure the external API wrapper
-            var trackedAircraftWriter = new TrackedAircraftWriter(Context);
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, trackedAircraftWriter, _serviceType, ApiEndpointType.HistoricalFlights, Settings);
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.HistoricalFlights, Settings, false);
 
             // Extract the lookup parameters from the command line
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
             var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
             // Retrieve a list of aircraft that haven't been looked up yet
-            var aircraft = await _writer.ListAsync(x => x.LookupTimestamp == null);
+            var aircraft = await Factory.TrackedAircraftWriter.ListAsync(x => x.LookupTimestamp == null);
             foreach (var a in aircraft)
             {
                 // Look this one up

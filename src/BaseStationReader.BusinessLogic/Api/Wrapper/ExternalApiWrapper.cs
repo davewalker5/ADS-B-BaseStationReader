@@ -6,6 +6,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Tracking;
+using CsvHelper;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
@@ -20,28 +21,26 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IAircraftApiWrapper _aircraftApiWrapper;
         private readonly IAirportWeatherApiWrapper _airportWeatherApiWrapper;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly ITrackedAircraftWriter _trackedAircraftWriter;
         private readonly IFlightNumberApiWrapper _flightNumberApiWrapper;
         private readonly ILookupEligibilityAssessor _lookupEligibilityAssessor;
 
         public ExternalApiWrapper(
             int maximumLookupAttempts,
+            bool ignoreTrackingStatus,
             ITrackerLogger logger,
-            IDatabaseManagementFactory factory,
-            ITrackedAircraftWriter trackedAircraftWriter)
+            IDatabaseManagementFactory factory)
         {
             _maximumLookupAttempts = maximumLookupAttempts;
             _logger = logger;
             _factory = factory;
             _register = new ExternalApiRegister(logger);
-            _airlineApiWrapper = new AirlineApiWrapper(logger, _register, _factory.AirlineManager);
-            _activeFlightApiWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager);
-            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, _factory.FlightManager, trackedAircraftWriter);
-            _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, _factory.AircraftManager, _factory.ModelManager, _factory.ManufacturerManager);
+            _airlineApiWrapper = new AirlineApiWrapper(logger, _register, factory.AirlineManager);
+            _activeFlightApiWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, factory.FlightManager);
+            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, factory.FlightManager, factory.TrackedAircraftWriter);
+            _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, factory.AircraftManager, factory.ModelManager, factory.ManufacturerManager);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
-            _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, factory, trackedAircraftWriter);
-            _trackedAircraftWriter = trackedAircraftWriter;
-            _lookupEligibilityAssessor = new LookupEligibilityAssessor(logger, _historicalFlightWrapper, _activeFlightApiWrapper, _factory, _trackedAircraftWriter, maximumLookupAttempts);
+            _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, factory, factory.TrackedAircraftWriter);
+            _lookupEligibilityAssessor = new LookupEligibilityAssessor(logger, _historicalFlightWrapper, _activeFlightApiWrapper, factory, maximumLookupAttempts, ignoreTrackingStatus);
         }
 
         /// <summary>
@@ -119,9 +118,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var haveFlight = flight != null;
 
             // Update the lookup properties on the tracked aircraft record
-            if (_trackedAircraftWriter != null)
+            if (_factory.TrackedAircraftWriter != null)
             {
-                await _trackedAircraftWriter.UpdateLookupProperties(address, haveFlight, _maximumLookupAttempts);
+                await _factory.TrackedAircraftWriter.UpdateLookupProperties(address, haveFlight, _maximumLookupAttempts);
             }
 
             // If the lookup was successful and sighting creation is requested, save the relationship
@@ -198,7 +197,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Load the tracked aircraft record
-            var aircraft = await _trackedAircraftWriter?.GetAsync(x => x.Address == address);
+            var aircraft = await _factory.TrackedAircraftWriter?.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
                 // This is an error as the eligibility criteria shouldn't allow us to get this far if there's aircraft record
