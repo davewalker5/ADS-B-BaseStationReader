@@ -28,6 +28,8 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IEnumerable<string> _arrivalAirportCodes;
 
         public event EventHandler<BatchWrittenEventArgs> BatchWritten;
+        
+        public int QueueSize { get => _queue.Count; }
 
         public QueuedWriter(
             ITrackedAircraftWriter aircraftWriter,

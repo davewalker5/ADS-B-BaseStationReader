@@ -15,7 +15,6 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
-using System.Threading.Tasks;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -140,6 +139,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public void Stop()
             => _tracker.Stop();
+
+        /// <summary>
+        /// Return the number of pending requests in the writer queue
+        /// </summary>
+        public int QueueSize => _writer.QueueSize;
 
         /// <summary>
         /// Process all pending entries in the queued writer queue
