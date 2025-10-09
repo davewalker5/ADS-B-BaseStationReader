@@ -21,7 +21,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the manufacturer import command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportManufacturers)[0];
             var manufacturerImporter = new ManufacturerImporter(Factory.ManufacturerManager, Logger);

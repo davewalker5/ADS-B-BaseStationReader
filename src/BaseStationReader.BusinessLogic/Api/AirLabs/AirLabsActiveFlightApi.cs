@@ -51,7 +51,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <param name="propertyType"></param>
         /// <param name="propertyValue"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlight(ApiProperty propertyType, string propertyValue)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty propertyType, string propertyValue)
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
             var properties = await MakeApiRequestAsync($"&hex={propertyValue}");
@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <param name="centreLongitude"></param>
         /// <param name="rangeNm"></param>
         /// <returns></returns>
-        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBox(
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBoxAsync(
             double centreLatitude,
             double centreLongitude,
             double rangeNm)

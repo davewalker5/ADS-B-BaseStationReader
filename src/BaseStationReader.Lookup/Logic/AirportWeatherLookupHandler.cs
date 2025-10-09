@@ -30,7 +30,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the live airport weather lookup command
         /// </summary>
         /// <returns></returns>
-        public async Task HandleMETAR()
+        public async Task HandleMetarAsync()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
@@ -38,7 +38,7 @@ namespace BaseStationReader.Lookup.Logic
             var icao = Parser.GetValues(CommandLineOptionType.METAR)[0];
 
             // Perform the lookup
-            var results = await _wrapper.LookupCurrentAirportWeather(icao);
+            var results = await _wrapper.LookupCurrentAirportWeatherAsync(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)
@@ -56,7 +56,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the live airport weather lookup command
         /// </summary>
         /// <returns></returns>
-        public async Task HandleTAF()
+        public async Task HandleTafAsync()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
@@ -64,7 +64,7 @@ namespace BaseStationReader.Lookup.Logic
             var icao = Parser.GetValues(CommandLineOptionType.TAF)[0];
 
             // Perform the lookup
-            var results = await _wrapper.LookupAirportWeatherForecast(icao);
+            var results = await _wrapper.LookupAirportWeatherForecastAsync(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)

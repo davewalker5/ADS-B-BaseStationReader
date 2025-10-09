@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao)
+        public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
             Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
             var result = await MakeApiRequestAsync(icao);

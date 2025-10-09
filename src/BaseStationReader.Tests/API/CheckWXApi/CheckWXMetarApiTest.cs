@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void GetWeatherTest()
         {
             _client.AddResponse(Response);
-            var results = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);
@@ -48,7 +48,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var results = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNull(results);
         }
@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var properties = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNull(properties);
         }

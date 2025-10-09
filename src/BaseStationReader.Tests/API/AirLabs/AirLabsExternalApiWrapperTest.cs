@@ -123,7 +123,7 @@ namespace BaseStationReader.Tests.API
         public async Task LookupActiveFlightsInBoundingBoxTest()
         {
             _client.AddResponse(FlightsInBoundingBoxResponse);
-            var flights = await _wrapper.LookupActiveFlightsInBoundingBox(0, 0, 0);
+            var flights = await _wrapper.LookupActiveFlightsInBoundingBoxAsync(0, 0, 0);
 
             Assert.IsNotNull(flights);
             Assert.HasCount(2, flights);

@@ -26,7 +26,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the live aircraft lookup command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 

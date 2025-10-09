@@ -57,7 +57,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <param name="propertyValue"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlight(ApiProperty propertyType, string propertyValue)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty propertyType, string propertyValue)
         {
             Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
             var properties = await MakeApiRequestAsync($"/{propertyValue}");
@@ -73,7 +73,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
 #pragma warning disable CS1998
-        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBox(double centreLatitude, double centreLongitude, double rangeNm)
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBoxAsync(double centreLatitude, double centreLongitude, double rangeNm)
             => null;
 #pragma warning restore CS1998
 

@@ -27,7 +27,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the command to lookup flights within a defined bounding box
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             // Get the search parameters from the command line
             var filePath = Parser.GetValues(CommandLineOptionType.FlightsInRange)[1];
@@ -44,7 +44,7 @@ namespace BaseStationReader.Lookup.Logic
             var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
 
             // Perform the lookup
-            var flights = await wrapper.LookupActiveFlightsInBoundingBox(
+            var flights = await wrapper.LookupActiveFlightsInBoundingBoxAsync(
                 Settings.ReceiverLatitude.Value,
                 Settings.ReceiverLongitude.Value,
                 rangeNm);

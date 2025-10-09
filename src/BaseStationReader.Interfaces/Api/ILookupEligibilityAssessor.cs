@@ -5,6 +5,6 @@ namespace BaseStationReader.Interfaces.Api
 {
     public interface ILookupEligibilityAssessor
     {
-        Task<EligibilityResult> IsEligibleForLookup(ApiEndpointType type, string address);
+        Task<EligibilityResult> IsEligibleForLookupAsync(ApiEndpointType type, string address);
     }
 }
