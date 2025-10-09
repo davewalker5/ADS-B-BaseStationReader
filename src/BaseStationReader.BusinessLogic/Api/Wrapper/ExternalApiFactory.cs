@@ -33,6 +33,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             {(ApiServiceType.AirLabs, ApiEndpointType.Airlines), typeof(AirLabsAirlinesApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Aircraft), typeof(AirLabsAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights), typeof(SkyLinkActiveFlightApi) },
+            {(ApiServiceType.SkyLink, ApiEndpointType.HistoricalFlights), typeof(SkyLinkHistoricalFlightApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Airlines), typeof(SkyLinkAirlinesApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Aircraft), typeof(SkyLinkAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.METAR), typeof(SkyLinkMetarApi) },

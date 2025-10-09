@@ -16,13 +16,13 @@ namespace BaseStationReader.BusinessLogic.Api
         private readonly ITrackerHttpClient _client;
 
         protected ITrackerLogger Logger { get; private set; }
-        protected IDatabaseManagementFactory _factory;
+        protected IDatabaseManagementFactory Factory { get; private set; }
 
         protected ExternalApiBase(ITrackerLogger logger, ITrackerHttpClient client, IDatabaseManagementFactory factory)
         {
             Logger = logger;
             _client = client;
-            _factory = factory;
+            Factory = factory;
         }
 
         /// <summary>

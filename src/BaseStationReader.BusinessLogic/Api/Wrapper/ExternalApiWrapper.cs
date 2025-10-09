@@ -5,8 +5,6 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Tracking;
-using CsvHelper;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {

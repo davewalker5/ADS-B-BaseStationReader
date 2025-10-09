@@ -50,6 +50,19 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             => _supportedProperties.Contains(propertyType);
 
         /// <summary>
+        /// Look up a flight given the flight number
+        /// </summary>
+        /// <param name="flightNumber"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(string flightNumber)
+        {
+            Logger.LogMessage(Severity.Info, $"Looking up active flight using flight number {flightNumber}");
+            var properties = await MakeApiRequestAsync($"/{flightNumber}");
+            return properties?.Count > 0 ? properties : null;
+        }
+
+        /// <summary>
         /// Make a request to the specified URL
         /// </summary>
         /// <param name="parameters"></param>

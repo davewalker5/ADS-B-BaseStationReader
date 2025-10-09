@@ -20,16 +20,12 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <summary>
         /// Look up a flight given the flight number
         /// </summary>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
+        /// <param name="_"></param>
+        /// <param name="flightNumber"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty propertyType, string propertyValue)
-        {
-            Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
-            var properties = await MakeApiRequestAsync($"/{propertyValue}");
-            return properties?.Count > 0 ? properties : null;
-        }
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty _, string flightNumber)
+            => await LookupFlightByNumberAsync(flightNumber);
 
         /// <summary>
         /// The SkyLink API doesn't implement the flights in bounding box endpoint
