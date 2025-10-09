@@ -63,7 +63,7 @@ namespace BaseStationReader.Tests.Database
             var aircraft = await _writer.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
-            Assert.IsTrue(aircraft.First().Id > 0);
+            Assert.IsGreaterThan(0, aircraft.First().Id);
             Assert.AreEqual(Address, aircraft.First().Address);
             Assert.AreEqual(FirstSeen, aircraft.First().FirstSeen);
             Assert.AreEqual(LastSeen, aircraft.First().LastSeen);

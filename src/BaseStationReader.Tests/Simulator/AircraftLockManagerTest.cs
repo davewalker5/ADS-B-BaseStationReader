@@ -64,7 +64,7 @@ namespace BaseStationReader.Tests.Simulator
                 LastSeen = DateTime.Now.AddMinutes(-15)
             });
 
-            Assert.IsTrue(aircraft.Id > 0);
+            Assert.IsGreaterThan(0, aircraft.Id);
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             var active = await _aircraftLocker.GetActiveAircraftAsync(Address);

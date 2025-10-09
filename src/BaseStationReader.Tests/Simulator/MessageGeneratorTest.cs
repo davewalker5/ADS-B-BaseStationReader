@@ -38,8 +38,6 @@ namespace BaseStationReader.Tests.Simulator
 
             Assert.AreEqual(MessageType.MSG, message.MessageType);
             Assert.AreEqual(aircraft.Address, message.Address);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -54,8 +52,6 @@ namespace BaseStationReader.Tests.Simulator
 
             Assert.AreEqual(MessageType.MSG, message.MessageType);
             Assert.AreEqual(aircraft.Address, message.Address);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -66,8 +62,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.AreEqual(MessageType.MSG, message.MessageType);
             Assert.AreEqual(TransmissionType.Identification, message.TransmissionType);
             Assert.AreEqual(aircraft.Address, message.Address);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -83,8 +77,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.IsNotNull(message.Track);
             Assert.IsNotNull(message.Latitude);
             Assert.IsNotNull(message.Longitude);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -98,8 +90,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.IsNotNull(message.Altitude);
             Assert.IsNotNull(message.Latitude);
             Assert.IsNotNull(message.Longitude);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -113,8 +103,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.IsNotNull(message.GroundSpeed);
             Assert.IsNotNull(message.Track);
             Assert.IsNotNull(message.VerticalRate);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -126,8 +114,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.AreEqual(TransmissionType.SurveillanceAlt, message.TransmissionType);
             Assert.AreEqual(aircraft.Address, message.Address);
             Assert.IsNotNull(message.Altitude);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -140,8 +126,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.AreEqual(aircraft.Address, message.Address);
             Assert.IsNotNull(message.Altitude);
             Assert.IsNotNull(message.Squawk);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -153,8 +137,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.AreEqual(TransmissionType.AirToAir, message.TransmissionType);
             Assert.AreEqual(aircraft.Address, message.Address);
             Assert.IsNotNull(message.Altitude);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
 
         [TestMethod]
@@ -165,8 +147,6 @@ namespace BaseStationReader.Tests.Simulator
             Assert.AreEqual(MessageType.MSG, message.MessageType);
             Assert.AreEqual(TransmissionType.AllCallReply, message.TransmissionType);
             Assert.AreEqual(aircraft.Address, message.Address);
-            Assert.IsNotNull(message.Generated);
-            Assert.IsNotNull(message.LastSeen);
         }
     }
 }

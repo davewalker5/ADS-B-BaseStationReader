@@ -5,7 +5,6 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
@@ -107,7 +106,7 @@ namespace BaseStationReader.Tests.Database
 
             var aircraft = Task.Run(() => _aircraftWriter.ListAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.AreEqual(1, aircraft.Count);
+            Assert.HasCount(1, aircraft);
             Assert.AreEqual(added.Id, aircraft[0].Id);
             Assert.AreEqual(Address, aircraft[0].Address);
             Assert.AreEqual(Altitude, aircraft[0].Altitude);
@@ -144,7 +143,7 @@ namespace BaseStationReader.Tests.Database
 
             var position = Task.Run(() => _positionWriter.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
             Assert.IsNotNull(position);
-            Assert.IsTrue(position.Id > 0);
+            Assert.IsGreaterThan(0, position.Id);
             Assert.AreEqual(aircraft.Id, position.AircraftId);
             Assert.AreEqual(Altitude, position.Altitude);
             Assert.AreEqual(Latitude, position.Latitude);
@@ -163,7 +162,7 @@ namespace BaseStationReader.Tests.Database
 
             var added = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(added);
-            Assert.IsTrue(added.Id > 0);
+            Assert.IsGreaterThan(0, added.Id);
             Assert.AreNotEqual(TrackingStatus.Locked, added.Status);
 
             Push(new TrackedAircraft
@@ -185,8 +184,8 @@ namespace BaseStationReader.Tests.Database
 
             var aircraft = Task.Run(() => _aircraftWriter.ListAsync(x => true)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.AreEqual(2, aircraft.Count);
-            Assert.IsTrue(aircraft[0].Id > 0);
+            Assert.HasCount(2, aircraft);
+            Assert.IsGreaterThan(0, aircraft[0].Id);
             Assert.AreNotEqual(added.Id, aircraft[0].Id);
             Assert.AreEqual(added.Id, aircraft[1].Id);
         }
@@ -203,7 +202,7 @@ namespace BaseStationReader.Tests.Database
 
             var aircraft = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.IsTrue(aircraft.Id > 0);
+            Assert.IsGreaterThan(0, aircraft.Id);
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer.Stop();
@@ -245,7 +244,7 @@ namespace BaseStationReader.Tests.Database
             }
             stopwatch.Stop();
 
-            Assert.IsTrue(stopwatch.ElapsedMilliseconds <= MaximumWriterWaitTimeMs);
+            Assert.IsLessThanOrEqualTo(MaximumWriterWaitTimeMs, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
