@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void GetActiveFlightTest()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.AircraftAddress, Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
 
             Assert.IsNotNull(properties);
             Assert.HasCount(10, properties);
@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.AircraftAddress, Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
 
             Assert.IsNull(properties);
         }
@@ -66,7 +66,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void ClientExceptionTest()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupFlight(ApiProperty.AircraftAddress, Address)).Result;
+            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
 
             Assert.IsNull(properties);
         }

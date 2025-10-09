@@ -28,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.ConvertList, false, "--convert-list", "-ccl", "Convert a list of callsigns supplied in a text file to flight numbers export to a CSV file", 2, 2);
             Add(CommandLineOptionType.ConvertCallsigns, false, "--convert-callsigns", "-cc", "Convert tracked flight callsigns to flight numbers and export to a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportFlightNumberMappings, false, "--import-mappings", "-im", "Import a set of callsign/flight number mappings from a CSV file", 1, 1);
+            Add(CommandLineOptionType.ExportSchedule, false, "--export-schedule", "-es", "Export schedule information for an airport to a JSON file", 1, 4);
         }
     }
 }

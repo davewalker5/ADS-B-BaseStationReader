@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.API
         public void GetWeatherTest()
         {
             _client.AddResponse(Response);
-            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeather(AirportICAO)).Result;
+            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);

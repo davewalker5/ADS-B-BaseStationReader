@@ -7,6 +7,7 @@
         ActiveFlights,
         HistoricalFlights,
         METAR,
+        Schedules,
         TAF
     }
 }

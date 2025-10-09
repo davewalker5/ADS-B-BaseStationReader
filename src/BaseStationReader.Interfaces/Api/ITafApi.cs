@@ -2,6 +2,6 @@ namespace BaseStationReader.Interfaces.Api
 {
     public interface ITafApi : IExternalApi
     {
-        Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao);
+        Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao);
     }
 }

@@ -32,7 +32,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle callsign conversion for a single callsign supplied on the command line
         /// </summary>
         /// <returns></returns>
-        public async Task HandleForSingleCallsign()
+        public async Task HandleForSingleCallsignAsync()
         {
             // Exctract the callsign from the command line arguments and infer a flight number
             var callsign = Parser.GetValues(CommandLineOptionType.ConvertSingle)[0];
@@ -45,7 +45,7 @@ namespace BaseStationReader.Lookup.Logic
         /// line and export the results
         /// </summary>
         /// <returns></returns>
-        public async Task HandleForCallsignList()
+        public async Task HandleForCallsignListAsync()
         {
             // Exctract the callsign file and export CSV file paths from the command line arguments
             var callsignFilePath = Parser.GetValues(CommandLineOptionType.ConvertList)[0];
@@ -56,7 +56,7 @@ namespace BaseStationReader.Lookup.Logic
             if (callsigns.Length > 0)
             {
                 // Perform the conversion and export the results
-                var numbers = await _wrapper.GetFlightNumbersFromCallsigns(callsigns);
+                var numbers = await _wrapper.GetFlightNumbersFromCallsignsAsync(callsigns);
                 new FlightNumberExporter().Export(numbers, csvFilePath);
             }
             else
@@ -69,7 +69,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle callsign conversion for currently tracked aircraft and export for tracked aircraft
         /// </summary>
         /// <returns></returns>
-        public async Task HandleForTrackedAircraft()
+        public async Task HandleForTrackedAircraftAsync()
         {
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 

@@ -14,6 +14,7 @@
         ConvertSingle,
         Departure,
         EnableSqlWriter,
+        ExportSchedule,
         FlightsInRange,
         Help,
         HistoricalApi,

@@ -42,7 +42,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="type"></param>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<EligibilityResult> IsEligibleForLookup(ApiEndpointType type, string address)
+        public async Task<EligibilityResult> IsEligibleForLookupAsync(ApiEndpointType type, string address)
         {
             // Check the aircraft address is valid
             if (!_addressRegex.IsMatch(address))

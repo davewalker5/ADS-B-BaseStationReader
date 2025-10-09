@@ -21,7 +21,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the model import command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportModels)[0];
             var modelImporter = new ModelImporter(Factory.ManufacturerManager, Factory.ModelManager, Logger);

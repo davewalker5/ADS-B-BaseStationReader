@@ -21,7 +21,7 @@ namespace BaseStationReader.Lookup.Logic
         /// Handle the airline import command
         /// </summary>
         /// <returns></returns>
-        public async Task Handle()
+        public async Task HandleAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportAirlines)[0];
             var airlineImporter = new AirlineImporter(Factory.AirlineManager, Logger);

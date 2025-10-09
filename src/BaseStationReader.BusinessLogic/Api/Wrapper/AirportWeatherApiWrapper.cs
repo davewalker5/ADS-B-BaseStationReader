@@ -24,7 +24,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao)
+        public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
             // Get the API instance
             if (_register.GetInstance(ApiEndpointType.METAR) is not IMetarApi api) return null;
@@ -32,7 +32,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _logger.LogMessage(Severity.Info, $"Looking up weather for airport ICAO = '{icao}'");
 
             // Lookup the weather for the requested airport
-            var results = await api.LookupCurrentAirportWeather(icao);
+            var results = await api.LookupCurrentAirportWeatherAsync(icao);
 
             // Log the results
             LogWeatherReports(icao, results);
@@ -45,7 +45,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao)
+        public async Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao)
         {
             // Get the API instance
             if (_register.GetInstance(ApiEndpointType.TAF) is not ITafApi api) return null;
@@ -53,7 +53,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _logger.LogMessage(Severity.Info, $"Looking up weather for airport ICAO = '{icao}'");
 
             // Lookup the weather for the requested airport
-            var results = await api.LookupAirportWeatherForecast(icao);
+            var results = await api.LookupAirportWeatherForecastAsync(icao);
 
             // Log the results
             LogWeatherReports(icao, results);

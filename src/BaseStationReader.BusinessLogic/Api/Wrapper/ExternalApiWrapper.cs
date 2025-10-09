@@ -67,8 +67,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="callsigns"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsigns(IEnumerable<string> callsigns, DateTime? timestamp = null)
-            => await _flightNumberApiWrapper.GetFlightNumbersFromCallsigns(callsigns);
+        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsignsAsync(IEnumerable<string> callsigns, DateTime? timestamp = null)
+            => await _flightNumberApiWrapper.GetFlightNumbersFromCallsignsAsync(callsigns);
 
         /// <summary>
         /// Get flight numbers for aircraft that are currently being tracked
@@ -95,7 +95,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _logger.LogMessage(Severity.Info, $"Performing aircraft lookup : API={type}, Address={address}, Create Sighting={createSighting}");
 
             // Check the aircraft is eligible for lookup
-            var eligible = await _lookupEligibilityAssessor.IsEligibleForLookup(type, address);
+            var eligible = await _lookupEligibilityAssessor.IsEligibleForLookupAsync(type, address);
             if (!eligible.Eligible)
             {
                 // An aircraft that's not eligible for lookup now may become eligible as more messages are
@@ -144,27 +144,27 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="centreLongitude"></param>
         /// <param name="rangeNm"></param>
         /// <returns></returns>
-        public async Task<List<Flight>> LookupActiveFlightsInBoundingBox(
+        public async Task<List<Flight>> LookupActiveFlightsInBoundingBoxAsync(
             double centreLatitude,
             double centreLongitude,
             double rangeNm)
-            => await _activeFlightApiWrapper.LookupFlightsInBoundingBox(centreLatitude, centreLongitude, rangeNm);
+            => await _activeFlightApiWrapper.LookupFlightsInBoundingBoxAsync(centreLatitude, centreLongitude, rangeNm);
 
         /// <summary>
         /// Lookup the current weather for an airport
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupCurrentAirportWeather(string icao)
-            => await _airportWeatherApiWrapper.LookupCurrentAirportWeather(icao);
+        public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
+            => await _airportWeatherApiWrapper.LookupCurrentAirportWeatherAsync(icao);
 
         /// <summary>
         /// Lookup the weather forecast for an airport
         /// </summary>
         /// <param name="icao"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> LookupAirportWeatherForecast(string icao)
-            => await _airportWeatherApiWrapper.LookupAirportWeatherForecast(icao);
+        public async Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao)
+            => await _airportWeatherApiWrapper.LookupAirportWeatherForecastAsync(icao);
 
         /// <summary>
         /// Lookup a flight, detecting the right API instance and key for flight lookup
