@@ -10,7 +10,6 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -97,11 +96,21 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task FlushQueue()
         {
-            do
-            {
-                await ProcessBatch(int.MaxValue);
-            }
-            while (!_queue.IsEmpty);
+            var initialQueueSize = _queue.Count;
+
+            // Time how long the batch processing
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            // Process pending tracked aircraft, position update and API lookup requests
+            await ProcessPending<TrackedAircraft>();
+            await ProcessPending<AircraftPosition>();
+            await ProcessPending<ApiLookupRequest>();
+
+            // Stop the timer
+            stopwatch.Stop();
+
+            // Notify subscribers that a batch has been processed
+            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -145,12 +154,40 @@ namespace BaseStationReader.BusinessLogic.Database
                     break;
                 }
 
-                // Write the dequeued object to the database
-                await HandleDequeuedObjectAsync(queued);
+                // Process the dequeued request
+                await HandleDequeuedObjectAsync(queued, true);
             }
             stopwatch.Stop();
-            var finalQueueSize = _queue.Count;
 
+            // Notify subscribers that a batch has been processed
+            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+        }
+
+        /// <summary>
+        /// Process all pending requests of type T
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        private async Task ProcessPending<T>()
+        {
+            // Extract a list of requests from the queue
+            var requests = _queue.OfType<T>();
+
+            // Iterate over and process the requests
+            foreach (var request in requests)
+            {
+                await HandleDequeuedObjectAsync(request, false);
+            }
+        }
+
+        /// <summary>
+        /// Notify subscribers that a batch has been processed from the queue
+        /// </summary>
+        /// <param name="initialQueueSize"></param>
+        /// <param name="finalQueueSize"></param>
+        /// <param name="elapsedMillisconds"></param>
+        private void NotifyBatchWrittenSubscribers(int initialQueueSize, int finalQueueSize, long elapsedMillisconds)
+        {
             try
             {
                 // Notify subscribers that a batch has been written
@@ -158,7 +195,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 {
                     InitialQueueSize = initialQueueSize,
                     FinalQueueSize = finalQueueSize,
-                    Duration = stopwatch.ElapsedMilliseconds
+                    Duration = elapsedMillisconds
                 });
             }
             catch (Exception ex)
@@ -173,14 +210,15 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Receive a de-queued object, determine its type and use the handler to handle it
         /// </summary>
         /// <param name="queued"></param>
-        private async Task HandleDequeuedObjectAsync(object queued)
+        /// <param name="allowRequeues"></param>
+        private async Task HandleDequeuedObjectAsync(object queued, bool allowRequeues)
         {
             try
             {
                 var objectId = RuntimeHelpers.GetHashCode(queued);
                 if (await WriteTrackedAircraft(queued, objectId)) return;
                 if (await WriteAircraftPosition(queued, objectId)) return;
-                await ProcessAPILookupRequest(queued, objectId);
+                await ProcessAPILookupRequest(queued, objectId, allowRequeues);
             }
             catch (Exception ex)
             {
@@ -262,9 +300,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
+        /// <param name="allowRequeues"></param>
         /// <returns></returns>
         [ExcludeFromCodeCoverage]
-        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
+        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId, bool allowRequeues)
         {
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an API lookup request");
 
@@ -305,7 +344,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Requeue the reques on unsuccessful lookups. The API wrapper will return false for the requeue indicator
             // if there's no point
-            if (!result.Successful && result.Requeue)
+            if (allowRequeues && !result.Successful && result.Requeue)
             {
                 _queue.Enqueue(request);
             }

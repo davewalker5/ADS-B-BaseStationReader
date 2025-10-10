@@ -109,9 +109,7 @@ namespace BaseStationReader.Terminal
         /// <returns></returns>
         private static async Task<bool> ShowTrackingTable(LiveDisplayContext ctx)
         {
-            // If CTRL-C is pressed, capture the keypress
             bool cancelled = false;
-            Console.CancelKeyPress += (s, e) => { e.Cancel = true; cancelled = true; };
 
             // Reset the elapsed time since the last update
             int elapsed = 0;

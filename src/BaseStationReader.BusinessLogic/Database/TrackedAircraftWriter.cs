@@ -165,9 +165,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// that are eligible for lookup:
         /// 
         /// 1. The address is populated
-        /// 2. A lookup hasn't already been completed successfully
-        /// 3. The record isn't locked
-        /// 4. The maximum lookup attempts haven't been reached
+        /// 2. The callsign is populated
+        /// 3. A lookup hasn't already been completed successfully
+        /// 4. The record isn't locked
+        /// 5. The maximum lookup attempts haven't been reached
         /// 
         /// The locking state criterion is necessary as it ensures a given aircraft address is unique in
         /// the returned results (an aircraft can only appear once in a non-locked state but may occur
@@ -179,6 +180,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             return x =>
                 !string.IsNullOrEmpty(x.Address) &&
+                !string.IsNullOrEmpty(x.Callsign) &&
                 (x.LookupTimestamp == null) &&
                 (x.Status != TrackingStatus.Locked) &&
                 (maximumLookups == 0 || x.LookupAttempts < maximumLookups);

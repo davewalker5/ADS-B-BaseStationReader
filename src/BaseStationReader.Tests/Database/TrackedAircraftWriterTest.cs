@@ -146,8 +146,10 @@ namespace BaseStationReader.Tests.Database
             var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
+                Callsign = Callsign,
                 FirstSeen = FirstSeen,
-                LastSeen = LastSeen
+                LastSeen = LastSeen,
+                Status = TrackingStatus.Active
             });
 
             Assert.IsNull(initial.LookupTimestamp);
