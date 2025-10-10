@@ -5,7 +5,6 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
@@ -17,23 +16,20 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IHistoricalFlightApiWrapper _historicalFlightApiWrapper;
         private readonly IActiveFlightApiWrapper _activeFlightApiWrapper;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly ITrackedAircraftWriter _trackedAircraftWriter;
-        private readonly int _maximumLookupAttempts;
+        private readonly bool _ignoreTrackingStatus;
 
         public LookupEligibilityAssessor(
             ITrackerLogger logger,
             IHistoricalFlightApiWrapper historicalFlightApiWrapper,
             IActiveFlightApiWrapper activeFlightApiWrapper,
             IDatabaseManagementFactory factory,
-            ITrackedAircraftWriter trackedAircraftWriter,
-            int maximumLookupAttempts)
+            bool ignoreTrackingStatus)
         {
             _logger = logger;
             _historicalFlightApiWrapper = historicalFlightApiWrapper;
             _activeFlightApiWrapper = activeFlightApiWrapper;
-            _trackedAircraftWriter = trackedAircraftWriter;
             _factory = factory;
-            _maximumLookupAttempts = maximumLookupAttempts;
+            _ignoreTrackingStatus = ignoreTrackingStatus;
         }
 
         /// <summary>
@@ -65,18 +61,18 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return new(true, true);
             }
 
-            // To proceed, we need a tracked aircraft writer
-            if (_trackedAircraftWriter == null)
+            // If tracking status is to be ignored, the aircraft is eligible at this point
+            if (_ignoreTrackingStatus)
             {
-                _logger.LogMessage(Severity.Warning, $"No tracked aircraft writer available");
-                return new(false, false);
+                _logger.LogMessage(Severity.Debug, $"Ignoring eligibility criteria based on aircraft tracking status");
+                return new(true, true);
             }
 
             // Load the tracked aircraft record for further validation
-            var aircraft = await _trackedAircraftWriter.GetAsync(x => x.Address == address);
+            var aircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Aircraft is not tracked");
+                _logger.LogMessage(Severity.Warning, $"Aircraft is not a valid candidate for lookup");
                 return new(false, false);
             }
 
@@ -89,7 +85,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Attempt to load the flight number/callsign mapping for the aircraft
-            var mapping = await _factory.ConfirmedMappingManager.GetAsync(x => x.Callsign == aircraft.Callsign);
+            var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == aircraft.Callsign);
             if (mapping == null)
             {
                 _logger.LogMessage(Severity.Warning, $"Flight number mapping for callsign {aircraft.Callsign} not found");

@@ -19,7 +19,7 @@ namespace BaseStationReader.Tests.DataExchange
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
-            Assert.IsTrue(info.Length > 0);
+            Assert.IsGreaterThan(0, info.Length);
 
             File.Delete(filepath);
         }
@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.DataExchange
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
-            Assert.IsTrue(info.Length > 0);
+            Assert.IsGreaterThan(0, info.Length);
 
             File.Delete(filepath);
         }
@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests.DataExchange
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
-            Assert.IsTrue(info.Length > 0);
+            Assert.IsGreaterThan(0, info.Length);
 
             File.Delete(filepath);
         }
@@ -64,7 +64,7 @@ namespace BaseStationReader.Tests.DataExchange
 
             var info = new FileInfo(filepath);
             Assert.AreEqual(info.FullName, filepath);
-            Assert.IsTrue(info.Length > 0);
+            Assert.IsGreaterThan(0, info.Length);
 
             File.Delete(filepath);
         }

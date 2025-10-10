@@ -1,11 +1,9 @@
 ﻿using BaseStationReader.Data;
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Tests.Database
@@ -28,27 +26,21 @@ namespace BaseStationReader.Tests.Database
         private const decimal VerticalRate = 2624.0M;
         private const string Squawk = "7710";
 
-        private BaseStationReaderDbContext _context = null;
-        private ITrackedAircraftWriter _aircraftWriter = null;
-        private IPositionWriter _positionWriter = null;
-        private IAircraftLockManager _aircraftLocker = null;
+        private IDatabaseManagementFactory _factory = null;
         private QueuedWriter _writer = null;
         private bool _queueProcessed = false;
 
         [TestInitialize]
         public async Task TestInitialise()
         {
-            // Create an in-memory database context, the two writers and a lock manager
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _aircraftWriter = new TrackedAircraftWriter(_context);
-            _positionWriter = new PositionWriter(_context);
-            _aircraftLocker = new AircraftLockManager(_aircraftWriter, TimeToLockMs);
+            // Create a database management factory to supply entity management classes
+            var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
 
             // Create a queued writer, wire up the event handlers and start it
-            var logger = new MockFileLogger();
             var writerTimer = new MockTrackerTimer(WriterInterval);
-            _writer = new QueuedWriter(
-                _aircraftWriter, _positionWriter, _aircraftLocker, null, logger, writerTimer, [], [], WriterBatchSize, true);
+            _writer = new QueuedWriter(_factory, null, logger, writerTimer, [], [], WriterBatchSize, true);
             _writer.BatchWritten += OnBatchWritten;
 
             // Start the writer
@@ -73,7 +65,7 @@ namespace BaseStationReader.Tests.Database
 
             WaitForQueueToEmpty();
 
-            var aircraft = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
+            var aircraft = Task.Run(() => _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
             Assert.AreEqual(Address, aircraft.Address);
         }
@@ -81,7 +73,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public void UpdateExistingAircraftTest()
         {
-            var added =  Task.Run(() => _aircraftWriter.WriteAsync(new TrackedAircraft
+            var added =  Task.Run(() => _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -105,9 +97,9 @@ namespace BaseStationReader.Tests.Database
 
             WaitForQueueToEmpty();
 
-            var aircraft = Task.Run(() => _aircraftWriter.ListAsync(x => x.Address == Address)).Result;
+            var aircraft = Task.Run(() => _factory.TrackedAircraftWriter.ListAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.AreEqual(1, aircraft.Count);
+            Assert.HasCount(1, aircraft);
             Assert.AreEqual(added.Id, aircraft[0].Id);
             Assert.AreEqual(Address, aircraft[0].Address);
             Assert.AreEqual(Altitude, aircraft[0].Altitude);
@@ -124,7 +116,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public void AddActivePositionTest()
         {
-            var aircraft = Task.Run(() => _aircraftWriter.WriteAsync(new TrackedAircraft
+            var aircraft = Task.Run(() => _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
@@ -142,9 +134,9 @@ namespace BaseStationReader.Tests.Database
 
             WaitForQueueToEmpty();
 
-            var position = Task.Run(() => _positionWriter.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
+            var position = Task.Run(() => _factory.PositionWriter.GetAsync(x => x.AircraftId == aircraft.Id)).Result;
             Assert.IsNotNull(position);
-            Assert.IsTrue(position.Id > 0);
+            Assert.IsGreaterThan(0, position.Id);
             Assert.AreEqual(aircraft.Id, position.AircraftId);
             Assert.AreEqual(Altitude, position.Altitude);
             Assert.AreEqual(Latitude, position.Latitude);
@@ -154,16 +146,16 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public void StaleRecordIsLockedOnUpdateTest()
         {
-            Task.Run(() => _aircraftWriter.WriteAsync(new TrackedAircraft
+            Task.Run(() => _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-20),
                 LastSeen = DateTime.Now.AddMinutes(-15)
             })).Wait();
 
-            var added = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
+            var added = Task.Run(() => _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(added);
-            Assert.IsTrue(added.Id > 0);
+            Assert.IsGreaterThan(0, added.Id);
             Assert.AreNotEqual(TrackingStatus.Locked, added.Status);
 
             Push(new TrackedAircraft
@@ -183,10 +175,10 @@ namespace BaseStationReader.Tests.Database
 
             WaitForQueueToEmpty();
 
-            var aircraft = Task.Run(() => _aircraftWriter.ListAsync(x => true)).Result;
+            var aircraft = Task.Run(() => _factory.TrackedAircraftWriter.ListAsync(x => true)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.AreEqual(2, aircraft.Count);
-            Assert.IsTrue(aircraft[0].Id > 0);
+            Assert.HasCount(2, aircraft);
+            Assert.IsGreaterThan(0, aircraft[0].Id);
             Assert.AreNotEqual(added.Id, aircraft[0].Id);
             Assert.AreEqual(added.Id, aircraft[1].Id);
         }
@@ -194,23 +186,23 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task NewSessionLocksAllTest()
         {
-            Task.Run(() => _aircraftWriter.WriteAsync(new TrackedAircraft
+            Task.Run(() => _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = DateTime.Now.AddMinutes(-10),
                 LastSeen = DateTime.Now
             })).Wait();
 
-            var aircraft = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
+            var aircraft = Task.Run(() => _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(aircraft);
-            Assert.IsTrue(aircraft.Id > 0);
+            Assert.IsGreaterThan(0, aircraft.Id);
             Assert.AreNotEqual(TrackingStatus.Locked, aircraft.Status);
 
             _writer.Stop();
             await _writer.StartAsync();
             WaitForQueueToEmpty();
 
-            var locked = Task.Run(() => _aircraftWriter.GetAsync(x => x.Address == Address)).Result;
+            var locked = Task.Run(() => _factory.TrackedAircraftWriter.GetAsync(x => x.Address == Address)).Result;
             Assert.IsNotNull(locked);
             Assert.AreEqual(aircraft.Id, locked.Id);
             Assert.AreEqual(TrackingStatus.Locked, aircraft.Status);
@@ -245,7 +237,7 @@ namespace BaseStationReader.Tests.Database
             }
             stopwatch.Stop();
 
-            Assert.IsTrue(stopwatch.ElapsedMilliseconds <= MaximumWriterWaitTimeMs);
+            Assert.IsLessThanOrEqualTo(MaximumWriterWaitTimeMs, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>

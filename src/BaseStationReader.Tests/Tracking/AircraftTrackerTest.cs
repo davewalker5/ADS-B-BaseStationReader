@@ -7,7 +7,6 @@ using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Entities;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Tracking
 {
@@ -109,7 +108,7 @@ namespace BaseStationReader.Tests.Tracking
             }
 
             // The actual notifications list should now be equal to the length of the expected list
-            Assert.AreEqual(expected.Count, _notifications.Count);
+            Assert.HasCount(expected.Count, _notifications);
 
             // Now confirm the notifications we do have arrived in the right order with the correct aircraft data
             for (int i = 0; i < expected.Count; i++)

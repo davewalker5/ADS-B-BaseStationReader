@@ -7,7 +7,7 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    public class PositionWriter : IPositionWriter
+    internal class PositionWriter : IPositionWriter
     {
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _positionProperties = typeof(AircraftPosition)

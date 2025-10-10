@@ -41,7 +41,7 @@ namespace BaseStationReader.Lookup.Logic
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
             // Configure the external API wrappe
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.ActiveFlights, Settings, true);
 
             // Perform the lookup
             var flights = await wrapper.LookupActiveFlightsInBoundingBoxAsync(

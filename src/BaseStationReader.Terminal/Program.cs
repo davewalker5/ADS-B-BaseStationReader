@@ -92,6 +92,13 @@ namespace BaseStationReader.Terminal
                         });
                 }
                 while (_settings.RestartOnTimeout && !cancelled);
+
+                // Process all pending requests in the queued writer queue
+                if (_settings.EnableSqlWriter)
+                {
+                    Console.WriteLine($"Processing {_wrapper.QueueSize} pending database updates and API requests ...");
+                    await _wrapper.FlushQueue();
+                }
             }
         }
 
@@ -102,9 +109,7 @@ namespace BaseStationReader.Terminal
         /// <returns></returns>
         private static async Task<bool> ShowTrackingTable(LiveDisplayContext ctx)
         {
-            // If CTRL-C is pressed, capture the keypress
             bool cancelled = false;
-            Console.CancelKeyPress += (s, e) => { e.Cancel = true; cancelled = true; };
 
             // Reset the elapsed time since the last update
             int elapsed = 0;
@@ -137,9 +142,6 @@ namespace BaseStationReader.Terminal
 
             // Stop the wrapper
             _wrapper.Stop();
-
-            // Process all pending requests in the queued writer queue
-            await _wrapper.FlushQueue();
 
             return cancelled;
         }

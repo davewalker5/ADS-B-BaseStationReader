@@ -5,6 +5,7 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -31,15 +32,25 @@ namespace BaseStationReader.Lookup.Logic
             Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
 
             // Configure the external API wrapper
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.ActiveFlights, Settings, true);
 
             // Extract the lookup parameters from the command line
             var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
             var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
+            // Create the lookup request
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = address,
+                DepartureAirportCodes = departureAirportCodes,
+                ArrivalAirportCodes = arrivalAirportCodes,
+                CreateSighting = Settings.CreateSightings
+            };
+
             // Perform the lookup
-            await wrapper.LookupAsync(ApiEndpointType.ActiveFlights, address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+            await wrapper.LookupAsync(request);
         }
     }
 }

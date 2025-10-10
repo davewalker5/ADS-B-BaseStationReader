@@ -4,7 +4,6 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api
 {
@@ -12,16 +11,13 @@ namespace BaseStationReader.BusinessLogic.Api
     {
         private readonly ITrackerLogger _logger;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public FlightNumberApiWrapper(
             ITrackerLogger logger,
-            IDatabaseManagementFactory factory,
-            ITrackedAircraftWriter trackedAircraftWriter)
+            IDatabaseManagementFactory factory)
         {
             _logger = logger;
             _factory = factory;
-            _trackedAircraftWriter = trackedAircraftWriter;
         }
 
         /// <summary>
@@ -35,7 +31,7 @@ namespace BaseStationReader.BusinessLogic.Api
             var flightNumber = new FlightNumber(callsign, null, timestamp);
 
             // Look for a flight number mapping for the callsign
-            var mapping = await _factory.ConfirmedMappingManager.GetAsync(x => x.Callsign == callsign);
+            var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == callsign);
             if (mapping != null)
             {
                 _logger.LogMessage(Severity.Debug, $"Flight number mapping found for {callsign} => {mapping.FlightIATA}");
@@ -80,7 +76,7 @@ namespace BaseStationReader.BusinessLogic.Api
             List<FlightNumber> numbers = [];
 
             // Get a list of tracked aircraft that have the callsign set and match the status requirements
-            var trackedAircraft = await _trackedAircraftWriter.ListAsync(x =>
+            var trackedAircraft = await _factory.TrackedAircraftWriter.ListAsync(x =>
                 (x.Callsign != null) &&
                 ((statuses.Count() == 0) || statuses.Contains(x.Status)));
 

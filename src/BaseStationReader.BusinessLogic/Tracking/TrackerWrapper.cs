@@ -15,7 +15,6 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
-using System.Threading.Tasks;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -95,21 +94,24 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_settings.EnableSqlWriter)
             {
                 // Configure the database context and management classes
-                BaseStationReaderDbContext context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var aircraftWriter = new TrackedAircraftWriter(context);
-                var positionWriter = new PositionWriter(context);
-                var aircraftLocker = new AircraftLockManager(aircraftWriter, _settings.TimeToLock);
+                var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
+                var factory = new DatabaseManagementFactory(_logger, context, _settings.TimeToLock, _settings.MaximumLookups);
 
                 // Configure the external API wrapper
                 var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
-                var apiWrapper = ExternalApiFactory.GetWrapperInstance(_logger, TrackerHttpClient.Instance, context, aircraftWriter, serviceType, ApiEndpointType.ActiveFlights, _settings);
+                var apiWrapper = ExternalApiFactory.GetWrapperInstance(
+                    _logger,
+                    TrackerHttpClient.Instance,
+                    factory,
+                    serviceType,
+                    ApiEndpointType.ActiveFlights,
+                    _settings,
+                    false);
 
                 // Configure the queued writer
                 var writerTimer = new TrackerTimer(_settings.WriterInterval);
                 _writer = new QueuedWriter(
-                    aircraftWriter,
-                    positionWriter,
-                    aircraftLocker,
+                    factory,
                     apiWrapper,
                     _logger,
                     writerTimer,
@@ -140,6 +142,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public void Stop()
             => _tracker.Stop();
+
+        /// <summary>
+        /// Return the number of pending requests in the writer queue
+        /// </summary>
+        public int QueueSize => _writer.QueueSize;
 
         /// <summary>
         /// Process all pending entries in the queued writer queue
@@ -186,7 +193,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 if (_settings.AutoLookup)
                 {
                     _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
-                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                    _writer.Push(new ApiLookupRequest() { AircraftAddress = e.Aircraft.Address });
                 }
 
                 if (e.Position != null)
@@ -229,7 +236,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 if (!existingAircraft && _settings.AutoLookup)
                 {
                     _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
-                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                    _writer.Push(new ApiLookupRequest() { AircraftAddress = e.Aircraft.Address });
                 }
 
                 // Push the aircraft position to the queued writer queue
