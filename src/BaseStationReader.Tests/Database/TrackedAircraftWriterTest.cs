@@ -3,6 +3,7 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Globalization;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -27,8 +28,9 @@ namespace BaseStationReader.Tests.Database
         [TestInitialize]
         public void TestInitialise()
         {
-            BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(context, 0);
+            var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
         }
 
         [TestMethod]
@@ -150,7 +152,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _factory.TrackedAircraftWriter.UpdateLookupProperties(Address, true, 5);
+            _ = await _factory.TrackedAircraftWriter.UpdateLookupProperties(Address, true);
 
             var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);

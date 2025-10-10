@@ -1,6 +1,7 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -15,7 +16,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             ITrackerLogger logger,
             IExternalApiRegister register,
             IAirlineApiWrapper airlineWrapper,
-            IFlightManager flightManager) : base(logger, airlineWrapper, flightManager)
+            IDatabaseManagementFactory factory) : base(logger, airlineWrapper, factory)
         {
             _register = register;
         }
@@ -34,38 +35,29 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <summary>
         /// Look up an active flight and store it locally
         /// </summary>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
-        /// <param name="aircraftAddress"></param>
-        /// <param name="departureAirports"></param>
-        /// <param name="arrivalAirports"></param>
+        /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupFlightAsync(
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+        public async Task<Flight> LookupFlightAsync(ApiLookupRequest request)
         {
             // Get the API instance
             if (_register.GetInstance(ApiEndpointType.ActiveFlights) is not IActiveFlightsApi api) return null;
 
             // The property type must be supported
-            if (!api.SupportsLookupBy(propertyType))
+            if (!api.SupportsLookupBy(request.FlightPropertyType))
             {
-                LogMessage(Severity.Warning, propertyType, propertyValue, aircraftAddress, $"Flight lookup by {propertyType} is not supported");
+                LogMessage(Severity.Warning, request, $"Flight lookup by {request.FlightPropertyType} is not supported");
                 return null;
             }
 
             // The property value must be specified
-            if (string.IsNullOrEmpty(propertyValue))
+            if (string.IsNullOrEmpty(request.FlightPropertyValue))
             {
-                LogMessage(Severity.Warning, propertyType, propertyValue, aircraftAddress, "Invalid property value for lookup");
+                LogMessage(Severity.Warning, request, "Invalid property value for lookup");
                 return null;
             }
 
             // Use the API to look-up the flight
-            var properties = await api.LookupFlightAsync(propertyType, propertyValue);
+            var properties = await api.LookupFlightAsync(request.FlightPropertyType, request.FlightPropertyValue);
             if ((properties?.Count ?? 0) == 0)
             {
                 return null;
@@ -73,19 +65,19 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             // Extract the departure airport code and see if the flight is filtered out
             var departure = properties[ApiProperty.EmbarkationIATA];
-            if (!IsAirportAllowed(propertyType, propertyValue, aircraftAddress, AirportType.Departure, departure, departureAirportCodes))
+            if (!IsAirportAllowed(request, AirportType.Departure, departure))
             {
                 return null;
             }
 
             // Extract the arrival airport code and see if the flight is filtered out
             var arrival = properties[ApiProperty.DestinationIATA];
-            if (!IsAirportAllowed(propertyType, propertyValue, aircraftAddress, AirportType.Arrival, arrival, arrivalAirportCodes))
+            if (!IsAirportAllowed(request, AirportType.Arrival, arrival))
             {
                 return null;
             }
 
-            LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Route {departure} - {arrival} passes the airport filters");
+            LogMessage(Severity.Info, request, $"Route {departure} - {arrival} passes the airport filters");
 
             // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
             properties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
@@ -94,7 +86,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var airline = await _airlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
             if (airline == null)
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Unable to identify the airline - flight cannot be saved");
+                LogMessage(Severity.Info, request, $"Unable to identify the airline - flight cannot be saved");
                 return null;
             }
 

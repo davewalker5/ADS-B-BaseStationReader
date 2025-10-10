@@ -16,7 +16,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IHistoricalFlightApiWrapper _historicalFlightApiWrapper;
         private readonly IActiveFlightApiWrapper _activeFlightApiWrapper;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly int _maximumLookupAttempts;
         private readonly bool _ignoreTrackingStatus;
 
         public LookupEligibilityAssessor(
@@ -24,14 +23,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IHistoricalFlightApiWrapper historicalFlightApiWrapper,
             IActiveFlightApiWrapper activeFlightApiWrapper,
             IDatabaseManagementFactory factory,
-            int maximumLookupAttempts,
             bool ignoreTrackingStatus)
         {
             _logger = logger;
             _historicalFlightApiWrapper = historicalFlightApiWrapper;
             _activeFlightApiWrapper = activeFlightApiWrapper;
             _factory = factory;
-            _maximumLookupAttempts = maximumLookupAttempts;
             _ignoreTrackingStatus = ignoreTrackingStatus;
         }
 
@@ -72,17 +69,10 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Load the tracked aircraft record for further validation
-            var aircraft = await _factory.TrackedAircraftWriter.GetAsync(x => x.Address == address);
+            var aircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Aircraft is not tracked");
-                return new(false, false);
-            }
-
-            // Check the maximum lookup attempts haven't been reached
-            if ((_maximumLookupAttempts > 0) && (aircraft.LookupAttempts >= _maximumLookupAttempts))
-            {
-                _logger.LogMessage(Severity.Warning, $"Tracked aircraft {address} has reached the maximum number of lookup attempts {_maximumLookupAttempts}");
+                _logger.LogMessage(Severity.Warning, $"Aircraft is not a valid candidate for lookup");
                 return new(false, false);
             }
 

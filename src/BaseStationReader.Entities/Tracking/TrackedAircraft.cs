@@ -58,8 +58,14 @@ namespace BaseStationReader.Entities.Tracking
         [Required]
         public TrackingStatus Status { get; set; }
 
+        /// <summary>
+        /// Set when a successful API lookup for the aircraft and flight is completed
+        /// </summary>
         public DateTime? LookupTimestamp { get; set; }
 
+        /// <summary>
+        /// Count the number of API lookup attempts for this aircraft and flight
+        /// </summary>
         [Required]
         public int LookupAttempts { get; set; } = 0;
 

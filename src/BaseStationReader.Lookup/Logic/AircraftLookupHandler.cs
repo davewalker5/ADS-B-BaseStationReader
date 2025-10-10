@@ -5,6 +5,7 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -38,8 +39,18 @@ namespace BaseStationReader.Lookup.Logic
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
             var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
+            // Create the lookup request
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = address,
+                DepartureAirportCodes = departureAirportCodes,
+                ArrivalAirportCodes = arrivalAirportCodes,
+                CreateSighting = Settings.CreateSightings
+            };
+
             // Perform the lookup
-            await wrapper.LookupAsync(ApiEndpointType.ActiveFlights, address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+            await wrapper.LookupAsync(request);
         }
     }
 }

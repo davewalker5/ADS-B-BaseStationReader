@@ -1,6 +1,5 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;

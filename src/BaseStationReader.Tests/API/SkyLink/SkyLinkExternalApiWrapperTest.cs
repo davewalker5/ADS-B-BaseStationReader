@@ -57,13 +57,12 @@ namespace BaseStationReader.Tests.API
         [TestInitialize]
         public async Task Initialise()
         {
-            var logger = new MockFileLogger();
-            _client = new();
-
             // Create a factory that can be used to query the objects that are created during lookup
+            var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(context, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
+            _client = new();
             _wrapper = ExternalApiFactory.GetWrapperInstance(
                 logger, _client, _factory, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings, false);
 
@@ -91,7 +90,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, null, null, true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
@@ -106,7 +115,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Embarkation],
+                ArrivalAirportCodes = [Destination],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
@@ -118,7 +137,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Destination],
+                ArrivalAirportCodes = [Embarkation],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
 
             Assert.IsFalse(result.Successful);
             Assert.IsFalse(result.Requeue);

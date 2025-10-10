@@ -14,7 +14,6 @@ namespace BaseStationReader.Tests.API
         private const string METAR = "METAR EGLL 291150Z COR AUTO VRB03KT 9999 SCT028 16/09 Q1026 NOSIG";
         private const string Response = "{ \"results\": 1, \"data\": [ \"METAR EGLL 291150Z COR AUTO VRB03KT 9999 SCT028 16/09 Q1026 NOSIG\" ] }";
 
-        private MockFileLogger _logger;
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
 
@@ -31,12 +30,13 @@ namespace BaseStationReader.Tests.API
         [TestInitialize]
         public void Initialise()
         {
-            _logger = new();
-            _client = new();
+            var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var factory = new DatabaseManagementFactory(context, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
+
+            _client = new();
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                _logger, _client, factory, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, false);
+                logger, _client, factory, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, false);
         }
 
         [TestMethod]

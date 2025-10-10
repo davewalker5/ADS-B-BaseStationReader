@@ -63,7 +63,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             bool ignoreTrackingStatus)
         {
             // Create an instance of the wrapper
-            var wrapper = new ExternalApiWrapper(settings.MaximumLookups, ignoreTrackingStatus, logger, factory);
+            var wrapper = new ExternalApiWrapper(ignoreTrackingStatus, logger, factory);
 
             // Get an instance of the flights API and register it
             var flightsApi = GetApiInstance(

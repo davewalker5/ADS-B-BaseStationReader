@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.API
         public void Initialise()
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(context, 0);
+            _factory = new DatabaseManagementFactory(_logger, context, 0, 0);
         }
 
         [TestMethod]

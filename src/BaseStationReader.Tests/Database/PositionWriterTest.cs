@@ -2,6 +2,7 @@
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using System.Globalization;
+using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -21,8 +22,10 @@ namespace BaseStationReader.Tests.Database
         [TestInitialize]
         public async Task TestInitialise()
         {
-            BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(context, 0);
+            var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+
             _ = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,

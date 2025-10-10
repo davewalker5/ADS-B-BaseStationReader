@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -38,11 +39,21 @@ namespace BaseStationReader.Lookup.Logic
             var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
 
             // Retrieve a list of aircraft that haven't been looked up yet
-            var aircraft = await Factory.TrackedAircraftWriter.ListAsync(x => x.LookupTimestamp == null);
+            var aircraft = await Factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
             foreach (var a in aircraft)
             {
-                // Look this one up
-                _ = await wrapper.LookupAsync(ApiEndpointType.HistoricalFlights, a.Address, departureAirportCodes, arrivalAirportCodes, Settings.CreateSightings);
+                // Create the lookup request
+                var request = new ApiLookupRequest()
+                {
+                    FlightEndpointType = ApiEndpointType.HistoricalFlights,
+                    AircraftAddress = a.Address,
+                    DepartureAirportCodes = departureAirportCodes,
+                    ArrivalAirportCodes = arrivalAirportCodes,
+                    CreateSighting = Settings.CreateSightings
+                };
+
+                // Perform the lookup
+                await wrapper.LookupAsync(request);
             }
         }
     }

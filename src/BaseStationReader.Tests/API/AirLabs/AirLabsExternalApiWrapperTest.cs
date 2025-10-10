@@ -32,7 +32,6 @@ namespace BaseStationReader.Tests.API
 
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
-        private BaseStationReaderDbContext _context;
         private IDatabaseManagementFactory _factory;
 
         private readonly ExternalApiSettings _settings = new()
@@ -50,21 +49,22 @@ namespace BaseStationReader.Tests.API
         [TestInitialize]
         public async Task Initialise()
         {
+
+            // Create a factory that can be used to query the objects that are created during lookup
             var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+
             _client = new();
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var factory = new DatabaseManagementFactory(_context, 0);
             _wrapper = ExternalApiFactory.GetWrapperInstance(
-                logger, _client, factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
+                logger, _client, _factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
 
             // Create a tracked aircraft that will match the first flight in the flights response
-            _ = await factory.TrackedAircraftWriter.WriteAsync(new()
+            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = AircraftAddress
             });
 
-            // Create a factory that can be used to query the objects that are created during lookup
-            _factory = new DatabaseManagementFactory(_context, 0);
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup
@@ -78,7 +78,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, null, null, true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
@@ -93,7 +103,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Embarkation], [Destination], true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Embarkation],
+                ArrivalAirportCodes = [Destination],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
@@ -108,7 +128,17 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
             _client.AddResponse(AirlineResponse);
-            var result = await _wrapper.LookupAsync(ApiEndpointType.ActiveFlights, AircraftAddress, [Destination], [Embarkation], true);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Destination],
+                ArrivalAirportCodes = [Embarkation],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
             var flights = await _factory.FlightManager.ListAsync(x => true);
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
@@ -164,13 +194,12 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
 
             var today = DateTime.Today;
-            await _context.TrackedAircraft.AddAsync(new()
+            await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Callsign = "KLM123XY",
                 LastSeen = today,
                 Status = TrackingStatus.Active
             });
-            await _context.SaveChangesAsync();
 
             var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([]);
 
@@ -187,13 +216,12 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
 
             var today = DateTime.Today;
-            await _context.TrackedAircraft.AddAsync(new()
+            await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Callsign = "KLM123XY",
                 LastSeen = today,
                 Status = TrackingStatus.Active
             });
-            await _context.SaveChangesAsync();
 
             var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Active]);
 
@@ -210,13 +238,12 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse(AirlineResponse);
 
             var today = DateTime.Today;
-            await _context.TrackedAircraft.AddAsync(new()
+            await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Callsign = "KLM123XY",
                 LastSeen = today,
                 Status = TrackingStatus.Active
             });
-            await _context.SaveChangesAsync();
 
             var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Inactive]);
 
@@ -230,13 +257,12 @@ namespace BaseStationReader.Tests.API
             _client.AddResponse("{}");
 
             var today = DateTime.Today;
-            await _context.TrackedAircraft.AddAsync(new()
+            await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Callsign = "KLM123XY",
                 LastSeen = today,
                 Status = TrackingStatus.Active
             });
-            await _context.SaveChangesAsync();
 
             var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([]);
 

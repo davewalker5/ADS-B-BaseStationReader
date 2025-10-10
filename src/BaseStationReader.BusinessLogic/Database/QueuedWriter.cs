@@ -10,6 +10,7 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -58,7 +59,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // To stop the queue growing and consuming memory, entries are discarded if the timer
             // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition || entity is APILookupRequest))
+            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition || entity is ApiLookupRequest))
             {
                 _queue.Enqueue(entity);
             }
@@ -268,40 +269,39 @@ namespace BaseStationReader.BusinessLogic.Database
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an API lookup request");
 
             // Attempt to cast the queued object as a lookup request and identify if that's what it is
-            if (queued is not APILookupRequest request)
+            if (queued is not ApiLookupRequest request)
             {
                 _logger.LogMessage(Severity.Verbose, $"Queued object {objectId} is not an API lookup request");
                 return false;
             }
 
             // Find the associated tracked aircraft
-            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(request.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(request.AircraftAddress);
             if (activeAircraft == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not being tracked yet - API lookup will not be performed");
+                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.AircraftAddress} is not being tracked yet - API lookup will not be performed");
                 _queue.Enqueue(request);
-                return true;
-            }
-
-            // Check it's not already been looked up
-            if (activeAircraft.LookupTimestamp != null)
-            {
-                _logger.LogMessage(Severity.Debug, $"Lookup for aircraft with address {request.Address} was completed at {activeAircraft.LookupTimestamp} - API lookup will not be performed");
                 return true;
             }
 
             // Check the API wrapper has been initialised
             if (_apiWrapper == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.Address} not done");
+                _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.AircraftAddress} not done");
                 return true;
             }
 
+            // Populate additional lookup properties on the request
+            request.FlightEndpointType = ApiEndpointType.ActiveFlights;
+            request.DepartureAirportCodes = _departureAirportCodes;
+            request.ArrivalAirportCodes = _arrivalAirportCodes;
+            request.CreateSighting = _createSightings;
+
             // Perform the API lookup
-            _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-            var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+            _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.AircraftAddress}");
+            var result = await _apiWrapper.LookupAsync(request);
             var outcome = result.Successful ? "was" : "was not";
-            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.Address} {outcome} successful");
+            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.AircraftAddress} {outcome} successful");
 
             // Requeue the reques on unsuccessful lookups. The API wrapper will return false for the requeue indicator
             // if there's no point

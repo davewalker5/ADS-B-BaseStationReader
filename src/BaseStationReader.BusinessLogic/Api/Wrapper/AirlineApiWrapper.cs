@@ -11,16 +11,16 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
     {
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
-        private readonly IAirlineManager _airlineManager;
+        private readonly IDatabaseManagementFactory _factory;
 
         public AirlineApiWrapper(
             ITrackerLogger logger,
             IExternalApiRegister register,
-            IAirlineManager airlineManager)
+            IDatabaseManagementFactory factory)
         {
             _logger = logger;
             _register = register;
-            _airlineManager = airlineManager;
+            _factory = factory;
         }
 
         /// <summary>
@@ -42,15 +42,15 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // See if the airline is stored locally, first. Search by IATA and ICAO code and if that doesn't
             // produce a result search by name, assuming one has been provided
             LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database using ICAO and IATA codes");
-            var airline = await _airlineManager.GetByCodeAsync(iata, icao);
+            var airline = await _factory.AirlineManager.GetByCodeAsync(iata, icao);
             if ((airline == null) && !string.IsNullOrEmpty(name))
             {
                 LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database by name");
-                airline = await _airlineManager.GetAsync(x => x.Name == name);
+                airline = await _factory.AirlineManager.GetAsync(x => x.Name == name);
                 if (airline == null)
                 {
                     LogMessage(Severity.Info, icao, iata, name, "Not stored locally, adding to the database");
-                    airline = await _airlineManager.AddAsync(iata, icao, name);
+                    airline = await _factory.AirlineManager.AddAsync(iata, icao, name);
                 }
             }
 
@@ -77,7 +77,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
                     // Create a new airline object containing the details returned by the API
                     LogMessage(Severity.Info, airlineICAO, airlineIATA, airlineName, "Saving new airline to the database");
-                    airline = await _airlineManager.AddAsync(airlineIATA, airlineICAO, airlineName);
+                    airline = await _factory.AirlineManager.AddAsync(airlineIATA, airlineICAO, airlineName);
                 }
                 else
                 {
@@ -101,6 +101,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="name"></param>
         /// <param name="message"></param>
         private void LogMessage(Severity severity, string icao, string iata, string name, string message)
-            => _logger.LogMessage(severity, $"Airline ICAO={icao}, IATA={iata}, Name={name} : {message}");
+            => _logger.LogMessage(severity, $"Airline ICAO = {icao}, IATA = {iata}, Name = {name} : {message}");
     }
 }

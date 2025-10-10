@@ -95,7 +95,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 // Configure the database context and management classes
                 var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var factory = new DatabaseManagementFactory(context, _settings.TimeToLock);
+                var factory = new DatabaseManagementFactory(_logger, context, _settings.TimeToLock, _settings.MaximumLookups);
 
                 // Configure the external API wrapper
                 var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
@@ -193,7 +193,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 if (_settings.AutoLookup)
                 {
                     _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
-                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                    _writer.Push(new ApiLookupRequest() { AircraftAddress = e.Aircraft.Address });
                 }
 
                 if (e.Position != null)
@@ -236,7 +236,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 if (!existingAircraft && _settings.AutoLookup)
                 {
                     _logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {e.Aircraft.Address} {e.Aircraft.Behaviour}");
-                    _writer.Push(new APILookupRequest() { Address = e.Aircraft.Address });
+                    _writer.Push(new ApiLookupRequest() { AircraftAddress = e.Aircraft.Address });
                 }
 
                 // Push the aircraft position to the queued writer queue

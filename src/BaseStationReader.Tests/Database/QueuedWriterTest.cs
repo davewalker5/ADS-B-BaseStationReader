@@ -26,7 +26,6 @@ namespace BaseStationReader.Tests.Database
         private const decimal VerticalRate = 2624.0M;
         private const string Squawk = "7710";
 
-        private BaseStationReaderDbContext _context = null;
         private IDatabaseManagementFactory _factory = null;
         private QueuedWriter _writer = null;
         private bool _queueProcessed = false;
@@ -34,12 +33,12 @@ namespace BaseStationReader.Tests.Database
         [TestInitialize]
         public async Task TestInitialise()
         {
-            // Create an in-memory database context, the two writers and a lock manager
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(_context, TimeToLockMs);
+            // Create a database management factory to supply entity management classes
+            var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
 
             // Create a queued writer, wire up the event handlers and start it
-            var logger = new MockFileLogger();
             var writerTimer = new MockTrackerTimer(WriterInterval);
             _writer = new QueuedWriter(_factory, null, logger, writerTimer, [], [], WriterBatchSize, true);
             _writer.BatchWritten += OnBatchWritten;

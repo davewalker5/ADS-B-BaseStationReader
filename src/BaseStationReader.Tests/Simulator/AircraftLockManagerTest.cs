@@ -2,23 +2,23 @@
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.Simulator
 {
     [TestClass]
     public class AircraftLockManagerTest
     {
-        private BaseStationReaderDbContext _context = null;
         private IDatabaseManagementFactory _factory = null;
         private const int TimeToLockMs = 600000;
-
         private const string Address = "406A3D";
 
         [TestInitialize]
         public void TestInitialise()
         {
-            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(_context, TimeToLockMs);
+            var logger = new MockFileLogger();
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
         }
 
         [TestMethod]

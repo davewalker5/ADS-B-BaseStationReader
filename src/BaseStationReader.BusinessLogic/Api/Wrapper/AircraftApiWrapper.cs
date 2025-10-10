@@ -12,22 +12,16 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
     {
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
-        private readonly IAircraftManager _aircraftManager;
-        private readonly IManufacturerManager _manufacturerManager;
-        private readonly IModelManager _modelManager;
+        private readonly IDatabaseManagementFactory _factory;
 
         public AircraftApiWrapper(
             ITrackerLogger logger,
             IExternalApiRegister register,
-            IAircraftManager aircraftManager,
-            IModelManager modelManager,
-            IManufacturerManager manufacturerManager)
+            IDatabaseManagementFactory factory)
         {
             _logger = logger;
             _register = register;
-            _aircraftManager = aircraftManager;
-            _modelManager = modelManager;
-            _manufacturerManager = manufacturerManager;
+            _factory = factory;
         }
 
         /// <summary>
@@ -46,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // See if the aircraft is stored locally, first
-            var aircraft = await _aircraftManager.GetAsync(x => x.Address == address);
+            var aircraft = await _factory.AircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
                 // Get the API instance
@@ -69,10 +63,10 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                     int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
 
                     // Save the manufacturer, model and aircraft
-                    var manufacturer = await _manufacturerManager.AddAsync(properties[ApiProperty.ManufacturerName]);
-                    var model = await _modelManager.AddAsync(
+                    var manufacturer = await _factory.ManufacturerManager.AddAsync(properties[ApiProperty.ManufacturerName]);
+                    var model = await _factory.ModelManager.AddAsync(
                         properties[ApiProperty.ModelIATA], modelICAO, properties[ApiProperty.ModelName], manufacturer.Id);
-                    aircraft = await _aircraftManager.AddAsync(
+                    aircraft = await _factory.AircraftManager.AddAsync(
                         address, properties[ApiProperty.AircraftRegistration], manufactured, age, model.Id);
 
                     // TODO: Remove this
