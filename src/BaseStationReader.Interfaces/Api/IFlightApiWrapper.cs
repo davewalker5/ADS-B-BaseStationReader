@@ -1,14 +1,11 @@
 using BaseStationReader.Entities.Api;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Interfaces.Api
 {
     public interface IFlightApiWrapper
     {
-        Task<Flight> LookupFlightAsync(
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes);
+        bool SupportsLookupBy(ApiProperty propertyType);
+        Task<Flight> LookupFlightAsync(ApiLookupRequest request);
     }
 }

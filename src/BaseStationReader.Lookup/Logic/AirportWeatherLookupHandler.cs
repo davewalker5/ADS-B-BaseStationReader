@@ -22,7 +22,7 @@ namespace BaseStationReader.Lookup.Logic
             ApiServiceType serviceType) : base(settings, parser, logger, factory)
         {
             _serviceType = serviceType;
-            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Context, null, _serviceType, ApiEndpointType.ActiveFlights, Settings);
+            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.ActiveFlights, Settings, true);
 
         }
 

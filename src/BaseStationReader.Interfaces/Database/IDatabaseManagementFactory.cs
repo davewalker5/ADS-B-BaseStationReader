@@ -1,3 +1,5 @@
+using BaseStationReader.Interfaces.Tracking;
+
 namespace BaseStationReader.Interfaces.Database
 {
     public interface IDatabaseManagementFactory
@@ -9,6 +11,9 @@ namespace BaseStationReader.Interfaces.Database
         IManufacturerManager ManufacturerManager { get; }
         IModelManager ModelManager { get; }
         ISightingManager SightingManager { get; }
-        IFlightNumberMappingManager ConfirmedMappingManager { get; }
+        IFlightNumberMappingManager FlightNumberMappingManager { get; }
+        ITrackedAircraftWriter TrackedAircraftWriter { get; }
+        IPositionWriter PositionWriter { get; }
+        IAircraftLockManager AircraftLockManager { get; }
     }
 }

@@ -15,9 +15,7 @@ namespace BaseStationReader.BusinessLogic.Database
 {
     public class QueuedWriter : IQueuedWriter
     {
-        private readonly ITrackedAircraftWriter _aircraftWriter;
-        private readonly IPositionWriter _positionWriter;
-        private readonly IAircraftLockManager _locker;
+        private readonly IDatabaseManagementFactory _factory;
         private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerLogger _logger;
@@ -28,11 +26,11 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IEnumerable<string> _arrivalAirportCodes;
 
         public event EventHandler<BatchWrittenEventArgs> BatchWritten;
+        
+        public int QueueSize { get => _queue.Count; }
 
         public QueuedWriter(
-            ITrackedAircraftWriter aircraftWriter,
-            IPositionWriter positionWriter,
-            IAircraftLockManager locker,
+            IDatabaseManagementFactory factory,
             IExternalApiWrapper apiWrapper,
             ITrackerLogger logger,
             ITrackerTimer timer,
@@ -41,9 +39,7 @@ namespace BaseStationReader.BusinessLogic.Database
             int batchSize,
             bool createSightings)
         {
-            _aircraftWriter = aircraftWriter;
-            _positionWriter = positionWriter;
-            _locker = locker;
+            _factory = factory;
             _apiWrapper = apiWrapper;
             _logger = logger;
             _timer = timer;
@@ -62,7 +58,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // To stop the queue growing and consuming memory, entries are discarded if the timer
             // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition || entity is APILookupRequest))
+            if (_timer != null && (entity is TrackedAircraft || entity is AircraftPosition || entity is ApiLookupRequest))
             {
                 _queue.Enqueue(entity);
             }
@@ -75,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // Set the locked flag on all unlocked records. This prevents confusing tracking of the same aircraft
             // on different flights
-            List<TrackedAircraft> unlocked = await _aircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
+            List<TrackedAircraft> unlocked = await _factory.TrackedAircraftWriter.ListAsync(x => (x.Status != TrackingStatus.Locked));
             foreach (var aircraft in unlocked)
             {
                 aircraft.Status = TrackingStatus.Locked;
@@ -100,11 +96,21 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task FlushQueue()
         {
-            do
-            {
-                await ProcessBatch(int.MaxValue);
-            }
-            while (!_queue.IsEmpty);
+            var initialQueueSize = _queue.Count;
+
+            // Time how long the batch processing
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            // Process pending tracked aircraft, position update and API lookup requests
+            await ProcessPending<TrackedAircraft>();
+            await ProcessPending<AircraftPosition>();
+            await ProcessPending<ApiLookupRequest>();
+
+            // Stop the timer
+            stopwatch.Stop();
+
+            // Notify subscribers that a batch has been processed
+            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -148,12 +154,40 @@ namespace BaseStationReader.BusinessLogic.Database
                     break;
                 }
 
-                // Write the dequeued object to the database
-                await HandleDequeuedObjectAsync(queued);
+                // Process the dequeued request
+                await HandleDequeuedObjectAsync(queued, true);
             }
             stopwatch.Stop();
-            var finalQueueSize = _queue.Count;
 
+            // Notify subscribers that a batch has been processed
+            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+        }
+
+        /// <summary>
+        /// Process all pending requests of type T
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        private async Task ProcessPending<T>()
+        {
+            // Extract a list of requests from the queue
+            var requests = _queue.OfType<T>();
+
+            // Iterate over and process the requests
+            foreach (var request in requests)
+            {
+                await HandleDequeuedObjectAsync(request, false);
+            }
+        }
+
+        /// <summary>
+        /// Notify subscribers that a batch has been processed from the queue
+        /// </summary>
+        /// <param name="initialQueueSize"></param>
+        /// <param name="finalQueueSize"></param>
+        /// <param name="elapsedMillisconds"></param>
+        private void NotifyBatchWrittenSubscribers(int initialQueueSize, int finalQueueSize, long elapsedMillisconds)
+        {
             try
             {
                 // Notify subscribers that a batch has been written
@@ -161,7 +195,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 {
                     InitialQueueSize = initialQueueSize,
                     FinalQueueSize = finalQueueSize,
-                    Duration = stopwatch.ElapsedMilliseconds
+                    Duration = elapsedMillisconds
                 });
             }
             catch (Exception ex)
@@ -176,14 +210,15 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Receive a de-queued object, determine its type and use the handler to handle it
         /// </summary>
         /// <param name="queued"></param>
-        private async Task HandleDequeuedObjectAsync(object queued)
+        /// <param name="allowRequeues"></param>
+        private async Task HandleDequeuedObjectAsync(object queued, bool allowRequeues)
         {
             try
             {
                 var objectId = RuntimeHelpers.GetHashCode(queued);
                 if (await WriteTrackedAircraft(queued, objectId)) return;
                 if (await WriteAircraftPosition(queued, objectId)) return;
-                await ProcessAPILookupRequest(queued, objectId);
+                await ProcessAPILookupRequest(queued, objectId, allowRequeues);
             }
             catch (Exception ex)
             {
@@ -212,7 +247,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
             // ID so that record will be updated rather than a new one created
-            var activeAircraft = await _locker.GetActiveAircraftAsync(aircraft.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(aircraft.Address);
             if (activeAircraft != null)
             {
                 aircraft.Id = activeAircraft.Id;
@@ -220,7 +255,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Write the tracked aircraft
             _logger.LogMessage(Severity.Verbose, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
-            await _aircraftWriter.WriteAsync(aircraft);
+            await _factory.TrackedAircraftWriter.WriteAsync(aircraft);
 
             return true;
         }
@@ -243,7 +278,7 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             // Find the associated tracked aircraft
-            var activeAircraft = await _locker.GetActiveAircraftAsync(position.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(position.Address);
             if (activeAircraft == null)
             {
                 _logger.LogMessage(Severity.Debug, $"Aircraft with address {position.Address} is not active - API lookup will not be performed");
@@ -254,7 +289,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // Assign the aircraft ID, for the foreign key relationship, and write the position
             position.AircraftId = activeAircraft.Id;
             _logger.LogMessage(Severity.Verbose, $"Writing position for aircraft {position.Address} with ID {position.AircraftId}");
-            await _positionWriter.WriteAsync(position);
+            await _factory.PositionWriter.WriteAsync(position);
 
             return true;
         }
@@ -265,51 +300,51 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
+        /// <param name="allowRequeues"></param>
         /// <returns></returns>
         [ExcludeFromCodeCoverage]
-        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId)
+        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId, bool allowRequeues)
         {
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an API lookup request");
 
             // Attempt to cast the queued object as a lookup request and identify if that's what it is
-            if (queued is not APILookupRequest request)
+            if (queued is not ApiLookupRequest request)
             {
                 _logger.LogMessage(Severity.Verbose, $"Queued object {objectId} is not an API lookup request");
                 return false;
             }
 
             // Find the associated tracked aircraft
-            var activeAircraft = await _locker.GetActiveAircraftAsync(request.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(request.AircraftAddress);
             if (activeAircraft == null)
             {
-                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.Address} is not being tracked yet - API lookup will not be performed");
+                _logger.LogMessage(Severity.Debug, $"Aircraft with address {request.AircraftAddress} is not being tracked yet - API lookup will not be performed");
                 _queue.Enqueue(request);
-                return true;
-            }
-
-            // Check it's not already been looked up
-            if (activeAircraft.LookupTimestamp != null)
-            {
-                _logger.LogMessage(Severity.Debug, $"Lookup for aircraft with address {request.Address} was completed at {activeAircraft.LookupTimestamp} - API lookup will not be performed");
                 return true;
             }
 
             // Check the API wrapper has been initialised
             if (_apiWrapper == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.Address} not done");
+                _logger.LogMessage(Severity.Warning, $"Live API is not specified or is unsupported: Lookup for aircraft with address {request.AircraftAddress} not done");
                 return true;
             }
 
+            // Populate additional lookup properties on the request
+            request.FlightEndpointType = ApiEndpointType.ActiveFlights;
+            request.DepartureAirportCodes = _departureAirportCodes;
+            request.ArrivalAirportCodes = _arrivalAirportCodes;
+            request.CreateSighting = _createSightings;
+
             // Perform the API lookup
-            _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.Address}");
-            var result = await _apiWrapper.LookupAsync(ApiEndpointType.ActiveFlights, request.Address, _departureAirportCodes, _arrivalAirportCodes, _createSightings);
+            _logger.LogMessage(Severity.Debug, $"Performing API lookup for aircraft {request.AircraftAddress}");
+            var result = await _apiWrapper.LookupAsync(request);
             var outcome = result.Successful ? "was" : "was not";
-            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.Address} {outcome} successful");
+            _logger.LogMessage(Severity.Info, $"Lookup for aircraft {request.AircraftAddress} {outcome} successful");
 
             // Requeue the reques on unsuccessful lookups. The API wrapper will return false for the requeue indicator
             // if there's no point
-            if (!result.Successful && result.Requeue)
+            if (allowRequeues && !result.Successful && result.Requeue)
             {
                 _queue.Enqueue(request);
             }

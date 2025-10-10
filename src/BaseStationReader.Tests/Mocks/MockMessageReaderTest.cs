@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests.Mocks
                 // date and time fields
                 var expected = messages[i].Split(",");
                 var actual = _received[i].Split(",");
-                Assert.AreEqual(expected.Length, actual.Length);
+                Assert.HasCount(expected.Length, actual);
 
                 // Build a list of fields excluded from the comparison
                 var excluded = new List<int>

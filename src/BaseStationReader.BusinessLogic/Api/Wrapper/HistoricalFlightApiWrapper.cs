@@ -6,24 +6,20 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class HistoricalFlightApiWrapper : FlightApiWrapperBase, IHistoricalFlightApiWrapper
     {
         private readonly IExternalApiRegister _register;
-        private readonly ITrackedAircraftWriter _trackedAircraftWriter;
 
         public HistoricalFlightApiWrapper(
             ITrackerLogger logger,
             IExternalApiRegister register,
             IAirlineApiWrapper airlineWrapper,
-            IFlightManager flightManager,
-            ITrackedAircraftWriter trackedAircraftWriter) : base(logger, airlineWrapper, flightManager)
+            IDatabaseManagementFactory factory) : base(logger, airlineWrapper, factory)
         {
             _register = register;
-            _trackedAircraftWriter = trackedAircraftWriter;
         }
 
         /// <summary>
@@ -40,45 +36,35 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <summary>
         /// Identify and save historical flight details for a tracked aircraft
         /// </summary>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
-        /// <param name="aircraftAddress"></param>
-        /// <param name="date"></param>
-        /// <param name="departureAirportCodes"></param>
-        /// <param name="arrivalAirportCodes"></param>
+        /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<Flight> LookupFlightAsync(
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+        public async Task<Flight> LookupFlightAsync(ApiLookupRequest request)
         {
             // Get the API instance
             if (_register.GetInstance(ApiEndpointType.HistoricalFlights) is not IHistoricalFlightsApi api) return null;
 
             // The aircraft address must be specified
-            if (string.IsNullOrEmpty(propertyValue))
+            if (string.IsNullOrEmpty(request.FlightPropertyValue))
             {
-                LogMessage(Severity.Warning, propertyType, propertyValue, aircraftAddress, "Invalid aircraft address for lookup");
+                LogMessage(Severity.Warning, request, "Invalid aircraft address for lookup");
                 return null;
             }
 
             // Retrieve the tracked aircraft record 
-            var aircraft = await _trackedAircraftWriter.GetAsync(x => (x.Address == aircraftAddress) && (x.LookupTimestamp == null));
+            var aircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
             if (aircraft == null)
             {
-                LogMessage(Severity.Warning, propertyType, propertyValue, aircraftAddress, $"Aircraft is not in the tracking table");
+                LogMessage(Severity.Warning, request, $"Aircraft is not a valid lookup candidate");
                 return null;
             }
 
             // Use the API to look-up details for historical flights by the aircraft
             Flight flight = null;
-            LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Looking up historical flights using the API");
-            var properties = await api.LookupFlightsByAircraftAsync(aircraftAddress, aircraft.LastSeen);
+            LogMessage(Severity.Info, request, $"Looking up historical flights using the API");
+            var properties = await api.LookupFlightsByAircraftAsync(request.AircraftAddress, aircraft.LastSeen);
 
             var numberOfFlights = properties?.Count ?? 0;
-            LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"{numberOfFlights} flight(s) found");
+            LogMessage(Severity.Info, request, $"{numberOfFlights} flight(s) found");
 
             if (numberOfFlights > 0)
             {
@@ -86,7 +72,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 foreach (var flightProperties in properties)
                 {
                     // See if this one matches the filtering criteria
-                    var matches = FilterFlight(propertyType, propertyValue, aircraft, flightProperties, departureAirportCodes, arrivalAirportCodes);
+                    var matches = FilterFlight(request, aircraft, flightProperties);
                     if (matches)
                     {
                         // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
@@ -102,7 +88,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         }
                         else
                         {
-                            LogMessage(Severity.Debug, propertyType, propertyValue, aircraftAddress, $"Unable to identify the airline - flight cannot be saved");
+                            LogMessage(Severity.Debug, request, $"Unable to identify the airline - flight cannot be saved");
                             return null;
                         }
                     }
@@ -123,73 +109,58 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        private bool FilterFlight(
-            ApiProperty propertyType,
-            string propertyValue,
-            TrackedAircraft aircraft,
-            Dictionary<ApiProperty, string> properties,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+        private bool FilterFlight(ApiLookupRequest request, TrackedAircraft aircraft, Dictionary<ApiProperty, string> properties)
         {
             // Extract the departure airport code and see if the flight is filtered out
             var departure = properties[ApiProperty.EmbarkationIATA];
-            if (!IsAirportAllowed(propertyType, propertyValue, aircraft.Address, AirportType.Departure, departure, departureAirportCodes))
+            if (!IsAirportAllowed(request, AirportType.Departure, departure))
             {
                 return false;
             }
     
             // Extract the arrival airport code and see if the flight is filtered out
             var arrival = properties[ApiProperty.DestinationIATA];
-            if (!IsAirportAllowed(propertyType, propertyValue, aircraft.Address, AirportType.Arrival, arrival, arrivalAirportCodes))
+            if (!IsAirportAllowed(request, AirportType.Arrival, arrival))
             {
                 return false;
             }
 
-            // Extract the address and check it matches
-            // Update: The response doesn't always contain the address but as the request has been made for a specific
-            // 24-bit ICAO address the assumption is that only matching flights are returned
-            // var address = properties[ApiProperty.AircraftAddress];
-            // if (address != aircraft.Address)
-            // {
-            //     LogMessage(Severity.Info, address, $"Address for route {departure} - {arrival} is {address} and does not match the expected address ({aircraft.Address})");
-            //     return false;
-            // }
-
-            // Get the flight times from the properties collection
-            var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);
-            var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
-
-            // Convert the last seen date on the aircraft to UTC and see if it passes the filters
-            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
-            if (!CompareFlightTimes(propertyType, propertyValue, aircraft.Address, departureTime, arrivalTime, lastSeenUtc))
+            // If we've looked the flight up by number we should have only one (correct) match so time-based
+            // filtering isn't necessary
+            if (request.FlightPropertyType != ApiProperty.FlightNumber)
             {
-                // The dates may have been returned as local time, marked as UTC in the response. Given the
-                // difference can be a maximum of 1 hour and seeing the same aircraft on two flights in that
-                // timeframe is unlikely, compare using local time as well
-                if (!CompareFlightTimes(propertyType, propertyValue, aircraft.Address, departureTime, arrivalTime, aircraft.LastSeen))
+                // Get the flight times from the properties collection
+                var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);
+                var arrivalTime = ExtractTimestamp(properties[ApiProperty.ArrivalTime]);
+
+                // Convert the last seen date on the aircraft to UTC and see if it passes the filters
+                var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
+                if (!CompareFlightTimes(request, departureTime, arrivalTime, lastSeenUtc))
                 {
-                    return false;
+                    // The dates may have been returned as local time, marked as UTC in the response. Given the
+                    // difference can be a maximum of 1 hour and seeing the same aircraft on two flights in that
+                    // timeframe is unlikely, compare using local time as well
+                    if (!CompareFlightTimes(request, departureTime, arrivalTime, aircraft.LastSeen))
+                    {
+                        return false;
+                    }
                 }
             }
 
-            LogMessage(Severity.Info, propertyType, propertyValue, aircraft.Address, $"Flight with route {departure} - {arrival} matches filters");
+            LogMessage(Severity.Info, request, $"Flight with route {departure} - {arrival} matches filters");
             return true;
         }
 
         /// <summary>
         /// Compare a last seen timestamp to the departure and arrival times for a flight
         /// </summary>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
-        /// <param name="aircraftAddress"></param>
+        /// <param name="request"></param>
         /// <param name="departureTime"></param>
         /// <param name="arrivalTime"></param>
         /// <param name="lastSeen"></param>
         /// <returns></returns>
         private bool CompareFlightTimes(
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
+            ApiLookupRequest request,
             DateTime? departureTime,
             DateTime? arrivalTime,
             DateTime lastSeen)
@@ -197,28 +168,28 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // Check the departure time has a value
             if (!departureTime.HasValue)
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Departure time is not specified");
+                LogMessage(Severity.Info, request, $"Departure time is not specified");
                 return false;
             }
 
             // Departure time should be <= last seen
             if (departureTime.Value > lastSeen)
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Departure time of {departureTime} is later than the observed time {lastSeen} {lastSeen.Kind}");
+                LogMessage(Severity.Info, request, $"Departure time of {departureTime} is later than the observed time {lastSeen} {lastSeen.Kind}");
                 return false;
             }
 
             // Check the arrival time has a value
             if (!arrivalTime.HasValue)
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Arrival time is not specified");
+                LogMessage(Severity.Info, request, $"Arrival time is not specified");
                 return false;
             }
 
             // Arrival time should be >= lastSeen
             if (arrivalTime.Value < lastSeen)
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeen} {lastSeen.Kind}");
+                LogMessage(Severity.Info, request, $"Arrival time of {arrivalTime} is earlier than the observed time {lastSeen} {lastSeen.Kind}");
                 return false;
             }
 

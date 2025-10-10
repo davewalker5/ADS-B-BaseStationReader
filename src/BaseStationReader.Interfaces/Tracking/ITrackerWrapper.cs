@@ -15,6 +15,7 @@ namespace BaseStationReader.Interfaces.Tracking
         Task InitialiseAsync();
         void Start();
         void Stop();
+        int QueueSize { get; }
         Task FlushQueue();
         void ClearQueue();
     }

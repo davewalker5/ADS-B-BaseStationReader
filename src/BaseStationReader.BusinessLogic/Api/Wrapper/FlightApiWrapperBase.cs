@@ -1,5 +1,6 @@
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -10,16 +11,16 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
     {
         protected readonly ITrackerLogger _logger;
         protected readonly IAirlineApiWrapper _airlineWrapper;
-        protected readonly IFlightManager _flightManager;
+        protected readonly IDatabaseManagementFactory _factory;
 
         public FlightApiWrapperBase(
             ITrackerLogger logger,
             IAirlineApiWrapper airlineWrapper,
-            IFlightManager flightManager)
+            IDatabaseManagementFactory factory)
         {
             _logger = logger;
             _airlineWrapper = airlineWrapper;
-            _flightManager = flightManager;
+            _factory = factory;
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         protected async Task<Flight> SaveFlightAsync(Dictionary<ApiProperty, string> properties, int airlineId)
         {
             // Save the flight
-            Flight flight = await _flightManager.AddAsync(
+            Flight flight = await _factory.FlightManager.AddAsync(
                 properties[ApiProperty.FlightIATA],
                 properties[ApiProperty.FlightICAO],
                 properties[ApiProperty.FlightNumber],
@@ -53,33 +54,25 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <summary>
         /// Return true if an airport code is allowed by the specified code list
         /// </summary>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
-        /// <param name="aircraftAddress"></param>
+        /// <param name="request"></param>
         /// <param name="type"></param>
         /// <param name="airportCode"></param>
-        /// <param name="airportCodeList"></param>
         /// <returns></returns>
-        protected bool IsAirportAllowed(
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
-            AirportType type,
-            string airportCode,
-            IEnumerable<string> airportCodeList)
+        protected bool IsAirportAllowed(ApiLookupRequest request, AirportType type, string airportCode)
         {
             var allowed = true;
+            var airportCodeList = type == AirportType.Departure ? request.DepartureAirportCodes : request.ArrivalAirportCodes;
             var numberOfAirportCodes = airportCodeList?.Count();
             if (numberOfAirportCodes > 0)
             {
                 allowed = airportCodeList.Contains(airportCode);
                 var airportCodeListString = string.Join(", ", airportCodeList);
                 var message = $"{type} code {airportCode} is in list {airportCodeListString} = {allowed}";
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, message);
+                LogMessage(Severity.Info, request, message);
             }
             else
             {
-                LogMessage(Severity.Info, propertyType, propertyValue, aircraftAddress, $"No {type} airport code filtering list supplied");
+                LogMessage(Severity.Info, request, $"No {type} airport code filtering list supplied");
             }
 
             return allowed;
@@ -89,16 +82,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// Log a message concerning a flight lookup
         /// </summary>
         /// <param name="severity"></param>
-        /// <param name="propertyType"></param>
-        /// <param name="propertyValue"></param>
-        /// <param name="aircraftAddress"></param>
+        /// <param name="request"></param>
         /// <param name="message"></param>
-        protected void LogMessage(
-            Severity severity,
-            ApiProperty propertyType,
-            string propertyValue,
-            string aircraftAddress,
-            string message)
-            => _logger.LogMessage(severity, $"Flight lookup for aircraft {aircraftAddress} using {propertyType}={propertyValue} : {message}");
+        protected void LogMessage(Severity severity, ApiLookupRequest request, string message)
+            => _logger.LogMessage(severity, $"Flight lookup for aircraft {request.AircraftAddress} using {request.FlightPropertyType}={request.FlightPropertyValue} : {message}");
     }
 }
