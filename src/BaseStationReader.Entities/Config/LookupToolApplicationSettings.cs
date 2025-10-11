@@ -14,5 +14,7 @@ namespace BaseStationReader.Entities.Config
         public string WeatherApi { get; set; } = nameof(ApiServiceType.None);
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
+        public string ScheduleStartTime { get; set; }
+        public string ScheduleEndTime { get; set; }
     }
 }

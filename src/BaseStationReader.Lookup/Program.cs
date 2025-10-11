@@ -116,27 +116,6 @@ namespace BaseStationReader.Lookup
                     await new AirportWeatherLookupHandler(settings, parser, logger, factory, serviceType).HandleTafAsync();
                 }
 
-                // Perform a single callsign to flight number conversion, for testing purposes
-                if (parser.IsPresent(CommandLineOptionType.ConvertSingle))
-                {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, parser, logger, factory, serviceType).HandleForSingleCallsignAsync();
-                }
-
-                // Perform a callsign to flight number conversion for a list of callsigns, for testing purposes
-                if (parser.IsPresent(CommandLineOptionType.ConvertList))
-                {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, parser, logger, factory, serviceType).HandleForCallsignListAsync();
-                }
-
-                // Export callsign to flight number conversions for tracked aircraft, for testing purposes
-                if (parser.IsPresent(CommandLineOptionType.ConvertCallsigns))
-                {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new CallsignConversionHandler(settings, parser, logger, factory, serviceType).HandleForTrackedAircraftAsync();
-                }
-
                 // Export schedule information for a specified airport and, optionally, date range
                 if (parser.IsPresent(CommandLineOptionType.ExportSchedule))
                 {
