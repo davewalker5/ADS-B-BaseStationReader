@@ -7,11 +7,13 @@ using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal class ScheduleLookupHandler : LookupHandlerBase
     {
+        private static Regex _scheduleTimeRegex = new(@"^\d{2}:\d{2}$", RegexOptions.Compiled);
         private readonly ApiServiceType _serviceType;
 
         private readonly JsonSerializerOptions _options = new()
@@ -37,14 +39,12 @@ namespace BaseStationReader.Lookup.Logic
             var values = Parser.GetValues(CommandLineOptionType.ExportSchedule);
             switch (values.Count)
             {
-                case 1:
                 case 2:
-                    // IATA code and output file path
-                    await HandleForNowAsync(values);
+                    // IATA code and output folder
+                    await HandleForTodayAsync(values);
                     break;
-                case 3:
                 case 4:
-                    // IATA code, from date, to date and output file path
+                    // IATA code, from date, to date and output folder
                     await HandleForDateRangeAsync(values);
                     break;
                 default:
@@ -59,16 +59,14 @@ namespace BaseStationReader.Lookup.Logic
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        private async Task HandleForNowAsync(IList<string> values)
+        private async Task HandleForTodayAsync(IList<string> values)
         {
-            // Set the "from" date to an hour before now, so the date range spans the current time,
-            // and the "to" date to 11 hours ahead
-            var from = DateTime.Now.AddHours(-1);
-            var to = DateTime.Now.AddHours(11);
-            var filePath = values.Count == 2 ? values[1] : null;
+            // Use the times in the settings file to configure start and end date and time objects for today
+            var from = GetScheduleTime(Settings.ScheduleStartTime);
+            var to = GetScheduleTime(Settings.ScheduleEndTime);
 
             // Perform the lookup and export the result to a JSON file
-            await RequestAndExportSchedulesAsync(values[0], filePath, from, to);
+            await RequestAndExportSchedulesAsync(values[0], from, to, values[1]);
         }
 
         /// <summary>
@@ -81,37 +79,70 @@ namespace BaseStationReader.Lookup.Logic
             // Parse the string representations of the dates to yield date/time objects
             var from = ExtractTimestamp(values[1]);
             var to = ExtractTimestamp(values[2]);
-            var filePath = values.Count == 4 ? values[3] : null;
 
             // Perform the lookup and export the result to a JSON file
-            await RequestAndExportSchedulesAsync(values[0], filePath, from, to);
+            await RequestAndExportSchedulesAsync(values[0], from, to, values[3]);
+        }
+
+        /// <summary>
+        /// Request scheduling information for the single airport or for all airports listed in the file
+        /// represented by the IATA code
+        /// </summary>
+        /// <param name="iata"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="outputFolder"></param>
+        /// <returns></returns>
+        private async Task RequestAndExportSchedulesAsync(string iataCodeOrFilePath, DateTime? from, DateTime? to, string outputFolder)
+        {
+            // Check the dates are valid
+            if (!from.HasValue || !to.HasValue || (to <= from))
+            {
+                Logger.LogMessage(Severity.Error, $"Invalid time range for schedule download");
+                return;
+            }
+
+            // Check the output folder exists
+            if (!Path.Exists(outputFolder))
+            {
+                Logger.LogMessage(Severity.Error, $"Output folder {outputFolder} does not exist");
+                return;
+            }
+
+            // Is it a single code or a file path?
+            if (File.Exists(iataCodeOrFilePath))
+            {
+                // File path, so read the content and iterate over each code
+                var codes = File.ReadAllLines(iataCodeOrFilePath);
+                foreach (var code in codes)
+                {
+                    // Clean this one up and download the schedules for it
+                    var iataCode = code.Trim();
+                    await RequestAndExportSchedulesForAirportAsync(iataCode, from, to, outputFolder);
+                }
+            }
+            else
+            {
+                await RequestAndExportSchedulesForAirportAsync(iataCodeOrFilePath, from, to, outputFolder);
+            }
         }
 
         /// <summary>
         /// Request scheduling information per the specified criteria and export to a JSON file
         /// </summary>
         /// <param name="iata"></param>
-        /// <param name="filePath"></param>
         /// <param name="from"></param>
         /// <param name="to"></param>
+        /// <param name="outputFolder"></param>
         /// <returns></returns>
-        private async Task RequestAndExportSchedulesAsync(string iata, string filePath, DateTime? from, DateTime? to)
+        private async Task RequestAndExportSchedulesForAirportAsync(string iata, DateTime? from, DateTime? to, string outputFolder)
         {
-            // Check the dates are valid
-            if (!from.HasValue || !to.HasValue)
-            {
-                return;
-            }
-
-            // If the file path isn't specified, construct it from the IATA code and "from" date
-            if (string.IsNullOrEmpty(filePath))
-            {
-                var prefix = from.Value.ToString("yyyy-MM-dd");
-                filePath = $"{prefix}-{iata}.json";
-            }
+            // Construct the output file name from the IATA code and "from" date
+            var prefix = from.Value.ToString("yyyy-MM-dd");
+            var filePath = Path.Join(outputFolder, $"{prefix}-{iata}.json");
 
             // Get an instance of the API
-                var instance = ExternalApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings);
+            var instance = ExternalApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings);
             if (instance is ISchedulesApi api)
             {
                 // Perform the lookup
@@ -122,6 +153,26 @@ namespace BaseStationReader.Lookup.Logic
                     File.WriteAllText(filePath, json.ToJsonString(_options));
                 }
             }
+        }
+        
+        /// <summary>
+        /// Given a time in HH:MM format from the settings file, try to construct that time today as a date and
+        /// time object
+        /// </summary>
+        /// <param name="timeString"></param>
+        /// <returns></returns>
+        private DateTime? GetScheduleTime(string timeString)
+        {
+            var dateString = DateTime.Today.ToString("yyyy-MMM-dd");
+            var dateTimeString = $"{dateString} {timeString}";
+
+            if (!DateTime.TryParse(dateTimeString, out DateTime dateTime))
+            {
+                Logger.LogMessage(Severity.Error, $"{dateTimeString} is not a valid date and time");
+                return null;
+            }
+
+            return dateTime;
         }
 
         /// <summary>

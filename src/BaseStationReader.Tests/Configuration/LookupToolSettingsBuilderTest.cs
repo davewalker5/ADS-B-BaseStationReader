@@ -32,6 +32,8 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual("CheckWXApi", settings.WeatherApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
+            Assert.AreEqual("09:00", settings.ScheduleStartTime);
+            Assert.AreEqual("21:00", settings.ScheduleEndTime);
 
             var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines && x.Service == ApiServiceType.AirLabs);
             Assert.AreEqual(ApiServiceType.AirLabs, airlinesEndpoint.Service);

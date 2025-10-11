@@ -8,6 +8,8 @@
     "WeatherApi": "CheckWXApi",
     "ReceiverLatitude": 51.470020,
     "ReceiverLongitude": -0.454295,
+    "ScheduleStartTime": "09:00",
+    "ScheduleEndTime": "21:00",
     "ApiEndpoints": [
       {
         "EndpointType": "Aircraft",
