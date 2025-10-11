@@ -175,51 +175,6 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(TAF, results.First());
         }
 
-        [TestMethod]
-        public async Task GetFlightNumberForCallsignTest()
-        {
-            var today = DateTime.Today;
-            var number = await _wrapper.GetFlightNumberFromCallsignAsync(Callsign, today);
-
-            Assert.IsNotNull(number);
-            Assert.AreEqual(Callsign, number.Callsign);
-            Assert.AreEqual(FlightIATA, number.Number);
-            Assert.AreEqual(today, number.Date);
-        }
-
-        [TestMethod]
-        public async Task GetFlightNumbersForTrackedAircraft()
-        {
-            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([]);
-
-            Assert.IsNotNull(numbers);
-            Assert.HasCount(1, numbers);
-            Assert.AreEqual(Callsign, numbers[0].Callsign);
-            Assert.AreEqual(FlightIATA, numbers[0].Number);
-            Assert.AreEqual(DateTime.Today, numbers[0].Date);
-        }
-
-        [TestMethod]
-        public async Task GetFlightNumbersForTrackedAircraftWithAcceptingStatusFilters()
-        {
-            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Active]);
-
-            Assert.IsNotNull(numbers);
-            Assert.HasCount(1, numbers);
-            Assert.AreEqual(Callsign, numbers[0].Callsign);
-            Assert.AreEqual(FlightIATA, numbers[0].Number);
-            Assert.AreEqual(DateTime.Today, numbers[0].Date);
-        }
-
-        [TestMethod]
-        public async Task GetFlightNumbersForTrackedAircraftWithExcludingStatusFilters()
-        {
-            var numbers = await _wrapper.GetFlightNumbersForTrackedAircraftAsync([TrackingStatus.Inactive]);
-
-            Assert.IsNotNull(numbers);
-            Assert.IsEmpty(numbers);
-        }
-
         private async Task AssertExpectedAircraftCreated()
         {
             var aircraft = await _factory.AircraftManager.ListAsync(x => true);

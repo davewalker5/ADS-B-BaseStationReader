@@ -47,32 +47,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             => _register.RegisterExternalApi(type, api);
 
         /// <summary>
-        /// Return a flight number given a callsign
-        /// </summary>
-        /// <param name="callsign"></param>
-        /// <param name="timestamp"></param>
-        /// <returns></returns>
-        public async Task<FlightNumber> GetFlightNumberFromCallsignAsync(string callsign, DateTime? timestamp = null)
-            => await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(callsign, timestamp);
-
-        /// <summary>
-        /// Return a flight number for each callsign in the supplied list
-        /// </summary>
-        /// <param name="callsigns"></param>
-        /// <param name="timestamp"></param>
-        /// <returns></returns>
-        public async Task<List<FlightNumber>> GetFlightNumbersFromCallsignsAsync(IEnumerable<string> callsigns, DateTime? timestamp = null)
-            => await _flightNumberApiWrapper.GetFlightNumbersFromCallsignsAsync(callsigns);
-
-        /// <summary>
-        /// Get flight numbers for aircraft that are currently being tracked
-        /// </summary>
-        /// <param name="statuses"></param>
-        /// <returns></returns>
-        public async Task<List<FlightNumber>> GetFlightNumbersForTrackedAircraftAsync(IEnumerable<TrackingStatus> statuses)
-            => await _flightNumberApiWrapper.GetFlightNumbersForTrackedAircraftAsync(statuses);
-
-        /// <summary>
         /// Lookup a flight and aircraft given a 24-bit aircraft ICAO address and filtering parameters
         /// </summary>
         /// <param name="request"></param>
