@@ -141,7 +141,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task SetTrackedAircraftTimestampAsyncTest()
+        public async Task SetTrackedAircraftTimestampTestAsync()
         {
             var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {

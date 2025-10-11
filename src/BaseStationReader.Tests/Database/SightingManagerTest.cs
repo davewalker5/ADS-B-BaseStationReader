@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetAsyncTest()
+        public async Task GetTestAsync()
         {
             var timestamp = DateTime.Today;
             var sighting = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
@@ -68,7 +68,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListAsyncTest()
+        public async Task ListTestAsync()
         {
             var timestamp = DateTime.Today;
             _ = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);

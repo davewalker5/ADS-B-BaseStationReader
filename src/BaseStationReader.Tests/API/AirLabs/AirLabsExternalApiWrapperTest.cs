@@ -73,7 +73,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupAsyncTest()
+        public async Task LookupTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -98,7 +98,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupWithAcceptingAirportFiltersAsyncTest()
+        public async Task LookupWithAcceptingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -123,7 +123,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupWithExcludingAirportFiltersAsyncTest()
+        public async Task LookupWithExcludingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
