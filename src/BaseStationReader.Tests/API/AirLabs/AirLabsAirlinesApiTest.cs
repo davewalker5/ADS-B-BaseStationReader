@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -35,10 +36,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAirlineByIATACodeTest()
+        public async Task GetAirlineByIATACodeTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupAirlineByIATACodeAsync("LS")).Result;
+            var properties = await _api.LookupAirlineByIATACodeAsync("LS");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -48,10 +49,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAirlineByICAOCodeTest()
+        public async Task GetAirlineByICAOCodeTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -61,10 +62,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void NoIATACodeTest()
+        public async Task NoIATACodeTestAsync()
         {
             _client.AddResponse(NoIATACode);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -74,10 +75,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void NoICAOCodeTest()
+        public async Task NoICAOCodeTestAsync()
         {
             _client.AddResponse(NoICAOCode);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -87,19 +88,28 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task NullResponseTestAsync()
         {
-            _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse(null);
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
-            _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("EXS")).Result;
+            _client.AddResponse("{}");
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public async Task EmptyJsonResponseTestAsync()
+        {
+            _client.AddResponse("{\"response\": []}");
+            var properties = await _api.LookupAirlineByICAOCodeAsync("EXS");
 
             Assert.IsNull(properties);
         }

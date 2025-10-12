@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests.API
         };
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a factory that can be used to query the objects that are created during lookup
             var logger = new MockFileLogger();
@@ -85,7 +85,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupAsyncTest()
+        public async Task LookupTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -104,13 +104,13 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreated();
-            await AssertExpectedAirlineCreated();
-            await AssertExpectedFlightCreated();
+            await AssertExpectedAircraftCreatedAsync();
+            await AssertExpectedAirlineCreatedAsync();
+            await AssertExpectedFlightCreatedAsync();
         }
 
         [TestMethod]
-        public async Task LookupWithAcceptingAirportFiltersAsyncTest()
+        public async Task LookupWithAcceptingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -132,7 +132,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupWithExcludingAirportFiltersAsyncTest()
+        public async Task LookupWithExcludingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -175,7 +175,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(TAF, results.First());
         }
 
-        private async Task AssertExpectedAircraftCreated()
+        private async Task AssertExpectedAircraftCreatedAsync()
         {
             var aircraft = await _factory.AircraftManager.ListAsync(x => true);
 
@@ -189,7 +189,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
         }
 
-        private async Task AssertExpectedAirlineCreated()
+        private async Task AssertExpectedAirlineCreatedAsync()
         {
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
@@ -200,7 +200,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(AirlineName, airlines[0].Name);
         }
 
-        private async Task AssertExpectedFlightCreated()
+        private async Task AssertExpectedFlightCreatedAsync()
         {
             var flights = await _factory.FlightManager.ListAsync(x => true);
 

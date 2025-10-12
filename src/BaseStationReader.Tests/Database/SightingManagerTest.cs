@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests.Database
         private Flight _flight;
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a context and a sighting management class to test
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddTest()
+        public async Task AddTestAsync()
         {
             var timestamp = DateTime.Today;
             var sighting = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetAsyncTest()
+        public async Task GetTestAsync()
         {
             var timestamp = DateTime.Today;
             var sighting = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
@@ -68,7 +68,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListAsyncTest()
+        public async Task ListTestAsync()
         {
             var timestamp = DateTime.Today;
             _ = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);

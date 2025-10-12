@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="models"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<Model> models)
+        public override async Task SaveAsync(IEnumerable<Model> models)
         {
             if (models?.Any() == true)
             {

@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -17,6 +18,9 @@ namespace BaseStationReader.Tests.API.AirLabs
         private const string ModelIATA = "73H";
         private const string ModelName = "Boeing 737-800 (winglets) pax";
         private const string Response = "{ \"response\": [ { \"hex\": \"4076ED\", \"reg_number\": \"G-DRTO\", \"flag\": \"UK\", \"airline_icao\": \"EXS\", \"airline_iata\": \"LS\", \"seen\": 4902263, \"icao\": \"B738\", \"iata\": \"73H\", \"model\": \"Boeing 737-800 (winglets) pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"M\", \"built\": 2011, \"age\": 10, \"msn\": null, \"line\": null, \"lat\": 27.93442, \"lng\": -15.38821, \"alt\": null, \"dir\": 288, \"speed\": null, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-18 17:31:58\" } ] }";
+        private const string ResponseWithNoBuildDate = "{ \"response\": [ { \"hex\": \"4076ED\", \"reg_number\": \"G-DRTO\", \"flag\": \"UK\", \"airline_icao\": \"EXS\", \"airline_iata\": \"LS\", \"seen\": 4902263, \"icao\": \"B738\", \"iata\": \"73H\", \"model\": \"Boeing 737-800 (winglets) pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"M\", \"msn\": null, \"line\": null, \"lat\": 27.93442, \"lng\": -15.38821, \"alt\": null, \"dir\": 288, \"speed\": null, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-18 17:31:58\" } ] }";
+        private const string ResponseWithNullBuildDate = "{ \"response\": [ { \"hex\": \"4076ED\", \"reg_number\": \"G-DRTO\", \"flag\": \"UK\", \"airline_icao\": \"EXS\", \"airline_iata\": \"LS\", \"seen\": 4902263, \"icao\": \"B738\", \"iata\": \"73H\", \"model\": \"Boeing 737-800 (winglets) pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"M\", \"built\": null, \"msn\": null, \"line\": null, \"lat\": 27.93442, \"lng\": -15.38821, \"alt\": null, \"dir\": 288, \"speed\": null, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-18 17:31:58\" } ] }";
+        private const string ResponseWithNoRegistration = "{ \"response\": [ { \"hex\": \"4076ED\", \"flag\": \"UK\", \"airline_icao\": \"EXS\", \"airline_iata\": \"LS\", \"seen\": 4902263, \"icao\": \"B738\", \"iata\": \"73H\", \"model\": \"Boeing 737-800 (winglets) pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"M\", \"built\": 2011, \"age\": 10, \"msn\": null, \"line\": null, \"lat\": 27.93442, \"lng\": -15.38821, \"alt\": null, \"dir\": 288, \"speed\": null, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-18 17:31:58\" } ] }";
 
         private MockTrackerHttpClient _client = null;
         private IAircraftApi _api = null;
@@ -40,11 +44,11 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAircraftByAddressTest()
+        public async Task GetAircraftByAddressTestAsync()
         {
             _client.AddResponse(Response);
             var expectedAge = (DateTime.Today.Year - int.Parse(Manufactured)).ToString();
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(7, properties);
@@ -58,19 +62,71 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task GetAircraftWithNoBuildDateByAddressTestAsync()
         {
-            _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            _client.AddResponse(ResponseWithNoBuildDate);
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNotNull(properties);
+            Assert.HasCount(7, properties);
+            Assert.AreEqual(Registration, properties[ApiProperty.AircraftRegistration]);
+            Assert.IsEmpty(properties[ApiProperty.AircraftManufactured]);
+            Assert.IsEmpty(properties[ApiProperty.AircraftAge]);
+            Assert.AreEqual(Manufacturer, properties[ApiProperty.ManufacturerName]);
+            Assert.AreEqual(ModelICAO, properties[ApiProperty.ModelICAO]);
+            Assert.AreEqual(ModelIATA, properties[ApiProperty.ModelIATA]);
+            Assert.AreEqual(ModelName, properties[ApiProperty.ModelName]);
+        }
+
+        [TestMethod]
+        public async Task GetAircraftWithNullBuildDateByAddressTestAsync()
+        {
+            _client.AddResponse(ResponseWithNullBuildDate);
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNotNull(properties);
+            Assert.HasCount(7, properties);
+            Assert.AreEqual(Registration, properties[ApiProperty.AircraftRegistration]);
+            Assert.IsEmpty(properties[ApiProperty.AircraftManufactured]);
+            Assert.IsEmpty(properties[ApiProperty.AircraftAge]);
+            Assert.AreEqual(Manufacturer, properties[ApiProperty.ManufacturerName]);
+            Assert.AreEqual(ModelICAO, properties[ApiProperty.ModelICAO]);
+            Assert.AreEqual(ModelIATA, properties[ApiProperty.ModelIATA]);
+            Assert.AreEqual(ModelName, properties[ApiProperty.ModelName]);
+        }
+
+        [TestMethod]
+        public async Task GetAircraftWithNoRegistrationByAddressTestAsync()
+        {
+            _client.AddResponse(ResponseWithNoRegistration);
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public async Task InvalidJsonResponseTestAsync()
+        {
+            _client.AddResponse("{}");
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public async Task EmptyJsonResponseTestAsync()
+        {
+            _client.AddResponse("{\"response\": []}");
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }

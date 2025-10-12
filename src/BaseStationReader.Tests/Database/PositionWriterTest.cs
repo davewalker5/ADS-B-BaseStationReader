@@ -20,7 +20,7 @@ namespace BaseStationReader.Tests.Database
         private int _aircraftId = 0;
 
         [TestInitialize]
-        public async Task TestInitialise()
+        public async Task InitialiseAsync()
         {
             var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -35,7 +35,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             await _factory.PositionWriter.WriteAsync(new AircraftPosition
             {
@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests.Database
 
 
         [TestMethod]
-        public async Task ListTest()
+        public async Task ListTestAsync()
         {
             await _factory.PositionWriter.WriteAsync(new AircraftPosition
             {
@@ -75,7 +75,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task UpdateTest()
+        public async Task UpdateTestAsync()
         {
             var initial = await _factory.PositionWriter.WriteAsync(new AircraftPosition
             {
@@ -103,7 +103,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddSecondTest()
+        public async Task AddSecondTestAsync()
         {
             var writtenFirst = await _factory.PositionWriter.WriteAsync(new AircraftPosition
             {

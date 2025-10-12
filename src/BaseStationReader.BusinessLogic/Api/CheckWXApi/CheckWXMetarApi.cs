@@ -3,6 +3,7 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 {
@@ -12,6 +13,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
         private readonly string _baseAddress;
         private readonly string _key;
 
+        [ExcludeFromCodeCoverage]
         public CheckWXMetarApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

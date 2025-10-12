@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
@@ -13,6 +14,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private readonly string _host;
         private readonly string _key;
 
+        [ExcludeFromCodeCoverage]
         public SkyLinkMetarApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

@@ -109,7 +109,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="address"></param>
         /// <param name="successful"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> UpdateLookupProperties(string address, bool successful)
+        public async Task<TrackedAircraft> UpdateLookupPropertiesAsync(string address, bool successful)
         {
             // Get the list of eligible records and find the one for the specified aircraft
             var eligibilityPredicate = EligibleForLookup(_maximumLookups);

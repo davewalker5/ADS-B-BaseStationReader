@@ -4,6 +4,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -42,10 +43,10 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
         
         [TestMethod]
-        public void GetHistoricalFlightsTest()
+        public async Task GetHistoricalFlightsTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc)).Result;
+            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(2, properties);
@@ -82,19 +83,19 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc)).Result;
+            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc)).Result;
+            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
 
             Assert.IsNull(properties);
         }

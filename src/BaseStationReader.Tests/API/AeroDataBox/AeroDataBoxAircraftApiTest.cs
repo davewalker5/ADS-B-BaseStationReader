@@ -3,6 +3,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -34,10 +35,10 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public void GetAircraftByAddressTest()
+        public async Task GetAircraftByAddressTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             var expectedAge = (DateTime.Now.Year - 2012).ToString();
             Assert.IsNotNull(properties);
@@ -52,19 +53,19 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }

@@ -10,6 +10,6 @@ namespace BaseStationReader.Interfaces.Database
         Task StartAsync();
         void Stop();
         void ClearQueue();
-        Task FlushQueue();
+        Task FlushQueueAsync();
     }
 }

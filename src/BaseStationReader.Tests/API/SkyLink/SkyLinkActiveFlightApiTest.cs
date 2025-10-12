@@ -3,6 +3,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.SkyLink
 {
@@ -35,10 +36,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void GetActiveFlightTest()
+        public async Task GetActiveFlightTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA)).Result;
+            var properties = await _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(7, properties);
@@ -52,19 +53,19 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task NullResponseTestAsync()
         {
-            _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA)).Result;
+            _client.AddResponse(null);
+            var properties = await _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
-            _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA)).Result;
+            _client.AddResponse("{}");
+            var properties = await _api.LookupFlightAsync(ApiProperty.FlightNumber, FlightIATA);
 
             Assert.IsNull(properties);
         }

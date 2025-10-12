@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -53,7 +53,7 @@ namespace BaseStationReader.Tests.Database
 
 
         [TestMethod]
-        public async Task ListTest()
+        public async Task ListTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -72,7 +72,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListOrderingTest()
+        public async Task ListOrderingTestAsync()
         {
             var first = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -99,7 +99,7 @@ namespace BaseStationReader.Tests.Database
 
 
         [TestMethod]
-        public async Task UpdateTest()
+        public async Task UpdateTestAsync()
         {
             var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -141,7 +141,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task SetTrackedAircraftTimestampAsyncTest()
+        public async Task SetTrackedAircraftTimestampTestAsync()
         {
             var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -154,7 +154,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _factory.TrackedAircraftWriter.UpdateLookupProperties(Address, true);
+            _ = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(Address, true);
 
             var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
@@ -163,7 +163,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddSecondTest()
+        public async Task AddSecondTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {

@@ -57,6 +57,24 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
+        public void OverrideLogFileTest()
+        {
+            var args = new string[] { "--log-file", "MyLog.log" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "trackersettings.json");
+            Assert.AreEqual("MyLog.log", settings.LogFile);
+        }
+
+        [TestMethod]
+        public void OverrideMinimumLogLevelTest()
+        {
+            var args = new string[] { "--log-level", "Debug" };
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, "trackersettings.json");
+            Assert.AreEqual(Severity.Debug, settings.MinimumLogLevel);
+        }
+
+        [TestMethod]
         public void OverrideCreateSettingsTest()
         {
             var args = new string[] { "--create-sightings", "true" };

@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -34,10 +35,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetActiveFlightTest()
+        public async Task GetActiveFlightTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(10, properties);
@@ -54,19 +55,28 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task NullResponseTestAsync()
         {
-            _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
+            _client.AddResponse(null);
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public async Task InvalidJsonResponseTest()
         {
-            _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address)).Result;
+            _client.AddResponse("{}");
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public async Task EmptyJsonResponseTestAsync()
+        {
+            _client.AddResponse("{\"response\": []}");
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
 
             Assert.IsNull(properties);
         }

@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Database;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -19,6 +20,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             ApiProperty.AircraftAddress
         ];
 
+        [ExcludeFromCodeCoverage]
         public AeroDataBoxHistoricalFlightApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

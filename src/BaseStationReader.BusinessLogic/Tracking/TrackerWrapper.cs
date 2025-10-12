@@ -152,8 +152,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// Process all pending entries in the queued writer queue
         /// </summary>
         /// <returns></returns>
-        public async Task FlushQueue()
-            => await _writer.FlushQueue();
+        public async Task FlushQueueAsync()
+            => await _writer.FlushQueueAsync();
 
         /// <summary>
         /// Clear all pending entries from the queued writer queue

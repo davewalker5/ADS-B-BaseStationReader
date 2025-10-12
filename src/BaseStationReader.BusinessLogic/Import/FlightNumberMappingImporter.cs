@@ -31,7 +31,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="mappings"></param>
         /// <param name="truncate"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<FlightNumberMapping> mappings)
+        public override async Task SaveAsync(IEnumerable<FlightNumberMapping> mappings)
         {
             if (mappings?.Any() == true)
             {

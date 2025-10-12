@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -12,6 +13,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
         private readonly string _baseAddress;
 
+        [ExcludeFromCodeCoverage]
         public AirLabsAircraftApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,
@@ -64,19 +66,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 }
 
                 // Extract the year the aircraft was built and use it to determine the age
-                int? manufactured = aircraft?["built"]?.GetValue<int?>();
-                int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
+                int? manufactured = aircraft["built"]?.GetValue<int?>();
+                var age = manufactured != null ? (DateTime.Today.Year - manufactured).ToString() : "";
 
                 // Extract the values into a dictionary
                 properties = new()
                 {
-                    { ApiProperty.AircraftRegistration, aircraft?["reg_number"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.AircraftRegistration, aircraft["reg_number"]?.GetValue<string>() ?? "" },
                     { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
-                    { ApiProperty.AircraftAge, age?.ToString() ?? "" },
-                    { ApiProperty.ManufacturerName, aircraft?["manufacturer"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelICAO, aircraft?["icao"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelIATA, aircraft?["iata"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelName, aircraft?["model"]?.GetValue<string>() ?? "" }
+                    { ApiProperty.AircraftAge, age },
+                    { ApiProperty.ManufacturerName, aircraft["manufacturer"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelICAO, aircraft["icao"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelIATA, aircraft["iata"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelName, aircraft["model"]?.GetValue<string>() ?? "" }
                 };
 
                 // Log the properties dictionary
