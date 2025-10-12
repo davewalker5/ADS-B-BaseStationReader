@@ -2,6 +2,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.SkyLink
 {
@@ -34,10 +35,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void GetWeatherTest()
+        public async Task GetWeatherTestAsync()
         {
             _client.AddResponse(Response);
-            var results = Task.Run(() => _api.LookupAirportWeatherForecastAsync(AirportICAO)).Result;
+            var results = await _api.LookupAirportWeatherForecastAsync(AirportICAO);
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);
@@ -45,19 +46,19 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void NullResponseTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAirportWeatherForecastAsync(AirportICAO)).Result;
+            var properties = await _api.LookupAirportWeatherForecastAsync(AirportICAO);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
-            var results = Task.Run(() => _api.LookupAirportWeatherForecastAsync(AirportICAO)).Result;
+            var results = await _api.LookupAirportWeatherForecastAsync(AirportICAO);
 
             Assert.IsNull(results);
         }

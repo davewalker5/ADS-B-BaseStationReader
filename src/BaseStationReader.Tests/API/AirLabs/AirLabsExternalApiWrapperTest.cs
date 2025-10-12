@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.API
         };
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
 
             // Create a factory that can be used to query the objects that are created during lookup
@@ -92,9 +92,9 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreated();
-            await AssertExpectedAirlineCreated();
-            await AssertExpectedFlightCreated();
+            await AssertExpectedAircraftCreatedAsync();
+            await AssertExpectedAirlineCreatedAsync();
+            await AssertExpectedFlightCreatedAsync();
         }
 
         [TestMethod]
@@ -117,9 +117,9 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreated();
-            await AssertExpectedAirlineCreated();
-            await AssertExpectedFlightCreated();
+            await AssertExpectedAircraftCreatedAsync();
+            await AssertExpectedAirlineCreatedAsync();
+            await AssertExpectedFlightCreatedAsync();
         }
 
         [TestMethod]
@@ -144,13 +144,13 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsFalse(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreated();
+            await AssertExpectedAircraftCreatedAsync();
             Assert.IsEmpty(airlines);
             Assert.IsEmpty(flights);
         }
 
         [TestMethod]
-        public async Task LookupActiveFlightsInBoundingBoxTest()
+        public async Task LookupActiveFlightsInBoundingBoxTestAsync()
         {
             _client.AddResponse(FlightsInBoundingBoxResponse);
             var flights = await _wrapper.LookupActiveFlightsInBoundingBoxAsync(0, 0, 0);
@@ -175,7 +175,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual("IST", flight.Destination);
         }
 
-        private async Task AssertExpectedAircraftCreated()
+        private async Task AssertExpectedAircraftCreatedAsync()
         {
             var aircraft = await _factory.AircraftManager.ListAsync(x => true);
             var expectedAge = DateTime.Now.Year - AircraftManufactured;
@@ -192,7 +192,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
         }
 
-        private async Task AssertExpectedAirlineCreated()
+        private async Task AssertExpectedAirlineCreatedAsync()
         {
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
@@ -203,7 +203,7 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(AirlineName, airlines[0].Name);
         }
 
-        private async Task AssertExpectedFlightCreated()
+        private async Task AssertExpectedFlightCreatedAsync()
         {
             var flights = await _factory.FlightManager.ListAsync(x => true);
 

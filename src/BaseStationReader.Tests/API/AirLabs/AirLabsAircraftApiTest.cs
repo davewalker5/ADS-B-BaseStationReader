@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -43,11 +44,11 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAircraftByAddressTest()
+        public async Task GetAircraftByAddressTestAsync()
         {
             _client.AddResponse(Response);
             var expectedAge = (DateTime.Today.Year - int.Parse(Manufactured)).ToString();
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(7, properties);
@@ -61,10 +62,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAircraftWithNoBuildDateByAddressTest()
+        public async Task GetAircraftWithNoBuildDateByAddressTestAsync()
         {
             _client.AddResponse(ResponseWithNoBuildDate);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(7, properties);
@@ -78,10 +79,10 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAircraftWithNullBuildDateByAddressTest()
+        public async Task GetAircraftWithNullBuildDateByAddressTestAsync()
         {
             _client.AddResponse(ResponseWithNullBuildDate);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(7, properties);
@@ -95,37 +96,37 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
-        public void GetAircraftWithNoRegistrationByAddressTest()
+        public async Task GetAircraftWithNoRegistrationByAddressTestAsync()
         {
             _client.AddResponse(ResponseWithNoRegistration);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void NullResponseTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void EmptyJsonResponseTest()
+        public async Task EmptyJsonResponseTestAsync()
         {
             _client.AddResponse("{\"response\": []}");
-            var properties = Task.Run(() => _api.LookupAircraftAsync(Address)).Result;
+            var properties = await _api.LookupAircraftAsync(Address);
 
             Assert.IsNull(properties);
         }

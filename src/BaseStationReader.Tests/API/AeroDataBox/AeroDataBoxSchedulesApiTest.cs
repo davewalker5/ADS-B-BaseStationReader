@@ -13,7 +13,6 @@ namespace BaseStationReader.Tests.API.AeroDataBox
 
         private MockTrackerHttpClient _client = null;
         private ISchedulesApi _api = null;
-        private MockFileLogger _logger = null;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -28,13 +27,13 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         [TestInitialize]
         public void Initialise()
         {
-            _logger = new MockFileLogger();
+            var logger = new MockFileLogger();
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxSchedulesApi(_logger, _client, null, _settings);
+            _api = new AeroDataBoxSchedulesApi(logger, _client, null, _settings);
         }
 
         [TestMethod]
-        public async Task LookupSchedulesTest()
+        public async Task LookupSchedulesTestAsync()
         {
             _client.AddResponse(Response);
             var schedules = await _api.LookupSchedulesRawAsync("AMS", DateTime.Now, DateTime.Now.AddHours(12));
@@ -61,7 +60,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public async Task LookupSchedulesWithTimespanThatIsNegativeTest()
+        public async Task LookupSchedulesWithTimespanThatIsNegativeTestAsync()
         {
             _client.AddResponse(Response);
             var schedules = await _api.LookupSchedulesRawAsync("AMS", DateTime.Today.AddDays(1), DateTime.Today);
@@ -70,7 +69,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public async Task LookupSchedulesWithTimespanThatIsTooLongTest()
+        public async Task LookupSchedulesWithTimespanThatIsTooLongTestAsync()
         {
             _client.AddResponse(Response);
             var schedules = await _api.LookupSchedulesRawAsync("AMS", DateTime.Today, DateTime.Today.AddDays(1));
@@ -79,7 +78,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public async Task InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
             var schedules = await _api.LookupSchedulesRawAsync("AMS", DateTime.Today, DateTime.Today.AddDays(1));
@@ -88,7 +87,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public async Task NullResponseTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
             var properties = await _api.LookupSchedulesRawAsync("AMS", DateTime.Today, DateTime.Today.AddDays(1));

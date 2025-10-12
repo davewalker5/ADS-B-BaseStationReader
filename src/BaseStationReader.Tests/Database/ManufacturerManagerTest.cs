@@ -12,7 +12,7 @@ namespace BaseStationReader.Tests.Database
         private IManufacturerManager _manager = null;
 
         [TestInitialize]
-        public async Task TestInitialize()
+        public async Task InitialiseAsync()
         {
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _manager = new ManufacturerManager(context);
@@ -20,7 +20,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddDuplicateTest()
+        public async Task AddDuplicateTestAsync()
         {
             await _manager.AddAsync(Name);
             var manufacturers = await _manager.ListAsync(x => true);
@@ -28,7 +28,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             var manufacturer = await _manager.GetAsync(a => a.Name == Name);
             Assert.IsNotNull(manufacturer);
@@ -37,14 +37,14 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetMissingTest()
+        public async Task GetMissingTestAsync()
         {
             var manufacturer = await _manager.GetAsync(a => a.Name == "Missing");
             Assert.IsNull(manufacturer);
         }
 
         [TestMethod]
-        public async Task ListAllTest()
+        public async Task ListAllTestAsync()
         {
             var manufacturers = await _manager.ListAsync(x => true);
             Assert.HasCount(1, manufacturers);
@@ -52,7 +52,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListMissingTest()
+        public async Task ListMissingTestAsync()
         {
             var manufacturers = await _manager.ListAsync(e => e.Name == "Missing");
             Assert.IsEmpty(manufacturers);

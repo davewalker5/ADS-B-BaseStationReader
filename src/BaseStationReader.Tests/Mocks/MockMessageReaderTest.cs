@@ -11,7 +11,7 @@ namespace BaseStationReader.Tests.Mocks
         private readonly List<string> _received = new();
 
         [TestMethod]
-        public async Task TestMockMessageReader()
+        public async Task TestMockMessageReaderAsync()
         {
             string[] messages = new string[] {
                 "MSG,8,1,1,3965A3,1,2023/08/23,12:07:27.929,2023/08/23,12:07:28.005,,,,,,,,,,,,0",

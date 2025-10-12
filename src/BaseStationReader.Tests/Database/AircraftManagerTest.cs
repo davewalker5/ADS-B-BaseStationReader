@@ -21,7 +21,7 @@ namespace BaseStationReader.Tests.Database
         private readonly int _age = DateTime.Now.Year - Manufactured;
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a context and an aircraft management class to test
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddDuplicateTest()
+        public async Task AddDuplicateTestAsync()
         {
             await _manager.AddAsync(Address, Registration, Manufactured, _age, _model.Id);
             var aircraft = await _manager.ListAsync(x => true);
@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             var aircraft = await _manager.GetAsync(a => a.Address == Address);
             Assert.IsNotNull(aircraft);
@@ -58,14 +58,14 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetMissingTest()
+        public async Task GetMissingTestAsync()
         {
             var aircraft = await _manager.GetAsync(a => a.Address == "Missing");
             Assert.IsNull(aircraft);
         }
 
         [TestMethod]
-        public async Task ListAllTest()
+        public async Task ListAllTestAsync()
         {
             var aircraft = await _manager.ListAsync(x => true);
             Assert.IsNotNull(aircraft);
@@ -82,7 +82,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListMissingTest()
+        public async Task ListMissingTestAsync()
         {
             var aircraft = await _manager.ListAsync(x => x.Address == "Missing");
             Assert.IsEmpty(aircraft);

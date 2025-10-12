@@ -14,7 +14,7 @@ namespace BaseStationReader.Tests.Database
         private IAirlineManager _manager = null;
 
         [TestInitialize]
-        public async Task TestInitialize()
+        public async Task InitialiseAsync()
         {
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _manager = new AirlineManager(context);
@@ -22,7 +22,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddDuplicateTest()
+        public async Task AddDuplicateTestAsync()
         {
             await _manager.AddAsync(IATA, ICAO, Name);
             var airlines = await _manager.ListAsync(x => true);
@@ -30,7 +30,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             var airline = await _manager.GetAsync(a => a.Name == Name);
             Assert.IsNotNull(airline);
@@ -39,14 +39,14 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetMissingTest()
+        public async Task GetMissingTestAsync()
         {
             var airline = await _manager.GetAsync(a => a.Name == "Missing");
             Assert.IsNull(airline);
         }
 
         [TestMethod]
-        public async Task ListAllTest()
+        public async Task ListAllTestAsync()
         {
             var airlines = await _manager.ListAsync(x => true);
             Assert.HasCount(1, airlines);
@@ -54,7 +54,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListMissingTest()
+        public async Task ListMissingTestAsync()
         {
             var airlines = await _manager.ListAsync(e => e.Name == "Missing");
             Assert.IsEmpty(airlines);

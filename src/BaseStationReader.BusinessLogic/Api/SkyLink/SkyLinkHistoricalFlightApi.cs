@@ -13,7 +13,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(ApiEndpointType.ActiveFlights, logger, client, factory, settings)
+            ExternalApiSettings settings) : base(ApiEndpointType.HistoricalFlights, logger, client, factory, settings)
         {
         }
 

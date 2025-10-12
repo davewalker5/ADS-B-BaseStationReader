@@ -17,7 +17,7 @@ namespace BaseStationReader.Tests.Database
         private Manufacturer _manufacturer;
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a context and a model management class to test
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddDuplicateTest()
+        public async Task AddDuplicateTestAsync()
         {
             await _manager.AddAsync(ModelIATA, ModelICAO, ModelName, _manufacturer.Id);
             var models = await _manager.ListAsync(x => true);
@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task AddAndGetTest()
+        public async Task AddAndGetTestAsync()
         {
             var model = await _manager.GetAsync(a => a.IATA == ModelIATA);
             Assert.IsNotNull(model);
@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetByICAOCodeTest()
+        public async Task GetByICAOCodeTestAsync()
         {
             var model = await _manager.GetByCodeAsync(null, ModelICAO);
             Assert.IsNotNull(model);
@@ -61,7 +61,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetByIATACodeTest()
+        public async Task GetByIATACodeTestAsync()
         {
             var model = await _manager.GetByCodeAsync(ModelIATA, null);
             Assert.IsNotNull(model);
@@ -73,14 +73,14 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetMissingTest()
+        public async Task GetMissingTestAsync()
         {
             var model = await _manager.GetAsync(a => a.IATA == "Missing");
             Assert.IsNull(model);
         }
 
         [TestMethod]
-        public async Task ListAllTest()
+        public async Task ListAllTestAsync()
         {
             var models = await _manager.ListAsync(x => true);
             Assert.IsNotNull(models);
@@ -93,7 +93,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListMissingTest()
+        public async Task ListMissingTestAsync()
         {
             var models = await _manager.ListAsync(x => x.IATA == "Missing");
             Assert.IsEmpty(models);

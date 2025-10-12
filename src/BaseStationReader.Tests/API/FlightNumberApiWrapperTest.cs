@@ -28,7 +28,7 @@ namespace BaseStationReader.Tests.API
         private IFlightNumberApiWrapper _wrapper;
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a database management factory
             var logger = new MockFileLogger();

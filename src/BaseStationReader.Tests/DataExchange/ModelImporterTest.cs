@@ -25,7 +25,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportTest()
+        public async Task ImportTestAsync()
         {
             _ = await _manufacturerManager.AddAsync("Airbus");
             await _importer.Import("models.csv");
@@ -41,7 +41,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportWithoutManufacturerPresentTest()
+        public async Task ImportWithoutManufacturerPresentTestAsync()
         {
             await _importer.Import("models.csv");
             var models = await _modelManager.ListAsync(x => true);
@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportEmptyFileTest()
+        public async Task ImportEmptyFileTestAsync()
         {
             await _importer.Import("empty_models.csv");
             var models = await _modelManager.ListAsync(x => true);
@@ -61,7 +61,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportMissingFileTest()
+        public async Task ImportMissingFileTestAsync()
         {
             await _importer.Import("missing.csv");
             var models = await _modelManager.ListAsync(x => true);

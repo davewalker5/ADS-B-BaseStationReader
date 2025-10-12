@@ -22,7 +22,7 @@ namespace BaseStationReader.Tests.Simulator
         }
 
         [TestMethod]
-        public async Task GetActiveAircraftTest()
+        public async Task GetActiveAircraftTestAsync()
         {
             var added = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.Simulator
         }
 
         [TestMethod]
-        public async Task GetInactiveAircraftTest()
+        public async Task GetInactiveAircraftTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests.Simulator
         }
 
         [TestMethod]
-        public async Task InactiveAircraftIsLockedTest()
+        public async Task InactiveAircraftIsLockedTestAsync()
         {
             var aircraft = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
@@ -73,7 +73,7 @@ namespace BaseStationReader.Tests.Simulator
         }
 
         [TestMethod]
-        public async Task GetMissingAircraftTest()
+        public async Task GetMissingAircraftTestAsync()
         {
             var active = await _factory.AircraftLockManager.GetActiveAircraftAsync("000000");
             Assert.IsNull(active);

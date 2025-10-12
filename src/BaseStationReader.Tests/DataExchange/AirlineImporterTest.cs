@@ -23,7 +23,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportTest()
+        public async Task ImportTestAsync()
         {
             await _importer.Import("airlines.csv");
             var airlines = await _airlineManager.ListAsync(x => true);
@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportEmptyFileTest()
+        public async Task ImportEmptyFileTestAsync()
         {
             await _importer.Import("empty_airlines.csv");
             var airlines = await _airlineManager.ListAsync(x => true);
@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.DataExchange
         }
 
         [TestMethod]
-        public async Task ImportMissingFileTest()
+        public async Task ImportMissingFileTestAsync()
         {
             await _importer.Import("missing.csv");
             var airlines = await _airlineManager.ListAsync(x => true);

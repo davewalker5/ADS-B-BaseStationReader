@@ -21,7 +21,7 @@ namespace BaseStationReader.Tests.Database
         private IDatabaseManagementFactory _factory;
 
         [TestInitialize]
-        public async Task Initialise()
+        public async Task InitialiseAsync()
         {
             // Create a database management factory
             var logger = new MockFileLogger();
@@ -43,7 +43,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task GetAsyncTest()
+        public async Task GetAsyncTestAsync()
         {
             var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == Callsign);
 
@@ -61,7 +61,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ListAsyncTest()
+        public async Task ListAsyncTestAsync()
         {
             var mappings = await _factory.FlightNumberMappingManager.ListAsync(x => true);
 
@@ -80,7 +80,7 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task UpdateTest()
+        public async Task UpdateTestAsync()
         {
             var updatedAirlineICAO = AirlineICAO.Reverse().ToString();
             var updatedAirlineIATA = AirlineIATA.Reverse().ToString();

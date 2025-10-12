@@ -3,6 +3,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
+using System.Threading.Tasks;
 
 namespace BaseStationReader.Tests.API.SkyLink
 {
@@ -35,10 +36,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void GetAirlineByIATACodeTest()
+        public async Task GetAirlineByIATACodeTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupAirlineByIATACodeAsync("BA")).Result;
+            var properties = await _api.LookupAirlineByIATACodeAsync("BA");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -48,10 +49,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void GetAirlineByICAOCodeTest()
+        public async Task GetAirlineByICAOCodeTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("BAW");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -61,10 +62,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void NoIATACodeTest()
+        public async Task NoIATACodeTestAsync()
         {
             _client.AddResponse(NoIATACode);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("BAW");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -74,10 +75,10 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void NoICAOCodeTest()
+        public async Task NoICAOCodeTestAsync()
         {
             _client.AddResponse(NoICAOCode);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("BAW");
 
             Assert.IsNotNull(properties);
             Assert.HasCount(3, properties);
@@ -87,19 +88,19 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void NullResponseTest()
+        public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("BAW");
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("[]");
-            var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
+            var properties = await _api.LookupAirlineByICAOCodeAsync("BAW");
 
             Assert.IsNull(properties);
         }
