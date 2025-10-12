@@ -7,7 +7,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
-namespace BaseStationReader.Tests.API
+namespace BaseStationReader.Tests.API.Wrapper
 {
     [TestClass]
     public class FlightNumberApiWrapperTest
@@ -17,7 +17,6 @@ namespace BaseStationReader.Tests.API
         private const string AirlineICAO = "EIN";
         private const string AirlineName = "Aer Lingus";
         private const string FlightIATA = "EI527";
-        private const string FlightNumber = "527";
         private const string AirportICAO = "EGLL";
         private const string AirportIATA = "LHR";
         private const string AirportName = "London Heathrow";

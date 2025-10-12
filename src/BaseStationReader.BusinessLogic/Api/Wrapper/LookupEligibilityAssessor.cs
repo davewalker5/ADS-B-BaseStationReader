@@ -73,14 +73,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             if (aircraft == null)
             {
                 _logger.LogMessage(Severity.Warning, $"Aircraft is not a valid candidate for lookup");
-                return new(false, false);
-            }
-
-            // For lookup by flight number, the aircraft needs to have a callsign that can be mapped to a
-            // flight number
-            if (string.IsNullOrEmpty(aircraft.Callsign))
-            {
-                _logger.LogMessage(Severity.Warning, $"Tracked aircraft {address} does not have a callsign to enable flight number lookup");
                 return new(false, true);
             }
 
