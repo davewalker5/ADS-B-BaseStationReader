@@ -26,6 +26,8 @@
     <None Remove="empty_manufacturers.csv" />
     <None Remove="models.csv" />
     <None Remove="empty_models.csv" />
+    <None Remove="flight_number_mappings.csv" />
+    <None Remove="empty_mappings.csv" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +62,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_models.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="flight_number_mappings.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_mappings.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
