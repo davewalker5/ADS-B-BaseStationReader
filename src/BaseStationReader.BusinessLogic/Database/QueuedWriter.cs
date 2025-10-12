@@ -106,6 +106,9 @@ namespace BaseStationReader.BusinessLogic.Database
             await ProcessPendingAsync<AircraftPosition>();
             await ProcessPendingAsync<ApiLookupRequest>();
 
+            // Clear the queue
+            _queue.Clear();
+
             // Stop the timer
             stopwatch.Stop();
 

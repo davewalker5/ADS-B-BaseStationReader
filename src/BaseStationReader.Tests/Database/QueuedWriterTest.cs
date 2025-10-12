@@ -209,6 +209,21 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(TrackingStatus.Locked, aircraft.Status);
         }
 
+        [TestMethod]
+        public async Task FlushQueueTestAsync()
+        {
+            Push(new TrackedAircraft
+            {
+                Address = Address,
+                FirstSeen = DateTime.Now.AddMinutes(-10),
+                LastSeen = DateTime.Now
+            });
+
+            Assert.AreEqual(1, _writer.QueueSize);
+            await _writer.FlushQueueAsync();
+            Assert.AreEqual(0, _writer.QueueSize);
+        }
+
         /// <summary>
         /// Push an entity into the writer's queue
         /// </summary>
