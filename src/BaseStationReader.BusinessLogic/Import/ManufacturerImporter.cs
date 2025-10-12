@@ -38,7 +38,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="manufacturers"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<Manufacturer> manufacturers)
+        public override async Task SaveAsync(IEnumerable<Manufacturer> manufacturers)
         {
             if (manufacturers?.Any() == true)
             {

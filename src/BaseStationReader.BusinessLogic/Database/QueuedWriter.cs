@@ -94,7 +94,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Flush all pending requests from the queue
         /// </summary>
         /// <returns></returns>
-        public async Task FlushQueue()
+        public async Task FlushQueueAsync()
         {
             var initialQueueSize = _queue.Count;
 
@@ -102,9 +102,9 @@ namespace BaseStationReader.BusinessLogic.Database
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Process pending tracked aircraft, position update and API lookup requests
-            await ProcessPending<TrackedAircraft>();
-            await ProcessPending<AircraftPosition>();
-            await ProcessPending<ApiLookupRequest>();
+            await ProcessPendingAsync<TrackedAircraft>();
+            await ProcessPendingAsync<AircraftPosition>();
+            await ProcessPendingAsync<ApiLookupRequest>();
 
             // Stop the timer
             stopwatch.Stop();
@@ -129,7 +129,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _timer.Stop();
 
             // Process the next batch from the queue
-            Task.Run(() => ProcessBatch(_batchSize)).Wait();
+            Task.Run(() => ProcessBatchAsync(_batchSize)).Wait();
 
             _timer.Start();
         }
@@ -139,7 +139,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="batchSize"></param>
         /// <returns></returns>
-        private async Task ProcessBatch(int batchSize)
+        private async Task ProcessBatchAsync(int batchSize)
         {
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -168,7 +168,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        private async Task ProcessPending<T>()
+        private async Task ProcessPendingAsync<T>()
         {
             // Extract a list of requests from the queue
             var requests = _queue.OfType<T>();
@@ -216,9 +216,9 @@ namespace BaseStationReader.BusinessLogic.Database
             try
             {
                 var objectId = RuntimeHelpers.GetHashCode(queued);
-                if (await WriteTrackedAircraft(queued, objectId)) return;
-                if (await WriteAircraftPosition(queued, objectId)) return;
-                await ProcessAPILookupRequest(queued, objectId, allowRequeues);
+                if (await WriteTrackedAircraftAsync(queued, objectId)) return;
+                if (await WriteAircraftPositionAsync(queued, objectId)) return;
+                await ProcessAPILookupRequestAsync(queued, objectId, allowRequeues);
             }
             catch (Exception ex)
             {
@@ -234,7 +234,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteTrackedAircraft(object queued, int objectId)
+        private async Task<bool> WriteTrackedAircraftAsync(object queued, int objectId)
         {
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as a tracked aircraft");
 
@@ -266,7 +266,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteAircraftPosition(object queued, int objectId)
+        private async Task<bool> WriteAircraftPositionAsync(object queued, int objectId)
         {
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an aircraft position");
 
@@ -303,7 +303,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="allowRequeues"></param>
         /// <returns></returns>
         [ExcludeFromCodeCoverage]
-        private async Task<bool> ProcessAPILookupRequest(object queued, int objectId, bool allowRequeues)
+        private async Task<bool> ProcessAPILookupRequestAsync(object queued, int objectId, bool allowRequeues)
         {
             _logger.LogMessage(Severity.Verbose, $"Attempting to process queued object {objectId} as an API lookup request");
 

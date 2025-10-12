@@ -25,7 +25,7 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public async Task ImportTestAsync()
         {
-            await _importer.Import("manufacturers.csv");
+            await _importer.ImportAsync("manufacturers.csv");
             var manufacturers = await _manufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);
@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public async Task ImportEmptyFileTestAsync()
         {
-            await _importer.Import("empty_manufacturers.csv");
+            await _importer.ImportAsync("empty_manufacturers.csv");
             var manufacturers = await _manufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);
@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public async Task ImportMissingFileTestAsync()
         {
-            await _importer.Import("missing.csv");
+            await _importer.ImportAsync("missing.csv");
             var manufacturers = await _manufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);

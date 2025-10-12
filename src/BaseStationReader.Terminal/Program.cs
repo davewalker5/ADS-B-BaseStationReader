@@ -97,7 +97,7 @@ namespace BaseStationReader.Terminal
                 if (_settings.EnableSqlWriter)
                 {
                     Console.WriteLine($"Processing {_wrapper.QueueSize} pending database updates and API requests ...");
-                    await _wrapper.FlushQueue();
+                    await _wrapper.FlushQueueAsync();
                 }
             }
         }

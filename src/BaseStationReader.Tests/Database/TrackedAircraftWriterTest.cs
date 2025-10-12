@@ -154,7 +154,7 @@ namespace BaseStationReader.Tests.Database
 
             Assert.IsNull(initial.LookupTimestamp);
 
-            _ = await _factory.TrackedAircraftWriter.UpdateLookupProperties(Address, true);
+            _ = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(Address, true);
 
             var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
             Assert.IsNotNull(aircraft);

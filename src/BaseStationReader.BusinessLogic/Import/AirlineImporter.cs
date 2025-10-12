@@ -53,7 +53,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="airlines"></param>
         /// <returns></returns>
-        public override async Task Save(IEnumerable<Airline> airlines)
+        public override async Task SaveAsync(IEnumerable<Airline> airlines)
         {
             if (airlines?.Any() == true)
             {

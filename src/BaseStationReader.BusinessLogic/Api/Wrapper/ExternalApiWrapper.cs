@@ -83,7 +83,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var haveFlight = flight != null;
 
             // Update the lookup properties on the tracked aircraft record
-            var trackedAircraft = await _factory.TrackedAircraftWriter.UpdateLookupProperties(request.AircraftAddress, haveFlight);
+            var trackedAircraft = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(request.AircraftAddress, haveFlight);
 
             // If the lookup was successful and sighting creation is requested, save the relationship
             // between the flight and the aircraft as a sighting on this date

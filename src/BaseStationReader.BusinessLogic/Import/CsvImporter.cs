@@ -60,7 +60,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <returns></returns>
 #pragma warning disable CS1998
         [ExcludeFromCodeCoverage]
-        public virtual async Task Save(IEnumerable<T> entities)
+        public virtual async Task SaveAsync(IEnumerable<T> entities)
         {
             // This would be better as an abstract method but that's not possible with async
             // methods. The expectation is classes inheriting from this one *must* override
@@ -74,10 +74,10 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        public async Task Import(string filePath)
+        public async Task ImportAsync(string filePath)
         {
             var entities = Read(filePath);
-            await Save(entities);
+            await SaveAsync(entities);
         }
     }
 }
