@@ -91,7 +91,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public void NullResponseTest()
         {
             _client.AddResponse(null);
             var properties = Task.Run(() => _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc)).Result;

@@ -6,6 +6,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Database;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
@@ -16,6 +17,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         private readonly string _host;
         private readonly string _key;
 
+        [ExcludeFromCodeCoverage]
         public AeroDataBoxAircraftApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

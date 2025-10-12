@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
@@ -21,6 +22,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private readonly string _host;
         private readonly string _key;
 
+        [ExcludeFromCodeCoverage]
         public SkyLinkFlightApiBase(
             ApiEndpointType type,
             ITrackerLogger logger,

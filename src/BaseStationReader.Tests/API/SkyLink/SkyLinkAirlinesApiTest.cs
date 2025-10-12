@@ -87,18 +87,18 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
-        public void InvalidJsonResponseTest()
+        public void NullResponseTest()
         {
-            _client.AddResponse("[]");
+            _client.AddResponse(null);
             var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
 
             Assert.IsNull(properties);
         }
 
         [TestMethod]
-        public void ClientExceptionTest()
+        public void InvalidJsonResponseTest()
         {
-            _client.AddResponse(null);
+            _client.AddResponse("[]");
             var properties = Task.Run(() => _api.LookupAirlineByICAOCodeAsync("BAW")).Result;
 
             Assert.IsNull(properties);

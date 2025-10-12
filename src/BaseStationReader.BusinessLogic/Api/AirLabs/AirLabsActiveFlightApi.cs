@@ -7,6 +7,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -20,6 +21,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
         private readonly string _baseAddress;
 
+        [ExcludeFromCodeCoverage]
         public AirLabsActiveFlightApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

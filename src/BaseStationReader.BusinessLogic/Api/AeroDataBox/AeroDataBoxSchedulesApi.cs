@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
@@ -29,6 +30,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             { "codeType", "iata" }
         };
 
+        [ExcludeFromCodeCoverage]
         public AeroDataBoxSchedulesApi(
             ITrackerLogger logger,
             ITrackerHttpClient client,

@@ -45,21 +45,21 @@ namespace BaseStationReader.Tests.API.AirLabs
         }
 
         [TestMethod]
+        public void NullResponseTest()
+        {
+            _client.AddResponse(null);
+            var properties = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
         public void InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
             var results = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
 
             Assert.IsNull(results);
-        }
-
-        [TestMethod]
-        public void ClientExceptionTest()
-        {
-            _client.AddResponse(null);
-            var properties = Task.Run(() => _api.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
-
-            Assert.IsNull(properties);
         }
     }
 }
