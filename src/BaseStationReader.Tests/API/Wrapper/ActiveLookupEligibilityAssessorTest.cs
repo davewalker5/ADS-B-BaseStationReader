@@ -13,7 +13,7 @@ using Moq;
 namespace BaseStationReader.Tests.API.Wrapper
 {
     [TestClass]
-    public class HistoricalLookupEligibilityAssessorTest
+    public class ActiveLookupEligibilityAssessorTest
     {
         private ITrackerLogger _logger;
         private IDatabaseManagementFactory _factory;
@@ -31,11 +31,12 @@ namespace BaseStationReader.Tests.API.Wrapper
         }
 
         [TestMethod]
-        public async Task HistoricalLookupByInvalidAddressTestAsync()
+        public async Task ActiveLookupByInvalidAddressTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
+
             var assessor = new LookupEligibilityAssessor(
                 _logger,
                 historicalFlightApiWrapper.Object,
@@ -43,17 +44,18 @@ namespace BaseStationReader.Tests.API.Wrapper
                 _factory,
                 false);
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, InvalidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, InvalidAddress);
             Assert.IsFalse(result.Eligible);
             Assert.IsFalse(result.Requeue);
         }
 
         [TestMethod]
-        public async Task HistoricalLookupByAddressTestAsync()
+        public async Task ActiveLookupByAddressTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
+
             var assessor = new LookupEligibilityAssessor(
                 _logger,
                 historicalFlightApiWrapper.Object,
@@ -61,17 +63,18 @@ namespace BaseStationReader.Tests.API.Wrapper
                 _factory,
                 false);
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsTrue(result.Eligible);
             Assert.IsTrue(result.Requeue);
         }
 
         [TestMethod]
-        public async Task HistoricalLookupIgnoreTrackingStatusTestAsync()
+        public async Task ActiveLookupIgnoreTrackingStatusTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
+
             var assessor = new LookupEligibilityAssessor(
                 _logger,
                 historicalFlightApiWrapper.Object,
@@ -79,17 +82,17 @@ namespace BaseStationReader.Tests.API.Wrapper
                 _factory,
                 true);
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsTrue(result.Eligible);
             Assert.IsTrue(result.Requeue);
         }
 
         [TestMethod]
-        public async Task HistoricalLookupDoNotIgnoreTrackingStatusTestAsync()
+        public async Task ActiveLookupDoNotIgnoreTrackingStatusTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
                 _logger,
@@ -109,17 +112,17 @@ namespace BaseStationReader.Tests.API.Wrapper
 
             await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Arrival, "BA188", Callsign, "");
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsTrue(result.Eligible);
             Assert.IsTrue(result.Requeue);
         }
 
         [TestMethod]
-        public async Task HistoricalLookupNotACandidateTestAsync()
+        public async Task ActiveLookupNotACandidateTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
                 _logger,
@@ -136,17 +139,17 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LookupTimestamp = null
             });
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsFalse(result.Eligible);
             Assert.IsTrue(result.Requeue);
         }
 
         [TestMethod]
-        public async Task HistoricalLookupNoCallsignMappingTestAsync()
+        public async Task ActiveLookupNoCallsignMappingTestAsync()
         {
-            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
-            historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
                 _logger,
@@ -164,7 +167,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LookupTimestamp = null
             });
 
-            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsFalse(result.Eligible);
             Assert.IsFalse(result.Requeue);
         }
