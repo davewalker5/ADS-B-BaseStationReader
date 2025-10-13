@@ -7,14 +7,13 @@ using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal class ScheduleLookupHandler : LookupHandlerBase
     {
-        private static Regex _scheduleTimeRegex = new(@"^\d{2}:\d{2}$", RegexOptions.Compiled);
         private readonly ApiServiceType _serviceType;
+        private ISchedulesApi _api;
 
         private readonly JsonSerializerOptions _options = new()
         {
@@ -109,6 +108,14 @@ namespace BaseStationReader.Lookup.Logic
                 return;
             }
 
+            // Construct the API instance
+            _api = ExternalApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
+            if (_api == null)
+            {
+                Logger.LogMessage(Severity.Error, $"API instance is not a schedule retrieval API");
+                return;
+            }
+
             // Is it a single code or a file path?
             if (File.Exists(iataCodeOrFilePath))
             {
@@ -141,17 +148,12 @@ namespace BaseStationReader.Lookup.Logic
             var prefix = from.Value.ToString("yyyy-MM-dd");
             var filePath = Path.Join(outputFolder, $"{prefix}-{iata}.json");
 
-            // Get an instance of the API
-            var instance = ExternalApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings);
-            if (instance is ISchedulesApi api)
+            // Perform the lookup
+            var json = await _api.LookupSchedulesRawAsync(iata, from.Value, to.Value);
+            if (json != null)
             {
-                // Perform the lookup
-                var json = await api.LookupSchedulesRawAsync(iata, from.Value, to.Value);
-                if (json != null)
-                {
-                    // Write the JSON to the specified output file
-                    File.WriteAllText(filePath, json.ToJsonString(_options));
-                }
+                // Write the JSON to the specified output file
+                File.WriteAllText(filePath, json.ToJsonString(_options));
             }
         }
         
