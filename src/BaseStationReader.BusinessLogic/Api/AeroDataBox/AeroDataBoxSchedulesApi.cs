@@ -47,6 +47,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             _host = new Uri(url).Host;
 
             // Set the rate limit for this service on the HTTP client
+            Logger.LogMessage(Severity.Info, $"Using rate limit of {definition?.RateLimit}");
             client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);
         }
 
