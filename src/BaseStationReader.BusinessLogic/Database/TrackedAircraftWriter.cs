@@ -180,6 +180,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             return x =>
                 !string.IsNullOrEmpty(x.Address) &&
+                (x.Address != "000000") &&
                 !string.IsNullOrEmpty(x.Callsign) &&
                 (x.LookupTimestamp == null) &&
                 (x.Status != TrackingStatus.Locked) &&
