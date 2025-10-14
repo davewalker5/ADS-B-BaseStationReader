@@ -28,17 +28,18 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <returns></returns>
         public async Task<FlightNumber> GetFlightNumberFromCallsignAsync(string callsign, DateTime? timestamp = null)
         {
-            var flightNumber = new FlightNumber(callsign, null, timestamp);
+            FlightNumber flightNumber;
 
             // Look for a flight number mapping for the callsign
             var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == callsign);
             if (mapping != null)
             {
+                flightNumber = new(mapping, timestamp);
                 _logger.LogMessage(Severity.Debug, $"Flight number mapping found for {callsign} => {mapping.FlightIATA}");
-                flightNumber.Number = mapping.FlightIATA;
             }
             else
             {
+                flightNumber = new(callsign, timestamp);
                 _logger.LogMessage(Severity.Debug, $"No flight number mapping found for '{callsign}'");
             }
 

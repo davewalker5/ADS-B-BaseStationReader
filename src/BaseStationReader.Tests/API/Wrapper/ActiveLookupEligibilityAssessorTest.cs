@@ -110,7 +110,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LookupTimestamp = null
             });
 
-            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Arrival, "BA188", Callsign, "");
+            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Arrival, "", "", "BA188", Callsign, "");
 
             var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
             Assert.IsTrue(result.Eligible);

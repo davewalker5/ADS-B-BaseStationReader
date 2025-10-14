@@ -27,6 +27,8 @@ namespace BaseStationReader.Tests.API
         private const string FlightIATA = "EI527";
         private const string FlightNumber = "527";
         private const string AirportICAO = "EGLL";
+        private const string AirportIATA = "LHR";
+        private const string AirportName = "London Heathrow";
         private const string Callsign = "EIN5KM";
         private const string METAR = "METAR EGLL 031150Z COR AUTO 19011KT 150V240 9999 BKN005 OVC009 17/16 Q1009 NOSIG";
         private const string TAF = "TAF EGLL 021702Z 0218/0324 19012KT 9999 FEW025 PROB30 TEMPO 0220/0303 18015G25KT TEMPO 0223/0305 7000 RA PROB40 TEMPO 0300/0305 3000 +RA BKN012 BECMG 0302/0306 BKN005 TEMPO 0305/0312 6000 -RADZ PROB30 TEMPO 0305/0310 3000 DZ BKN002 BECMG 0312/0315 SCT020 PROB40 TEMPO 0312/0318 20015G25KT 8000 -RA BKN009 BECMG 0318/0320 21018G28KT TEMPO 0318/0324 4000 RADZ BKN009";
@@ -76,7 +78,18 @@ namespace BaseStationReader.Tests.API
             });
 
             // Add the flight number mapping
-            _ = await _factory.FlightNumberMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, AirportICAO, null, null, AirportType.Unknown, FlightIATA, Callsign, "");
+            _ = await _factory.FlightNumberMappingManager.AddAsync(
+                AirlineICAO,
+                AirlineIATA,
+                AirlineName,
+                AirportICAO,
+                AirportIATA,
+                AirportName,
+                AirportType.Unknown,
+                Embarkation,
+                Destination,
+                FlightIATA,
+                Callsign, "");
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup

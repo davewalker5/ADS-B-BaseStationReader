@@ -39,23 +39,21 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return null;
             }
 
-            // See if the airline is stored locally, first. Search by IATA and ICAO code and if that doesn't
-            // produce a result search by name, assuming one has been provided
-            LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database using ICAO and IATA codes");
-            var airline = await _factory.AirlineManager.GetByCodeAsync(iata, icao);
-            if ((airline == null) && !string.IsNullOrEmpty(name))
+            // See if the airline is stored locally, first
+            LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database");
+            var airline = await _factory.AirlineManager.GetAsync(iata, icao, name);
+            if ((airline == null) &&
+                !string.IsNullOrEmpty(iata) &&
+                !string.IsNullOrEmpty(icao) &&
+                !string.IsNullOrEmpty(name))
             {
-                LogMessage(Severity.Info, icao, iata, name, "Looking for airline in the database by name");
-                airline = await _factory.AirlineManager.GetAsync(x => x.Name == name);
-                if (airline == null)
-                {
-                    LogMessage(Severity.Info, icao, iata, name, "Not stored locally, adding to the database");
-                    airline = await _factory.AirlineManager.AddAsync(iata, icao, name);
-                }
+                // The airline isn't stored locally but we have all the necessary properties to add it to the
+                // database so do so
+                LogMessage(Severity.Info, icao, iata, name, "Not stored locally, adding to the database");
+                airline = await _factory.AirlineManager.AddAsync(iata, icao, name);
             }
 
-            // If we've only got the codes, the airline could still be unidentified at this point, in which
-            // case we need to use the API to look it up
+            // Not in the database and we don't have complete properties, so use the API to look the airline up
             if (airline == null)
             {
                 LogMessage(Severity.Info, icao, iata, name, "Not stored locally, using the API");

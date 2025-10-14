@@ -120,7 +120,7 @@ namespace BaseStationReader.BusinessLogic.Database
             if (aircraft != null)
             {
                 _logger.LogMessage(Severity.Debug,
-                    $"Record found for lookup property update:" +
+                    $"Record found for lookup property update: " +
                     $"Address = {aircraft.Address}, " +
                     $"Callsign = {aircraft.Callsign}, " +
                     $"Lookup Attempts = {aircraft.LookupAttempts}, " +

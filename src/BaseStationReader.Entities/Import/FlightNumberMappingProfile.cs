@@ -22,6 +22,8 @@ namespace BaseStationReader.Entities.Import
 
             Map(m => m.Callsign).Name("callsign");
             Map(m => m.FlightIATA).Name("flight_iata");
+            Map(m => m.Embarkation).Name("embarkation");
+            Map(m => m.Destination).Name("destination");
             Map(m => m.FileName).Name("filename");
         }
     }

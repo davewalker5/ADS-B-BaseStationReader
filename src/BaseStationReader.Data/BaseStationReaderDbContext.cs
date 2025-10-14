@@ -110,8 +110,8 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
-                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
-                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+                entity.Property(e => e.ICAO).HasColumnName("ICAO");
+                entity.Property(e => e.IATA).HasColumnName("IATA");
             });
 
             modelBuilder.Entity<Flight>(entity =>
@@ -120,7 +120,7 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Number).IsRequired().HasColumnName("Number");
-                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
+                entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
                 entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
                 entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
@@ -194,7 +194,6 @@ namespace BaseStationReader.Data
             {
                 entity.ToTable("FLIGHT_NUMBER_MAPPING");
 
-
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.AirlineICAO).HasColumnName("AirlineICAO");
                 entity.Property(e => e.AirlineIATA).HasColumnName("AirlineIATA");
@@ -203,7 +202,8 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.AirportIATA).HasColumnName("AirportIATA");
                 entity.Property(e => e.AirportName).HasColumnName("AirportName");
                 entity.Property(e => e.AirportType).IsRequired().HasColumnName("AirportType");
-                entity.Property(e => e.FlightIATA).IsRequired().HasColumnName("FlightIATA");
+                entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
+                entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
                 entity.Property(e => e.FileName).IsRequired().HasColumnName("Filename");
             });

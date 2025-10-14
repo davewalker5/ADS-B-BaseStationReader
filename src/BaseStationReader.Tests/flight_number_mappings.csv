@@ -1,2 +1,2 @@
-callsign,flight_iata,airline_iata,airline_icao,airline_name,airport_iata,airport_icao,airport_name,direction,filename
-BAW2038,BA2038,BA,BAW,British Airways,MCO,KMCO,Orlando,Arrivals,2025-10-12-LGW.json
+callsign,flight_iata,airline_iata,airline_icao,airline_name,airport_iata,airport_icao,airport_name,embarkation,destination,direction,filename
+BAW2038,BA2038,BA,BAW,British Airways,MCO,KMCO,Orlando,MCO,LGW,Arrivals,2025-10-12-LGW.json

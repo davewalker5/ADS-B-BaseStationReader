@@ -15,6 +15,8 @@ namespace BaseStationReader.Tests.API.SkyLink
     {
         private const string Address = "4CAD7A";
         private const string Callsign = "EIN38W";
+        private const string Embarkation = "LHR";
+        private const string Destination = "SNN";
         private const string FlightIATA = "EI385";
         private const string FlightNumber = "385";
         private const string Response = "{ \"flight_number\": \"EI385\", \"status\": \"Landed 16:13\", \"airline\": \"Aer Lingus\", \"departure\": { \"airport\": \"LHR • London\", \"airport_full\": \"London Heathrow Airport\", \"scheduled_time\": \"14:40\", \"scheduled_date\": \"09 Oct\", \"actual_time\": \"15:19\", \"actual_date\": \"09 Oct\", \"terminal\": \"2\", \"gate\": \"A23\", \"checkin\": \"--\" }, \"arrival\": { \"airport\": \"SNN • Shannon\", \"airport_full\": \"Shannon  International Airport\", \"scheduled_time\": \"16:10\", \"scheduled_date\": \"09 Oct\", \"estimated_time\": \"16:13\", \"estimated_date\": \"09 Oct\", \"terminal\": \"--\", \"gate\": \"--\", \"baggage\": \"--\" } }";
@@ -47,7 +49,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         public async Task GetHistoricalFlightsTestAsync()
         {
             // Add a callsign/flight number mapping and a tracked aircraft with that callsign
-            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Unknown, FlightIATA, Callsign, "");
+            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Unknown, Embarkation, Destination, FlightIATA, Callsign, "");
             await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,

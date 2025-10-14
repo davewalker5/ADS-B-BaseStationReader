@@ -44,6 +44,8 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="airportIATA"></param>
         /// <param name="airportName"></param>
         /// <param name="airportType"></param>
+        /// <param name="embarkation"></param>
+        /// <param name="destination"></param>
         /// <param name="flightIATA"></param>
         /// <param name="callsign"></param>
         /// <param name="filename"></param>
@@ -56,6 +58,8 @@ namespace BaseStationReader.BusinessLogic.Database
             string airportIATA,
             string airportName,
             AirportType airportType,
+            string embarkation,
+            string destination,
             string flightIATA,
             string callsign,
             string filename)
@@ -72,6 +76,8 @@ namespace BaseStationReader.BusinessLogic.Database
                 mapping.AirportIATA = airportIATA;
                 mapping.AirportName = airportName;
                 mapping.AirportType = airportType;
+                mapping.Embarkation = embarkation;
+                mapping.Destination = destination;
                 mapping.FlightIATA = flightIATA;
                 mapping.FileName = filename;
             }
@@ -87,6 +93,8 @@ namespace BaseStationReader.BusinessLogic.Database
                     AirportIATA = airportIATA,
                     AirportName = airportName,
                     AirportType = airportType,
+                    Embarkation = embarkation,
+                    Destination = destination,
                     FlightIATA = flightIATA,
                     Callsign = callsign,
                     FileName = filename

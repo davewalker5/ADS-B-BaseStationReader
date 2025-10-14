@@ -12,6 +12,8 @@ namespace BaseStationReader.Tests.Database
         private const string AirlineIATA = "EI";
         private const string AirlineICAO = "EIN";
         private const string AirlineName = "Aer Lingus";
+        private const string Embarkation = "CDG";
+        private const string Destination = "DUB";
         private const string FlightIATA = "EI527";
         private const string AirportICAO = "EGLL";
         private const string AirportIATA = "LHR";
@@ -37,6 +39,8 @@ namespace BaseStationReader.Tests.Database
                 AirportIATA,
                 AirportName,
                 AirportType.Unknown,
+                Embarkation,
+                Destination,
                 FlightIATA,
                 Callsign,
                 "");
@@ -89,6 +93,8 @@ namespace BaseStationReader.Tests.Database
             var updatedAirportIATA = AirportIATA.Reverse().ToString();
             var updatedAirportName = AirportName.Reverse().ToString();
             var updatedFlightIATA = FlightIATA.Reverse().ToString();
+            var updatedEmbarkation = Embarkation.Reverse().ToString();
+            var updatedDestination = Destination.Reverse().ToString();
             var updatedFileName = "Some File.json";
 
             var mapping = await _factory.FlightNumberMappingManager.AddAsync(
@@ -99,6 +105,8 @@ namespace BaseStationReader.Tests.Database
                 updatedAirportIATA,
                 updatedAirportName,
                 AirportType.Departure,
+                updatedEmbarkation,
+                updatedDestination,
                 updatedFlightIATA,
                 Callsign,
                 updatedFileName);
