@@ -11,7 +11,9 @@ namespace BaseStationReader.Entities.Import
         public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
         {
             if (string.IsNullOrWhiteSpace(text))
+            {
                 return false;
+            }
 
             switch (text.Trim().ToLowerInvariant())
             {

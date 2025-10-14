@@ -17,6 +17,7 @@
         HistoricalApi,
         HistoricalLookup,
         Host,
+        ImportAircraft,
         ImportAirlines,
         ImportFlightNumberMappings,
         ImportManufacturers,

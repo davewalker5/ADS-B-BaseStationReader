@@ -81,6 +81,12 @@ namespace BaseStationReader.Lookup
                     await new ModelImportHandler(settings, parser, logger, factory).HandleAsync();
                 }
 
+                // If a CSV file containing aircraft details has been supplied, import it
+                if (parser.IsPresent(CommandLineOptionType.ImportAircraft))
+                {
+                    await new AircraftImportHandler(settings, parser, logger, factory).HandleAsync();
+                }
+
                 // If an aircraft address has been supplied, look it up and store the results
                 if (parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {

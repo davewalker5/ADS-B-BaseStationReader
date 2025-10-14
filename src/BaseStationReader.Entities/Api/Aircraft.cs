@@ -28,5 +28,11 @@ namespace BaseStationReader.Entities.Api
 
         [NotMapped]
         public string Callsign { get; set; }
+
+        [NotMapped]
+        public string ModelIATA { get; set; }
+
+        [NotMapped]
+        public string ModelICAO { get; set; }
     }
 }
