@@ -42,7 +42,8 @@ namespace BaseStationReader.BusinessLogic.Logging
                     Logger.LogMessage(Severity.Debug, $"Saving flight number mapping : " +
                     $"{mapping.AirlineICAO}, {mapping.AirlineIATA}, {mapping.AirlineName}, " +
                     $"{mapping.AirportICAO}, {mapping.AirportIATA}, {mapping.AirportName}, {mapping.AirportType}, " +
-                    $"{mapping.FlightIATA}, {mapping.Callsign}, {mapping.FileName}");
+                    $"{mapping.Embarkation}, {mapping.Destination}, {mapping.FlightIATA}, " +
+                    $"{mapping.Callsign}, {mapping.FileName}");
 
                     await _confirmedMappingManager.AddAsync(
                         mapping.AirlineICAO,
@@ -52,6 +53,8 @@ namespace BaseStationReader.BusinessLogic.Logging
                         mapping.AirportIATA,
                         mapping.AirportName,
                         mapping.AirportType,
+                        mapping.Embarkation,
+                        mapping.Destination,
                         mapping.FlightIATA,
                         mapping.Callsign,
                         mapping.FileName);

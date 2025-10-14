@@ -16,12 +16,13 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
-        /// Return an airline by either ICAO or IATA code, whichever is specified
+        /// Return an airline by ICAO, IATA or name, in that order
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<Airline> GetByCodeAsync(string iata, string icao)
+        public async Task<Airline> GetAsync(string iata, string icao, string name)
         {
             Airline airline = null;
 
@@ -32,6 +33,10 @@ namespace BaseStationReader.BusinessLogic.Database
             else if (!string.IsNullOrEmpty(iata))
             {
                 airline = await GetAsync(x => x.IATA == iata);
+            }
+            else if (!string.IsNullOrEmpty(name))
+            {
+                airline = await GetAsync(x => x.Name == name);
             }
 
             return airline;
@@ -66,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Airline> AddAsync(string iata, string icao, string name)
         {
-            var airline = await GetByCodeAsync(iata, icao);
+            var airline = await GetAsync(iata, icao, name);
             if (airline == null)
             {
                 airline = new Airline { IATA = iata, ICAO = icao, Name = name };

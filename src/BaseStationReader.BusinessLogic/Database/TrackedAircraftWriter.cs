@@ -120,7 +120,7 @@ namespace BaseStationReader.BusinessLogic.Database
             if (aircraft != null)
             {
                 _logger.LogMessage(Severity.Debug,
-                    $"Record found for lookup property update:" +
+                    $"Record found for lookup property update: " +
                     $"Address = {aircraft.Address}, " +
                     $"Callsign = {aircraft.Callsign}, " +
                     $"Lookup Attempts = {aircraft.LookupAttempts}, " +
@@ -180,6 +180,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             return x =>
                 !string.IsNullOrEmpty(x.Address) &&
+                (x.Address != "000000") &&
                 !string.IsNullOrEmpty(x.Callsign) &&
                 (x.LookupTimestamp == null) &&
                 (x.Status != TrackingStatus.Locked) &&

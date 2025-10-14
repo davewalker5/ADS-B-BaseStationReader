@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
@@ -48,6 +49,34 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             flight.ModelICAO = modelICAO;
 
             // And as we now have a matching flight, return it
+            return flight;
+        }
+
+        /// <summary>
+        /// Create a flight from a flight number mapping if the airports aren't filtered out
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="mapping"></param>
+        /// <returns></returns>
+        public async Task<Flight> CreateFlightFromMapping(ApiLookupRequest request, FlightNumberMapping mapping)
+        {
+            // Check the airports aren't filtered out
+            if (!IsAirportAllowed(request, AirportType.Departure, mapping.Embarkation))
+            {
+                return null;
+            }
+
+            if (!IsAirportAllowed(request, AirportType.Arrival, mapping.Destination))
+            {
+                return null;
+            }
+
+            _logger.LogMessage(Severity.Info, $"Creating flight {mapping.FlightIATA} from flight number mapping");
+
+            var airline = await _factory.AirlineManager.AddAsync(mapping.AirlineIATA, mapping.AirlineICAO, mapping.AirlineName);
+            var flightNumber = Regex.Replace(mapping.FlightIATA, @"\D", "");
+            var flight = await _factory.FlightManager.AddAsync(mapping.FlightIATA, null, flightNumber, mapping.Embarkation, mapping.Destination, airline.Id);
+
             return flight;
         }
 

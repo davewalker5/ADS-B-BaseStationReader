@@ -13,7 +13,6 @@ namespace BaseStationReader.Entities.Api
         [Required]
         public string Number { get; set; } = "";
 
-        [Required]
         public string ICAO { get; set; } = "";
 
         [Required]

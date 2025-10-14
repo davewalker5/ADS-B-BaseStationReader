@@ -15,6 +15,8 @@ namespace BaseStationReader.Entities.Api
         public string AirportIATA { get; set; }
         public string AirportName { get; set; }
         public AirportType AirportType { get; set; }
+        public string Embarkation { get; set; }
+        public string Destination { get; set; }
         public string FlightIATA { get; set; }
         public string Callsign { get; set; }
         public string FileName { get; set; }

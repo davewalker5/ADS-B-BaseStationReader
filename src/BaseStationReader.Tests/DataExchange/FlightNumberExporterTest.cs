@@ -26,7 +26,12 @@ namespace BaseStationReader.Tests.DataExchange
         [TestMethod]
         public void ExportTest()
         {
-            List<FlightNumber> flightNumbers = [new(Callsign, FlightNumber, _date)];
+            var mapping = new FlightNumberMapping()
+            {
+                Callsign = Callsign,
+                FlightIATA = FlightNumber
+            };
+            List<FlightNumber> flightNumbers = [new(mapping, _date)];
 
             _filePath = Path.ChangeExtension(Path.GetTempFileName(), "csv");
             new FlightNumberExporter().Export(flightNumbers, _filePath);

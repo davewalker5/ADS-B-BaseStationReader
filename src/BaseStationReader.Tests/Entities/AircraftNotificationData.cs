@@ -1,6 +1,5 @@
 ﻿using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Tracking;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Entities
 {

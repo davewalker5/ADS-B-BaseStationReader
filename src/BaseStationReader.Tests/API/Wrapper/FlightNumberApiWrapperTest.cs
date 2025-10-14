@@ -16,6 +16,8 @@ namespace BaseStationReader.Tests.API.Wrapper
         private const string AirlineIATA = "EI";
         private const string AirlineICAO = "EIN";
         private const string AirlineName = "Aer Lingus";
+        private const string Embarkation = "CDG";
+        private const string Destination = "DUB";
         private const string FlightIATA = "EI527";
         private const string AirportICAO = "EGLL";
         private const string AirportIATA = "LHR";
@@ -43,6 +45,8 @@ namespace BaseStationReader.Tests.API.Wrapper
                 AirportIATA,
                 AirportName,
                 AirportType.Unknown,
+                Embarkation,
+                Destination,
                 FlightIATA,
                 Callsign,
                 "");
@@ -59,7 +63,7 @@ namespace BaseStationReader.Tests.API.Wrapper
 
             Assert.IsNotNull(flightNumber);
             Assert.AreEqual(Callsign, flightNumber.Callsign);
-            Assert.AreEqual(FlightIATA, flightNumber.Number);
+            Assert.AreEqual(FlightIATA, flightNumber.FlightIATA);
             Assert.AreEqual(now, flightNumber.Date);
         }
 
@@ -71,7 +75,7 @@ namespace BaseStationReader.Tests.API.Wrapper
 
             Assert.IsNotNull(flightNumber);
             Assert.AreEqual(UnmappedCallsign, flightNumber.Callsign);
-            Assert.IsNull(flightNumber.Number);
+            Assert.IsNull(flightNumber.FlightIATA);
             Assert.AreEqual(now, flightNumber.Date);
         }
 
@@ -84,7 +88,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flightNumbers);
             Assert.HasCount(1, flightNumbers);
             Assert.AreEqual(Callsign, flightNumbers[0].Callsign);
-            Assert.AreEqual(FlightIATA, flightNumbers[0].Number);
+            Assert.AreEqual(FlightIATA, flightNumbers[0].FlightIATA);
             Assert.AreEqual(now, flightNumbers[0].Date);
         }
 
@@ -97,7 +101,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flightNumbers);
             Assert.HasCount(1, flightNumbers);
             Assert.AreEqual(UnmappedCallsign, flightNumbers[0].Callsign);
-            Assert.IsNull(flightNumbers[0].Number);
+            Assert.IsNull(flightNumbers[0].FlightIATA);
             Assert.AreEqual(now, flightNumbers[0].Date);
         }
 
@@ -118,7 +122,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flightNumbers);
             Assert.HasCount(1, flightNumbers);
             Assert.AreEqual(Callsign, flightNumbers[0].Callsign);
-            Assert.AreEqual(FlightIATA, flightNumbers[0].Number);
+            Assert.AreEqual(FlightIATA, flightNumbers[0].FlightIATA);
             Assert.AreEqual(now, flightNumbers[0].Date);
         }
 
@@ -139,7 +143,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flightNumbers);
             Assert.HasCount(1, flightNumbers);
             Assert.AreEqual(UnmappedCallsign, flightNumbers[0].Callsign);
-            Assert.IsNull(flightNumbers[0].Number);
+            Assert.IsNull(flightNumbers[0].FlightIATA);
             Assert.AreEqual(now, flightNumbers[0].Date);
         }
 
@@ -160,7 +164,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flightNumbers);
             Assert.HasCount(1, flightNumbers);
             Assert.AreEqual(Callsign, flightNumbers[0].Callsign);
-            Assert.AreEqual(FlightIATA, flightNumbers[0].Number);
+            Assert.AreEqual(FlightIATA, flightNumbers[0].FlightIATA);
             Assert.AreEqual(now, flightNumbers[0].Date);
         }
 

@@ -40,6 +40,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<EligibilityResult> IsEligibleForLookupAsync(ApiEndpointType type, string address)
         {
+            _logger.LogMessage(Severity.Debug, $"Assessing eligibility of aircraft with address {address} for lookup");
+
             // Check the aircraft address is valid
             if (!_addressRegex.IsMatch(address))
             {
@@ -57,14 +59,14 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
 
             if (supportsAddressLookup)
             {
-                _logger.LogMessage(Severity.Debug, $"Flight lookup API supports lookup by aircraft address");
+                _logger.LogMessage(Severity.Debug, $"{address} is eligible : Flight lookup API supports lookup by aircraft address");
                 return new(true, true);
             }
 
             // If tracking status is to be ignored, the aircraft is eligible at this point
             if (_ignoreTrackingStatus)
             {
-                _logger.LogMessage(Severity.Debug, $"Ignoring eligibility criteria based on aircraft tracking status");
+                _logger.LogMessage(Severity.Debug, $"{address} is eligible : Ignoring eligibility criteria based on aircraft tracking status");
                 return new(true, true);
             }
 
@@ -72,7 +74,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var aircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(address);
             if (aircraft == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Aircraft is not a valid candidate for lookup");
+                _logger.LogMessage(Severity.Warning, $"{address} is not eligible : Aircraft is not a valid candidate for lookup");
                 return new(false, true);
             }
 
@@ -80,11 +82,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == aircraft.Callsign);
             if (mapping == null)
             {
-                _logger.LogMessage(Severity.Warning, $"Flight number mapping for callsign {aircraft.Callsign} not found");
+                _logger.LogMessage(Severity.Warning, $"{address} is not eligible : Flight number mapping for callsign {aircraft.Callsign} not found");
                 return new(false, false);
             }
 
             // If we make it here, it's eligible
+            _logger.LogMessage(Severity.Debug, $"{address} is eligible : Flight number mapping for callsign {aircraft.Callsign} found");
             return new(true, true);
         }
     }

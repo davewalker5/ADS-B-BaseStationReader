@@ -21,7 +21,7 @@ namespace BaseStationReader.Entities.Api
             => new()
             {
                 Callsign = flight.Callsign,
-                Number = flight.Number,
+                Number = flight.FlightIATA,
                 Date = flight.Date != null ? flight.Date.Value.ToString(DateTimeFormat) : ""
             };
     }

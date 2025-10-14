@@ -15,6 +15,8 @@ namespace BaseStationReader.Interfaces.Database
             string airportIATA,
             string airportName,
             AirportType airportType,
+            string embarkation,
+            string destination,
             string flightIATA,
             string callsign,
             string filename);
