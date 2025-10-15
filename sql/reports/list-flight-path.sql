@@ -1,5 +1,3 @@
-PRAGMA journal_mode=WAL;
-
 SELECT      a.Address,
             a.Callsign,
             p.Altitude,
@@ -9,5 +7,5 @@ SELECT      a.Address,
             p.Timestamp
 FROM        TRACKED_AIRCRAFT a
 INNER JOIN  POSITION p on p.AircraftId = a.Id
-WHERE       a.Address = ''
+WHERE       a.Address = '$ADDRESS'
 ORDER BY    p.Timestamp ASC;
