@@ -1,6 +1,6 @@
 #!/bin/sh -f
 
-PROJECT_FOLDER=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PROJECT_FOLDER=$( cd "$( dirname "$0" )/.." && pwd )
 
 # Run the tests
 dotnet test \

@@ -1,6 +1,6 @@
 #!/bin/sh -f
 
-PROJECT_FOLDER=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PROJECT_FOLDER=$( cd "$( dirname "$0" )/.." && pwd )
 SQL_FOLDER="$PROJECT_FOLDER/sql/mapping"
 CREATE_TABLE_QUERY="$SQL_FOLDER/create-observed-flight-table.sql"
 EXPORT_QUERY="$SQL_FOLDER/export-observed-flights.sql"

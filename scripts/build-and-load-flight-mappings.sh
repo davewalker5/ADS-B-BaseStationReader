@@ -1,6 +1,6 @@
 #!/bin/sh -f
 
-PROJECT_FOLDER=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PROJECT_FOLDER=$( cd "$( dirname "$0" )/.." && pwd )
 DATA_FOLDER="$PROJECT_FOLDER/data"
 JSON_FOLDER="$DATA_FOLDER/json"
 CSV_FILE="$DATA_FOLDER/flight_number_mappings.csv"
@@ -13,7 +13,7 @@ echo "CSV File       : $CSV_FILE"
 echo
 
 # Build the CSV file
-python create-flight-mapping-csv.py -i "$JSON_FOLDER" -o "$CSV_FILE"
+python "$PROJECT_FOLDER/create-flight-mapping-csv.py" -i "$JSON_FOLDER" -o "$CSV_FILE"
 if [ $? -ne 0 ]; then
     exit 1
 fi

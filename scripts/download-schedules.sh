@@ -1,6 +1,6 @@
 #!/bin/sh -f
 
-PROJECT_FOLDER=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PROJECT_FOLDER=$( cd "$( dirname "$0" )/.." && pwd )
 TODAY=$(date +"%Y-%m-%d")
 JSON_FOLDER="$PROJECT_FOLDER/data/json/$TODAY"
 LOOKUP_TOOL_FOLDER="$PROJECT_FOLDER/BaseStationReader.Lookup"
