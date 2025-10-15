@@ -1,5 +1,3 @@
-PRAGMA journal_mode = WAL;
-
 SELECT      m.IATA,
             m.ICAO,
             m.Name,
