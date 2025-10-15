@@ -12,6 +12,7 @@ declare -a exclusions=(
     "database.ipynb"
     "export.ipynb"
     "pathutils.ipynb"
+    "plot-flight-path.ipynb"
 )
 
 # Change to the notebooks folder
