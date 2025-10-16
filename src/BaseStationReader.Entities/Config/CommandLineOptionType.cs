@@ -12,7 +12,6 @@
         Departure,
         EnableSqlWriter,
         ExportSchedule,
-        FlightsInRange,
         Help,
         HistoricalApi,
         HistoricalLookup,

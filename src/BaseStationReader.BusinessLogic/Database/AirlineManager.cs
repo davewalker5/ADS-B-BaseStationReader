@@ -71,10 +71,24 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Airline> AddAsync(string iata, string icao, string name)
         {
-            var airline = await GetAsync(iata, icao, name);
+            // Clean the inputs so they're in a standardised format
+            var cleanIATA = StringCleaner.CleanIATA(iata);
+            var cleanICAO = StringCleaner.CleanICAO(icao);
+            var cleanName = StringCleaner.CleanName(name);
+
+            // Look for a matching record
+            var airline = await GetAsync(cleanIATA, cleanICAO, cleanName);
+
             if (airline == null)
             {
-                airline = new Airline { IATA = iata, ICAO = icao, Name = name };
+                // No match, so create a new record
+                airline = new Airline
+                {
+                    IATA = cleanIATA,
+                    ICAO = cleanICAO,
+                    Name = cleanName
+                };
+
                 await _context.Airlines.AddAsync(airline);
                 await _context.SaveChangesAsync();
             }

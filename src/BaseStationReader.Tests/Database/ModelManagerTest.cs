@@ -51,7 +51,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task GetByICAOCodeTestAsync()
         {
-            var model = await _manager.GetByCodeAsync(null, ModelICAO);
+            var model = await _manager.GetAsync(null, ModelICAO, null);
             Assert.IsNotNull(model);
             Assert.IsGreaterThan(0, model.Id);
             Assert.AreEqual(ModelIATA, model.IATA);
@@ -63,7 +63,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task GetByIATACodeTestAsync()
         {
-            var model = await _manager.GetByCodeAsync(ModelIATA, null);
+            var model = await _manager.GetAsync(ModelIATA, null, null);
             Assert.IsNotNull(model);
             Assert.IsGreaterThan(0, model.Id);
             Assert.AreEqual(ModelIATA, model.IATA);
@@ -71,6 +71,19 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(ModelName, model.Name);
             Assert.AreEqual(Manufacturer, model.Manufacturer.Name);
         }
+
+        [TestMethod]
+        public async Task GetByNameTestAsync()
+        {
+            var model = await _manager.GetAsync(null, null, ModelName);
+            Assert.IsNotNull(model);
+            Assert.IsGreaterThan(0, model.Id);
+            Assert.AreEqual(ModelIATA, model.IATA);
+            Assert.AreEqual(ModelICAO, model.ICAO);
+            Assert.AreEqual(ModelName, model.Name);
+            Assert.AreEqual(Manufacturer, model.Manufacturer.Name);
+        }
+
 
         [TestMethod]
         public async Task GetMissingTestAsync()

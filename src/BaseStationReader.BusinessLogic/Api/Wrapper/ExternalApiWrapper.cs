@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
@@ -102,19 +101,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             // re-queueing the request
             return new(haveFlight, false);
         }
-
-        /// <summary>
-        /// Lookup all active flights within a bounding box around a central point
-        /// </summary>
-        /// <param name="centreLatitude"></param>
-        /// <param name="centreLongitude"></param>
-        /// <param name="rangeNm"></param>
-        /// <returns></returns>
-        public async Task<List<Flight>> LookupActiveFlightsInBoundingBoxAsync(
-            double centreLatitude,
-            double centreLongitude,
-            double rangeNm)
-            => await _activeFlightApiWrapper.LookupFlightsInBoundingBoxAsync(centreLatitude, centreLongitude, rangeNm);
 
         /// <summary>
         /// Lookup the current weather for an airport

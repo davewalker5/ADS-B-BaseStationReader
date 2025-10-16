@@ -41,11 +41,17 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Manufacturer> AddAsync(string name)
         {
-            var manufacturer = await GetAsync(a => a.Name == name);
+            // Clean the inputs so they're in a standardised format
+            var clean = StringCleaner.CleanName(name);
+
+            // Look for a matching record
+            var manufacturer = await GetAsync(a => a.Name == clean);
 
             if (manufacturer == null)
             {
-                manufacturer = new Manufacturer { Name = name };
+                // No match, so create a new record
+                manufacturer = new Manufacturer { Name = clean };
+
                 await _context.Manufacturers.AddAsync(manufacturer);
                 await _context.SaveChangesAsync();
             }

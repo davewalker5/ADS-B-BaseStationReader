@@ -8,6 +8,7 @@ namespace BaseStationReader.BusinessLogic.Database
     public class DatabaseManagementFactory : IDatabaseManagementFactory
     {
         private readonly BaseStationReaderDbContext _context;
+        private readonly Lazy<IDataCleaner> _cleaner;
         private readonly Lazy<IAircraftManager> _aircraftManager = null;
         private readonly Lazy<IAirlineManager> _airlineManager = null;
         private readonly Lazy<IFlightManager> _flightManager = null;
@@ -20,6 +21,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IAircraftLockManager> _aircraftLockManager = null;
 
         public ITrackerLogger Logger { get; private set; }
+        public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
         public IAirlineManager AirlineManager { get { return _airlineManager.Value; } }
         public IFlightManager FlightManager { get { return _flightManager.Value; } }
@@ -40,6 +42,7 @@ namespace BaseStationReader.BusinessLogic.Database
             Logger = logger;
             _context = context;
 
+            _cleaner = new Lazy<IDataCleaner>(() => new DataCleaner(context));
             _aircraftManager = new Lazy<IAircraftManager>(() => new AircraftManager(context));
             _airlineManager = new Lazy<IAirlineManager>(() => new AirlineManager(context));
             _flightManager = new Lazy<IFlightManager>(() => new FlightManager(context));

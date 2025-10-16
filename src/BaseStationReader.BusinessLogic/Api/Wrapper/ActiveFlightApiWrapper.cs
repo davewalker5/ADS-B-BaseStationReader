@@ -96,39 +96,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
-        /// Lookup all active flights within a bounding box around a central point
-        /// </summary>
-        /// <param name="centreLatitude"></param>
-        /// <param name="centreLongitude"></param>
-        /// <param name="rangeNm"></param>
-        /// <returns></returns>
-        public async Task<List<Flight>> LookupFlightsInBoundingBoxAsync(
-            double centreLatitude,
-            double centreLongitude,
-            double rangeNm)
-        {
-            // Get the API instance
-            if (_register.GetInstance(ApiEndpointType.ActiveFlights) is not IActiveFlightsApi api) return null;
-
-            List<Flight> flights = [];
-
-            // Use the API to look-up the flights
-            var properties = await api.LookupFlightsInBoundingBoxAsync(centreLatitude, centreLongitude, rangeNm);
-            if ((properties?.Count ?? 0) > 0)
-            {
-                // Iterate over the collection of flight properties
-                foreach (var flightDetails in properties)
-                {
-                    // Create a flight object from this set of properties and add it to the collection
-                    var flight = CreateFlightFromProperties(flightDetails);
-                    flights.Add(flight);
-                }
-            }
-
-            return flights;
-        }
-
-        /// <summary>
         /// Return true if we have a valid value for an API property
         /// </summary>
         /// <param name="properties"></param>

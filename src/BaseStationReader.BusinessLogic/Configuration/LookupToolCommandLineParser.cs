@@ -22,7 +22,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.HistoricalApi, false, "--historical-api", "-hapi", "Specify the name of an API to use for historical flight lookups", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
-            Add(CommandLineOptionType.FlightsInRange, false, "--export-in-range", "-eir", "Export flights within the specified range (Nm) of the receiver to a CSV file", 2, 2);
             Add(CommandLineOptionType.HistoricalLookup, false, "--historical-lookup", "-hl", "Lookup all tracked aircraft that have not already been looked up", 0, 0);
             Add(CommandLineOptionType.METAR, false, "--metar", "-m", "Lookup the current weather for a given airport ICAO code", 1, 1);
             Add(CommandLineOptionType.TAF, false, "--taf", "-t", "Lookup the weather forecast for a given airport ICAO code", 1, 1);

@@ -25,7 +25,7 @@ namespace BaseStationReader.Tests.API
         private const string DepartureTime = "2025-09-25 07:45Z";
         private const string AirlineIATA = "U2";
         private const string AirlineICAO = "EZY";
-        private const string AirlineName = "easyJet";
+        private const string AirlineName = "Easyjet";
         private const string FlightNumber = "U22123";
         private const string Callsign = "EZY12ND";
         private const string AircraftResponse = "{ \"id\": 26975, \"reg\": \"G-UZHF\", \"active\": true, \"serial\": \"8193\", \"hexIcao\": \"4074B6\", \"airlineName\": \"easyJet\", \"iataCodeShort\": \"32A\", \"icaoCode\": \"A320\", \"model\": \"A20N\", \"modelCode\": \"320-251N\", \"numSeats\": 186, \"rolloutDate\": \"2018-04-09\", \"firstFlightDate\": \"2018-04-09\", \"deliveryDate\": \"2018-04-17\", \"registrationDate\": \"2018-04-17\", \"typeName\": \"Airbus A320 (Sharklets)\", \"numEngines\": 2, \"engineType\": \"Jet\", \"isFreighter\": false, \"productionLine\": \"Airbus A320\", \"ageYears\": 7.5, \"verified\": true, \"numRegistrations\": 1 }";

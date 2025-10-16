@@ -18,12 +18,12 @@ namespace BaseStationReader.Tests.API
         private const string ModelICAO = "B77W";
         private const string ModelIATA = "77W";
         private const string ModelName = "Boeing 777-300ER pax";
-        private const string ManufacturerName = "BOEING";
+        private const string ManufacturerName = "Boeing";
         private const string Embarkation = "AMS";
         private const string Destination = "LIM";
         private const string AirlineIATA = "KL";
         private const string AirlineICAO = "KLM";
-        private const string AirlineName = "KLM Royal Dutch Airlines";
+        private const string AirlineName = "Klm Royal Dutch Airlines";
         private const string FlightNumber = "KL743";
         private const string FlightResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"lat\": 51.17756, \"lng\": -2.833342, \"alt\": 9148, \"dir\": 253, \"speed\": 849, \"v_speed\": 0, \"flight_number\": \"743\", \"flight_icao\": \"KLM743\", \"flight_iata\": \"KL743\", \"dep_icao\": \"EHAM\", \"dep_iata\": \"AMS\", \"arr_icao\": \"SPJC\", \"arr_iata\": \"LIM\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"aircraft_icao\": \"B77W\", \"updated\": 1758446111, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
         private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
@@ -147,32 +147,6 @@ namespace BaseStationReader.Tests.API
             await AssertExpectedAircraftCreatedAsync();
             Assert.IsEmpty(airlines);
             Assert.IsEmpty(flights);
-        }
-
-        [TestMethod]
-        public async Task LookupActiveFlightsInBoundingBoxTestAsync()
-        {
-            _client.AddResponse(FlightsInBoundingBoxResponse);
-            var flights = await _wrapper.LookupActiveFlightsInBoundingBoxAsync(0, 0, 0);
-
-            Assert.IsNotNull(flights);
-            Assert.HasCount(2, flights);
-
-            var flight = flights.Where(x => x.AircraftAddress == "4CAA59").First();
-            Assert.IsNotNull(flight);
-            Assert.AreEqual("RYR5552", flight.ICAO);
-            Assert.AreEqual("FR5552", flight.IATA);
-            Assert.AreEqual("FR5552", flight.Number);
-            Assert.AreEqual("STN", flight.Embarkation);
-            Assert.AreEqual("GRO", flight.Destination);
-
-            flight = flights.Where(x => x.AircraftAddress == "4BAA8A").First();
-            Assert.IsNotNull(flight);
-            Assert.AreEqual("THY1869", flight.ICAO);
-            Assert.AreEqual("TK1869", flight.IATA);
-            Assert.AreEqual("TK1869", flight.Number);
-            Assert.AreEqual("LGW", flight.Embarkation);
-            Assert.AreEqual("IST", flight.Destination);
         }
 
         private async Task AssertExpectedAircraftCreatedAsync()
