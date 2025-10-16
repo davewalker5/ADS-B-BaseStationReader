@@ -20,8 +20,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<Model> GetByCodeAsync(string iata, string icao)
+        public async Task<Model> GetAsync(string iata, string icao, string name)
         {
             Model model = null;
 
@@ -32,6 +33,10 @@ namespace BaseStationReader.BusinessLogic.Database
             else if (!string.IsNullOrEmpty(iata))
             {
                 model = await GetAsync(x => x.IATA == iata);
+            }
+            else if (!string.IsNullOrEmpty(name))
+            {
+                model = await GetAsync(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             }
 
             return model;
@@ -67,16 +72,24 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<Model> AddAsync(string iata, string icao, string name, int manufacturerId)
         {
-            var model = await GetByCodeAsync(iata, icao);
+            // Clean the inputs so they're in a standardised format
+            var cleanIATA = StringCleaner.CleanIATA(iata);
+            var cleanICAO = StringCleaner.CleanICAO(icao);
+
+            // Look for a matching record
+            var model = await GetAsync(cleanIATA, cleanICAO, name);
+
             if (model == null)
             {
+                // No match, so create a new record
                 model = new Model
                 {
-                    IATA = iata,
-                    ICAO = icao,
+                    IATA = cleanIATA,
+                    ICAO = cleanICAO,
                     Name = name,
                     ManufacturerId = manufacturerId
                 };
+
                 await _context.Models.AddAsync(model);
                 await _context.SaveChangesAsync();
             }

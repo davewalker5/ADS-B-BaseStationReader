@@ -101,13 +101,6 @@ namespace BaseStationReader.Lookup
                     await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, serviceType).HandleAsync();
                 }
 
-                // Look up live flights within a given bounding box of the receiver
-                if (parser.IsPresent(CommandLineOptionType.FlightsInRange))
-                {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new FlightsInRangeHandler(settings, parser, logger, factory, serviceType).HandleAsync();
-                }
-
                 // Look up the current weather at a given airport
                 if (parser.IsPresent(CommandLineOptionType.METAR))
                 {

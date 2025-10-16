@@ -1,7 +1,5 @@
 ﻿using System.Text.Json.Nodes;
-using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Entities.Geometry;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
@@ -58,30 +56,6 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
             var properties = await MakeApiRequestAsync($"&hex={propertyValue}");
             return properties.Count > 0 ? properties.First() : null;
-        }
-
-        /// <summary>
-        /// Lookup all active flights within a bounding box around a central point
-        /// </summary>
-        /// <param name="centreLatitude"></param>
-        /// <param name="centreLongitude"></param>
-        /// <param name="rangeNm"></param>
-        /// <returns></returns>
-        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsInBoundingBoxAsync(
-            double centreLatitude,
-            double centreLongitude,
-            double rangeNm)
-        {
-            Logger.LogMessage(Severity.Info, $"Looking for active flights in a {rangeNm} Nm bounding box around ({centreLatitude}, {centreLongitude})");
-
-            // Convert the range to metres and calculate the bounding box
-            var rangeMetres = 1852.0 * rangeNm;
-            (_, Coordinate northEast, _, Coordinate southWest) =
-                CoordinateMathematics.GetBoundingBox(centreLatitude, centreLongitude, rangeMetres);
-
-            // Make the API request and parse the response to yield a list of flight property dicitonaries 
-            var properties = await MakeApiRequestAsync($"&bbox={southWest.Latitude},{southWest.Longitude},{northEast.Latitude},{northEast.Longitude}");
-            return properties;
         }
 
         /// <summary>

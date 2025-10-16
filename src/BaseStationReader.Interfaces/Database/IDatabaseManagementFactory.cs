@@ -5,6 +5,7 @@ namespace BaseStationReader.Interfaces.Database
     public interface IDatabaseManagementFactory
     {
         T Context<T>() where T : class;
+        IDataCleaner DataCleaner { get; }
         IAircraftManager AircraftManager { get; }
         IAirlineManager AirlineManager { get; }
         IFlightManager FlightManager { get; }

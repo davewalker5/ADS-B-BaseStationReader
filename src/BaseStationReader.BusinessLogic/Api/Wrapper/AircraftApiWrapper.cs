@@ -32,6 +32,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO)
         {
+            _logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
             {
@@ -68,13 +70,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         properties[ApiProperty.ModelIATA], modelICAO, properties[ApiProperty.ModelName], manufacturer.Id);
                     aircraft = await _factory.AircraftManager.AddAsync(
                         address, properties[ApiProperty.AircraftRegistration], manufactured, age, model.Id);
-
-                    // TODO: Remove this
-                    // If the properties contain an active flight callsign, pass it back to the caller
-                    // if (properties.TryGetValue(ApiProperty.Callsign, out string callsign))
-                    // {
-                    //     aircraft.Callsign = callsign;
-                    // } 
                 }
                 else
                 {

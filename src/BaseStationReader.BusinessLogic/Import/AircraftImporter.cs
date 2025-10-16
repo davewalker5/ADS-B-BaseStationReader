@@ -47,7 +47,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 // Now identify the model for each one
                 foreach (var a in aircraft)
                 {
-                    var model = Task.Run(() => _modelManager.GetByCodeAsync(a.ModelIATA, a.ModelICAO)).Result;
+                    var model = Task.Run(() => _modelManager.GetAsync(a.ModelIATA, a.ModelICAO, a.Model?.Name)).Result;
                     a.ModelId = model?.Id ?? 0;
                 }
 
