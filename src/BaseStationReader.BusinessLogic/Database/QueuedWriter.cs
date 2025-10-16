@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
-        /// 
+        /// Start the queued writer
         /// </summary>
         public async Task StartAsync()
         {
@@ -100,6 +100,9 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            // Stop the timer first to avoid conflicts accessing the queue and writing to the database
+            _timer.Stop();
 
             // Process pending tracked aircraft, position update and API lookup requests
             await ProcessPendingAsync<TrackedAircraft>();
