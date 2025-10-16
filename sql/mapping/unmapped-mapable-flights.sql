@@ -11,5 +11,6 @@ SELECT      ta.Address,
             fnm.FlightIATA,
             ta.LastSeen
 FROM        TRACKED_AIRCRAFT ta
+INNER JOIN  AIRCRAFT a ON a.Address = ta.Address
 INNER JOIN  FLIGHT_NUMBER_MAPPING fnm ON fnm.Callsign = ta.Callsign
 WHERE       ta.LookupTimestamp IS NULL;
