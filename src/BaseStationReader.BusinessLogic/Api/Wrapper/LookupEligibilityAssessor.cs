@@ -40,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<EligibilityResult> IsEligibleForLookupAsync(ApiEndpointType type, string address)
         {
-            _logger.LogMessage(Severity.Debug, $"Assessing eligibility of aircraft with address {address} for lookup");
+            _logger.LogMessage(Severity.Info, $"Assessing eligibility of aircraft with address {address} for lookup");
 
             // Check the aircraft address is valid
             if (!_addressRegex.IsMatch(address))

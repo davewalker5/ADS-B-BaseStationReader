@@ -5,6 +5,7 @@ using Serilog.Core;
 using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Interfaces.Logging;
+using System.Runtime.CompilerServices;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
@@ -71,30 +72,34 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="severity"></param>
         /// <param name="message"></param>
-        public void LogMessage(Severity severity, string message)
+        /// <param name="caller"></param>
+        public void LogMessage(Severity severity, string message, [CallerMemberName] string caller = "")
         {
             // Check the logger is configured
             if (!_configured) return;
+
+            // Add the caller to the message
+            var traceableMessage = $"{caller} : {message}";
 
             // Log the message
             switch (severity)
             {
                 case Severity.Debug:
-                    Log.Debug(message);
+                    Log.Debug(traceableMessage);
                     break;
                 case Severity.Info:
-                    Log.Information(message);
+                    Log.Information(traceableMessage);
                     break;
                 case Severity.Warning:
-                    Log.Warning(message);
+                    Log.Warning(traceableMessage);
                     break;
                 case Severity.Error:
-                    Log.Error(message);
+                    Log.Error(traceableMessage);
                     break;
                 case Severity.Verbose:
                     if (_verbose)
                     {
-                        Log.Debug(message);
+                        Log.Debug(traceableMessage);
                     }
                     break;
                 default:
@@ -106,20 +111,21 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// Log exception details, including the stack trace
         /// </summary>
         /// <param name="ex"></param>
-        public void LogException(Exception ex)
+        /// <param name="caller"></param>
+        public void LogException(Exception ex, [CallerMemberName] string caller = "")
         {
             // Check the logger is configured
             if (!_configured) return;
 
-            Log.Error(ex.Message);
-            Log.Error(ex.ToString());
+            Log.Error($"{caller} : ex.Message");
+            Log.Error($"{caller} : {ex}");
         }
 
         /// <summary>
         /// Log external API configuration details
         /// </summary>
         /// <param name=""></param>
-        public void LogApiConfiguration(ExternalApiSettings settings)
+        public void LogApiConfiguration(ExternalApiSettings settings, [CallerMemberName] string caller = "")
         {
             // Check the logger is configured
             if (!_configured) return;
@@ -129,7 +135,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 LogMessage(Severity.Debug, service.ToString());
                 foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
                 {
-                    LogMessage(Severity.Debug, endpoint.ToString());
+                    LogMessage(Severity.Debug, endpoint.ToString(), caller);
                 }
             }
         }

@@ -2,7 +2,7 @@
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace BaseStationReader.Tests.Mocks
 {
@@ -12,25 +12,25 @@ namespace BaseStationReader.Tests.Mocks
         {
         }
 
-        public void LogMessage(Severity severity, string message)
+        public void LogMessage(Severity severity, string message, [CallerMemberName] string caller = "")
         {
-            Debug.Print($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [{severity.ToString()}] {message}");
+            Debug.Print($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [{severity.ToString()}] {caller} : {message}");
         }
 
-        public void LogException(Exception ex)
+        public void LogException(Exception ex, [CallerMemberName] string caller = "")
         {
-            LogMessage(Severity.Error, ex.Message);
-            LogMessage(Severity.Error, ex.ToString());
+            LogMessage(Severity.Error, ex.Message, caller);
+            LogMessage(Severity.Error, ex.ToString(), caller);
         }
 
-        public void LogApiConfiguration(ExternalApiSettings settings)
+        public void LogApiConfiguration(ExternalApiSettings settings, [CallerMemberName] string caller = "")
         {
             foreach (var service in settings.ApiServices)
             {
                 LogMessage(Severity.Debug, service.ToString());
                 foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
                 {
-                    LogMessage(Severity.Debug, endpoint.ToString());
+                    LogMessage(Severity.Debug, endpoint.ToString(), caller);
                 }
             }
         }

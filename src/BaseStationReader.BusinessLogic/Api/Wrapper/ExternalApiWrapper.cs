@@ -72,8 +72,8 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(request.AircraftAddress, "");
             if (aircraft == null)
             {
-                // If the API can't find the aircraft, not only has this lookup failed but there's no point
-                // retrying
+                // If we can't find the aircraft locally or via the APU, not only has this lookup failed but
+                // there's no point retrying
                 return new(false, false);
             }
 
@@ -125,64 +125,75 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         private async Task<Flight> LookupFlightAsync(ApiLookupRequest request)
         {
-            Flight flight = null;
-
             // Determine whether we're doing an active or historical flight lookup and get the
             // appropriate API instance
             IFlightApiWrapper api = request.FlightEndpointType == ApiEndpointType.ActiveFlights ?
                 _activeFlightApiWrapper : _historicalFlightWrapper;
 
-            // If the API supports lookup by address, use that
-            var lookupByAddressIsSupported = api.SupportsLookupBy(ApiProperty.AircraftAddress);
-            if (lookupByAddressIsSupported)
-            {
-                // Lookup the flight using the aircraft address
-                request.FlightPropertyType = ApiProperty.AircraftAddress;
-                request.FlightPropertyValue = request.AircraftAddress;
-                flight = await api.LookupFlightAsync(request);
+            // Preferentially use the flight number mapping data to create the airline and flight
+            (var number, var flight) = await CreateFlightFromMapping(request, api);
 
-                // If we got a flight, return it
-                if (flight != null)
+            // If that didn't work, fall back to using the API
+            if (flight == null)
+            {
+                // Determine API capabilitues
+                var canLookupByAddress = api.SupportsLookupBy(ApiProperty.AircraftAddress);
+                var canLookupByNumber = api.SupportsLookupBy(ApiProperty.FlightNumber);
+
+                if (canLookupByAddress)
                 {
-                    return flight;
+                    // Lookup the flight using the aircraft address
+                    _logger.LogMessage(Severity.Info, $"Using the API to look up flight for aircraft {request.AircraftAddress} by address");
+                    request.FlightPropertyType = ApiProperty.AircraftAddress;
+                    request.FlightPropertyValue = request.AircraftAddress;
+                    flight = await api.LookupFlightAsync(request);
+                }
+                else if (canLookupByNumber)
+                {
+                    // Lookup the flight using the flight number
+                    _logger.LogMessage(Severity.Info, $"Using the API to look up flight {number.FlightIATA} for aircraft {request.AircraftAddress} by number");
+                    request.FlightPropertyType = ApiProperty.FlightNumber;
+                    request.FlightPropertyValue = number.FlightIATA;
+                    flight = await api.LookupFlightAsync(request);
+                }
+                else
+                {
+                    _logger.LogMessage(Severity.Error, $"API does not support the available lookup criteria");
                 }
             }
 
-            // Load the tracked aircraft record. Fall through from the address-based lookup, above, to allow the
-            // flight to be created from callsign mapping data, if possible
+            return flight;
+        }
+
+        /// <summary>
+        /// Create a flight from flight number mapping data and return the mapping and flight instances
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="api"></param>
+        /// <returns></returns>
+        private async Task<(FlightNumberMapping, Flight)> CreateFlightFromMapping(ApiLookupRequest request, IFlightApiWrapper api)
+        {
+            // Lookup the tracked aircraft record
+            _logger.LogMessage(Severity.Debug, $"Looking up tracked aircraft record for address '{request.AircraftAddress}'");
             var aircraft = await _factory.TrackedAircraftWriter?.GetAsync(x => x.Address == request.AircraftAddress);
             if (aircraft == null)
             {
-                // This is an error as the eligibility criteria shouldn't allow us to get this far if there's aircraft record
-                _logger.LogMessage(Severity.Error, $"Unable to find tracked aircraft record for aicraft with address '{request.AircraftAddress}'");
-                return null;
+                _logger.LogMessage(Severity.Warning, $"Unable to find tracked aircraft record for aicraft with address '{request.AircraftAddress}'");
+                return (null, null);
             }
 
-            // Lookup the flight number based on the callsign and check it's found
+            // Look up the flight number mapping based on the callsign
             _logger.LogMessage(Severity.Debug, $"Looking up flight number for callsign '{aircraft.Callsign}'");
             var number = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(aircraft.Callsign);
             if (string.IsNullOrEmpty(number.FlightIATA))
             {
-                _logger.LogMessage(Severity.Warning, $"No flight number mapping for callsign '{aircraft.Callsign}' : Unable to look up flight by number");
-                return null;
+                _logger.LogMessage(Severity.Warning, $"No flight number mapping for callsign '{aircraft.Callsign}'");
+                return (null, null);
             }
 
-            // If lookup by address is supported by the API, we've fallen through from above so don't attempt lookup
-            // by flight number. If lookup by address is *not* supported, do make the attempt
-            if (!lookupByAddressIsSupported)
-            {
-                // Lookup the flight by number
-                request.FlightPropertyType = ApiProperty.FlightNumber;
-                request.FlightPropertyValue = number.FlightIATA;
-
-                _logger.LogMessage(Severity.Info, $"Looking up flight by number {number.FlightIATA} for aircraft {request.AircraftAddress}");
-                flight = await api.LookupFlightAsync(request);
-            }
-
-            // If the flight still hasn't been found, use the flight number mapping data to create the airline and flight
-            // provided the airports aren't not filtered out
-            flight ??= await api.CreateFlightFromMapping(request, number);
-            return flight;
+            // Create the flight and airline from the mapping data, provided the airports aren't filtered out
+            var flight = await api.CreateFlightFromMapping(request, number);
+            return (number, flight);
         }
     }
 }
