@@ -106,28 +106,5 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             var value = properties?.ContainsKey(key) == true ? properties[key] : null;
             return !string.IsNullOrEmpty(value);
         }
-
-        /// <summary>
-        /// Create a flight object from a dictionary of properties returned from the API
-        /// </summary>
-        /// <param name="properties"></param>
-        /// <returns></returns>
-        private static Flight CreateFlightFromProperties(Dictionary<ApiProperty, string> properties)
-            => new()
-            {
-                Embarkation = properties[ApiProperty.EmbarkationIATA],
-                Destination = properties[ApiProperty.DestinationIATA],
-                IATA = properties[ApiProperty.FlightIATA],
-                ICAO = properties[ApiProperty.FlightICAO],
-                Number = properties[ApiProperty.FlightNumber],
-                Airline = new()
-                {
-                    IATA = properties[ApiProperty.AirlineIATA],
-                    ICAO = properties[ApiProperty.AirlineICAO],
-                    Name = properties[ApiProperty.AirlineName]
-                },
-                AircraftAddress = properties[ApiProperty.AircraftAddress],
-                ModelICAO = properties[ApiProperty.ModelICAO]
-            };
     }
 }

@@ -5,13 +5,16 @@ using Serilog.Core;
 using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Interfaces.Logging;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace BaseStationReader.BusinessLogic.Logging
 {
     [ExcludeFromCodeCoverage]
     public class FileLogger : ITrackerLogger
     {
+        private static readonly string _loggerTypeName = typeof(FileLogger).Name;
+        private static readonly string _loggerTypeNamespacePrefix = typeof(FileLogger).Namespace.Split(".")[0];
+
         private bool _configured = false;
         private bool _verbose = false;
 
@@ -73,13 +76,14 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="severity"></param>
         /// <param name="message"></param>
         /// <param name="caller"></param>
-        public void LogMessage(Severity severity, string message, [CallerMemberName] string caller = "")
+        public void LogMessage(Severity severity, string message, string caller = null)
         {
             // Check the logger is configured
             if (!_configured) return;
 
             // Add the caller to the message
-            var traceableMessage = $"{caller} : {message}";
+            caller = GetCallerDetails();
+            var traceableMessage = !string.IsNullOrEmpty(caller) ? $"{caller} : {message}" : message;
 
             // Log the message
             switch (severity)
@@ -112,32 +116,83 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// </summary>
         /// <param name="ex"></param>
         /// <param name="caller"></param>
-        public void LogException(Exception ex, [CallerMemberName] string caller = "")
+        public void LogException(Exception ex, string caller = "")
         {
             // Check the logger is configured
             if (!_configured) return;
 
-            Log.Error($"{caller} : ex.Message");
-            Log.Error($"{caller} : {ex}");
+            // Get the calling method details
+            caller = GetCallerDetails();
+
+            LogMessage(Severity.Error, ex.Message, caller);
+            LogMessage(Severity.Error, ex.ToString(), caller);
         }
 
         /// <summary>
         /// Log external API configuration details
         /// </summary>
         /// <param name=""></param>
-        public void LogApiConfiguration(ExternalApiSettings settings, [CallerMemberName] string caller = "")
+        public void LogApiConfiguration(ExternalApiSettings settings, string caller = "")
         {
             // Check the logger is configured
             if (!_configured) return;
 
+            // Get the calling method details
+            caller = GetCallerDetails();
+
+            // Iterate over the service definitions
             foreach (var service in settings.ApiServices)
             {
-                LogMessage(Severity.Debug, service.ToString());
+                // Log the definition for the current service
+                LogMessage(Severity.Debug, service.ToString(), caller);
+
+                // Iterate over the service endpoints and log each one
                 foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
                 {
                     LogMessage(Severity.Debug, endpoint.ToString(), caller);
                 }
             }
+        }
+
+        /// <summary>
+        /// Walk the stack to determine the caller's declaring type and method name details (the
+        /// [CallerMemberName] attribute doesn't include the declaring type name)
+        /// </summary>
+        private static string GetCallerDetails()
+        {
+            // Get the current stack trace and iterate over the frames
+            var stack = new StackTrace();
+            foreach (var frame in stack.GetFrames())
+            {
+                // Get the method and declaring type details from the current frame
+                var method = frame.GetMethod();
+                var declaringType = method.DeclaringType;
+                if (declaringType == null) continue;
+
+                // Get the name and namespace for the type
+                var declaringTypeName = declaringType.Name;
+                var declaringTypeNamespace = declaringType.Namespace;
+
+                // Move on to the next frame if:
+                // 
+                // 1. The declaring type name is empty
+                // 2. It's another method in the current class
+                // 3. It's a compiler generated method
+                // 4. It's not in the application namespace
+                //
+                if (string.IsNullOrEmpty(declaringTypeName) ||
+                    declaringTypeName.Equals(_loggerTypeName) ||
+                    declaringTypeName.Contains("<") ||
+                    !declaringTypeNamespace.StartsWith(_loggerTypeNamespacePrefix))
+                {
+                    continue;
+                }
+
+                // Found the calling type and method - return the details
+                return $"{declaringTypeName}.{method.Name}";
+            }
+
+            return "";
         }
     }
 }
