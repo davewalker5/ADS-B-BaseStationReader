@@ -17,6 +17,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
         public virtual DbSet<FlightNumberMapping> FlightNumberMappings { get; set; }
+        public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -206,6 +207,14 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
                 entity.Property(e => e.FileName).IsRequired().HasColumnName("Filename");
+            });
+
+            modelBuilder.Entity<ExcludedAddress>(entity =>
+            {
+                entity.ToTable("EXCLUDED_ADDRESS");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
             });
         }
     }

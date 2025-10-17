@@ -19,6 +19,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<ITrackedAircraftWriter> _trackedAircraftWriter = null;
         private readonly Lazy<IPositionWriter> _positionWriter = null;
         private readonly Lazy<IAircraftLockManager> _aircraftLockManager = null;
+        private readonly Lazy<IExcludedAddressManager> _excludedAddressManager = null;
 
         public ITrackerLogger Logger { get; private set; }
         public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
@@ -32,6 +33,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public ITrackedAircraftWriter TrackedAircraftWriter { get { return _trackedAircraftWriter.Value; } }
         public IPositionWriter PositionWriter { get { return _positionWriter.Value; } }
         public IAircraftLockManager AircraftLockManager { get { return _aircraftLockManager.Value; } }
+        public IExcludedAddressManager ExcludedAddressManager { get { return _excludedAddressManager.Value; } }
 
         public DatabaseManagementFactory(
             ITrackerLogger logger,
@@ -53,6 +55,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(logger, context, maximumLookupAttempts));
             _positionWriter = new Lazy<IPositionWriter>(() => new PositionWriter(context));
             _aircraftLockManager = new Lazy<IAircraftLockManager>(() => new AircraftLockManager(_trackedAircraftWriter.Value, timeToLockMs));
+            _excludedAddressManager = new Lazy<IExcludedAddressManager>(() => new ExcludedAddressManager(context));
         }
 
         /// <summary>

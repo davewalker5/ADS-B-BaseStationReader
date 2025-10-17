@@ -13,6 +13,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly ITrackerTimer _timer;
         private readonly IAircraftPropertyUpdater _updater;
         private readonly INotificationSender _sender;
+        private readonly IList<string> _excludedAddresses;
         private readonly Dictionary<string, TrackedAircraft> _aircraft = [];
         private CancellationTokenSource _cancellationTokenSource = null;
         private readonly int _recentMs;
@@ -31,6 +32,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerTimer timer,
             IAircraftPropertyUpdater updater,
             INotificationSender sender,
+            IList<string> excludedAddresses,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -40,6 +42,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _timer = timer;
             _updater = updater;
             _sender = sender;
+            _excludedAddresses = excludedAddresses;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
             _staleMs = staleMilliseconds;
@@ -84,9 +87,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var fields = e.Message.Split(",");
             if (fields.Length > 1 && Enum.TryParse(fields[0], true, out MessageType messageType) && _parsers.TryGetValue(messageType, out IMessageParser parser))
             {
-                // Parse the message and check the aircraft identifier is valid
+                // Parse the message and check the aircraft identifier is valid and isn't excluded
                 Message msg = parser.Parse(fields);
-                if (msg.Address.Length > 0)
+                if ((msg.Address.Length > 0) && !_excludedAddresses.Contains(msg.Address))
                 {
                     // See if this is an existing aircraft or not and either update it or add it to the tracking collection
                     if (_aircraft.ContainsKey(msg.Address))

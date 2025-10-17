@@ -28,6 +28,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.WeatherApi, false, "--weather-api", "-wapi", "Specify the name of an API to use for weather lookups", 1, 1);
             Add(CommandLineOptionType.ImportFlightNumberMappings, false, "--import-mappings", "-im", "Import a set of callsign/flight number mappings from a CSV file", 1, 1);
             Add(CommandLineOptionType.ExportSchedule, false, "--export-schedule", "-es", "Export schedule information for an airport to a JSON file", 1, 4);
+            Add(CommandLineOptionType.AddExclusion, false, "--exclude", "-ex", "Add an address to the excluded addresses list", 1, 1);
+            Add(CommandLineOptionType.ListExclusions, false, "--list-exclusions", "-lex", "List the excluded aircraft addresses", 0, 0);
         }
     }
 }

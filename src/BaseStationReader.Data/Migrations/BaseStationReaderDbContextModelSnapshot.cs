@@ -302,6 +302,23 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("POSITION", (string)null);
                 });
 
+            modelBuilder.Entity("BaseStationReader.Entities.Tracking.ExcludedAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Address");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EXCLUDED_ADDRESS", (string)null);
+                });
+
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.TrackedAircraft", b =>
                 {
                     b.Property<int>("Id")

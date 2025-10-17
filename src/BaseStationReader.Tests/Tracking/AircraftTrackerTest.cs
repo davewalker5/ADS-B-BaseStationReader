@@ -55,6 +55,7 @@ namespace BaseStationReader.Tests.Tracking
                 timer,
                 updater,
                 notificationSender,
+                [],
                 TrackerRecentMs,
                 TrackerStaleMs,
                 TrackerRemovedMs);
