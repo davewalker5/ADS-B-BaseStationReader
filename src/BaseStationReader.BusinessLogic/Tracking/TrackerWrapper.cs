@@ -62,6 +62,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 { MessageType.MSG, new MsgMessageParser() }
             };
 
+            // Configure the database context and management classes
+            var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
+            var factory = new DatabaseManagementFactory(_logger, context, _settings.TimeToLock, _settings.MaximumLookups);
+
+            // Load the current exclusions
+            var exclusions = await factory.ExcludedAddressManager.ListAsync(x => true);
+            var excluedAddresses = exclusions.Select(x => x.Address).ToList();
+
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
             var assessor = new SimpleAircraftBehaviourAssessor();
@@ -81,6 +89,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 trackerTimer,
                 propertyUpdater,
                 notificationSender,
+                excluedAddresses,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
@@ -93,10 +102,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Set up the queued database writer
             if (_settings.EnableSqlWriter)
             {
-                // Configure the database context and management classes
-                var context = new BaseStationReaderDbContextFactory().CreateDbContext(Array.Empty<string>());
-                var factory = new DatabaseManagementFactory(_logger, context, _settings.TimeToLock, _settings.MaximumLookups);
-
                 // Configure the external API wrapper
                 var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
                 var apiWrapper = ExternalApiFactory.GetWrapperInstance(

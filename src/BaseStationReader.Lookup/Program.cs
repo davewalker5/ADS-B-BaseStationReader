@@ -60,31 +60,31 @@ namespace BaseStationReader.Lookup
                 // If a CSV file containing airline details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportAirlines))
                 {
-                    await new AirlineImportHandler(settings, parser, logger, factory).HandleAsync();
+                    await new ImportHandler(settings, parser, logger, factory).HandleAirlineImportAsync();
                 }
 
                 // If a CSV file containing manufacturer details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportManufacturers))
                 {
-                    await new ManufacturerImportHandler(settings, parser, logger, factory).HandleAsync();
+                    await new ImportHandler(settings, parser, logger, factory).HandleManufacturerImportAsync();
                 }
 
                 // If a CSV file containing confirmed flight number mappings has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportFlightNumberMappings))
                 {
-                    await new FlightNumberMappingImportHandler(settings, parser, logger, factory).HandleAsync();
+                    await new ImportHandler(settings, parser, logger, factory).HandleMappingImportAsync();
                 }
 
                 // If a CSV file containing model details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportModels))
                 {
-                    await new ModelImportHandler(settings, parser, logger, factory).HandleAsync();
+                    await new ImportHandler(settings, parser, logger, factory).HandleModelImportAsync();
                 }
 
                 // If a CSV file containing aircraft details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportAircraft))
                 {
-                    await new AircraftImportHandler(settings, parser, logger, factory).HandleAsync();
+                    await new ImportHandler(settings, parser, logger, factory).HandleAircraftImportAsync();
                 }
 
                 // If an aircraft address has been supplied, look it up and store the results
@@ -119,6 +119,18 @@ namespace BaseStationReader.Lookup
                 if (parser.IsPresent(CommandLineOptionType.ExportSchedule))
                 {
                     await new ScheduleLookupHandler(settings, parser, logger, factory, ApiServiceType.AeroDataBox).HandleAsync();
+                }
+
+                // Handle addition of an aircraft address to the exclusions list
+                if (parser.IsPresent(CommandLineOptionType.AddExclusion))
+                {
+                    await new ExclusionHandler(settings, parser, logger, factory).HandleAddAsync();
+                }
+
+                // List excluded aircraft addresses
+                if (parser.IsPresent(CommandLineOptionType.ListExclusions))
+                {
+                    await new ExclusionHandler(settings, parser, logger, factory).HandleListAsync();
                 }
             }
         }

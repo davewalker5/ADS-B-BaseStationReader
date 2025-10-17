@@ -2,6 +2,7 @@
 {
     public enum CommandLineOptionType
     {
+        AddExclusion,
         AddressFile,
         AircraftAddress,
         ApplicationTimeout,
@@ -21,6 +22,7 @@
         ImportFlightNumberMappings,
         ImportManufacturers,
         ImportModels,
+        ListExclusions,
         LiveApi,
         LogFile,
         MaximumAircraftLifespan,
