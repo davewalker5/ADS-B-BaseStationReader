@@ -161,7 +161,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
                 builder.Append(letter);
             }
 
-            // Add a rnadom flight number
+            // Add a random flight IATA code
             var number = _random.Next(1, 1000);
             builder.Append(number.ToString("000"));
 

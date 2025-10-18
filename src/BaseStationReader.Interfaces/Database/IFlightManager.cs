@@ -11,7 +11,6 @@ namespace BaseStationReader.Interfaces.Database
         Task<Flight> AddAsync(
             string iata,
             string icao,
-            string number,
             string embarkation,
             string destination,
             int airlineId);

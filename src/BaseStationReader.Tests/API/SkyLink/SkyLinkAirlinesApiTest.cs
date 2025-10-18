@@ -3,7 +3,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
-using System.Threading.Tasks;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests.API.SkyLink
 {
@@ -31,8 +31,9 @@ namespace BaseStationReader.Tests.API.SkyLink
         public void Initialise()
         {
             var logger = new MockFileLogger();
+            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new SkyLinkAirlinesApi(logger, _client, null, _settings);
+            _api = new SkyLinkAirlinesApi(_client, factory, _settings);
         }
 
         [TestMethod]

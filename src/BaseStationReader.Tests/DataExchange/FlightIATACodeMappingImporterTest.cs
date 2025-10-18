@@ -9,25 +9,25 @@ using BaseStationReader.Entities.Api;
 namespace BaseStationReader.Tests.DataExchange
 {
     [TestClass]
-    public class FlightNumberMappingImporterTest
+    public class FlightIATACodeMappingImporterTest
     {
-        private IFlightNumberMappingManager _mappingManager;
-        private IFlightNumberMappingImporter _importer;
+        private IDatabaseManagementFactory _factory;
+        private IFlightIATACodeMappingImporter _importer;
 
         [TestInitialize]
         public void Initialise()
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _mappingManager = new FlightNumberMappingManager(context);
-            _importer = new FlightNumberMappingImporter(_mappingManager, logger);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _importer = new FlightIATACodeMappingImporter(_factory);
         }
 
         [TestMethod]
         public async Task ImportTestAsync()
         {
             await _importer.ImportAsync("flight_number_mappings.csv");
-            var mappings = await _mappingManager.ListAsync(x => true);
+            var mappings = await _factory.FlightIATACodeMappingManager.ListAsync(x => true);
 
             Assert.IsNotNull(mappings);
             Assert.HasCount(1, mappings);
@@ -48,7 +48,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportEmptyFileTestAsync()
         {
             await _importer.ImportAsync("empty_mappings.csv");
-            var airlines = await _mappingManager.ListAsync(x => true);
+            var airlines = await _factory.FlightIATACodeMappingManager.ListAsync(x => true);
 
             Assert.IsNotNull(airlines);
             Assert.HasCount(0, airlines);
@@ -58,7 +58,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportMissingFileTestAsync()
         {
             await _importer.ImportAsync("missing.csv");
-            var airlines = await _mappingManager.ListAsync(x => true);
+            var airlines = await _factory.FlightIATACodeMappingManager.ListAsync(x => true);
 
             Assert.IsNotNull(airlines);
             Assert.HasCount(0, airlines);

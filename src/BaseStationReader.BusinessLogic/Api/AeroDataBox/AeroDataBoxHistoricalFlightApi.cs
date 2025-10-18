@@ -3,9 +3,8 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
-using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Database;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -22,10 +21,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
         [ExcludeFromCodeCoverage]
         public AeroDataBoxHistoricalFlightApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -58,50 +56,33 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             string address,
             DateTime date)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address} at {date}");
-            var properties = await MakeApiRequestAsync(address, date);
-            return properties;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<List<Dictionary<ApiProperty, string>>> MakeApiRequestAsync(string address, DateTime date)
-        {
             List<Dictionary<ApiProperty, string>> properties = [];
 
-            try
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address} at {date}");
+
+            // Convert the date to UTC and generate a representation in the required format
+            var fromDate = date.ToUniversalTime().AddDays(-1).ToString("yyyy-MM-dd");
+            var toDate = date.ToUniversalTime().AddDays(1).ToString("yyyy-MM-dd");
+
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}{address}/{fromDate}/{toDate}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Conver the date to UTC and generate a representation in the required format
-                var fromDate = date.ToUniversalTime().AddDays(-1).ToString("yyyy-MM-dd");
-                var toDate = date.ToUniversalTime().AddDays(1).ToString("yyyy-MM-dd");
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{address}/{fromDate}/{toDate}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
+            var array = node as JsonArray;
+            if (array != null)
+            {
+                // Iterate over each (presumed) flight in the response
+                foreach (var flight in array)
                 {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
-
-                if (node != null)
-                {
-                    // Iterate over each (presumed) flight in the response
-                    foreach (var flight in node as JsonArray)
-                    {
-                        // Extract the flight properties into a dictionary and add them to the collection
-                        // of flight property dictionaries
-                        var flightProperties = ExtractSingleFlight(flight);
-                        properties.Add(flightProperties);
-                    }
+                    // Extract the flight properties into a dictionary and add them to the collection
+                    // of flight property dictionaries
+                    var flightProperties = ExtractSingleFlight(flight);
+                    properties.Add(flightProperties);
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
             }
 
             return properties.Count > 0 ? properties : null;
@@ -115,12 +96,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
         {
             // Extract the properties of interest from the node
-            var flightNumber = (node?["number"]?.GetValue<string>() ?? "").Replace(" ", "");
+            var flightIATA = GetStringValue(node, "number").Replace(" ", "");
             Dictionary<ApiProperty, string> properties = new()
             {
-                { ApiProperty.FlightIATA, "" },
+                { ApiProperty.FlightIATA, flightIATA },
                 { ApiProperty.FlightICAO, "" },
-                { ApiProperty.FlightNumber, flightNumber },
                 { ApiProperty.ModelICAO, "" }
             };
 
@@ -146,17 +126,18 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             // Find the departure airport node and the departure time node. For the latter, try "runwayTime" first
             // and if that's not there fallback to "scheduledTime"
-            var airport = node?["departure"]?["airport"];
-            var time = node?["departure"]?["runwayTime"];
-            time ??= node?["departure"]?["revisedTime"];
-            time ??= node?["departure"]?["scheduledTime"];
+            var departure = GetObjectValue(node, "departure") as JsonObject;
+            var airport = GetObjectValue(departure, "airport") as JsonObject;
+            var time = GetObjectValue(departure, "runwayTime") as JsonObject;
+            time ??= GetObjectValue(departure, "revisedTime") as JsonObject;
+            time ??= GetObjectValue(departure, "scheduledTime") as JsonObject;
 
-            Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
-            Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.EmbarkationIATA, airport?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.DepartureTime, time?["utc"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.EmbarkationIATA, GetStringValue(airport, "iata"));
+            properties.Add(ApiProperty.DepartureTime, GetStringValue(time, "utc"));
         }
 
         /// <summary>
@@ -166,19 +147,20 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
-            // Find the arrival airport node and the arrival time node. For the latter, use revised time, predicted
-            // time and scheduled time, in thatr order
-            var airport = node?["arrival"]?["airport"];
-            var time = node?["arrival"]?["revisedTime"];
-            time ??= node?["arrival"]?["predictedTime"];
-            time ??= node?["arrival"]?["scheduledTime"];
+            // Find the arrival airport node and the departure time node. For the latter, try "runwayTime" first
+            // and if that's not there fallback to "scheduledTime"
+            var arrival = GetObjectValue(node, "arrival") as JsonObject;
+            var airport = GetObjectValue(arrival, "airport") as JsonObject;
+            var time = GetObjectValue(arrival, "revisedTime") as JsonObject;
+            time ??= GetObjectValue(arrival, "predictedTime") as JsonObject;
+            time ??= GetObjectValue(arrival, "scheduledTime") as JsonObject;
 
-            Logger.LogMessage(Severity.Debug, $"Extracting arrival airport details from {airport?.ToJsonString()}");
-            Logger.LogMessage(Severity.Debug, $"Extracting arrival time from {time?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting arrival airport details from {airport?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting arrival time from {time?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.DestinationIATA, airport?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.ArrivalTime, time?["utc"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.DestinationIATA, GetStringValue(airport, "iata"));
+            properties.Add(ApiProperty.ArrivalTime, GetStringValue(time, "utc"));
         }
 
         /// <summary>
@@ -189,13 +171,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private void ExtractAirline(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airline node
-            var airline = node?["airline"];
-            Logger.LogMessage(Severity.Debug, $"Extracting airline details from {airline?.ToJsonString()}");
+            var airline = GetObjectValue(node, "airline") as JsonObject;
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting airline details from {airline?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AirlineIATA, airline?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AirlineICAO, airline?["icao"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AirlineName, GetStringValue(airline, "name"));
+            properties.Add(ApiProperty.AirlineIATA, GetStringValue(airline, "iata"));
+            properties.Add(ApiProperty.AirlineICAO, GetStringValue(airline, "icao"));
         }
 
         /// <summary>
@@ -206,12 +188,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private void ExtractAircraft(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airline node
-            var aircraft = node?["aircraft"];
-            Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {aircraft?.ToJsonString()}");
+            var aircraft = GetObjectValue(node, "aircraft") as JsonObject;
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {aircraft?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.AircraftRegistration, aircraft?["reg"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AircraftAddress, aircraft?["modeS"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AircraftRegistration, GetStringValue(aircraft, "reg"));
+            properties.Add(ApiProperty.AircraftAddress, GetStringValue(aircraft, "modeS"));
         }
     }
 }

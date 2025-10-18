@@ -5,9 +5,9 @@ using CsvHelper.Configuration;
 namespace BaseStationReader.Entities.Import
 {
     [ExcludeFromCodeCoverage]
-    public sealed class FlightNumberMappingProfile : ClassMap<FlightNumberMapping>
+    public sealed class FlightIATACodeMappingProfile : ClassMap<FlightIATACodeMapping>
     {
-        public FlightNumberMappingProfile()
+        public FlightIATACodeMappingProfile()
         {
             Map(m => m.AirlineICAO).Name("airline_icao");
             Map(m => m.AirlineIATA).Name("airline_iata");

@@ -19,7 +19,7 @@
         Host,
         ImportAircraft,
         ImportAirlines,
-        ImportFlightNumberMappings,
+        ImportFlightIATACodeMappings,
         ImportManufacturers,
         ImportModels,
         ListExclusions,

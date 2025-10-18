@@ -4,7 +4,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
@@ -32,10 +31,9 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 
         [ExcludeFromCodeCoverage]
         public AeroDataBoxSchedulesApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -47,7 +45,6 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             _host = new Uri(url).Host;
 
             // Set the rate limit for this service on the HTTP client
-            Logger.LogMessage(Severity.Info, $"Using rate limit of {definition?.RateLimit}");
             client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);
         }
 
@@ -64,14 +61,14 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             var timespan = (int)Math.Round((to - from).TotalMinutes, 0, MidpointRounding.AwayFromZero);
             if (timespan < 1)
             {
-                Logger.LogMessage(Severity.Error, $"{from} to {to} gives a timespan of {timespan} minutes which is invalid");
+                Factory.Logger.LogMessage(Severity.Error, $"{from} to {to} gives a timespan of {timespan} minutes which is invalid");
                 return null;
             }
 
             // Make sure the timespan represented by the two dates is within the allowed range
             if (timespan > 60 * TimespanLimitHours)
             {
-                Logger.LogMessage(Severity.Error, $"{from} to {to} gives a timespan of {timespan} minutes which is too large");
+                Factory.Logger.LogMessage(Severity.Error, $"{from} to {to} gives a timespan of {timespan} minutes which is too large");
                 return null;
             }
 
@@ -79,37 +76,15 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             var fromStr = from.ToString(DateTimeFormat);
             var toStr = to.ToString(DateTimeFormat);
 
-            // Make the request and return the resulting JSON node
-            var schedules = await MakeApiRequestAsync($"{iata}/{fromStr}/{toStr}");
-            return schedules;
-        }
+            // Construct the URL with query parameters
+            var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
 
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<JsonNode> MakeApiRequestAsync(string parameters)
-        {
-            JsonNode node = null;
-
-            try
+            // Make a request for the data from the API
+            JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Construct the URL with query parameters
-                var url = $"{_baseAddress}/{parameters}?{BuildQueryString()}";
-
-                // Make a request for the data from the API
-                node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
-            }
-            catch (Exception ex)
-            {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
-            }
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
             return node;
         }

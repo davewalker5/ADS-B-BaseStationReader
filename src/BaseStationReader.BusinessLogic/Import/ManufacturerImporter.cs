@@ -1,5 +1,4 @@
 using BaseStationReader.Entities.Import;
-using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
@@ -9,10 +8,10 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class ManufacturerImporter : CsvImporter<ManufacturerMappingProfile, Manufacturer>, IManufacturerImporter
     {
-        private readonly IManufacturerManager _manufacturerManager;
+        private readonly IDatabaseManagementFactory _factory;
 
-        public ManufacturerImporter(IManufacturerManager manufacturerManager, ITrackerLogger logger) : base(logger)
-            => _manufacturerManager = manufacturerManager;
+        public ManufacturerImporter(IDatabaseManagementFactory factory) : base(factory.Logger)
+            => _factory = factory;
 
         /// <summary>
         /// Read a set of airline instances from a CSV file
@@ -47,7 +46,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 foreach (var manufacturer in manufacturers)
                 {
                     Logger.LogMessage(Severity.Debug, $"Saving manufacturer '{manufacturer.Name}'");
-                    await _manufacturerManager.AddAsync(manufacturer.Name);
+                    await _factory.ManufacturerManager.AddAsync(manufacturer.Name);
                 }
             }
             else

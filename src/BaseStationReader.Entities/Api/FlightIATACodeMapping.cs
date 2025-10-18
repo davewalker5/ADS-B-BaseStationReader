@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
-    public class FlightNumberMapping
+    public class FlightIATACodeMapping
     {
         [Key]
         public int Id { get; set; }

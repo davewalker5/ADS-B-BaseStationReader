@@ -18,7 +18,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IAircraftApiWrapper _aircraftApiWrapper;
         private readonly IAirportWeatherApiWrapper _airportWeatherApiWrapper;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly IFlightNumberApiWrapper _flightNumberApiWrapper;
         private readonly ILookupEligibilityAssessor _lookupEligibilityAssessor;
 
         public ExternalApiWrapper(
@@ -29,13 +28,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             _logger = logger;
             _factory = factory;
             _register = new ExternalApiRegister(logger);
-            _airlineApiWrapper = new AirlineApiWrapper(logger, _register, factory);
-            _activeFlightApiWrapper = new ActiveFlightApiWrapper(logger, _register, _airlineApiWrapper, factory);
-            _historicalFlightWrapper = new HistoricalFlightApiWrapper(logger, _register, _airlineApiWrapper, factory);
-            _aircraftApiWrapper = new AircraftApiWrapper(logger, _register, factory);
+            _airlineApiWrapper = new AirlineApiWrapper(_register, factory);
+            _activeFlightApiWrapper = new ActiveFlightApiWrapper(_register, _airlineApiWrapper, factory);
+            _historicalFlightWrapper = new HistoricalFlightApiWrapper(_register, _airlineApiWrapper, factory);
+            _aircraftApiWrapper = new AircraftApiWrapper(_register, factory);
             _airportWeatherApiWrapper = new AirportWeatherApiWrapper(logger, _register);
-            _flightNumberApiWrapper = new FlightNumberApiWrapper(_logger, factory);
-            _lookupEligibilityAssessor = new LookupEligibilityAssessor(logger, _historicalFlightWrapper, _activeFlightApiWrapper, factory, ignoreTrackingStatus);
+            _lookupEligibilityAssessor = new LookupEligibilityAssessor(_historicalFlightWrapper, _activeFlightApiWrapper, factory, ignoreTrackingStatus);
         }
 
         /// <summary>
@@ -130,7 +128,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             IFlightApiWrapper api = request.FlightEndpointType == ApiEndpointType.ActiveFlights ?
                 _activeFlightApiWrapper : _historicalFlightWrapper;
 
-            // Preferentially use the flight number mapping data to create the airline and flight
+            // Preferentially use the callsign-to-flight mapping data to create the airline and flight
             (var number, var flight) = await CreateFlightFromMapping(request, api);
 
             // If that didn't work, fall back to using the API
@@ -138,7 +136,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             {
                 // Determine API capabilitues
                 var canLookupByAddress = api.SupportsLookupBy(ApiProperty.AircraftAddress);
-                var canLookupByNumber = api.SupportsLookupBy(ApiProperty.FlightNumber);
+                var canLookupByNumber = api.SupportsLookupBy(ApiProperty.FlightIATA);
 
                 if (canLookupByAddress)
                 {
@@ -150,9 +148,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 }
                 else if (canLookupByNumber)
                 {
-                    // Lookup the flight using the flight number
-                    _logger.LogMessage(Severity.Info, $"Using the API to look up flight {number.FlightIATA} for aircraft {request.AircraftAddress} by number");
-                    request.FlightPropertyType = ApiProperty.FlightNumber;
+                    // Lookup the flight using the flight IATA code
+                    _logger.LogMessage(Severity.Info, $"Using the API to look up flight {number.FlightIATA} for aircraft {request.AircraftAddress} by IATA code");
+                    request.FlightPropertyType = ApiProperty.FlightIATA;
                     request.FlightPropertyValue = number.FlightIATA;
                     flight = await api.LookupFlightAsync(request);
                 }
@@ -166,12 +164,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
-        /// Create a flight from flight number mapping data and return the mapping and flight instances
+        /// Create a flight from callsign-to-flight mapping data and return the mapping and flight instances
         /// </summary>
         /// <param name="request"></param>
         /// <param name="api"></param>
         /// <returns></returns>
-        private async Task<(FlightNumberMapping, Flight)> CreateFlightFromMapping(ApiLookupRequest request, IFlightApiWrapper api)
+        private async Task<(FlightIATACodeMapping, Flight)> CreateFlightFromMapping(ApiLookupRequest request, IFlightApiWrapper api)
         {
             // Lookup the tracked aircraft record
             _logger.LogMessage(Severity.Debug, $"Looking up tracked aircraft record for address '{request.AircraftAddress}'");
@@ -182,12 +180,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return (null, null);
             }
 
-            // Look up the flight number mapping based on the callsign
-            _logger.LogMessage(Severity.Debug, $"Looking up flight number for callsign '{aircraft.Callsign}'");
-            var number = await _flightNumberApiWrapper.GetFlightNumberFromCallsignAsync(aircraft.Callsign);
-            if (string.IsNullOrEmpty(number.FlightIATA))
+            // Look up the mapping based on the callsign
+            _logger.LogMessage(Severity.Debug, $"Looking up mapping for callsign '{aircraft.Callsign}'");
+            var number = await _factory.FlightIATACodeMappingManager.GetAsync(x => x.Callsign == aircraft.Callsign);
+            if (string.IsNullOrEmpty(number?.FlightIATA))
             {
-                _logger.LogMessage(Severity.Warning, $"No flight number mapping for callsign '{aircraft.Callsign}'");
+                _logger.LogMessage(Severity.Warning, $"No flight IATA code mapping for callsign '{aircraft.Callsign}'");
                 return (null, null);
             }
 

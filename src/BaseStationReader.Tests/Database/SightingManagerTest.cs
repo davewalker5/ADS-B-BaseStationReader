@@ -15,7 +15,6 @@ namespace BaseStationReader.Tests.Database
         private const string ModelName = "A330-200";
         private const string Registration = "G-ABCD";
         private const int Manufactured = 2014;
-        private const string FlightNumber = "185";
         private const string FlightIATA = "BA185";
         private const string FlightICAO = "BAW185";
         private const string Embarkation = "LHR";
@@ -43,7 +42,7 @@ namespace BaseStationReader.Tests.Database
 
             // Set up an airline and a flight
             var airline = await new AirlineManager(context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            _flight = await new FlightManager(context).AddAsync(FlightIATA, FlightICAO, FlightNumber, Embarkation, Destination, airline.Id);
+            _flight = await new FlightManager(context).AddAsync(FlightIATA, FlightICAO, Embarkation, Destination, airline.Id);
         }
 
         [TestMethod]

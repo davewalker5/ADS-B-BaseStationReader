@@ -10,7 +10,8 @@ namespace BaseStationReader.Tests.DataExchange
     [TestClass]
     public class AirlineImporterTest
     {
-        private IAirlineManager _airlineManager;
+
+        private IDatabaseManagementFactory _factory;
         private IAirlineImporter _importer;
 
         [TestInitialize]
@@ -18,15 +19,15 @@ namespace BaseStationReader.Tests.DataExchange
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _airlineManager = new AirlineManager(context);
-            _importer = new AirlineImporter(_airlineManager, logger);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _importer = new AirlineImporter(_factory);
         }
 
         [TestMethod]
         public async Task ImportTestAsync()
         {
             await _importer.ImportAsync("airlines.csv");
-            var airlines = await _airlineManager.ListAsync(x => true);
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
             Assert.IsNotNull(airlines);
             Assert.HasCount(1, airlines);
@@ -40,7 +41,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportEmptyFileTestAsync()
         {
             await _importer.ImportAsync("empty_airlines.csv");
-            var airlines = await _airlineManager.ListAsync(x => true);
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
             Assert.IsNotNull(airlines);
             Assert.HasCount(0, airlines);
@@ -50,7 +51,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportMissingFileTestAsync()
         {
             await _importer.ImportAsync("missing.csv");
-            var airlines = await _airlineManager.ListAsync(x => true);
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
 
             Assert.IsNotNull(airlines);
             Assert.HasCount(0, airlines);

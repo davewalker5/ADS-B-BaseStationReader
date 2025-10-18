@@ -11,9 +11,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
 
-        public AirportWeatherApiWrapper(
-            ITrackerLogger logger,
-            IExternalApiRegister register)
+        public AirportWeatherApiWrapper(ITrackerLogger logger, IExternalApiRegister register)
         {
             _logger = logger;
             _register = register;

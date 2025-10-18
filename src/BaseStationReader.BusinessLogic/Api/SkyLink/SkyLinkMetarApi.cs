@@ -3,7 +3,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
@@ -16,10 +15,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
         [ExcludeFromCodeCoverage]
         public SkyLinkMetarApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -41,49 +39,28 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
-            var result = await MakeApiRequestAsync(icao);
-            IEnumerable<string> results = string.IsNullOrEmpty(result) ? null : [result];
-            return results;
-        }
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
 
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<string> MakeApiRequestAsync(string parameters)
-        {
-            string metar = null;
-
-            try
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}/{icao}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}/{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                // Get the weather report object from the response
-                var report = GetResponseAsObject(node);
-                if (report == null)
-                {
-                    return null;
-                }
-
-                // Extract the report and log it
-                metar = report?["raw"]?.GetValue<string>() ?? "";
-                Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
-            }
-            catch (Exception ex)
+            // Get the weather report object from the response
+            var report = GetResponseAsObject(node);
+            if (report == null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
+                return null;
             }
 
-            return metar;
+            // Extract the report and log it
+            string metar = GetStringValue(report, "raw");
+            Factory.Logger.LogMessage(Severity.Debug, $"METAR for {icao} : {metar}");
+
+            return string.IsNullOrEmpty(metar) ? null : [metar];
         }
     }
 }

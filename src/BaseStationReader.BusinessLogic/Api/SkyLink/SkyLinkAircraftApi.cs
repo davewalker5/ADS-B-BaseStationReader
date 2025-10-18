@@ -5,7 +5,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
@@ -18,10 +17,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
         [ExcludeFromCodeCoverage]
         public SkyLinkAircraftApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -44,80 +42,62 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <exception cref="NotImplementedException"></exception>
         public async Task<Dictionary<ApiProperty, string>> LookupAircraftAsync(string address)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"?icao24={address}");
-            return properties;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
-        {
             Dictionary<ApiProperty, string> properties = [];
 
-            try
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}?icao24={address}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                // Extract the response as a JSON object
-                var response = GetResponseAsObject(node);
-                if (response == null)
-                {
-                    return null;
-                }
-
-                // Get the aircraft list from the object
-                var aircraftList = response["aircraft"] as JsonArray;
-                if (aircraftList == null)
-                {
-                    Logger.LogMessage(Severity.Warning, $"Aircraft list from the response is NULL");
-                    return null;
-                }
-
-                // Check there are some aircraft in the list
-                if (aircraftList.Count == 0)
-                {
-                    Logger.LogMessage(Severity.Warning, $"Aircraft list from the response is empty");
-                    return null;
-                }
-
-                // Extract the aircraft
-                var aircraft = aircraftList.First() as JsonObject;
-                if (aircraft == null)
-                {
-                    Logger.LogMessage(Severity.Warning, $"First element in the aircraft list is not a JSON object");
-                    return null;
-                }
-
-                // Extract the values into a dictionary
-                properties = new()
-                {
-                    { ApiProperty.AircraftRegistration, aircraft?["registration"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelICAO, aircraft?["aircraft_type"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelIATA, "" },
-                    { ApiProperty.ModelName, "" },
-                    { ApiProperty.Callsign, aircraft?["callsign"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AircraftManufactured, "" },
-                    { ApiProperty.ManufacturerName, "" }
-                };
-
-                // Log the properties dictionary
-                LogProperties("Aircraft", properties);
-            }
-            catch (Exception ex)
+            // Extract the response as a JSON object
+            var response = GetResponseAsObject(node);
+            if (response == null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
+                return null;
             }
+
+            // Get the aircraft list from the object
+            var aircraftList = response["aircraft"] as JsonArray;
+            if (aircraftList == null)
+            {
+                Factory.Logger.LogMessage(Severity.Warning, $"Aircraft list from the response is NULL");
+                return null;
+            }
+
+            // Check there are some aircraft in the list
+            if (aircraftList.Count == 0)
+            {
+                Factory.Logger.LogMessage(Severity.Warning, $"Aircraft list from the response is empty");
+                return null;
+            }
+
+            // Extract the aircraft
+            var aircraft = aircraftList.First() as JsonObject;
+            if (aircraft == null)
+            {
+                Factory.Logger.LogMessage(Severity.Warning, $"First element in the aircraft list is not a JSON object");
+                return null;
+            }
+
+            // Extract the values into a dictionary
+            properties = new()
+            {
+                { ApiProperty.AircraftRegistration, GetStringValue(aircraft, "registration") },
+                { ApiProperty.ModelICAO, GetStringValue(aircraft, "aircraft_type") },
+                { ApiProperty.ModelIATA, "" },
+                { ApiProperty.ModelName, "" },
+                { ApiProperty.Callsign, GetStringValue(aircraft, "callsign") },
+                { ApiProperty.AircraftManufactured, "" },
+                { ApiProperty.ManufacturerName, "" }
+            };
+
+            // Log the properties dictionary
+            LogProperties("Aircraft", properties);
 
             return HaveValidProperties(properties) ? properties : null;
         }

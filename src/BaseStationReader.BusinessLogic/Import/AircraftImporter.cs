@@ -1,5 +1,4 @@
 using BaseStationReader.Entities.Import;
-using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
@@ -9,17 +8,10 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class AircraftImporter : CsvImporter<AircraftMappingProfile, Aircraft>, IAircraftImporter
     {
-        private readonly IAircraftManager _aircraftManager;
-        private readonly IModelManager _modelManager;
+        private readonly IDatabaseManagementFactory _factory;
 
-        public AircraftImporter(
-            IAircraftManager aircraftManager,
-            IModelManager modelManager,
-            ITrackerLogger logger) : base(logger)
-        {
-            _aircraftManager = aircraftManager;
-            _modelManager = modelManager;
-        }
+        public AircraftImporter(IDatabaseManagementFactory factory) : base(factory.Logger)
+            => _factory = factory;
 
         /// <summary>
         /// Read a set of Aircraft instances from a CSV file
@@ -47,7 +39,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 // Now identify the model for each one
                 foreach (var a in aircraft)
                 {
-                    var model = Task.Run(() => _modelManager.GetAsync(a.ModelIATA, a.ModelICAO, a.Model?.Name)).Result;
+                    var model = Task.Run(() => _factory.ModelManager.GetAsync(a.ModelIATA, a.ModelICAO, a.Model?.Name)).Result;
                     a.ModelId = model?.Id ?? 0;
                 }
 
@@ -79,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                         $"Manufactured = {a.Manufactured}");
 
                     var age = a.Manufactured > 0 ? DateTime.Today.Year - a.Manufactured : null;
-                    await _aircraftManager.AddAsync(a.Address, a.Registration, a.Manufactured, age, a.ModelId);
+                    await _factory.AircraftManager.AddAsync(a.Address, a.Registration, a.Manufactured, age, a.ModelId);
                 }
             }
             else

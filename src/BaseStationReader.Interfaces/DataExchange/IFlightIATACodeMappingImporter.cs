@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Import;
 
 namespace BaseStationReader.Interfaces.DataExchange
 {
-    public interface IFlightNumberMappingImporter : ICsvImporter<FlightNumberMappingProfile, FlightNumberMapping>
+    public interface IFlightIATACodeMappingImporter : ICsvImporter<FlightIATACodeMappingProfile, FlightIATACodeMapping>
     {
     }
 }

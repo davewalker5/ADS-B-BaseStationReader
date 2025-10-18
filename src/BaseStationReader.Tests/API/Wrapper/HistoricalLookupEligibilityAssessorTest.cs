@@ -37,7 +37,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,
@@ -55,7 +54,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,
@@ -73,7 +71,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             historicalFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(false);
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,
@@ -92,7 +89,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,
@@ -107,7 +103,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LookupTimestamp = null
             });
 
-            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Arrival, "", "", "BA188", Callsign, "");
+            await _factory.FlightIATACodeMappingManager.AddAsync("", "", "", "", "", "", AirportType.Arrival, "", "", "BA188", Callsign, "");
 
             var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.HistoricalFlights, ValidAddress);
             Assert.IsTrue(result.Eligible);
@@ -122,7 +118,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,
@@ -149,7 +144,6 @@ namespace BaseStationReader.Tests.API.Wrapper
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
 
             var assessor = new LookupEligibilityAssessor(
-                _logger,
                 historicalFlightApiWrapper.Object,
                 activeFlightApiWrapper.Object,
                 _factory,

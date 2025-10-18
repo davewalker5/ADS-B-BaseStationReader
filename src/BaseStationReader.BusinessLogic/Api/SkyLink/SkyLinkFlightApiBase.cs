@@ -6,7 +6,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
@@ -15,7 +14,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private const ApiServiceType ServiceType = ApiServiceType.SkyLink;
 
         private readonly List<ApiProperty> _supportedProperties = [
-            ApiProperty.FlightNumber
+            ApiProperty.FlightIATA
         ];
 
         private readonly string _baseAddress;
@@ -25,10 +24,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         [ExcludeFromCodeCoverage]
         public SkyLinkFlightApiBase(
             ApiEndpointType type,
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -52,77 +50,56 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             => _supportedProperties.Contains(propertyType);
 
         /// <summary>
-        /// Look up a flight given the flight number
+        /// Look up a flight given the flight IATA 
         /// </summary>
-        /// <param name="flightNumber"></param>
+        /// <param name="flightIATA"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(string flightNumber)
-        {
-            Logger.LogMessage(Severity.Info, $"Looking up flight using flight number {flightNumber}");
-            var properties = await MakeApiRequestAsync($"/{flightNumber}");
-            return properties?.Count > 0 ? properties : null;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        protected async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(string flightIATA)
         {
             Dictionary<ApiProperty, string> properties = [];
 
-            try
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up flight using flight IATA code {flightIATA}");
+
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}/{flightIATA}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                // Get the flight object from the response
-                var flight = GetResponseAsObject(node);
-                if (flight == null)
-                {
-                    return null;
-                }
-
-                // Extract the flight number and split out the airline IATA and the numeric part
-                var airlineIATA = "";
-                var flightNumber = "";
-                var flightIATA = flight?["flight_number"]?.GetValue<string>() ?? "";
-                var match = Regex.Match(flightIATA, @"^([A-Za-z]+)(\d+)$");
-                if (match.Success)
-                {
-                    airlineIATA = match.Groups[1].Value;
-                    flightNumber = match.Groups[2].Value;
-                }
-
-                // Extract the values into a dictionary
-                properties = new()
-                {
-                    { ApiProperty.FlightNumber, flightNumber },
-                    { ApiProperty.FlightICAO, "" },
-                    { ApiProperty.FlightIATA, flightIATA },
-                    { ApiProperty.AirlineIATA, airlineIATA},
-                    { ApiProperty.AirlineICAO, ""}
-                };
-
-                // Extract the airport details
-                ExtractEmbarkationAirport(flight, properties);
-                ExtractDestinationAirport(flight, properties);
-
-                // Log the properties dictionary
-                LogProperties("Flight", properties);
-            }
-            catch (Exception ex)
+            // Get the flight object from the response
+            var flight = GetResponseAsObject(node);
+            if (flight == null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
+                return null;
             }
+
+            // Extract the flight IATA code and split out the airline IATA and the numeric flight number
+            var airlineIATA = "";
+            flightIATA = GetStringValue(flight, "flight_number");
+            var match = Regex.Match(flightIATA, @"^([A-Za-z]+)(\d+)$");
+            if (match.Success)
+            {
+                airlineIATA = match.Groups[1].Value;
+            }
+
+            // Extract the values into a dictionary
+            properties = new()
+            {
+                { ApiProperty.FlightICAO, "" },
+                { ApiProperty.FlightIATA, flightIATA },
+                { ApiProperty.AirlineIATA, airlineIATA},
+                { ApiProperty.AirlineICAO, ""}
+            };
+
+            // Extract the airport details
+            ExtractEmbarkationAirport(flight, properties);
+            ExtractDestinationAirport(flight, properties);
+
+            // Log the properties dictionary
+            LogProperties("Flight", properties);
 
             return HaveValidProperties(properties) ? properties : null;
         }
@@ -135,13 +112,13 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private void ExtractEmbarkationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the departure airport node
-            var airport = node?["departure"];
+            var airport = GetObjectValue(node, "departure") as JsonNode;
 
-            Logger.LogMessage(Severity.Debug, $"Extracting embarkation airport details from {airport?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting embarkation airport details from {airport?.ToJsonString()}");
 
             // Extract the airport property - this should be a string with the IATA code followed by a separator then the
             // name
-            var airportDetails = airport?["airport"]?.GetValue<string>() ?? "";
+            var airportDetails = GetStringValue(airport, "airport");
             var iata = !string.IsNullOrEmpty(airportDetails) ? airportDetails[..3] : "";
 
             // Extract the properties of interest from the node
@@ -156,13 +133,13 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the departure airport node
-            var airport = node?["arrival"];
+            var airport = GetObjectValue(node, "arrival") as JsonObject;
 
-            Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
+            Factory.Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
 
             // Extract the airport property - this should be a string with the IATA code followed by a separator then the
             // name
-            var airportDetails = airport?["airport"]?.GetValue<string>() ?? "";
+            var airportDetails = GetStringValue(airport, "airport");
             var iata = !string.IsNullOrEmpty(airportDetails) ? airportDetails[..3] : "";
 
             // Extract the properties of interest from the node

@@ -1,3 +1,4 @@
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.Interfaces.Database
@@ -5,6 +6,7 @@ namespace BaseStationReader.Interfaces.Database
     public interface IDatabaseManagementFactory
     {
         T Context<T>() where T : class;
+        ITrackerLogger Logger { get; }
         IDataCleaner DataCleaner { get; }
         IAircraftManager AircraftManager { get; }
         IAirlineManager AirlineManager { get; }
@@ -12,7 +14,7 @@ namespace BaseStationReader.Interfaces.Database
         IManufacturerManager ManufacturerManager { get; }
         IModelManager ModelManager { get; }
         ISightingManager SightingManager { get; }
-        IFlightNumberMappingManager FlightNumberMappingManager { get; }
+        IFlightIATACodeMappingManager FlightIATACodeMappingManager { get; }
         ITrackedAircraftWriter TrackedAircraftWriter { get; }
         IPositionWriter PositionWriter { get; }
         IAircraftLockManager AircraftLockManager { get; }

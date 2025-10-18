@@ -12,25 +12,21 @@ namespace BaseStationReader.Entities.Api
         [Export("AirlineName", 2)]
         public string AirlineName { get; set; } = "";
 
-        [Export("Number", 3)]
-        public string Number { get; set; } = "";
-
-        [Export("ICAO", 4)]
+        [Export("ICAO", 3)]
         public string ICAO { get; set; } = "";
 
-        [Export("IATA", 5)]
+        [Export("IATA", 4)]
         public string IATA { get; set; } = "";
 
-        [Export("Embarkation", 6)]
+        [Export("Embarkation", 5)]
         public string Embarkation { get; set; } = "";
 
-        [Export("Destination", 7)]
+        [Export("Destination", 6)]
         public string Destination { get; set; } = "";
 
         public static ExportableFlight FromFlight(Flight flight)
             => new()
             {
-                Number = flight.Number,
                 ICAO = flight.ICAO,
                 IATA = flight.IATA,
                 Embarkation = flight.Embarkation,

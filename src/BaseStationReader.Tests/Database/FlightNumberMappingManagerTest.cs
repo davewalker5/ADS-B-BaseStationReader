@@ -30,8 +30,8 @@ namespace BaseStationReader.Tests.Database
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
-            // Add a callsign/flight number mapping
-            await _factory.FlightNumberMappingManager.AddAsync(
+            // Add a callsign/flight IATA code mapping
+            await _factory.FlightIATACodeMappingManager.AddAsync(
                 AirlineICAO,
                 AirlineIATA,
                 AirlineName,
@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task GetAsyncTestAsync()
         {
-            var mapping = await _factory.FlightNumberMappingManager.GetAsync(x => x.Callsign == Callsign);
+            var mapping = await _factory.FlightIATACodeMappingManager.GetAsync(x => x.Callsign == Callsign);
 
             Assert.IsNotNull(mapping);
             Assert.AreEqual(AirlineICAO, mapping.AirlineICAO);
@@ -67,7 +67,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task ListAsyncTestAsync()
         {
-            var mappings = await _factory.FlightNumberMappingManager.ListAsync(x => true);
+            var mappings = await _factory.FlightIATACodeMappingManager.ListAsync(x => true);
 
             Assert.IsNotNull(mappings);
             Assert.HasCount(1, mappings);
@@ -97,7 +97,7 @@ namespace BaseStationReader.Tests.Database
             var updatedDestination = Destination.Reverse().ToString();
             var updatedFileName = "Some File.json";
 
-            var mapping = await _factory.FlightNumberMappingManager.AddAsync(
+            var mapping = await _factory.FlightIATACodeMappingManager.AddAsync(
                 updatedAirlineICAO,
                 updatedAirlineIATA,
                 updatedAirlineName,

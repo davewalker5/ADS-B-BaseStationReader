@@ -3,6 +3,7 @@ using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using System.Text.Json.Nodes;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -28,8 +29,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public void Initialise()
         {
             var logger = new MockFileLogger();
+            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxSchedulesApi(logger, _client, null, _settings);
+            _api = new AeroDataBoxSchedulesApi(_client, factory, _settings);
         }
 
         [TestMethod]

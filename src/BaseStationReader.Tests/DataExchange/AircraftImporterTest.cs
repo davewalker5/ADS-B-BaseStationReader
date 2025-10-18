@@ -15,9 +15,7 @@ namespace BaseStationReader.Tests.DataExchange
         private const string ModelIATA = "32N";
         private const string ModelName = "Airbus A320neo";
 
-        private IManufacturerManager _manufacturerManager;
-        private IModelManager _modelManager;
-        private IAircraftManager _aircraftManager;
+        private IDatabaseManagementFactory _factory;
         private IAircraftImporter _importer;
 
         [TestInitialize]
@@ -25,20 +23,18 @@ namespace BaseStationReader.Tests.DataExchange
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _manufacturerManager = new ManufacturerManager(context);
-            _modelManager = new ModelManager(context);
-            _aircraftManager = new AircraftManager(context);
-            _importer = new AircraftImporter(_aircraftManager, _modelManager, logger);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _importer = new AircraftImporter(_factory);
         }
 
         [TestMethod]
         public async Task ImportTestAsync()
         {
-            var manufacturer = await _manufacturerManager.AddAsync(ManufacturerName);
-            _ = await _modelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            var manufacturer = await _factory.ManufacturerManager.AddAsync(ManufacturerName);
+            _ = await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
 
             await _importer.ImportAsync("aircraft.csv");
-            var aircraft = await _aircraftManager.ListAsync(x => true);
+            var aircraft = await _factory.AircraftManager.ListAsync(x => true);
 
             Assert.IsNotNull(aircraft);
             Assert.HasCount(1, aircraft);
@@ -58,7 +54,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportWithoutModelPresentTestAsync()
         {
             await _importer.ImportAsync("aircraft.csv");
-            var aircraft = await _modelManager.ListAsync(x => true);
+            var aircraft = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(aircraft);
             Assert.HasCount(0, aircraft);
@@ -68,7 +64,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportEmptyFileTestAsync()
         {
             await _importer.ImportAsync("empty_aircraft.csv");
-            var aircraft = await _modelManager.ListAsync(x => true);
+            var aircraft = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(aircraft);
             Assert.HasCount(0, aircraft);
@@ -78,7 +74,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportMissingFileTestAsync()
         {
             await _importer.ImportAsync("missing.csv");
-            var aircraft = await _modelManager.ListAsync(x => true);
+            var aircraft = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(aircraft);
             Assert.HasCount(0, aircraft);

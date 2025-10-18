@@ -4,7 +4,6 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
@@ -13,10 +12,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IExternalApiRegister _register;
 
         public ActiveFlightApiWrapper(
-            ITrackerLogger logger,
             IExternalApiRegister register,
             IAirlineApiWrapper airlineWrapper,
-            IDatabaseManagementFactory factory) : base(logger, airlineWrapper, factory)
+            IDatabaseManagementFactory factory) : base(airlineWrapper, factory)
         {
             _register = register;
         }
@@ -83,7 +81,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             properties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
             properties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);
             properties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
-            var airline = await _airlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
+            var airline = await AirlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
             if (airline == null)
             {
                 LogMessage(Severity.Info, request, $"Unable to identify the airline - flight cannot be saved");

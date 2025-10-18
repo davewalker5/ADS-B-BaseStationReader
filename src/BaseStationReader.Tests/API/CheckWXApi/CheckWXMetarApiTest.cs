@@ -2,7 +2,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Api.CheckWXApi;
-using System.Threading.Tasks;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -30,8 +30,9 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void Initialise()
         {
             var logger = new MockFileLogger();
+            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new CheckWXMetarApi(logger, _client, null, _settings);
+            _api = new CheckWXMetarApi(_client, factory, _settings);
         }
 
         [TestMethod]
