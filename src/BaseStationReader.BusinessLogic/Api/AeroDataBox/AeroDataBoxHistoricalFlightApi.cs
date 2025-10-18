@@ -106,7 +106,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonNode node)
         {
             // Extract the properties of interest from the node
-            var flightIATA = (node?["number"]?.GetValue<string>() ?? "").Replace(" ", "");
+            var flightIATA = GetStringValue(node, "number").Replace(" ", "");
             Dictionary<ApiProperty, string> properties = new()
             {
                 { ApiProperty.FlightIATA, flightIATA },
@@ -136,17 +136,18 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             // Find the departure airport node and the departure time node. For the latter, try "runwayTime" first
             // and if that's not there fallback to "scheduledTime"
-            var airport = node?["departure"]?["airport"];
-            var time = node?["departure"]?["runwayTime"];
-            time ??= node?["departure"]?["revisedTime"];
-            time ??= node?["departure"]?["scheduledTime"];
+            var departure = GetObjectValue(node, "departure") as JsonObject;
+            var airport = GetObjectValue(departure, "airport") as JsonObject;
+            var time = GetObjectValue(departure, "runwayTime") as JsonObject;
+            time ??= GetObjectValue(departure, "revisedTime") as JsonObject;
+            time ??= GetObjectValue(departure, "scheduledTime") as JsonObject;
 
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting departure time from {time?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.EmbarkationIATA, airport?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.DepartureTime, time?["utc"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.EmbarkationIATA, GetStringValue(airport, "iata"));
+            properties.Add(ApiProperty.DepartureTime, GetStringValue(time, "utc"));
         }
 
         /// <summary>
@@ -156,19 +157,20 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
-            // Find the arrival airport node and the arrival time node. For the latter, use revised time, predicted
-            // time and scheduled time, in thatr order
-            var airport = node?["arrival"]?["airport"];
-            var time = node?["arrival"]?["revisedTime"];
-            time ??= node?["arrival"]?["predictedTime"];
-            time ??= node?["arrival"]?["scheduledTime"];
+            // Find the arrival airport node and the departure time node. For the latter, try "runwayTime" first
+            // and if that's not there fallback to "scheduledTime"
+            var arrival = GetObjectValue(node, "arrival") as JsonObject;
+            var airport = GetObjectValue(arrival, "airport") as JsonObject;
+            var time = GetObjectValue(arrival, "revisedTime") as JsonObject;
+            time ??= GetObjectValue(arrival, "predictedTime") as JsonObject;
+            time ??= GetObjectValue(arrival, "scheduledTime") as JsonObject;
 
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting arrival airport details from {airport?.ToJsonString()}");
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting arrival time from {time?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.DestinationIATA, airport?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.ArrivalTime, time?["utc"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.DestinationIATA, GetStringValue(airport, "iata"));
+            properties.Add(ApiProperty.ArrivalTime, GetStringValue(time, "utc"));
         }
 
         /// <summary>
@@ -179,13 +181,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private void ExtractAirline(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airline node
-            var airline = node?["airline"];
+            var airline = GetObjectValue(node, "airline") as JsonObject;
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting airline details from {airline?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AirlineIATA, airline?["iata"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AirlineICAO, airline?["icao"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AirlineName, GetStringValue(airline, "name"));
+            properties.Add(ApiProperty.AirlineIATA, GetStringValue(airline, "iata"));
+            properties.Add(ApiProperty.AirlineICAO, GetStringValue(airline, "icao"));
         }
 
         /// <summary>
@@ -196,12 +198,12 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         private void ExtractAircraft(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the airline node
-            var aircraft = node?["aircraft"];
+            var aircraft = GetObjectValue(node, "aircraft") as JsonObject;
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting aircraft details from {aircraft?.ToJsonString()}");
 
             // Extract the properties of interest from the node
-            properties.Add(ApiProperty.AircraftRegistration, aircraft?["reg"]?.GetValue<string>() ?? "");
-            properties.Add(ApiProperty.AircraftAddress, aircraft?["modeS"]?.GetValue<string>() ?? "");
+            properties.Add(ApiProperty.AircraftRegistration, GetStringValue(aircraft, "reg"));
+            properties.Add(ApiProperty.AircraftAddress, GetStringValue(aircraft, "modeS"));
         }
     }
 }

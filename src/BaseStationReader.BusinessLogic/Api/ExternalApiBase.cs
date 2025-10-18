@@ -171,5 +171,35 @@ namespace BaseStationReader.BusinessLogic.Api
             var value = properties?.ContainsKey(key) == true ? properties[key] : null;
             return !string.IsNullOrEmpty(value);
         }
+
+        /// <summary>
+        /// Return a property of a JSON node as an object
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
+        public static object GetObjectValue(JsonNode node, string propertyName)
+            => (node is JsonObject jsonObject) && jsonObject.ContainsKey(propertyName) ?
+                jsonObject[propertyName] : null;
+
+        /// <summary>
+        /// Return a string representation of the value for a given key in a Json object
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static string GetStringValue(JsonNode node, string propertyName)
+            => (node is JsonObject jsonObject) && jsonObject.ContainsKey(propertyName) ?
+                jsonObject[propertyName]?.ToString() ?? "" : "";
+
+        /// <summary>
+        /// Extract the value for a given key in a Json object and convert to an interger
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static int? GetIntegerValue(JsonNode node, string propertyName)
+            => (node is JsonObject jsonObject) && jsonObject.ContainsKey(propertyName) ?
+                jsonObject[propertyName]?.GetValue<int?>() : null;
     }
 }

@@ -3,7 +3,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
@@ -71,7 +70,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             }
 
             // Extract the report and log it
-            metar = report?["raw"]?.GetValue<string>() ?? "";
+            metar = GetStringValue(report, "raw");
             Factory.Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
 
             return metar;

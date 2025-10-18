@@ -74,9 +74,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             // Extract the values into a dictionary
             properties = new()
             {
-                { ApiProperty.AirlineIATA, airline?["iata_code"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AirlineICAO, airline?["icao_code"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineIATA, GetStringValue(airline, "iata_code") },
+                { ApiProperty.AirlineICAO, GetStringValue(airline, "icao_code") },
+                { ApiProperty.AirlineName, GetStringValue(airline, "name") }
             };
 
             // Log the properties dictionary

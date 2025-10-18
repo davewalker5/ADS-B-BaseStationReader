@@ -73,12 +73,12 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
                 // Extract the values into a dictionary
                 properties = new()
                 {
-                    { ApiProperty.AircraftRegistration, node?["reg"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.AircraftRegistration, GetStringValue(node, "reg")},
                     { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
                     { ApiProperty.AircraftAge, age?.ToString() ?? "" },
-                    { ApiProperty.ModelICAO, node?["icaoCode"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelIATA, node?["iataCodeShort"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.ModelName, node?["typeName"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelICAO, GetStringValue(node, "icaoCode")},
+                    { ApiProperty.ModelIATA, GetStringValue(node, "iataCodeShort")},
+                    { ApiProperty.ModelName, GetStringValue(node, "typeName")},
                     { ApiProperty.ManufacturerName, "" }
                 };
 
@@ -107,7 +107,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             int? year = null;
 
             // Extract the delivery date from the response and attempt to parse it as a date
-            var deliveryDate = node?["deliveryDate"]?.GetValue<string>() ?? "";
+            var deliveryDate = GetStringValue(node, "deliveryDate");
             if (!string.IsNullOrEmpty(deliveryDate) &&
                 DateTime.TryParseExact(deliveryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime delivered))
             {

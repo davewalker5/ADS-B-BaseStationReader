@@ -62,19 +62,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             }
 
             // Extract the year the aircraft was built and use it to determine the age
-            int? manufactured = aircraft["built"]?.GetValue<int?>();
+            int? manufactured = GetIntegerValue(aircraft, "built");
             var age = manufactured != null ? (DateTime.Today.Year - manufactured).ToString() : "";
 
             // Extract the values into a dictionary
             properties = new()
             {
-                { ApiProperty.AircraftRegistration, aircraft["reg_number"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AircraftRegistration, GetStringValue(aircraft, "reg_number") },
                 { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
                 { ApiProperty.AircraftAge, age },
-                { ApiProperty.ManufacturerName, aircraft["manufacturer"]?.GetValue<string>() ?? "" },
-                { ApiProperty.ModelICAO, aircraft["icao"]?.GetValue<string>() ?? "" },
-                { ApiProperty.ModelIATA, aircraft["iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.ModelName, aircraft["model"]?.GetValue<string>() ?? "" }
+                { ApiProperty.ManufacturerName,  GetStringValue(aircraft, "manufacturer") },
+                { ApiProperty.ModelICAO, GetStringValue(aircraft, "icao") },
+                { ApiProperty.ModelIATA, GetStringValue(aircraft, "iata") },
+                { ApiProperty.ModelName, GetStringValue(aircraft, "model") }
             };
 
             // Log the properties dictionary

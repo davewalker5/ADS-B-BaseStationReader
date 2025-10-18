@@ -71,7 +71,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             }
 
             // Extract the report and log it
-            metar = report?["raw"]?.GetValue<string>() ?? "";
+            metar = GetStringValue(report, "raw");
             Factory.Logger.LogMessage(Severity.Debug, $"TAF for {parameters} : {metar}");
 
             return metar;

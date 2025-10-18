@@ -82,9 +82,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             // Extract the values into a dictionary
             properties = new()
             {
-                { ApiProperty.AirlineIATA, airline?["iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AirlineICAO, airline?["icao"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineIATA, GetStringValue(airline, "iata") },
+                { ApiProperty.AirlineICAO, GetStringValue(airline, "icao") },
+                { ApiProperty.AirlineName, GetStringValue(airline, "name") }
             };
 
             // Log the properties dictionary

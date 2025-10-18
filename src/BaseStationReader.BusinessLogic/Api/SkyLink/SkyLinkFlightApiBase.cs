@@ -88,7 +88,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
             // Extract the flight IATA code and split out the airline IATA and the numeric flight number
             var airlineIATA = "";
-            var flightIATA = flight?["flight_number"]?.GetValue<string>() ?? "";
+            var flightIATA = GetStringValue(flight, "flight_number");
             var match = Regex.Match(flightIATA, @"^([A-Za-z]+)(\d+)$");
             if (match.Success)
             {
@@ -122,13 +122,13 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private void ExtractEmbarkationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the departure airport node
-            var airport = node?["departure"];
+            var airport = GetObjectValue(node, "departure") as JsonNode;
 
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting embarkation airport details from {airport?.ToJsonString()}");
 
             // Extract the airport property - this should be a string with the IATA code followed by a separator then the
             // name
-            var airportDetails = airport?["airport"]?.GetValue<string>() ?? "";
+            var airportDetails = GetStringValue(airport, "airport");
             var iata = !string.IsNullOrEmpty(airportDetails) ? airportDetails[..3] : "";
 
             // Extract the properties of interest from the node
@@ -143,13 +143,13 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         private void ExtractDestinationAirport(JsonNode node, Dictionary<ApiProperty, string> properties)
         {
             // Find the departure airport node
-            var airport = node?["arrival"];
+            var airport = GetObjectValue(node, "arrival") as JsonObject;
 
             Factory.Logger.LogMessage(Severity.Debug, $"Extracting destination airport details from {airport?.ToJsonString()}");
 
             // Extract the airport property - this should be a string with the IATA code followed by a separator then the
             // name
-            var airportDetails = airport?["airport"]?.GetValue<string>() ?? "";
+            var airportDetails = GetStringValue(airport, "airport");
             var iata = !string.IsNullOrEmpty(airportDetails) ? airportDetails[..3] : "";
 
             // Extract the properties of interest from the node

@@ -79,9 +79,13 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             // Iterate over each (presumed) flight in the response
             foreach (var flight in flightList)
             {
-                // Extract the flight properties into a dictionary and add them to the collection
-                // of flight property dictionaries
+                // Extract the flight properties into a dictionary
                 var flightProperties = ExtractSingleFlight(flight);
+
+                // Log the properties dictionary
+                LogProperties("Flight", flightProperties);
+            
+                // Add the flight properties to the collection
                 properties.Add(flightProperties);
             }
 
@@ -93,28 +97,25 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private Dictionary<ApiProperty, string> ExtractSingleFlight(JsonObject node)
+        internal static Dictionary<ApiProperty, string> ExtractSingleFlight(JsonObject node)
         {
             // Extract the airline IATA code and flight IATA code from the response
-            var airlineIATA = node?["airline_iata"]?.GetValue<string>() ?? "";
+            var airlineIATA = GetStringValue(node, "airline_iata");
             var flightIATA = ExtractFlightIATA(node, airlineIATA);
 
             // Extract the properties of interest from the node
             Dictionary<ApiProperty, string> properties = new()
             {
-                { ApiProperty.EmbarkationIATA, node?["dep_iata"]?.GetValue<string>() ?? "" },
-                { ApiProperty.DestinationIATA, node?["arr_iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.EmbarkationIATA, GetStringValue(node, "dep_iata")},
+                { ApiProperty.DestinationIATA, GetStringValue(node, "arr_iata")},
                 { ApiProperty.FlightIATA, flightIATA },
-                { ApiProperty.FlightICAO, node?["flight_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.FlightICAO, GetStringValue(node, "flight_icao")},
                 { ApiProperty.AirlineIATA, airlineIATA },
-                { ApiProperty.AirlineICAO, node?["airline_icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineICAO, GetStringValue(node, "airline_icao")},
                 { ApiProperty.AirlineName, "" },
-                { ApiProperty.ModelICAO, node?["aircraft_icao"]?.GetValue<string>() ?? "" },
-                { ApiProperty.AircraftAddress, node?["hex"]?.GetValue<string>() ?? "" },
+                { ApiProperty.ModelICAO, GetStringValue(node, "aircraft_icao")},
+                { ApiProperty.AircraftAddress, GetStringValue(node, "hex")}
             };
-
-            // Log the properties dictionary
-            LogProperties("Flight", properties);
 
             return properties;
         }
@@ -125,16 +126,16 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <param name="node"></param>
         /// <param name="airlineIATA"></param>
         /// <returns></returns>
-        private string ExtractFlightIATA(JsonNode node, string airlineIATA)
+        internal static string ExtractFlightIATA(JsonNode node, string airlineIATA)
         {
             // Extract the flight IATA code member of the response. If that returns a value, trust it
             // as the flight IATA code
-            var iata = node?["flight_iata"]?.GetValue<string>() ?? "";
+            var iata = GetStringValue(node, "flight_iata");
             if (string.IsNullOrEmpty(iata) && !string.IsNullOrEmpty(airlineIATA))
             {
                 // No flight IATA in the response but we have a valid airline IATA code. Use that plus
                 // the numeric flight number to construct the flight IATA
-                var flightNumber = node?["flight_number"]?.GetValue<string>() ?? "";
+                var flightNumber = GetStringValue(node, "flight_number");
                 if (!string.IsNullOrEmpty(flightNumber))
                 {
                     iata = $"{airlineIATA}{flightNumber}";
