@@ -76,25 +76,11 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             var fromStr = from.ToString(DateTimeFormat);
             var toStr = to.ToString(DateTimeFormat);
 
-            // Make the request and return the resulting JSON node
-            var schedules = await MakeApiRequestAsync($"{iata}/{fromStr}/{toStr}");
-            return schedules;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<JsonNode> MakeApiRequestAsync(string parameters)
-        {
-            JsonNode node = null;
-
             // Construct the URL with query parameters
-            var url = $"{_baseAddress}/{parameters}?{BuildQueryString()}";
+            var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
 
             // Make a request for the data from the API
-            node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
+            JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },
                 { "X-RapidAPI-Host", _host },

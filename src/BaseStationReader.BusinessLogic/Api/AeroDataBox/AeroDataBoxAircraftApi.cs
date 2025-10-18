@@ -42,22 +42,12 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAircraftAsync(string address)
         {
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
-            var properties = await MakeApiRequestAsync($"{address}");
-            return properties;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
-        {
             Dictionary<ApiProperty, string> properties = [];
 
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+ 
             // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
+            var url = $"{_baseAddress}{address}";
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },

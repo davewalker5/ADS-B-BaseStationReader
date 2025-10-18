@@ -57,22 +57,12 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <exception cref="NotImplementedException"></exception>
         public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(string flightIATA)
         {
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up flight using flight IATA code {flightIATA}");
-            var properties = await MakeApiRequestAsync($"/{flightIATA}");
-            return properties?.Count > 0 ? properties : null;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        protected async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
-        {
             Dictionary<ApiProperty, string> properties = [];
 
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up flight using flight IATA code {flightIATA}");
+
             // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
+            var url = $"{_baseAddress}/{flightIATA}";
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },
@@ -88,7 +78,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
             // Extract the flight IATA code and split out the airline IATA and the numeric flight number
             var airlineIATA = "";
-            var flightIATA = GetStringValue(flight, "flight_number");
+            flightIATA = GetStringValue(flight, "flight_number");
             var match = Regex.Match(flightIATA, @"^([A-Za-z]+)(\d+)$");
             if (match.Success)
             {

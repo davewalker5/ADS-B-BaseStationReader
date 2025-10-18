@@ -56,19 +56,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             string address,
             DateTime date)
         {
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address} at {date}");
-            var properties = await MakeApiRequestAsync(address, date);
-            return properties;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<List<Dictionary<ApiProperty, string>>> MakeApiRequestAsync(string address, DateTime date)
-        {
             List<Dictionary<ApiProperty, string>> properties = [];
+
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address} at {date}");
 
             // Convert the date to UTC and generate a representation in the required format
             var fromDate = date.ToUniversalTime().AddDays(-1).ToString("yyyy-MM-dd");

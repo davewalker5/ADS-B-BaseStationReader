@@ -40,22 +40,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
             Factory.Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
-            var result = await MakeApiRequestAsync(icao);
-            IEnumerable<string> results = string.IsNullOrEmpty(result) ? null : [result];
-            return results;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<string> MakeApiRequestAsync(string parameters)
-        {
-            string metar = null;
 
             // Make a request for the data from the API
-            var url = $"{_baseAddress}/{parameters}";
+            var url = $"{_baseAddress}/{icao}";
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },
@@ -70,10 +57,10 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             }
 
             // Extract the report and log it
-            metar = GetStringValue(report, "raw");
-            Factory.Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
+            string metar = GetStringValue(report, "raw");
+            Factory.Logger.LogMessage(Severity.Debug, $"METAR for {icao} : {metar}");
 
-            return metar;
+            return string.IsNullOrEmpty(metar) ? null : [metar];
         }
     }
 }

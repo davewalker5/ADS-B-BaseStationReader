@@ -36,22 +36,12 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
-            var results = await MakeApiRequestAsync(icao);
-            return results;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL and return the response properties as a dictionary
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<IEnumerable<string>> MakeApiRequestAsync(string parameters)
-        {
             IEnumerable<string> results = null;
 
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
+
             // Make a request for the data from the API
-            var url = $"{_baseAddress}/{parameters}";
+            var url = $"{_baseAddress}/{icao}";
             var node = await GetAsync(ServiceType, url, new()
             {
                 { "X-API-Key", _key }
@@ -76,7 +66,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
             // Log the reports
             foreach (var metar in results)
             {
-                Factory.Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
+                Factory.Logger.LogMessage(Severity.Debug, $"METAR for {icao} : {metar}");
             }
 
             return results;

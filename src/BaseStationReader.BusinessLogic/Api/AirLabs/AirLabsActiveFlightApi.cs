@@ -51,29 +51,19 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty propertyType, string propertyValue)
         {
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
-            var properties = await MakeApiRequestAsync($"&hex={propertyValue}");
-            return properties.Count > 0 ? properties.First() : null;
-        }
-
-        /// <summary>
-        /// Make a request to the specified URL
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private async Task<List<Dictionary<ApiProperty, string>>> MakeApiRequestAsync(string parameters)
-        {
             List<Dictionary<ApiProperty, string>> properties = [];
 
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
+
             // Make a request for the data from the API
-            var url = $"{_baseAddress}{parameters}";
+            var url = $"{_baseAddress}&hex={propertyValue}";
             var node = await GetAsync(ServiceType, url, []);
 
             // Get the response array
             var flightList = GetResponseAsObjectList(node);
             if (flightList == null)
             {
-                return properties;
+                return null;
             }
 
             // Iterate over each (presumed) flight in the response
@@ -89,7 +79,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
                 properties.Add(flightProperties);
             }
 
-            return properties;
+            return properties.Count > 0 ? properties.First() : null;
         }
 
         /// <summary>
