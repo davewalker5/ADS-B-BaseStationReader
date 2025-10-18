@@ -7,6 +7,6 @@ namespace BaseStationReader.Interfaces.Api
     {
         bool SupportsLookupBy(ApiProperty propertyType);
         Task<Flight> LookupFlightAsync(ApiLookupRequest request);
-        Task<Flight> CreateFlightFromMapping(ApiLookupRequest request, FlightNumberMapping mapping);
+        Task<Flight> CreateFlightFromMapping(ApiLookupRequest request, FlightIATACodeMapping mapping);
     }
 }

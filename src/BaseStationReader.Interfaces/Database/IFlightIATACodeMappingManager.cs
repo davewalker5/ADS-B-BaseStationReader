@@ -3,11 +3,11 @@ using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.Interfaces.Database
 {
-    public interface IFlightNumberMappingManager
+    public interface IFlightIATACodeMappingManager
     {
-        Task<FlightNumberMapping> GetAsync(Expression<Func<FlightNumberMapping, bool>> predicate);
-        Task<List<FlightNumberMapping>> ListAsync(Expression<Func<FlightNumberMapping, bool>> predicate);
-        Task<FlightNumberMapping> AddAsync(
+        Task<FlightIATACodeMapping> GetAsync(Expression<Func<FlightIATACodeMapping, bool>> predicate);
+        Task<List<FlightIATACodeMapping>> ListAsync(Expression<Func<FlightIATACodeMapping, bool>> predicate);
+        Task<FlightIATACodeMapping> AddAsync(
             string airlineICAO,
             string airlineIATA,
             string airlineName,

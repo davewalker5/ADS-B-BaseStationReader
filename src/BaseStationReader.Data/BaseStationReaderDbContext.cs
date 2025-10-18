@@ -16,7 +16,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
-        public virtual DbSet<FlightNumberMapping> FlightNumberMappings { get; set; }
+        public virtual DbSet<FlightIATACodeMapping> FlightIATACodeMappings { get; set; }
         public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
@@ -120,7 +120,6 @@ namespace BaseStationReader.Data
                 entity.ToTable("FLIGHT");
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.Number).IsRequired().HasColumnName("Number");
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
                 entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
@@ -191,7 +190,7 @@ namespace BaseStationReader.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            modelBuilder.Entity<FlightNumberMapping>(entity =>
+            modelBuilder.Entity<FlightIATACodeMapping>(entity =>
             {
                 entity.ToTable("FLIGHT_NUMBER_MAPPING");
 

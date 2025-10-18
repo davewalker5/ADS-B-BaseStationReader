@@ -16,7 +16,6 @@
         EmbarkationIATA,
         FlightIATA,
         FlightICAO,
-        FlightNumber,
         ManufacturerName,
         METAR,
         ModelIATA,

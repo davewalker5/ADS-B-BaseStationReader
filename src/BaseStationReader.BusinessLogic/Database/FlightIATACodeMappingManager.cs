@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    internal class FlightNumberMappingManager : IFlightNumberMappingManager
+    internal class FlightIATACodeMappingManager : IFlightIATACodeMappingManager
     {
         private readonly BaseStationReaderDbContext _context;
 
-        public FlightNumberMappingManager(BaseStationReaderDbContext context)
+        public FlightIATACodeMappingManager(BaseStationReaderDbContext context)
         {
             _context = context;
         }
@@ -20,9 +20,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<FlightNumberMapping> GetAsync(Expression<Func<FlightNumberMapping, bool>> predicate)
+        public async Task<FlightIATACodeMapping> GetAsync(Expression<Func<FlightIATACodeMapping, bool>> predicate)
         {
-            List<FlightNumberMapping> mappings = await ListAsync(predicate);
+            List<FlightIATACodeMapping> mappings = await ListAsync(predicate);
             return mappings.FirstOrDefault();
         }
 
@@ -31,11 +31,11 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<List<FlightNumberMapping>> ListAsync(Expression<Func<FlightNumberMapping, bool>> predicate)
-            => await _context.FlightNumberMappings.Where(predicate).ToListAsync();
+        public async Task<List<FlightIATACodeMapping>> ListAsync(Expression<Func<FlightIATACodeMapping, bool>> predicate)
+            => await _context.FlightIATACodeMappings.Where(predicate).ToListAsync();
         
         /// <summary>
-        /// Add a confirmed mapping between callsign and flight number
+        /// Add a confirmed mapping between callsign and flight IATA code
         /// </summary>
         /// <param name="airlineICAO"></param>
         /// <param name="airlineIATA"></param>
@@ -50,7 +50,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="callsign"></param>
         /// <param name="filename"></param>
         /// <returns></returns>
-        public async Task<FlightNumberMapping> AddAsync(
+        public async Task<FlightIATACodeMapping> AddAsync(
             string airlineICAO,
             string airlineIATA,
             string airlineName,
@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Database
             string filename)
         {
             // See if the mapping already exists, based on the callsign
-            var mapping = await _context.FlightNumberMappings.FirstOrDefaultAsync(x => x.Callsign == callsign);
+            var mapping = await _context.FlightIATACodeMappings.FirstOrDefaultAsync(x => x.Callsign == callsign);
             if (mapping != null)
             {
                 // Already exists, so just update its properties
@@ -84,7 +84,7 @@ namespace BaseStationReader.BusinessLogic.Database
             else
             {
                 // Doesn't exist, so create a new mapping
-                mapping = new FlightNumberMapping()
+                mapping = new FlightIATACodeMapping()
                 {
                     AirlineICAO = airlineICAO,
                     AirlineIATA = airlineIATA,
@@ -101,7 +101,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 };
 
                 // Add it to the database
-                await _context.FlightNumberMappings.AddAsync(mapping);
+                await _context.FlightIATACodeMappings.AddAsync(mapping);
             }
 
             await _context.SaveChangesAsync();

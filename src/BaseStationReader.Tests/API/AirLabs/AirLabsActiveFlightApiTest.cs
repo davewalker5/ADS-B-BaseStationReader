@@ -3,7 +3,8 @@ using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
-using System.Threading.Tasks;
+using BaseStationReader.BusinessLogic.Database;
+using System.Text.Json.Nodes;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -12,6 +13,8 @@ namespace BaseStationReader.Tests.API.AirLabs
     {
         private const string Address = "4005C1";
         private const string Response = "{ \"response\": [ { \"hex\": \"4005C1\", \"flag\": \"UK\", \"lat\": 54.001557, \"lng\": -15.078022, \"alt\": 12516, \"dir\": 93, \"speed\": 900, \"flight_number\": \"172\", \"flight_icao\": \"BAW172\", \"flight_iata\": \"BA172\", \"dep_icao\": \"KJFK\", \"dep_iata\": \"JFK\", \"arr_icao\": \"EGLL\", \"arr_iata\": \"LHR\", \"airline_icao\": \"BAW\", \"airline_iata\": \"BA\", \"aircraft_icao\": \"B772\", \"updated\": 1758434637, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
+        private const string ResponseWithIATAButNoNumber = "{ \"response\": [ { \"hex\": \"4005C1\", \"flag\": \"UK\", \"lat\": 54.001557, \"lng\": -15.078022, \"alt\": 12516, \"dir\": 93, \"speed\": 900, \"flight_icao\": \"BAW172\", \"flight_iata\": \"BA172\", \"dep_icao\": \"KJFK\", \"dep_iata\": \"JFK\", \"arr_icao\": \"EGLL\", \"arr_iata\": \"LHR\", \"airline_icao\": \"BAW\", \"airline_iata\": \"BA\", \"aircraft_icao\": \"B772\", \"updated\": 1758434637, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
+        private const string ResponseWithNumberButNoIATA = "{ \"response\": [ { \"hex\": \"4005C1\", \"flag\": \"UK\", \"lat\": 54.001557, \"lng\": -15.078022, \"alt\": 12516, \"dir\": 93, \"speed\": 900, \"flight_number\": \"172\", \"flight_icao\": \"BAW172\", \"dep_icao\": \"KJFK\", \"dep_iata\": \"JFK\", \"arr_icao\": \"EGLL\", \"arr_iata\": \"LHR\", \"airline_icao\": \"BAW\", \"airline_iata\": \"BA\", \"aircraft_icao\": \"B772\", \"updated\": 1758434637, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
 
         private MockTrackerHttpClient _client = null;
         private IActiveFlightsApi _api = null;
@@ -30,8 +33,9 @@ namespace BaseStationReader.Tests.API.AirLabs
         public void Initialise()
         {
             var logger = new MockFileLogger();
+            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsActiveFlightApi(logger, _client, null, _settings);
+            _api = new AirLabsActiveFlightApi(_client, factory, _settings);
         }
 
         [TestMethod]
@@ -39,19 +43,23 @@ namespace BaseStationReader.Tests.API.AirLabs
         {
             _client.AddResponse(Response);
             var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
+            AssertPropertiesAreCorrect(properties);
+        }
 
-            Assert.IsNotNull(properties);
-            Assert.HasCount(10, properties);
-            Assert.AreEqual("JFK", properties[ApiProperty.EmbarkationIATA]);
-            Assert.AreEqual("LHR", properties[ApiProperty.DestinationIATA]);
-            Assert.AreEqual("BA172", properties[ApiProperty.FlightIATA]);
-            Assert.AreEqual("BAW172", properties[ApiProperty.FlightICAO]);
-            Assert.AreEqual("BA172", properties[ApiProperty.FlightNumber]);
-            Assert.AreEqual("BA", properties[ApiProperty.AirlineIATA]);
-            Assert.AreEqual("BAW", properties[ApiProperty.AirlineICAO]);
-            Assert.IsEmpty(properties[ApiProperty.AirlineName]);
-            Assert.AreEqual("B772", properties[ApiProperty.ModelICAO]);
-            Assert.AreEqual("4005C1", properties[ApiProperty.AircraftAddress]);
+        [TestMethod]
+        public async Task GetActiveFlightWithNoNumberInResponseTestAsync()
+        {
+            _client.AddResponse(ResponseWithIATAButNoNumber);
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
+            AssertPropertiesAreCorrect(properties);
+        }
+
+        [TestMethod]
+        public async Task GetActiveFlightWithNoFlightIATAInResponseTestAsync()
+        {
+            _client.AddResponse(ResponseWithIATAButNoNumber);
+            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
+            AssertPropertiesAreCorrect(properties);
         }
 
         [TestMethod]
@@ -79,6 +87,21 @@ namespace BaseStationReader.Tests.API.AirLabs
             var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
 
             Assert.IsNull(properties);
+        }
+
+        private static void AssertPropertiesAreCorrect(Dictionary<ApiProperty, string> properties)
+        {
+            Assert.IsNotNull(properties);
+            Assert.HasCount(9, properties);
+            Assert.AreEqual("JFK", properties[ApiProperty.EmbarkationIATA]);
+            Assert.AreEqual("LHR", properties[ApiProperty.DestinationIATA]);
+            Assert.AreEqual("BA172", properties[ApiProperty.FlightIATA]);
+            Assert.AreEqual("BAW172", properties[ApiProperty.FlightICAO]);
+            Assert.AreEqual("BA", properties[ApiProperty.AirlineIATA]);
+            Assert.AreEqual("BAW", properties[ApiProperty.AirlineICAO]);
+            Assert.IsEmpty(properties[ApiProperty.AirlineName]);
+            Assert.AreEqual("B772", properties[ApiProperty.ModelICAO]);
+            Assert.AreEqual("4005C1", properties[ApiProperty.AircraftAddress]);
         }
     }
 }

@@ -2,16 +2,14 @@ using System.Text.Json.Nodes;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
     internal abstract class SkyLinkApiBase : ExternalApiBase
     {
         public SkyLinkApiBase(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
-            IDatabaseManagementFactory factory) : base(logger, client, factory)
+            IDatabaseManagementFactory factory) : base(client, factory)
         {
         }
 
@@ -25,7 +23,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             // Check we have a response
             if (node == null)
             {
-                Logger.LogMessage(Severity.Warning, $"API returned NULL");
+                Factory.Logger.LogMessage(Severity.Warning, $"API returned NULL");
                 return null;
             }
 
@@ -33,14 +31,14 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             var response = node as JsonArray;
             if (response == null)
             {
-                Logger.LogMessage(Severity.Warning, $"API response array is NULL");
+                Factory.Logger.LogMessage(Severity.Warning, $"API response array is NULL");
                 return null;
             }
 
             // Check the array has some elements
             if (response.Count == 0)
             {
-                Logger.LogMessage(Severity.Warning, $"API response array is empty");
+                Factory.Logger.LogMessage(Severity.Warning, $"API response array is empty");
                 return null;
             }
 
@@ -65,7 +63,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
                 responseObject = response.First();
                 if (responseObject == null)
                 {
-                    Logger.LogMessage(Severity.Warning, "API response object is not an JSON object");
+                    Factory.Logger.LogMessage(Severity.Warning, "API response object is not an JSON object");
                 }
             }
 
@@ -82,7 +80,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             // Check we have a response
             if (node == null)
             {
-                Logger.LogMessage(Severity.Warning, $"API returned NULL");
+                Factory.Logger.LogMessage(Severity.Warning, $"API returned NULL");
                 return null;
             }
 
@@ -90,7 +88,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             var response = node as JsonObject;
             if (response == null)
             {
-                Logger.LogMessage(Severity.Warning, $"API response object is NULL");
+                Factory.Logger.LogMessage(Severity.Warning, $"API response object is NULL");
                 return null;
             }
 

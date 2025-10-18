@@ -1,5 +1,4 @@
 using BaseStationReader.Entities.Import;
-using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
@@ -9,14 +8,10 @@ namespace BaseStationReader.BusinessLogic.Logging
 {
     public class ModelImporter : CsvImporter<ModelMappingProfile, Model>, IModelImporter
     {
-        private readonly IManufacturerManager _manufacturerManager;
-        private readonly IModelManager _modelManager;
+        private readonly IDatabaseManagementFactory _factory;
 
-        public ModelImporter(IManufacturerManager manufacturerManager, IModelManager modelManager, ITrackerLogger logger) : base(logger)
-        {
-            _manufacturerManager = manufacturerManager;
-            _modelManager = modelManager;
-        }
+        public ModelImporter(IDatabaseManagementFactory factory) : base(factory.Logger)
+            => _factory = factory;
 
         /// <summary>
         /// Read a set of model instances from a CSV file
@@ -45,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 Logger.LogMessage(Severity.Info, $"Models with no IATA/ICAO code removed : {models.Count} models remaining");
 
                 // Populate the manufacturer ID on each model
-                var manufacturers = Task.Run(() => _manufacturerManager.ListAsync(x => true)).Result;
+                var manufacturers = Task.Run(() => _factory.ManufacturerManager.ListAsync(x => true)).Result;
                 foreach (var model in models)
                 {
                     var manufacturer = manufacturers.FirstOrDefault(x => x.Name.Equals(model.ManufacturerName, StringComparison.OrdinalIgnoreCase));
@@ -74,7 +69,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                 foreach (var model in models)
                 {
                     Logger.LogMessage(Severity.Debug, $"Saving model '{model.Name}' : IATA = '{model.IATA}', ICAO = '{model.ICAO}'");
-                    await _modelManager.AddAsync(model.IATA, model.ICAO, model.Name, model.ManufacturerId);
+                    await _factory.ModelManager.AddAsync(model.IATA, model.ICAO, model.Name, model.ManufacturerId);
                 }
             }
             else

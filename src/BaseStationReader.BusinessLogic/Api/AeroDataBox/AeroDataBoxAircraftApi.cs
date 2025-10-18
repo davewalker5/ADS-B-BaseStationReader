@@ -4,9 +4,8 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
-using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Database;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 {
@@ -19,10 +18,9 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 
         [ExcludeFromCodeCoverage]
         public AeroDataBoxAircraftApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -44,7 +42,7 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAircraftAsync(string address)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
             var properties = await MakeApiRequestAsync($"{address}");
             return properties;
         }
@@ -58,42 +56,34 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
         {
             Dictionary<ApiProperty, string> properties = [];
 
-            try
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}{parameters}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                if (node != null)
-                {
-                    // Extract the delivery date and use it to determine year of manufacture and age
-                    int? manufactured = GetYearOfManufacture(node as JsonObject);
-                    int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
-
-                    // Extract the values into a dictionary
-                    properties = new()
-                    {
-                        { ApiProperty.AircraftRegistration, node?["reg"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
-                        { ApiProperty.AircraftAge, age?.ToString() ?? "" },
-                        { ApiProperty.ModelICAO, node?["icaoCode"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelIATA, node?["iataCodeShort"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ModelName, node?["typeName"]?.GetValue<string>() ?? "" },
-                        { ApiProperty.ManufacturerName, "" }
-                    };
-
-                    // Log the properties dictionary
-                    LogProperties("Aircraft", properties);
-                }
-            }
-            catch (Exception ex)
+            if (node != null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
+                // Extract the delivery date and use it to determine year of manufacture and age
+                int? manufactured = GetYearOfManufacture(node as JsonObject);
+                int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
+
+                // Extract the values into a dictionary
+                properties = new()
+                {
+                    { ApiProperty.AircraftRegistration, node?["reg"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.AircraftManufactured, manufactured?.ToString() ?? "" },
+                    { ApiProperty.AircraftAge, age?.ToString() ?? "" },
+                    { ApiProperty.ModelICAO, node?["icaoCode"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelIATA, node?["iataCodeShort"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ModelName, node?["typeName"]?.GetValue<string>() ?? "" },
+                    { ApiProperty.ManufacturerName, "" }
+                };
+
+                // Log the properties dictionary
+                LogProperties("Aircraft", properties);
             }
 
             return HaveValidProperties(properties) ? properties : null;

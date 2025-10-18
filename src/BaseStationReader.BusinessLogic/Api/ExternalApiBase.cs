@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Nodes;
 using BaseStationReader.Interfaces.Api;
-using BaseStationReader.Interfaces.Logging;
 using System.Text.Json;
 using BaseStationReader.Interfaces.Database;
 
@@ -15,12 +14,10 @@ namespace BaseStationReader.BusinessLogic.Api
     {
         private readonly ITrackerHttpClient _client;
 
-        protected ITrackerLogger Logger { get; private set; }
         protected IDatabaseManagementFactory Factory { get; private set; }
 
-        protected ExternalApiBase(ITrackerLogger logger, ITrackerHttpClient client, IDatabaseManagementFactory factory)
+        protected ExternalApiBase(ITrackerHttpClient client, IDatabaseManagementFactory factory)
         {
-            Logger = logger;
             _client = client;
             Factory = factory;
         }
@@ -28,29 +25,27 @@ namespace BaseStationReader.BusinessLogic.Api
         /// <summary>
         /// Make a GET request to the specified URL and return the response as a JSON string
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="type"></param>
         /// <param name="endpoint"></param>
         /// <param name="headers"></param>
         /// <returns></returns>
         protected async Task<JsonNode> GetAsync(
-            ITrackerLogger logger,
             ApiServiceType type,
             string endpoint,
             Dictionary<string, string> headers)
-            => await SendRequestAsync(HttpMethod.Get, logger, type, endpoint, headers, null);
+            => await SendRequestAsync(HttpMethod.Get, type, endpoint, headers, null);
 
         /// <summary>
         /// Make a request to the specified URL and return the response properties as a JSON DOM
         /// </summary>
-        /// <param name="logger"></param>
+        /// <param name="method"></param>
         /// <param name="type"></param>
         /// <param name="endpoint"></param>
         /// <param name="headers"></param>
+        /// <param name="payload"></param>
         /// <returns></returns>
         private async Task<JsonNode> SendRequestAsync(
             HttpMethod method,
-            ITrackerLogger logger,
             ApiServiceType type,
             string endpoint,
             Dictionary<string, string> headers,
@@ -60,13 +55,13 @@ namespace BaseStationReader.BusinessLogic.Api
 
             try
             {
-                Logger.LogMessage(Severity.Debug, $"Making request to {endpoint}");
+                Factory.Logger.LogMessage(Severity.Debug, $"Making request to {endpoint}");
 
                 // Construct a request object, including the headers
                 var request = new HttpRequestMessage(method, endpoint);
                 foreach (var header in headers)
                 {
-                    Logger.LogMessage(Severity.Verbose, $"Adding header {header.Key}: {header.Value}");
+                    Factory.Logger.LogMessage(Severity.Verbose, $"Adding header {header.Key}: {header.Value}");
                     request.Headers.Add(header.Key, header.Value);
                 }
 
@@ -77,12 +72,12 @@ namespace BaseStationReader.BusinessLogic.Api
                 }
 
                 // Make a request for the data from the API
-                using (var response = await _client.SendAsync(logger, type, request))
+                using (var response = await _client.SendAsync(Factory.Logger, type, request))
                 {
                     // Check the request was successful
                     if (!response.IsSuccessStatusCode)
                     {
-                        Logger.LogMessage(Severity.Error, $"Response was not successful - code = {response.StatusCode}");
+                        Factory.Logger.LogMessage(Severity.Error, $"Response was not successful - code = {response.StatusCode}");
                         return null;
                     }
     
@@ -90,11 +85,11 @@ namespace BaseStationReader.BusinessLogic.Api
                     var json = await response.Content.ReadAsStringAsync();
                     if (string.IsNullOrEmpty(json))
                     {
-                        Logger.LogMessage(Severity.Warning, "Received empty response");
+                        Factory.Logger.LogMessage(Severity.Warning, "Received empty response");
                         return null;
                     }
 
-                    Logger.LogMessage(Severity.Debug, $"Received response {json}");
+                    Factory.Logger.LogMessage(Severity.Debug, $"Received response {json}");
 
                     // Parse the response JSON using lenient options, allowing trailing commas, skipping comments
                     try
@@ -112,8 +107,8 @@ namespace BaseStationReader.BusinessLogic.Api
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogMessage(Severity.Error, ex.Message);
-                        Logger.LogException(ex);
+                        Factory.Logger.LogMessage(Severity.Error, ex.Message);
+                        Factory.Logger.LogException(ex);
                         return null;
                     }
 
@@ -121,15 +116,15 @@ namespace BaseStationReader.BusinessLogic.Api
                     // log the fact
                     if (node == null)
                     {
-                        Logger.LogMessage(Severity.Warning, "JSON response did not parse to a valid JSON node");
+                        Factory.Logger.LogMessage(Severity.Warning, "JSON response did not parse to a valid JSON node");
                     }
                 }
             }
             catch (Exception ex)
             {
                 var message = $"Error calling {endpoint}: {ex.Message}";
-                Logger.LogMessage(Severity.Error, message);
-                Logger.LogException(ex);
+                Factory.Logger.LogMessage(Severity.Error, message);
+                Factory.Logger.LogException(ex);
                 node = null;
             }
 
@@ -155,13 +150,13 @@ namespace BaseStationReader.BusinessLogic.Api
                     var message = $"{type} API property {property.Key.ToString()} = {value}";
 
                     // Log the message for this property
-                    Logger.LogMessage(Severity.Verbose, message);
+                    Factory.Logger.LogMessage(Severity.Verbose, message);
                 }
             }
             else
             {
                 // Log the fact that the properties dictionary is NULL
-                Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
+                Factory.Logger.LogMessage(Severity.Warning, "API lookup generated a NULL properties dictionary");
             }
         }
 

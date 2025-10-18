@@ -2,13 +2,11 @@ using BaseStationReader.BusinessLogic.Api.AeroDatabox;
 using BaseStationReader.BusinessLogic.Api.AirLabs;
 using BaseStationReader.BusinessLogic.Api.CheckWXApi;
 using BaseStationReader.BusinessLogic.Api.SkyLink;
-using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
@@ -167,7 +165,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             logger.LogMessage(Severity.Debug, $"{endpoint} API for service {service} is of type {type.Name}");
 
             // Create an instance of the type
-            var instance = Activator.CreateInstance(type, logger, client, factory, settings);
+            var instance = Activator.CreateInstance(type, client, factory, settings);
             if (instance == null)
             {
                 logger.LogMessage(Severity.Error, $"Failed to create instance of {type.Name}");

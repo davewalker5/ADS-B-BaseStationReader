@@ -10,9 +10,6 @@ namespace BaseStationReader.Entities.Api
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public string Number { get; set; } = "";
-
         public string ICAO { get; set; } = "";
 
         [Required]

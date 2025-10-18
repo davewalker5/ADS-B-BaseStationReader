@@ -18,7 +18,6 @@ namespace BaseStationReader.Tests.API.SkyLink
         private const string Embarkation = "LHR";
         private const string Destination = "SNN";
         private const string FlightIATA = "EI385";
-        private const string FlightNumber = "385";
         private const string Response = "{ \"flight_number\": \"EI385\", \"status\": \"Landed 16:13\", \"airline\": \"Aer Lingus\", \"departure\": { \"airport\": \"LHR • London\", \"airport_full\": \"London Heathrow Airport\", \"scheduled_time\": \"14:40\", \"scheduled_date\": \"09 Oct\", \"actual_time\": \"15:19\", \"actual_date\": \"09 Oct\", \"terminal\": \"2\", \"gate\": \"A23\", \"checkin\": \"--\" }, \"arrival\": { \"airport\": \"SNN • Shannon\", \"airport_full\": \"Shannon  International Airport\", \"scheduled_time\": \"16:10\", \"scheduled_date\": \"09 Oct\", \"estimated_time\": \"16:13\", \"estimated_date\": \"09 Oct\", \"terminal\": \"--\", \"gate\": \"--\", \"baggage\": \"--\" } }";
 
         private MockTrackerHttpClient _client = null;
@@ -42,14 +41,14 @@ namespace BaseStationReader.Tests.API.SkyLink
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new SkyLinkHistoricalFlightApi(logger, _client, _factory, _settings);
+            _api = new SkyLinkHistoricalFlightApi(_client, _factory, _settings);
         }
 
         [TestMethod]
         public async Task GetHistoricalFlightsTestAsync()
         {
-            // Add a callsign/flight number mapping and a tracked aircraft with that callsign
-            await _factory.FlightNumberMappingManager.AddAsync("", "", "", "", "", "", AirportType.Unknown, Embarkation, Destination, FlightIATA, Callsign, "");
+            // Add a callsign/flight IATA code mapping and a tracked aircraft with that callsign
+            await _factory.FlightIATACodeMappingManager.AddAsync("", "", "", "", "", "", AirportType.Unknown, Embarkation, Destination, FlightIATA, Callsign, "");
             await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -62,8 +61,7 @@ namespace BaseStationReader.Tests.API.SkyLink
 
             Assert.IsNotNull(properties);
             Assert.HasCount(1, properties);
-            Assert.HasCount(7, properties[0]);
-            Assert.AreEqual(FlightNumber, properties[0][ApiProperty.FlightNumber]);
+            Assert.HasCount(6, properties[0]);
             Assert.IsEmpty(properties[0][ApiProperty.FlightICAO]);
             Assert.AreEqual(FlightIATA, properties[0][ApiProperty.FlightIATA]);
             Assert.AreEqual("EI", properties[0][ApiProperty.AirlineIATA]);

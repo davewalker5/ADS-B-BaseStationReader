@@ -10,8 +10,10 @@ namespace BaseStationReader.Tests.DataExchange
     [TestClass]
     public class ModelImporterTest
     {
-        private IManufacturerManager _manufacturerManager;
-        private IModelManager _modelManager;
+
+
+        private IDatabaseManagementFactory _factory;
+
         private IModelImporter _importer;
 
         [TestInitialize]
@@ -19,17 +21,16 @@ namespace BaseStationReader.Tests.DataExchange
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _manufacturerManager = new ManufacturerManager(context);
-            _modelManager = new ModelManager(context);
-            _importer = new ModelImporter(_manufacturerManager, _modelManager, logger);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _importer = new ModelImporter(_factory);
         }
 
         [TestMethod]
         public async Task ImportTestAsync()
         {
-            _ = await _manufacturerManager.AddAsync("Airbus");
+            _ = await _factory.ManufacturerManager.AddAsync("Airbus");
             await _importer.ImportAsync("models.csv");
-            var models = await _modelManager.ListAsync(x => true);
+            var models = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(models);
             Assert.HasCount(1, models);
@@ -44,7 +45,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportWithoutManufacturerPresentTestAsync()
         {
             await _importer.ImportAsync("models.csv");
-            var models = await _modelManager.ListAsync(x => true);
+            var models = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(models);
             Assert.HasCount(0, models);
@@ -54,7 +55,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportEmptyFileTestAsync()
         {
             await _importer.ImportAsync("empty_models.csv");
-            var models = await _modelManager.ListAsync(x => true);
+            var models = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(models);
             Assert.HasCount(0, models);
@@ -64,7 +65,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportMissingFileTestAsync()
         {
             await _importer.ImportAsync("missing.csv");
-            var models = await _modelManager.ListAsync(x => true);
+            var models = await _factory.ModelManager.ListAsync(x => true);
 
             Assert.IsNotNull(models);
             Assert.HasCount(0, models);

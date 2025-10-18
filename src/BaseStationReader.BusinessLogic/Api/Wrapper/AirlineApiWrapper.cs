@@ -3,22 +3,16 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class AirlineApiWrapper : IAirlineApiWrapper
     {
-        private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
         private readonly IDatabaseManagementFactory _factory;
 
-        public AirlineApiWrapper(
-            ITrackerLogger logger,
-            IExternalApiRegister register,
-            IDatabaseManagementFactory factory)
+        public AirlineApiWrapper(IExternalApiRegister register, IDatabaseManagementFactory factory)
         {
-            _logger = logger;
             _register = register;
             _factory = factory;
         }
@@ -99,6 +93,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="name"></param>
         /// <param name="message"></param>
         private void LogMessage(Severity severity, string icao, string iata, string name, string message)
-            => _logger.LogMessage(severity, $"Airline ICAO = {icao}, IATA = {iata}, Name = {name} : {message}");
+            => _factory.Logger.LogMessage(severity, $"Airline ICAO = {icao}, IATA = {iata}, Name = {name} : {message}");
     }
 }

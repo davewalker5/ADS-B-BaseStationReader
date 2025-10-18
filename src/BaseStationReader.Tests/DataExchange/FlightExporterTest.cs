@@ -11,7 +11,6 @@ namespace BaseStationReader.Tests.DataExchange
         private const string AircraftAddress = "4851F6";
         private const string FlightICAO = "KLM743";
         private const string FlightIATA = "KL743";
-        private const string FlightNumber = "743";
         private const string Embarkation = "AMS";
         private const string Destination = "LIM";
         private const string AirlineName = "KLM";
@@ -33,7 +32,6 @@ namespace BaseStationReader.Tests.DataExchange
             List<Flight> flights = [new()
             {
                 AircraftAddress = AircraftAddress,
-                Number = FlightNumber,
                 ICAO = FlightICAO,
                 IATA = FlightIATA,
                 Embarkation = Embarkation,
@@ -59,7 +57,6 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.IsNotNull(records);
             Assert.HasCount(1, records);
             Assert.AreEqual(AircraftAddress, records[0].AircraftAddress);
-            Assert.AreEqual(FlightNumber, records[0].Number);
             Assert.AreEqual(FlightICAO, records[0].ICAO);
             Assert.AreEqual(FlightIATA, records[0].IATA);
             Assert.AreEqual(Embarkation, records[0].Embarkation);

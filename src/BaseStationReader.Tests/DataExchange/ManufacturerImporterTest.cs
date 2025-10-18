@@ -10,7 +10,8 @@ namespace BaseStationReader.Tests.DataExchange
     [TestClass]
     public class ManufacturerImporterTest
     {
-        private IManufacturerManager _manufacturerManager;
+
+        private IDatabaseManagementFactory _factory;
         private IManufacturerImporter _importer;
 
         [TestInitialize]
@@ -18,15 +19,15 @@ namespace BaseStationReader.Tests.DataExchange
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _manufacturerManager = new ManufacturerManager(context);
-            _importer = new ManufacturerImporter(_manufacturerManager, logger);
+            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _importer = new ManufacturerImporter(_factory);
         }
 
         [TestMethod]
         public async Task ImportTestAsync()
         {
             await _importer.ImportAsync("manufacturers.csv");
-            var manufacturers = await _manufacturerManager.ListAsync(x => true);
+            var manufacturers = await _factory.ManufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);
             Assert.HasCount(1, manufacturers);
@@ -38,7 +39,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportEmptyFileTestAsync()
         {
             await _importer.ImportAsync("empty_manufacturers.csv");
-            var manufacturers = await _manufacturerManager.ListAsync(x => true);
+            var manufacturers = await _factory.ManufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);
             Assert.HasCount(0, manufacturers);
@@ -48,7 +49,7 @@ namespace BaseStationReader.Tests.DataExchange
         public async Task ImportMissingFileTestAsync()
         {
             await _importer.ImportAsync("missing.csv");
-            var manufacturers = await _manufacturerManager.ListAsync(x => true);
+            var manufacturers = await _factory.ManufacturerManager.ListAsync(x => true);
 
             Assert.IsNotNull(manufacturers);
             Assert.HasCount(0, manufacturers);

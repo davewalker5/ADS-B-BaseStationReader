@@ -24,7 +24,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAircraftImportAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportAircraft)[0];
-            var importer = new AircraftImporter(Factory.AircraftManager, Factory.ModelManager, Logger);
+            var importer = new AircraftImporter(Factory);
             await importer.ImportAsync(filePath);
         }
 
@@ -35,18 +35,18 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAirlineImportAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportAirlines)[0];
-            var airlineImporter = new AirlineImporter(Factory.AirlineManager, Logger);
+            var airlineImporter = new AirlineImporter(Factory);
             await airlineImporter.ImportAsync(filePath);
         }
 
         /// <summary>
-        /// Handle the confirmed flight number mapping import command
+        /// Handle the callsign/flight IATA code mapping import command
         /// </summary>
         /// <returns></returns>
         public async Task HandleMappingImportAsync()
         {
-            var filePath = Parser.GetValues(CommandLineOptionType.ImportFlightNumberMappings)[0];
-            var importer = new FlightNumberMappingImporter(Factory.FlightNumberMappingManager, Logger);
+            var filePath = Parser.GetValues(CommandLineOptionType.ImportFlightIATACodeMappings)[0];
+            var importer = new FlightIATACodeMappingImporter(Factory);
             await importer.ImportAsync(filePath);
         }
 
@@ -57,7 +57,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleManufacturerImportAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportManufacturers)[0];
-            var manufacturerImporter = new ManufacturerImporter(Factory.ManufacturerManager, Logger);
+            var manufacturerImporter = new ManufacturerImporter(Factory);
             await manufacturerImporter.ImportAsync(filePath);
         }
 
@@ -68,7 +68,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleModelImportAsync()
         {
             var filePath = Parser.GetValues(CommandLineOptionType.ImportModels)[0];
-            var modelImporter = new ModelImporter(Factory.ManufacturerManager, Factory.ModelManager, Logger);
+            var modelImporter = new ModelImporter(Factory);
             await modelImporter.ImportAsync(filePath);
         }
     }

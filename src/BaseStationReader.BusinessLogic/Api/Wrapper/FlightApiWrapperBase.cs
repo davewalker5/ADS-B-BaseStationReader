@@ -1,27 +1,20 @@
-using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal abstract class FlightApiWrapperBase
     {
-        protected readonly ITrackerLogger _logger;
-        protected readonly IAirlineApiWrapper _airlineWrapper;
-        protected readonly IDatabaseManagementFactory _factory;
+        protected IAirlineApiWrapper AirlineWrapper { get; private set; }
+        protected IDatabaseManagementFactory Factory { get; private set; }
 
-        public FlightApiWrapperBase(
-            ITrackerLogger logger,
-            IAirlineApiWrapper airlineWrapper,
-            IDatabaseManagementFactory factory)
+        public FlightApiWrapperBase(IAirlineApiWrapper airlineWrapper, IDatabaseManagementFactory factory)
         {
-            _logger = logger;
-            _airlineWrapper = airlineWrapper;
-            _factory = factory;
+            AirlineWrapper = airlineWrapper;
+            Factory = factory;
         }
 
         /// <summary>
@@ -34,10 +27,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         protected async Task<Flight> SaveFlightAsync(Dictionary<ApiProperty, string> properties, int airlineId)
         {
             // Save the flight
-            Flight flight = await _factory.FlightManager.AddAsync(
+            Flight flight = await Factory.FlightManager.AddAsync(
                 properties[ApiProperty.FlightIATA],
                 properties[ApiProperty.FlightICAO],
-                properties[ApiProperty.FlightNumber],
                 properties[ApiProperty.EmbarkationIATA],
                 properties[ApiProperty.DestinationIATA],
                 airlineId);
@@ -53,12 +45,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         }
 
         /// <summary>
-        /// Create a flight from a flight number mapping if the airports aren't filtered out
+        /// Create a flight from a callsign-to-flight mapping if the airports aren't filtered out
         /// </summary>
         /// <param name="request"></param>
         /// <param name="mapping"></param>
         /// <returns></returns>
-        public async Task<Flight> CreateFlightFromMapping(ApiLookupRequest request, FlightNumberMapping mapping)
+        public async Task<Flight> CreateFlightFromMapping(ApiLookupRequest request, FlightIATACodeMapping mapping)
         {
             // Check the airports aren't filtered out
             if (!IsAirportAllowed(request, AirportType.Departure, mapping.Embarkation))
@@ -71,11 +63,10 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return null;
             }
 
-            _logger.LogMessage(Severity.Info, $"Creating flight {mapping.FlightIATA} from flight number mapping");
+            Factory.Logger.LogMessage(Severity.Info, $"Creating flight {mapping.FlightIATA} from callsign mapping");
 
-            var airline = await _factory.AirlineManager.AddAsync(mapping.AirlineIATA, mapping.AirlineICAO, mapping.AirlineName);
-            var flightNumber = Regex.Replace(mapping.FlightIATA, @"\D", "");
-            var flight = await _factory.FlightManager.AddAsync(mapping.FlightIATA, null, flightNumber, mapping.Embarkation, mapping.Destination, airline.Id);
+            var airline = await Factory.AirlineManager.AddAsync(mapping.AirlineIATA, mapping.AirlineICAO, mapping.AirlineName);
+            var flight = await Factory.FlightManager.AddAsync(mapping.FlightIATA, null, mapping.Embarkation, mapping.Destination, airline.Id);
 
             return flight;
         }
@@ -114,6 +105,6 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <param name="request"></param>
         /// <param name="message"></param>
         protected void LogMessage(Severity severity, ApiLookupRequest request, string message)
-            => _logger.LogMessage(severity, $"Flight lookup for aircraft {request.AircraftAddress} using {request.FlightPropertyType}={request.FlightPropertyValue} : {message}");
+            => Factory.Logger.LogMessage(severity, $"Flight lookup for aircraft {request.AircraftAddress} using {request.FlightPropertyType}={request.FlightPropertyValue} : {message}");
     }
 }

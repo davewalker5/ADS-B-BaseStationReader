@@ -4,22 +4,16 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
     internal class AircraftApiWrapper : IAircraftApiWrapper
     {
-        private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
         private readonly IDatabaseManagementFactory _factory;
 
-        public AircraftApiWrapper(
-            ITrackerLogger logger,
-            IExternalApiRegister register,
-            IDatabaseManagementFactory factory)
+        public AircraftApiWrapper(IExternalApiRegister register, IDatabaseManagementFactory factory)
         {
-            _logger = logger;
             _register = register;
             _factory = factory;
         }
@@ -32,12 +26,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         /// <returns></returns>
         public async Task<Aircraft> LookupAircraftAsync(string address, string alternateModelICAO)
         {
-            _logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
+            _factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
 
             // The aircraft address must be specified
             if (string.IsNullOrEmpty(address))
             {
-                _logger.LogMessage(Severity.Warning, $"Unable to look up aircraft details : Invalid aircraft address");
+                _factory.Logger.LogMessage(Severity.Warning, $"Unable to look up aircraft details : Invalid aircraft address");
                 return null;
             }
 
@@ -48,7 +42,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 // Get the API instance
                 if (_register.GetInstance(ApiEndpointType.Aircraft) is not IAircraftApi api) return null;
 
-                _logger.LogMessage(Severity.Info, $"Aircraft {address} is not stored locally : Using the API");
+                _factory.Logger.LogMessage(Severity.Info, $"Aircraft {address} is not stored locally : Using the API");
 
                 // Not stored locally, so use the API to look it up
                 var properties = await api.LookupAircraftAsync(address);
@@ -73,12 +67,12 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Info, $"API lookup for aircraft {address} produced no results");
+                    _factory.Logger.LogMessage(Severity.Info, $"API lookup for aircraft {address} produced no results");
                 }
             }
             else
             {
-                _logger.LogMessage(Severity.Info, $"Aircraft {address} retrieved from the database");
+                _factory.Logger.LogMessage(Severity.Info, $"Aircraft {address} retrieved from the database");
             }
 
             return aircraft;

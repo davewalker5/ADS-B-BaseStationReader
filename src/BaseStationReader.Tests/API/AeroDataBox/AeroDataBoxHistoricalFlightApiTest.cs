@@ -4,7 +4,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using System.Globalization;
-using System.Threading.Tasks;
+using BaseStationReader.BusinessLogic.Database;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -38,8 +38,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public void Initialise()
         {
             var logger = new MockFileLogger();
+            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxHistoricalFlightApi(logger, _client, null, _settings);
+            _api = new AeroDataBoxHistoricalFlightApi(_client, factory, _settings);
         }
         
         [TestMethod]
@@ -51,10 +52,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             Assert.IsNotNull(properties);
             Assert.HasCount(2, properties);
 
-            Assert.HasCount(13, properties[0]);
-            Assert.IsEmpty(properties[0][ApiProperty.FlightIATA]);
+            Assert.HasCount(12, properties[0]);
+            Assert.AreEqual("U22123", properties[0][ApiProperty.FlightIATA]);
             Assert.IsEmpty(properties[0][ApiProperty.FlightICAO]);
-            Assert.AreEqual("U22123", properties[0][ApiProperty.FlightNumber]);
             Assert.AreEqual("MAN", properties[0][ApiProperty.EmbarkationIATA]);
             Assert.AreEqual("2025-09-25 07:45Z", properties[0][ApiProperty.DepartureTime]);
             Assert.AreEqual("FCO", properties[0][ApiProperty.DestinationIATA]);
@@ -66,10 +66,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             Assert.AreEqual(Registration, properties[0][ApiProperty.AircraftRegistration]);
             Assert.IsEmpty(properties[0][ApiProperty.ModelICAO]);
 
-            Assert.HasCount(13, properties[1]);
-            Assert.IsEmpty(properties[1][ApiProperty.FlightIATA]);
+            Assert.HasCount(12, properties[1]);
+            Assert.AreEqual("U22124", properties[1][ApiProperty.FlightIATA]);
             Assert.IsEmpty(properties[1][ApiProperty.FlightICAO]);
-            Assert.AreEqual("U22124", properties[1][ApiProperty.FlightNumber]);
             Assert.AreEqual("FCO", properties[1][ApiProperty.EmbarkationIATA]);
             Assert.AreEqual("2025-09-25 12:16Z", properties[1][ApiProperty.DepartureTime]);
             Assert.AreEqual("MAN", properties[1][ApiProperty.DestinationIATA]);

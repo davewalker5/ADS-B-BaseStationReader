@@ -46,7 +46,6 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<Flight> AddAsync(
             string iata,
             string icao,
-            string number,
             string embarkation,
             string destination,
             int airlineId)
@@ -54,7 +53,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // Check the flight doesn't exist based on the airline, number and route
             var flight = await GetAsync(x =>
                 (x.AirlineId == airlineId) &&
-                (x.Number == number) &&
+                (x.IATA == iata) &&
                 (x.Embarkation == embarkation) &&
                 (x.Destination == destination));
 
@@ -62,7 +61,6 @@ namespace BaseStationReader.BusinessLogic.Database
             {
                 flight = new Flight
                 {
-                    Number = number,
                     IATA = iata,
                     ICAO = icao,
                     Embarkation = embarkation,

@@ -4,7 +4,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.SkyLink
 {
@@ -17,10 +16,9 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
         [ExcludeFromCodeCoverage]
         public SkyLinkAirlinesApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and store the key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -42,7 +40,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACodeAsync(string iata)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
             return await MakeApiRequestAsync($"?iata={iata}");
         }
 
@@ -53,7 +51,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCodeAsync(string icao)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
             return await MakeApiRequestAsync($"?icao={icao}");
         }
 
@@ -66,39 +64,31 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         {
             Dictionary<ApiProperty, string> properties = [];
 
-            try
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}{parameters}";
+            var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new Dictionary<string, string>()
-                {
-                    { "X-RapidAPI-Key", _key },
-                    { "X-RapidAPI-Host", _host },
-                });
+                { "X-RapidAPI-Key", _key },
+                { "X-RapidAPI-Host", _host },
+            });
 
-                // Get the airline object from the response
-                var airline = GetFirstResponseObject(node);
-                if (airline == null)
-                {
-                    return null;
-                }
-
-                // Extract the values into a dictionary
-                properties = new()
-                {
-                    { ApiProperty.AirlineIATA, airline?["iata"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AirlineICAO, airline?["icao"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
-                };
-
-                // Log the properties dictionary
-                LogProperties("Airline", properties);
-            }
-            catch (Exception ex)
+            // Get the airline object from the response
+            var airline = GetFirstResponseObject(node);
+            if (airline == null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
+                return null;
             }
+
+            // Extract the values into a dictionary
+            properties = new()
+            {
+                { ApiProperty.AirlineIATA, airline?["iata"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineICAO, airline?["icao"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
+            };
+
+            // Log the properties dictionary
+            LogProperties("Airline", properties);
 
             return HaveValidProperties(properties) ? properties : null;
         }

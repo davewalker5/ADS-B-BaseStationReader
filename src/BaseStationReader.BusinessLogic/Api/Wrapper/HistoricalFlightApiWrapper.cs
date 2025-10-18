@@ -5,7 +5,6 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Api.Wrapper
 {
@@ -14,10 +13,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
         private readonly IExternalApiRegister _register;
 
         public HistoricalFlightApiWrapper(
-            ITrackerLogger logger,
             IExternalApiRegister register,
             IAirlineApiWrapper airlineWrapper,
-            IDatabaseManagementFactory factory) : base(logger, airlineWrapper, factory)
+            IDatabaseManagementFactory factory) : base(airlineWrapper, factory)
         {
             _register = register;
         }
@@ -51,7 +49,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
             }
 
             // Retrieve the tracked aircraft record 
-            var aircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
+            var aircraft = await Factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
             if (aircraft == null)
             {
                 LogMessage(Severity.Warning, request, $"Aircraft is not a valid lookup candidate");
@@ -79,7 +77,7 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                         flightProperties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
                         flightProperties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);
                         flightProperties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
-                        var airline = await _airlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
+                        var airline = await AirlineWrapper.LookupAirlineAsync(airlineICAO, airlineIATA, airlineName);
                         if (airline != null)
                         {
                             // Save and return this flight as the matching flight
@@ -125,9 +123,9 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return false;
             }
 
-            // If we've looked the flight up by number we should have only one (correct) match so time-based
+            // If we've looked the flight up by IATA we should have only one (correct) match so time-based
             // filtering isn't necessary
-            if (request.FlightPropertyType != ApiProperty.FlightNumber)
+            if (request.FlightPropertyType != ApiProperty.FlightIATA)
             {
                 // Get the flight times from the properties collection
                 var departureTime = ExtractTimestamp(properties[ApiProperty.DepartureTime]);

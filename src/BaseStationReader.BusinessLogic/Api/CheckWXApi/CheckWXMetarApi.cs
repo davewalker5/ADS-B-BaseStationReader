@@ -1,5 +1,4 @@
 using BaseStationReader.Entities.Config;
-using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
@@ -15,10 +14,9 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
 
         [ExcludeFromCodeCoverage]
         public CheckWXMetarApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties and capture the API key
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -38,7 +36,7 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up weather for airport with ICAO code {icao}");
             var results = await MakeApiRequestAsync(icao);
             return results;
         }
@@ -52,34 +50,33 @@ namespace BaseStationReader.BusinessLogic.Api.CheckWXApi
         {
             IEnumerable<string> results = null;
 
-            try
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}/{parameters}";
+            var node = await GetAsync(ServiceType, url, new()
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}/{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, new()
-                {
-                    { "X-API-Key", _key }
-                });
+                { "X-API-Key", _key }
+            });
 
-                if (node != null)
-                {
-                    // Extract the response element, which is an array of strings, from the JSON DOM and
-                    // convert to a list of strings
-                    var apiResponse = node?["data"]?.AsArray();
-                    results = apiResponse?.Select(x => x?.ToString());
-
-                    // Log the properties dictionary
-                    foreach (var metar in results)
-                    {
-                        Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
-                    }
-                }
+            if (node == null)
+            {
+                return null;
             }
-            catch (Exception ex)
+
+            // Extract the response element, which is an array of strings, from the JSON DOM and
+            // convert to a list of strings
+            var apiResponse = node["data"]?.AsArray();
+            if (apiResponse == null)
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
-                results = null;
+                return null;
+            }
+
+            // Convert the reports to a list of strings, removing empty entries
+            results = apiResponse.Where(x => x != null).Select(x => x.ToString()).Where(x => !string.IsNullOrEmpty(x));
+
+            // Log the reports
+            foreach (var metar in results)
+            {
+                Factory.Logger.LogMessage(Severity.Debug, $"METAR for {parameters} : {metar}");
             }
 
             return results;

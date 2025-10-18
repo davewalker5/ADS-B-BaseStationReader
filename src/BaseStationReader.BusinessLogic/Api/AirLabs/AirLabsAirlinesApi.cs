@@ -1,10 +1,9 @@
 ﻿using BaseStationReader.Entities.Config;
-using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Api;
-using BaseStationReader.Interfaces.Database;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Api.AirLabs
 {
@@ -15,10 +14,9 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
         [ExcludeFromCodeCoverage]
         public AirLabsAirlinesApi(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
-            ExternalApiSettings settings) : base(logger, client, factory)
+            ExternalApiSettings settings) : base(client, factory)
         {
             // Get the API configuration properties
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
@@ -38,7 +36,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACodeAsync(string iata)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
             return await MakeApiRequestAsync($"&iata_code={iata}");
         }
 
@@ -49,7 +47,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         /// <returns></returns>
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCodeAsync(string icao)
         {
-            Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
             return await MakeApiRequestAsync($"&icao_code={icao}");
         }
 
@@ -62,36 +60,27 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         {
             Dictionary<ApiProperty, string> properties = null;
 
-            try
+            // Make a request for the data from the API
+            var url = $"{_baseAddress}{parameters}";
+            var node = await GetAsync(ServiceType, url, []);
+
+            // Get the aircraft object from the response
+            var airline = GetFirstResponseObject(node);
+            if (airline == null)
             {
-                // Make a request for the data from the API
-                var url = $"{_baseAddress}{parameters}";
-                var node = await GetAsync(Logger, ServiceType, url, []);
-
-                // Get the aircraft object from the response
-                var airline = GetFirstResponseObject(node);
-                if (airline == null)
-                {
-                    return null;
-                }
-
-                // Extract the values into a dictionary
-                properties = new()
-                {
-                    { ApiProperty.AirlineIATA, airline?["iata_code"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AirlineICAO, airline?["icao_code"]?.GetValue<string>() ?? "" },
-                    { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
-                };
-
-                // Log the properties dictionary
-                LogProperties("Airline", properties);
+                return null;
             }
-            catch (Exception ex)
+
+            // Extract the values into a dictionary
+            properties = new()
             {
-                Logger.LogMessage(Severity.Error, ex.Message);
-                Logger.LogException(ex);
-                properties = null;
-            }
+                { ApiProperty.AirlineIATA, airline?["iata_code"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineICAO, airline?["icao_code"]?.GetValue<string>() ?? "" },
+                { ApiProperty.AirlineName, airline?["name"]?.GetValue<string>() ?? "" },
+            };
+
+            // Log the properties dictionary
+            LogProperties("Airline", properties);
 
             return HaveValidProperties(properties) ? properties : null;
         }

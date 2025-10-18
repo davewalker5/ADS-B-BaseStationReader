@@ -25,7 +25,6 @@ namespace BaseStationReader.Tests.API
         private const string AirlineICAO = "EIN";
         private const string AirlineName = "Aer Lingus";
         private const string FlightIATA = "EI527";
-        private const string FlightNumber = "527";
         private const string AirportICAO = "EGLL";
         private const string AirportIATA = "LHR";
         private const string AirportName = "London Heathrow";
@@ -77,8 +76,8 @@ namespace BaseStationReader.Tests.API
                 Status = TrackingStatus.Active
             });
 
-            // Add the flight number mapping
-            _ = await _factory.FlightNumberMappingManager.AddAsync(
+            // Add the flight IATA code mapping
+            _ = await _factory.FlightIATACodeMappingManager.AddAsync(
                 AirlineICAO,
                 AirlineIATA,
                 AirlineName,
@@ -220,7 +219,6 @@ namespace BaseStationReader.Tests.API
             Assert.IsNotNull(flights);
             Assert.HasCount(1, flights);
             Assert.AreEqual(FlightIATA, flights[0].IATA);
-            Assert.AreEqual(FlightNumber, flights[0].Number);
             Assert.AreEqual(AirlineICAO, flights[0].Airline.ICAO);
             Assert.AreEqual(AirlineIATA, flights[0].Airline.IATA);
             Assert.AreEqual(AirlineName, flights[0].Airline.Name);
