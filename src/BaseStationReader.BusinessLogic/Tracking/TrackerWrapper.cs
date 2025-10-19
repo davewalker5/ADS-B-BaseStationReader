@@ -67,8 +67,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var factory = new DatabaseManagementFactory(_logger, context, _settings.TimeToLock, _settings.MaximumLookups);
 
             // Load the current exclusions
-            var exclusions = await factory.ExcludedAddressManager.ListAsync(x => true);
-            var excluedAddresses = exclusions.Select(x => x.Address).ToList();
+            var excludedAddresses = (await factory.ExcludedAddressManager.ListAsync(x => true)).Select(x => x.Address).ToList();
+            var excludedCallsigns = (await factory.ExcludedCallsignManager.ListAsync(x => true)).Select(x => x.Callsign).ToList();
 
             // Set up the aircraft tracker
             var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
@@ -90,7 +90,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 trackerTimer,
                 propertyUpdater,
                 notificationSender,
-                excluedAddresses,
+                excludedAddresses,
+                excludedCallsigns,
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);

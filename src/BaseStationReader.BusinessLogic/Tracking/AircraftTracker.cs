@@ -3,6 +3,7 @@ using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Messages;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -14,6 +15,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly IAircraftPropertyUpdater _updater;
         private readonly INotificationSender _sender;
         private readonly IList<string> _excludedAddresses;
+        private readonly IList<string> _excludedCallsigns;
         private readonly Dictionary<string, TrackedAircraft> _aircraft = [];
         private CancellationTokenSource _cancellationTokenSource = null;
         private readonly int _recentMs;
@@ -33,6 +35,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             IAircraftPropertyUpdater updater,
             INotificationSender sender,
             IList<string> excludedAddresses,
+            IList<string> excludedCallsigns,
             int recentMilliseconds,
             int staleMilliseconds,
             int removedMilliseconds)
@@ -43,6 +46,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _updater = updater;
             _sender = sender;
             _excludedAddresses = excludedAddresses;
+            _excludedCallsigns = excludedCallsigns;
             _timer.Tick += OnTimer;
             _recentMs = recentMilliseconds;
             _staleMs = staleMilliseconds;
@@ -89,17 +93,29 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 // Parse the message and check the aircraft identifier is valid and isn't excluded
                 Message msg = parser.Parse(fields);
-                if ((msg.Address.Length > 0) && !_excludedAddresses.Contains(msg.Address))
+                if ((msg.Address.Length == 0) || _excludedAddresses.Contains(msg.Address))
                 {
-                    // See if this is an existing aircraft or not and either update it or add it to the tracking collection
-                    if (_aircraft.ContainsKey(msg.Address))
-                    {
-                        UpdateExistingAircraft(msg);
-                    }
-                    else
-                    {
-                        AddNewAircraft(msg);
-                    }
+                    // Missing or excluded address
+                    return;
+                }
+
+                // See if the callsign is excluded. If it is, add this aircraft as a temporary exclusion for the
+                // remainder of this session. No further messages will be forwarded for this aircraft and tracking
+                // details won't be written to the database
+                if (!string.IsNullOrEmpty(msg.Callsign) && _excludedCallsigns.Contains(msg.Callsign))
+                {
+                    _excludedAddresses.Add(msg.Address);
+                    return;
+                }
+
+                // See if this is an existing aircraft or not and either update it or add it to the tracking collection
+                if (_aircraft.ContainsKey(msg.Address))
+                {
+                    UpdateExistingAircraft(msg);
+                }
+                else
+                {
+                    AddNewAircraft(msg);
                 }
             }
         }

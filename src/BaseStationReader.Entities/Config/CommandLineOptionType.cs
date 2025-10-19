@@ -2,7 +2,8 @@
 {
     public enum CommandLineOptionType
     {
-        AddExclusion,
+        AddExcludedAddress,
+        AddExcludedCallsign,
         AddressFile,
         AircraftAddress,
         ApplicationTimeout,

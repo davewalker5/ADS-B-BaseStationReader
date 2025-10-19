@@ -15,6 +15,7 @@ sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" ".read '$SQL_FOLDER/list-aircraft.sq
 # Raw output : Curated data
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM FLIGHT_NUMBER_MAPPING" > "$DATA_FOLDER/flight-number-mappings.csv"
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM EXCLUDED_ADDRESS" > "$DATA_FOLDER/excluded-addresses.csv"
+sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM EXCLUDED_CALLSIGN" > "$DATA_FOLDER/excluded-callsigns.csv"
 
 # Raw output : Tracking data
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM TRACKED_AIRCRAFT" > "$DATA_FOLDER/tracked-aircraft.csv"

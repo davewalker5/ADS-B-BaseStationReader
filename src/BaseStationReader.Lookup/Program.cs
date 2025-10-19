@@ -122,9 +122,15 @@ namespace BaseStationReader.Lookup
                 }
 
                 // Handle addition of an aircraft address to the exclusions list
-                if (parser.IsPresent(CommandLineOptionType.AddExclusion))
+                if (parser.IsPresent(CommandLineOptionType.AddExcludedAddress))
                 {
-                    await new ExclusionHandler(settings, parser, logger, factory).HandleAddAsync();
+                    await new ExclusionHandler(settings, parser, logger, factory).HandleAddAddressExclusionAsync();
+                }
+
+                // Handle addition of a callsign to the exclusions list
+                if (parser.IsPresent(CommandLineOptionType.AddExcludedCallsign))
+                {
+                    await new ExclusionHandler(settings, parser, logger, factory).HandleAddCallsignExclusionAsync();
                 }
 
                 // List excluded aircraft addresses

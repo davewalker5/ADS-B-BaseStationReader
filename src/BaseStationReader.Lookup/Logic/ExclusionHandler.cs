@@ -1,5 +1,4 @@
 using BaseStationReader.BusinessLogic.Configuration;
-using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -18,13 +17,23 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the add exclusion command
+        /// Handle adding an aircraft address exclusion
         /// </summary>
         /// <returns></returns>
-        public async Task HandleAddAsync()
+        public async Task HandleAddAddressExclusionAsync()
         {
-            var address = Parser.GetValues(CommandLineOptionType.AddExclusion)[0];
+            var address = Parser.GetValues(CommandLineOptionType.AddExcludedAddress)[0];
             await Factory.ExcludedAddressManager.AddAsync(address);
+        }
+
+        /// <summary>
+        /// Handle adding a callsign exclusion
+        /// </summary>
+        /// <returns></returns>
+        public async Task HandleAddCallsignExclusionAsync()
+        {
+            var callsign = Parser.GetValues(CommandLineOptionType.AddExcludedCallsign)[0];
+            await Factory.ExcludedAddressManager.AddAsync(callsign);
         }
 
         /// <summary>
@@ -33,10 +42,20 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public async Task HandleListAsync()
         {
-            var exclusions = await Factory.ExcludedAddressManager.ListAsync(x => true);
-            foreach (var exclusion in exclusions)
+            // List excluded aircraft addresses
+            var excludedAddresses = await Factory.ExcludedAddressManager.ListAsync(x => true);
+            Console.WriteLine($"{excludedAddresses.Count} aircraft 24-bit ICAO address exclusion(s):\n");
+            foreach (var exclusion in excludedAddresses)
             {
                 Console.WriteLine(exclusion.Address);
+            }
+
+            // List excluded callsigns
+            var excludedCallsigns = await Factory.ExcludedCallsignManager.ListAsync(x => true);
+            Console.WriteLine($"{excludedCallsigns.Count} callsign exclusion(s):\n");
+            foreach (var exclusion in excludedCallsigns)
+            {
+                Console.WriteLine(exclusion.Callsign);
             }
         }
     }

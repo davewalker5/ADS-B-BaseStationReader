@@ -10,8 +10,10 @@ SELECT          ta.Address,
                 IFNULL( fnm.FlightIATA, 'No Mapping' ) AS "FlightIATA"
 FROM            TRACKED_AIRCRAFT ta
 LEFT OUTER JOIN FLIGHT_NUMBER_MAPPING fnm ON fnm.Callsign = ta.Callsign
+LEFT OUTER JOIN EXCLUDED_CALLSIGN ec ON ec.Callsign = ta.Callsign
 WHERE           LENGTH( IFNULL( ta.Address, '' )) > 0 AND
                 LENGTH( IFNULL( ta.Callsign, '' )) > 0 AND
                 ta.LookupTimestamp IS NULL AND
                 ta.Status <> 3 AND
-                LookupAttempts < 5;
+                ta.LookupAttempts < 5 AND
+                ec.Id IS NULL;

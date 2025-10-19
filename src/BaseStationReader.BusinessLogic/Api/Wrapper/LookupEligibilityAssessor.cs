@@ -45,6 +45,13 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return new(false, false);
             }
 
+            // Check the address isn't excluded
+            if (await _factory.ExcludedAddressManager.IsExcludedAsync(address))
+            {
+                _factory.Logger.LogMessage(Severity.Warning, $"{address} is not eligible : Aircraft address is excluded");
+                return new(false, false);
+            }
+
             // If the API supports address-based flight looked, then the address is eligible for lookup
             var supportsAddressLookup = type switch
             {
