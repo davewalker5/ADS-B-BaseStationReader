@@ -29,7 +29,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.ImportFlightIATACodeMappings, false, "--import-mappings", "-im", "Import a set of callsign/flight IATA code mappings from a CSV file", 1, 1);
             Add(CommandLineOptionType.ExportSchedule, false, "--export-schedule", "-es", "Export schedule information for an airport to a JSON file", 1, 4);
             Add(CommandLineOptionType.AddExcludedAddress, false, "--exclude-address", "-exa", "Add an aircraft address to the excluded addresses list", 1, 1);
-            Add(CommandLineOptionType.AddExcludedCallsign, false, "--exclude-callsign", "-exx", "Add a callsign to the excluded callsigns list", 1, 1);
+            Add(CommandLineOptionType.AddExcludedCallsign, false, "--exclude-callsign", "-exc", "Add a callsign to the excluded callsigns list", 1, 1);
             Add(CommandLineOptionType.ListExclusions, false, "--list-exclusions", "-lex", "List the excluded aircraft addresses and callsigns", 0, 0);
         }
     }
