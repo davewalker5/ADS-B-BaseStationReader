@@ -19,5 +19,6 @@ namespace BaseStationReader.Interfaces.Database
         IPositionWriter PositionWriter { get; }
         IAircraftLockManager AircraftLockManager { get; }
         IExcludedAddressManager ExcludedAddressManager { get; }
+        IExcludedCallsignManager ExcludedCallsignManager { get; }
     }
 }

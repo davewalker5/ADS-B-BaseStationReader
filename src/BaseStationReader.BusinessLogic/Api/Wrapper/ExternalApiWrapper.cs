@@ -180,6 +180,13 @@ namespace BaseStationReader.BusinessLogic.Api.Wrapper
                 return (null, null);
             }
 
+            // Check the callsign isn't excluded
+            if (await _factory.ExcludedCallsignManager.IsExcludedAsync(aircraft.Callsign))
+            {
+                _factory.Logger.LogMessage(Severity.Warning, $"Callsign {aircraft.Callsign} for aircraft {aircraft.Address} is excluded");
+                return new(null, null);
+            }
+
             // Look up the mapping based on the callsign
             _logger.LogMessage(Severity.Debug, $"Looking up mapping for callsign '{aircraft.Callsign}'");
             var number = await _factory.FlightIATACodeMappingManager.GetAsync(x => x.Callsign == aircraft.Callsign);

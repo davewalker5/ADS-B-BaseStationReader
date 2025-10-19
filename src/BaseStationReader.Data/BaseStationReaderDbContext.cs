@@ -18,6 +18,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Sighting> Sightings { get; set; }
         public virtual DbSet<FlightIATACodeMapping> FlightIATACodeMappings { get; set; }
         public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
+        public virtual DbSet<ExcludedCallsign> ExcludedCallsigns { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -214,6 +215,14 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+            });
+
+            modelBuilder.Entity<ExcludedCallsign>(entity =>
+            {
+                entity.ToTable("EXCLUDED_CALLSIGN");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
             });
         }
     }
