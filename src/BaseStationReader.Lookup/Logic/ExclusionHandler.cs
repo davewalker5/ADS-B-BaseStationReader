@@ -33,7 +33,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAddCallsignExclusionAsync()
         {
             var callsign = Parser.GetValues(CommandLineOptionType.AddExcludedCallsign)[0];
-            await Factory.ExcludedAddressManager.AddAsync(callsign);
+            await Factory.ExcludedCallsignManager.AddAsync(callsign);
         }
 
         /// <summary>
