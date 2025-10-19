@@ -408,3 +408,6 @@ ASALocalRun/
 published/
 Published/
 appsettings.Development.json
+data/json/
+data/reports/
+data/export/

@@ -78,8 +78,14 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template)
         {
-            // Find existing matching aircraft records
-            var aircraft = await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id);
+            // Find an existing matching tracked aircraft record. If the ID isn't set, look for a match
+            // by address for an aircraft that's still active. This logic is to prevent multiple
+            // duplicate aircraft records being created if a flurry of messages come in when an aircraft
+            // is first tracked
+            var aircraft = template.Id > 0 ?
+                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id) :
+                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => (x.Address == template.Address) && (x.Status == TrackingStatus.Active));
+
             if (aircraft != null)
             {
                 // The lookup properties may be set on the database but not in the incoming template

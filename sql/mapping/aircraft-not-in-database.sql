@@ -4,3 +4,4 @@ LEFT OUTER JOIN AIRCRAFT a ON a.Address = ta.Address
 LEFT OUTER JOIN EXCLUDED_ADDRESS ea ON ea.Address = ta.Address
 WHERE           a.Id IS NULL
 AND             ea.Id IS NULL;
+

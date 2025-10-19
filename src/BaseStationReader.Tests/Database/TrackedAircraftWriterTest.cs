@@ -78,14 +78,16 @@ namespace BaseStationReader.Tests.Database
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
-                LastSeen = LastSeen
+                LastSeen = LastSeen,
+                Status = TrackingStatus.Inactive
             });
 
             var second = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 FirstSeen = FirstSeen,
-                LastSeen = LastSeen.AddMinutes(10)
+                LastSeen = LastSeen.AddMinutes(10),
+                Status = TrackingStatus.Active
             });
 
             Assert.AreNotEqual(first.Id, second.Id);

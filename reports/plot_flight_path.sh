@@ -1,7 +1,7 @@
 #!/bin/bash -f
 
-if [[ $# -ne 1 ]]; then
-    echo Usage: plot_flight_path.sh ADDRESS
+if [[ $# -ne 2 ]]; then
+    echo Usage: plot_flight_path.sh ADDRESS API-KEY
     exit 1
 fi
 
@@ -13,6 +13,6 @@ export REPORTS_ROOT=$( cd "$( dirname "$0" )" && pwd )
 cd "$REPORTS_ROOT/notebooks"
 
 export PYTHONWARNINGS="ignore"
-papermill plot-flight-path.ipynb /dev/null -p aircraft_address "$1"
+papermill plot-flight-path.ipynb /dev/null -p aircraft_address "$1" -p token "$2"
 
 cd "$REPORTS_ROOT"
