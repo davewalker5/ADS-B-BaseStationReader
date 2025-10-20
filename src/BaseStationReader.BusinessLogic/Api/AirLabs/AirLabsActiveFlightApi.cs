@@ -57,6 +57,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}&hex={propertyValue}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.ActiveFlights, url, propertyType, propertyValue);
             var node = await GetAsync(ServiceType, url, []);
 
             // Get the response array

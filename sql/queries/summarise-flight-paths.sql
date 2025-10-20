@@ -7,6 +7,7 @@ SELECT      ta.Address,
             COUNT( p.Id ) AS "Points"
 FROM        TRACKED_AIRCRAFT ta
 INNER JOIN  POSITION p on p.AircraftId = ta.Id
+WHERE       ta.LastSeen BETWEEN '2025-10-19 00:00:00' AND '2025-10-20 00:00:00'
 GROUP BY    ta.Address,
             ta.Callsign
 HAVING      COUNT( p.Id ) > 50 AND ( MAX( p.Altitude ) - MIN( p.Altitude )) > 1000

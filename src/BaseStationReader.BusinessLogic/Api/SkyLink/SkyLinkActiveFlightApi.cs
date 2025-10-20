@@ -22,6 +22,6 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty _, string flightIATA)
-            => await LookupFlightByNumberAsync(flightIATA);
+            => await LookupFlightByNumberAsync(ApiEndpointType.ActiveFlights, flightIATA);
     }
 }

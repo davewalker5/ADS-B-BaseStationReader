@@ -19,6 +19,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<FlightIATACodeMapping> FlightIATACodeMappings { get; set; }
         public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
         public virtual DbSet<ExcludedCallsign> ExcludedCallsigns { get; set; }
+        public virtual DbSet<ApiLogEntry> ApiLogEntries { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -223,6 +224,19 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
+            });
+
+            modelBuilder.Entity<ApiLogEntry>(entity =>
+            {
+                entity.ToTable("API_LOG");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Service).IsRequired().HasColumnName("Service");
+                entity.Property(e => e.Endpoint).IsRequired().HasColumnName("Endpoint");
+                entity.Property(e => e.Url).IsRequired().HasColumnName("Url");
+                entity.Property(e => e.Property).IsRequired().HasColumnName("Property");
+                entity.Property(e => e.PropertyValue).HasColumnName("PropertyValue");
+                entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
             });
         }
     }

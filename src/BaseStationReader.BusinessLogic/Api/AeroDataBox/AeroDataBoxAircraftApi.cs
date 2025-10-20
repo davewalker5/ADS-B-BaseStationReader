@@ -46,8 +46,11 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
 
             Factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft with address {address}");
  
-            // Make a request for the data from the API
+            // Log the API request
             var url = $"{_baseAddress}{address}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Aircraft, url, ApiProperty.AircraftAddress, address);
+
+            // Make a request for the data from the API
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },

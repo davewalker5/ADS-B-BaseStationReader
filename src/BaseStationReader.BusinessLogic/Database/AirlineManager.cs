@@ -53,7 +53,6 @@ namespace BaseStationReader.BusinessLogic.Database
             return airlines.FirstOrDefault();
         }
 
-
         /// <summary>
         /// Return all airlines matching the specified criteria
         /// </summary>

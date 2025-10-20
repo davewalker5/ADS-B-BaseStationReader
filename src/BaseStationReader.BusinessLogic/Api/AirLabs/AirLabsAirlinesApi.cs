@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByIATACodeAsync(string iata)
         {
             Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with IATA code {iata}");
-            return await MakeApiRequestAsync($"&iata_code={iata}");
+            return await MakeApiRequestAsync(ApiProperty.AirlineIATA, $"&iata_code={iata}");
         }
 
         /// <summary>
@@ -48,20 +48,22 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
         public async Task<Dictionary<ApiProperty, string>> LookupAirlineByICAOCodeAsync(string icao)
         {
             Factory.Logger.LogMessage(Severity.Info, $"Looking up airline with ICAO code {icao}");
-            return await MakeApiRequestAsync($"&icao_code={icao}");
+            return await MakeApiRequestAsync(ApiProperty.AirlineICAO, $"&icao_code={icao}");
         }
 
         /// <summary>
         /// Make a request to the specified URL and return the response properties as a dictionary
         /// </summary>
+        /// <param name="property"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(string parameters)
+        private async Task<Dictionary<ApiProperty, string>> MakeApiRequestAsync(ApiProperty property, string parameters)
         {
             Dictionary<ApiProperty, string> properties = null;
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}{parameters}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Airlines, url, property, parameters);
             var node = await GetAsync(ServiceType, url, []);
 
             // Get the aircraft object from the response

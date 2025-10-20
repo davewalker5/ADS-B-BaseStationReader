@@ -20,5 +20,6 @@ namespace BaseStationReader.Interfaces.Database
         IAircraftLockManager AircraftLockManager { get; }
         IExcludedAddressManager ExcludedAddressManager { get; }
         IExcludedCallsignManager ExcludedCallsignManager { get; }
+        IApiLogManager ApiLogManager { get; }
     }
 }

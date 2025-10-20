@@ -47,7 +47,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
             }
 
             // Lookup the flight by flight IATA code
-            var properties = await LookupFlightByNumberAsync(mapping.FlightIATA);
+            var properties = await LookupFlightByNumberAsync(ApiEndpointType.HistoricalFlights, mapping.FlightIATA);
             return properties != null ? [properties] : null;
         }
     }
