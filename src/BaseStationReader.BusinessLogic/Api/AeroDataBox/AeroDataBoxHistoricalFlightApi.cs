@@ -64,8 +64,11 @@ namespace BaseStationReader.BusinessLogic.Api.AirLabs
             var fromDate = date.ToUniversalTime().AddDays(-1).ToString("yyyy-MM-dd");
             var toDate = date.ToUniversalTime().AddDays(1).ToString("yyyy-MM-dd");
 
-            // Make a request for the data from the API
+            // Log the request
             var url = $"{_baseAddress}{address}/{fromDate}/{toDate}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.HistoricalFlights, url, ApiProperty.AircraftAddress, address);
+
+            // Make a request for the data from the API
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },

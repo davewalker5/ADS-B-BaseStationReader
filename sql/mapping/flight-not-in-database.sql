@@ -1,4 +1,5 @@
-SELECT          ta.Address,
+SELECT          ta.Id,
+                ta.Address,
                 ta.Callsign,
                 ta.LastSeen
 FROM            TRACKED_AIRCRAFT ta

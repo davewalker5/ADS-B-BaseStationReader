@@ -5,6 +5,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using System.Globalization;
 using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Data;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -37,8 +38,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         [TestInitialize]
         public void Initialise()
         {
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
             _client = new MockTrackerHttpClient();
             _api = new AeroDataBoxHistoricalFlightApi(_client, factory, _settings);
         }

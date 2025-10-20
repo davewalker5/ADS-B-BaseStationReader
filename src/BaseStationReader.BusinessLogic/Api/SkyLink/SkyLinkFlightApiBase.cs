@@ -52,10 +52,11 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
         /// <summary>
         /// Look up a flight given the flight IATA 
         /// </summary>
+        /// <param name="endpoint"></param>
         /// <param name="flightIATA"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(string flightIATA)
+        public async Task<Dictionary<ApiProperty, string>> LookupFlightByNumberAsync(ApiEndpointType endpoint, string flightIATA)
         {
             Dictionary<ApiProperty, string> properties = [];
 
@@ -63,6 +64,7 @@ namespace BaseStationReader.BusinessLogic.Api.SkyLink
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}/{flightIATA}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, endpoint, url, ApiProperty.FlightIATA, flightIATA);
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },

@@ -4,6 +4,7 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.BusinessLogic.Database;
+using BaseStationReader.Data;
 
 namespace BaseStationReader.Tests.API.AirLabs
 {
@@ -30,8 +31,9 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestInitialize]
         public void Initialise()
         {
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            var factory = new DatabaseManagementFactory(logger, null, 0, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
             _client = new MockTrackerHttpClient();
             _api = new AirLabsAirlinesApi(_client, factory, _settings);
         }

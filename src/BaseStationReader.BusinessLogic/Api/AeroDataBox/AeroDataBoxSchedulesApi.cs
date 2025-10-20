@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
@@ -76,8 +77,9 @@ namespace BaseStationReader.BusinessLogic.Api.AeroDatabox
             var fromStr = from.ToString(DateTimeFormat);
             var toStr = to.ToString(DateTimeFormat);
 
-            // Construct the URL with query parameters
+            // Construct the URL with query parameters and log the request
             var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.HistoricalFlights, url, ApiProperty.AirportIATA, iata);
 
             // Make a request for the data from the API
             JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()

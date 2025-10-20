@@ -1,5 +1,7 @@
-SELECT          ta.Address,
+SELECT          ta.Id,
+                ta.Address,
                 ta.Callsign,
+                ta.Status,
                 fnm.AirlineIATA,
                 fnm.AirlineICAO,
                 fnm.AirlineName,
