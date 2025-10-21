@@ -66,8 +66,18 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<List<TrackedAircraft>> ListLookupCandidatesAsync()
         {
+            // Get an initial list of candidates for lookup
             var eligibilityPredicate = EligibleForLookup(_maximumLookups);
             var aircraft = await ListAsync(eligibilityPredicate);
+
+            // Get a list of excluded aircraft addresses and remove them from the list
+            var excludedAddresses = await _context.ExcludedAddresses.Select(x => x.Address).ToListAsync();
+            aircraft.RemoveAll(x => excludedAddresses.Contains(x.Address));
+
+            // Get a list of excluded callsigns and remove them from the list
+            var excludedCallsigns = await _context.ExcludedCallsigns.Select(x => x.Callsign).ToListAsync();
+            aircraft.RemoveAll(x => excludedCallsigns.Contains(x.Callsign));
+
             return aircraft;
         }
 

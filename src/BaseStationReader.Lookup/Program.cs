@@ -91,35 +91,31 @@ namespace BaseStationReader.Lookup
                 // If an aircraft address has been supplied, look it up and store the results
                 if (parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
-                    var serviceType = apiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory, serviceType).HandleAsync();
+                    await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Lookup historical flight details and store the results
                 if (parser.IsPresent(CommandLineOptionType.HistoricalLookup))
                 {
-                    var serviceType = apiFactory.GetServiceTypeFromString(settings.HistoricalApi);
-                    await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, apiFactory, serviceType).HandleAsync();
+                    await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Look up the current weather at a given airport
                 if (parser.IsPresent(CommandLineOptionType.METAR))
                 {
-                    var serviceType = apiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory, serviceType).HandleMetarAsync();
+                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory).HandleMetarAsync();
                 }
 
                 // Look up the weather forecast at a given airport
                 if (parser.IsPresent(CommandLineOptionType.TAF))
                 {
-                    var serviceType = apiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory, serviceType).HandleTafAsync();
+                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory).HandleTafAsync();
                 }
 
                 // Export schedule information for a specified airport and, optionally, date range
                 if (parser.IsPresent(CommandLineOptionType.ExportSchedule))
                 {
-                    await new ScheduleLookupHandler(settings, parser, logger, factory, apiFactory, ApiServiceType.AeroDataBox).HandleAsync();
+                    await new ScheduleLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Handle addition of an aircraft address to the exclusions list

@@ -146,7 +146,7 @@ namespace BaseStationReader.Api.Wrapper
                     request.FlightPropertyValue = request.AircraftAddress;
                     flight = await api.LookupFlightAsync(request);
                 }
-                else if (canLookupByNumber)
+                else if (canLookupByNumber && (number != null))
                 {
                     // Lookup the flight using the flight IATA code
                     _logger.LogMessage(Severity.Info, $"Using the API to look up flight {number.FlightIATA} for aircraft {request.AircraftAddress} by IATA code");
@@ -156,7 +156,7 @@ namespace BaseStationReader.Api.Wrapper
                 }
                 else
                 {
-                    _logger.LogMessage(Severity.Error, $"API does not support the available lookup criteria");
+                    _logger.LogMessage(Severity.Error, $"Flight lookup API does not support the available lookup criteria");
                 }
             }
 

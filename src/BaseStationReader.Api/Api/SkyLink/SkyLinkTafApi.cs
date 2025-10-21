@@ -44,7 +44,7 @@ namespace BaseStationReader.Api.SkyLink
 
             // Make a request for the data from the API
             var url = $"{_baseAddress}/{icao}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.METAR, url, ApiProperty.AirportICAO, icao);
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.TAF, url, ApiProperty.AirportICAO, icao);
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
             {
                 { "X-RapidAPI-Key", _key },

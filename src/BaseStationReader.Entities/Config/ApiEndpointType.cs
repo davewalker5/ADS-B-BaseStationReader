@@ -2,6 +2,7 @@
 {
     public enum ApiEndpointType
     {
+        None,
         Airlines,
         Aircraft,
         ActiveFlights,

@@ -11,7 +11,6 @@ namespace BaseStationReader.Lookup.Logic
 {
     internal class ScheduleLookupHandler : LookupHandlerBase
     {
-        private readonly ApiServiceType _serviceType;
         private ISchedulesApi _api;
 
         private readonly JsonSerializerOptions _options = new()
@@ -24,16 +23,12 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            IExternalApiFactory apiFactory,
-            ApiServiceType serviceType) : base(settings, parser, logger, factory, apiFactory)
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory, apiFactory)
         {
-            _serviceType = serviceType;
         }
 
         public async Task HandleAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
-
             // Extract the lookup parameters from the command line
             var values = Parser.GetValues(CommandLineOptionType.ExportSchedule);
             switch (values.Count)
@@ -109,7 +104,7 @@ namespace BaseStationReader.Lookup.Logic
             }
 
             // Construct the API instance
-            _api = ApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
+            _api = ApiFactory.GetApiInstance(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
             if (_api == null)
             {
                 Logger.LogMessage(Severity.Error, $"API instance is not a schedule retrieval API");

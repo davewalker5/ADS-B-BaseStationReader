@@ -2,26 +2,22 @@ using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal class HistoricalAircraftLookupHandler: LookupHandlerBase
     {
-        private readonly ApiServiceType _serviceType;
-
         public HistoricalAircraftLookupHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            IExternalApiFactory apiFactory,
-            ApiServiceType serviceType) : base(settings, parser, logger, factory, apiFactory)
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory, apiFactory)
         {
-            _serviceType = serviceType;
         }
 
         /// <summary>
@@ -30,10 +26,8 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public async Task HandleAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
-
-            // Configure the external API wrapper
-            var wrapper = ApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.HistoricalFlights, Settings, false);
+            // Get an instance of the API wrapper
+            var wrapper = GetWrapperInstance(Settings.LiveApi, ApiEndpointType.HistoricalFlights, false);
 
             // Extract the lookup parameters from the command line
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
@@ -41,6 +35,8 @@ namespace BaseStationReader.Lookup.Logic
 
             // Retrieve a list of aircraft that haven't been looked up yet
             var aircraft = await Factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
+            Logger.LogMessage(Severity.Info, $"Found {aircraft.Count} candidate(s) for lookup");
+
             foreach (var a in aircraft)
             {
                 // Create the lookup request
