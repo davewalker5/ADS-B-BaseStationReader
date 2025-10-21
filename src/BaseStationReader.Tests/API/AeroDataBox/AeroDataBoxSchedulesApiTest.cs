@@ -1,5 +1,5 @@
 using BaseStationReader.Tests.Mocks;
-using BaseStationReader.BusinessLogic.Api.AeroDatabox;
+using BaseStationReader.Api.AeroDatabox;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
 using System.Text.Json.Nodes;

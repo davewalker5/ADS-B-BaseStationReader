@@ -1,9 +1,7 @@
-using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Entities.Logging;
-using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
 
@@ -11,19 +9,14 @@ namespace BaseStationReader.Lookup.Logic
 {
     internal class AirportWeatherLookupHandler : LookupHandlerBase
     {
-        private readonly ApiServiceType _serviceType;
-        private readonly IExternalApiWrapper _wrapper;
 
         public AirportWeatherLookupHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            ApiServiceType serviceType) : base(settings, parser, logger, factory)
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory, apiFactory)
         {
-            _serviceType = serviceType;
-            _wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.ActiveFlights, Settings, true);
-
         }
 
         /// <summary>
@@ -32,13 +25,14 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public async Task HandleMetarAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
+            // Get an instance of the API wrapper
+            var wrapper = GetWrapperInstance(Settings.WeatherApi, ApiEndpointType.ActiveFlights);
 
             // Extract the lookup parameters from the command line
             var icao = Parser.GetValues(CommandLineOptionType.METAR)[0];
 
             // Perform the lookup
-            var results = await _wrapper.LookupCurrentAirportWeatherAsync(icao);
+            var results = await wrapper.LookupCurrentAirportWeatherAsync(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)
@@ -58,13 +52,14 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public async Task HandleTafAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
+            // Get an instance of the API wrapper
+            var wrapper = GetWrapperInstance(Settings.WeatherApi);
 
             // Extract the lookup parameters from the command line
             var icao = Parser.GetValues(CommandLineOptionType.TAF)[0];
 
             // Perform the lookup
-            var results = await _wrapper.LookupAirportWeatherForecastAsync(icao);
+            var results = await wrapper.LookupAirportWeatherForecastAsync(icao);
             if (results?.Count() > 0)
             {
                 foreach (var result in results)

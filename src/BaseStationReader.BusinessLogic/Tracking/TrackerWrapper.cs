@@ -10,11 +10,10 @@ using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using BaseStationReader.BusinessLogic.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
-using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -22,10 +21,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
     public class TrackerWrapper : ITrackerWrapper
     {
         private readonly ITrackerLogger _logger;
+        private readonly IExternalApiFactory _apiFactory;
+        private readonly ITrackerHttpClient _client;
         private readonly TrackerApplicationSettings _settings;
         private readonly IEnumerable<string> _departureAirportCodes;
         private readonly IEnumerable<string> _arrivalAirportCodes;
-        private readonly ApiServiceType _serviceType;
         private IAircraftTracker _tracker = null;
         private IQueuedWriter _writer = null;
 
@@ -38,16 +38,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
         public TrackerWrapper(
             ITrackerLogger logger,
+            IExternalApiFactory apiFactory,
+            ITrackerHttpClient client,
             TrackerApplicationSettings settings,
             IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes,
-            ApiServiceType serviceType)
+            IEnumerable<string> arrivalAirportCodes)
         {
             _logger = logger;
+            _apiFactory = apiFactory;
+            _client = client;
             _settings = settings;
             _departureAirportCodes = departureAirportCodes;
             _arrivalAirportCodes = arrivalAirportCodes;
-            _serviceType = serviceType;
         }
 
         /// <summary>
@@ -159,10 +161,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private async Task ConfigureSqlWriter(IDatabaseManagementFactory factory)
         {
             // Configure the external API wrapper
-            var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
-            var apiWrapper = ExternalApiFactory.GetWrapperInstance(
+            var serviceType = _apiFactory.GetServiceTypeFromString(_settings.LiveApi);
+            var apiWrapper = _apiFactory.GetWrapperInstance(
                 _logger,
-                TrackerHttpClient.Instance,
+                _client,
                 factory,
                 serviceType,
                 ApiEndpointType.ActiveFlights,

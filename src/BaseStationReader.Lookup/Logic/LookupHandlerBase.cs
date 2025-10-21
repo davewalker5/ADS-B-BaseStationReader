@@ -3,20 +3,24 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Api;
+using BaseStationReader.Api;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal abstract class LookupHandlerBase : CommandHandlerBase
     {
         private static char[] _separators = [' ', '.'];
+        protected IExternalApiFactory ApiFactory { get; private set; }
 
         public LookupHandlerBase(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            IDatabaseManagementFactory factory) : base(settings, parser, logger, factory)
+            IDatabaseManagementFactory factory,
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory)
         {
-
+            ApiFactory = apiFactory;
         }
 
         /// <summary>
@@ -43,6 +47,24 @@ namespace BaseStationReader.Lookup.Logic
             }
 
             return airportCodes;
+        }
+
+        /// <summary>
+        /// Return an instance of the service
+        /// </summary>
+        /// <param name="serviceType"></param>
+        /// <param name="flightsEndpointType"></param>
+        /// <param name="ignoreTrackingStatus"></param>
+        /// <returns></returns>
+        protected IExternalApiWrapper GetWrapperInstance(
+            string serviceTypeName,
+            ApiEndpointType flightsEndpointType = ApiEndpointType.None,
+            bool ignoreTrackingStatus = true)
+        {
+            var serviceType = ApiFactory.GetServiceTypeFromString(serviceTypeName);
+            Logger.LogMessage(Severity.Info, $"Using the {serviceType} API");
+            return ApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, serviceType, flightsEndpointType, Settings, ignoreTrackingStatus);
+
         }
     }
 }

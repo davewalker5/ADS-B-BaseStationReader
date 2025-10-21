@@ -1,5 +1,5 @@
 ﻿using BaseStationReader.Entities.Api;
-using BaseStationReader.BusinessLogic.Api.AirLabs;
+using BaseStationReader.Api.AirLabs;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;

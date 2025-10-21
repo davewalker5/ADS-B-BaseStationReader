@@ -1,4 +1,4 @@
-﻿using BaseStationReader.BusinessLogic.Api.Wrapper;
+﻿using BaseStationReader.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Logging;
@@ -54,8 +54,9 @@ namespace BaseStationReader.Lookup
                 context.Database.Migrate();
                 logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
-                // Create the database management factory
+                // Create the database management factory and API factory
                 var factory = new DatabaseManagementFactory(logger, context, 0, settings.MaximumLookups);
+                var apiFactory = new ExternalApiFactory();
 
                 // If a CSV file containing airline details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportAirlines))
@@ -90,35 +91,31 @@ namespace BaseStationReader.Lookup
                 // If an aircraft address has been supplied, look it up and store the results
                 if (parser.IsPresent(CommandLineOptionType.AircraftAddress))
                 {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.LiveApi);
-                    await new AircraftLookupHandler(settings, parser, logger, factory, serviceType).HandleAsync();
+                    await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Lookup historical flight details and store the results
                 if (parser.IsPresent(CommandLineOptionType.HistoricalLookup))
                 {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.HistoricalApi);
-                    await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, serviceType).HandleAsync();
+                    await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Look up the current weather at a given airport
                 if (parser.IsPresent(CommandLineOptionType.METAR))
                 {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, serviceType).HandleMetarAsync();
+                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory).HandleMetarAsync();
                 }
 
                 // Look up the weather forecast at a given airport
                 if (parser.IsPresent(CommandLineOptionType.TAF))
                 {
-                    var serviceType = ExternalApiFactory.GetServiceTypeFromString(settings.WeatherApi);
-                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, serviceType).HandleTafAsync();
+                    await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory).HandleTafAsync();
                 }
 
                 // Export schedule information for a specified airport and, optionally, date range
                 if (parser.IsPresent(CommandLineOptionType.ExportSchedule))
                 {
-                    await new ScheduleLookupHandler(settings, parser, logger, factory, ApiServiceType.AeroDataBox).HandleAsync();
+                    await new ScheduleLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Handle addition of an aircraft address to the exclusions list

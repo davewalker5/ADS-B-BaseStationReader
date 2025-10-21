@@ -13,7 +13,8 @@ using System.Diagnostics;
 using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Api.Wrapper;
+using BaseStationReader.Api;
 
 namespace BaseStationReader.Terminal
 {
@@ -66,8 +67,8 @@ namespace BaseStationReader.Terminal
                 var arrivalAirports = GetAirportCodeList(CommandLineOptionType.Arrival);
 
                 // Initialise the tracker wrapper
-                var serviceType = ExternalApiFactory.GetServiceTypeFromString(_settings.LiveApi);
-                _wrapper = new TrackerWrapper(_logger, _settings, departureAirports, arrivalAirports, serviceType);
+                var apiFactory = new ExternalApiFactory();
+                _wrapper = new TrackerWrapper(_logger, apiFactory, TrackerHttpClient.Instance, _settings, departureAirports, arrivalAirports);
                 await _wrapper.InitialiseAsync();
                 _wrapper.AircraftAdded += OnAircraftAdded;
                 _wrapper.AircraftUpdated += OnAircraftUpdated;

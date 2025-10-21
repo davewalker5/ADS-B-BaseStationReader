@@ -1,26 +1,22 @@
-using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Entities.Logging;
-using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal class AircraftLookupHandler : LookupHandlerBase
     {
-        private readonly ApiServiceType _serviceType;
-
         public AircraftLookupHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            ApiServiceType serviceType) : base(settings, parser, logger, factory)
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory, apiFactory)
         {
-            _serviceType = serviceType;
         }
 
         /// <summary>
@@ -29,10 +25,8 @@ namespace BaseStationReader.Lookup.Logic
         /// <returns></returns>
         public async Task HandleAsync()
         {
-            Logger.LogMessage(Severity.Info, $"Using the {_serviceType} API");
-
-            // Configure the external API wrapper
-            var wrapper = ExternalApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, _serviceType, ApiEndpointType.ActiveFlights, Settings, true);
+            // Get an instance of the API wrapper
+            var wrapper = GetWrapperInstance(Settings.LiveApi, ApiEndpointType.ActiveFlights);
 
             // Extract the lookup parameters from the command line
             var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];

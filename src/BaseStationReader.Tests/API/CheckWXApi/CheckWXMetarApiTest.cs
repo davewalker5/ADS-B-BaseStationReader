@@ -1,7 +1,7 @@
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.BusinessLogic.Api.CheckWXApi;
+using BaseStationReader.Api.CheckWXApi;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 
