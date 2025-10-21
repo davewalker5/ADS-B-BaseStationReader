@@ -1,9 +1,8 @@
-using BaseStationReader.BusinessLogic.Api;
+using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
-using BaseStationReader.BusinessLogic.Api.Wrapper;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
 using System.Text.Json;
@@ -25,7 +24,8 @@ namespace BaseStationReader.Lookup.Logic
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
             IDatabaseManagementFactory factory,
-            ApiServiceType serviceType) : base(settings, parser, logger, factory)
+            IExternalApiFactory apiFactory,
+            ApiServiceType serviceType) : base(settings, parser, logger, factory, apiFactory)
         {
             _serviceType = serviceType;
         }
@@ -109,7 +109,7 @@ namespace BaseStationReader.Lookup.Logic
             }
 
             // Construct the API instance
-            _api = ExternalApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
+            _api = ApiFactory.GetApiInstance(_serviceType, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
             if (_api == null)
             {
                 Logger.LogMessage(Severity.Error, $"API instance is not a schedule retrieval API");

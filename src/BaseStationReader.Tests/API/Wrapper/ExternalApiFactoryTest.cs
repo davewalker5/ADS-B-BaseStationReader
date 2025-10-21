@@ -1,4 +1,4 @@
-using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
@@ -14,6 +14,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         private readonly MockFileLogger _logger = new();
         private readonly MockTrackerHttpClient _client = new();
         private IDatabaseManagementFactory _factory;
+        private IExternalApiFactory _apiFactory;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -35,12 +36,13 @@ namespace BaseStationReader.Tests.API.Wrapper
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(_logger, context, 0, 0);
+            _apiFactory = new ExternalApiFactory();
         }
 
         [TestMethod]
         public void GetAeroDataBoxHistoricalFlightsApiInstanceTest()
         {
-            var api = ExternalApiFactory.GetApiInstance(
+            var api = _apiFactory.GetApiInstance(
                 ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _logger, _client, null, _settings)
                 as IHistoricalFlightsApi;
             Assert.IsTrue(api is IHistoricalFlightsApi);
@@ -49,7 +51,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAeroDataBoxAircraftApiInstanceTest()
         {
-            var api = ExternalApiFactory.GetApiInstance(
+            var api = _apiFactory.GetApiInstance(
                 ApiServiceType.AeroDataBox, ApiEndpointType.Aircraft, _logger, _client, null, _settings)
                 as IAircraftApi;
             Assert.IsTrue(api is IAircraftApi);
@@ -58,7 +60,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAirLabsActiveFlightsApiInstanceTest()
         {
-            var api = ExternalApiFactory.GetApiInstance(
+            var api = _apiFactory.GetApiInstance(
                 ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _logger, _client, null, _settings)
                 as IActiveFlightsApi;
             Assert.IsTrue(api is IActiveFlightsApi);
@@ -67,7 +69,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAirLabsAirlinesApiInstanceTest()
         {
-            var api = ExternalApiFactory.GetApiInstance(
+            var api = _apiFactory.GetApiInstance(
                 ApiServiceType.AirLabs, ApiEndpointType.Airlines, _logger, _client, null, _settings)
                 as IAirlinesApi;
             Assert.IsTrue(api is IAirlinesApi);
@@ -76,7 +78,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAirLabsAircraftApiInstanceTest()
         {
-            var api = ExternalApiFactory.GetApiInstance(
+            var api = _apiFactory.GetApiInstance(
                 ApiServiceType.AirLabs, ApiEndpointType.Aircraft, _logger, _client, null, _settings)
                 as IAircraftApi;
             Assert.IsTrue(api is IAircraftApi);
@@ -85,7 +87,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAeroDataBoxApiWrapperInstanceTest()
         {
-            var wrapper = ExternalApiFactory.GetWrapperInstance(
+            var wrapper = _apiFactory.GetWrapperInstance(
                 _logger, _client, _factory, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings, false);
             Assert.IsNotNull(wrapper);
         }
@@ -93,7 +95,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetAirLabsApiWrapperInstanceTest()
         {
-            var wrapper = ExternalApiFactory.GetWrapperInstance(
+            var wrapper = _apiFactory.GetWrapperInstance(
                 _logger, _client, _factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
             Assert.IsNotNull(wrapper);
         }
@@ -101,7 +103,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public void GetCheckWXApiWrapperInstanceTest()
         {
-            var wrapper = ExternalApiFactory.GetWrapperInstance(
+            var wrapper = _apiFactory.GetWrapperInstance(
                 _logger, _client, _factory, ApiServiceType.CheckWXApi, ApiEndpointType.ActiveFlights, _settings, false);
             Assert.IsNotNull(wrapper);
         }

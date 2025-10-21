@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>BaseStationReader.Api</PackageId>
+    <PackageVersion>1.71.0.0</PackageVersion>
+    <Authors>Dave Walker</Authors>
+    <Copyright>Copyright (c) 2023 - 2025 Dave Walker</Copyright>
+    <Owners>Dave Walker</Owners>
+    <Summary>Base Station Reader API Integrations</Summary>
+    <PackageTags>BaseStationReader api integration rest</PackageTags>
+    <Title>Base Station Reader API Integrations</Title>
+    <Description>Base Station Reader API Integrations</Description>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageProjectUrl>https://github.com/davewalker5/ADS-B-BaseStationReader</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <ReleaseVersion>1.71.0.0</ReleaseVersion>
+    <WarningsAsErrors>CS4014</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1900</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BaseStationReader.Tests" />
+  </ItemGroup>
+
+  <!-- <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
+  </ItemGroup> -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Interfaces\BaseStationReader.Interfaces.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -2,7 +2,7 @@
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
-using BaseStationReader.BusinessLogic.Api.SkyLink;
+using BaseStationReader.Api.SkyLink;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 

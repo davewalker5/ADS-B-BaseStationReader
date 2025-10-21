@@ -3,20 +3,23 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Api;
 
 namespace BaseStationReader.Lookup.Logic
 {
     internal abstract class LookupHandlerBase : CommandHandlerBase
     {
         private static char[] _separators = [' ', '.'];
+        protected IExternalApiFactory ApiFactory { get; private set; }
 
         public LookupHandlerBase(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
             ITrackerLogger logger,
-            IDatabaseManagementFactory factory) : base(settings, parser, logger, factory)
+            IDatabaseManagementFactory factory,
+            IExternalApiFactory apiFactory) : base(settings, parser, logger, factory)
         {
-
+            ApiFactory = apiFactory;
         }
 
         /// <summary>

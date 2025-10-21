@@ -1,4 +1,4 @@
-using BaseStationReader.BusinessLogic.Api.Wrapper;
+using BaseStationReader.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Config;
@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests.API
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
             _client = new();
-            _wrapper = ExternalApiFactory.GetWrapperInstance(
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(
                 logger, _client, _factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
 
             // Create a tracked aircraft that will match the first flight in the flights response
