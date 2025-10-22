@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <MSTest>
+    <!-- Disable or tune parallelization here -->
+    <Parallelize>
+      <Workers>0</Workers>          <!-- 0 = no parallel threads -->
+      <Scope>ClassLevel</Scope>     <!-- Required: ClassLevel or MethodLevel -->
+    </Parallelize>
+  </MSTest>
+</RunSettings>
