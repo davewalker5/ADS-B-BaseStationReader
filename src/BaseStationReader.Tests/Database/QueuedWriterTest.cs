@@ -223,6 +223,21 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(0, _writer.QueueSize);
         }
 
+        [TestMethod]
+        public void ClearQueueTest()
+        {
+            Push(new TrackedAircraft
+            {
+                Address = Address,
+                FirstSeen = DateTime.Now.AddMinutes(-10),
+                LastSeen = DateTime.Now
+            });
+
+            Assert.AreEqual(1, _writer.QueueSize);
+            _writer.ClearQueue();
+            Assert.AreEqual(0, _writer.QueueSize);
+        }
+
         /// <summary>
         /// Push an entity into the writer's queue
         /// </summary>
@@ -232,7 +247,7 @@ namespace BaseStationReader.Tests.Database
             // Reset the processing flag
             _queueProcessed = false;
 
-            // If the supplied aircraft isn't null, push it into the queu
+            // If the supplied object isn't null, push it into the queue
             if (entity != null)
             {
                 _writer.Push(entity);
