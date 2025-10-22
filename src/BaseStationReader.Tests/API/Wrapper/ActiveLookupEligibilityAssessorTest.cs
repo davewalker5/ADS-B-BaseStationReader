@@ -49,6 +49,26 @@ namespace BaseStationReader.Tests.API.Wrapper
         }
 
         [TestMethod]
+        public async Task ActiveLookupByExcludedAddressTestAsync()
+        {
+            var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
+            activeFlightApiWrapper.Setup(x => x.SupportsLookupBy(ApiProperty.AircraftAddress)).Returns(true);
+            var historicalFlightApiWrapper = new Mock<IHistoricalFlightApiWrapper>();
+
+            await _factory.ExcludedAddressManager.AddAsync(ValidAddress);
+
+            var assessor = new LookupEligibilityAssessor(
+                historicalFlightApiWrapper.Object,
+                activeFlightApiWrapper.Object,
+                _factory,
+                false);
+
+            var result = await assessor.IsEligibleForLookupAsync(ApiEndpointType.ActiveFlights, ValidAddress);
+            Assert.IsFalse(result.Eligible);
+            Assert.IsFalse(result.Requeue);
+        }
+
+        [TestMethod]
         public async Task ActiveLookupByAddressTestAsync()
         {
             var activeFlightApiWrapper = new Mock<IActiveFlightApiWrapper>();
