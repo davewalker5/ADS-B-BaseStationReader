@@ -4,7 +4,7 @@ using BaseStationReader.Entities.Tracking;
 namespace BaseStationReader.Tests.Tracking
 {
     [TestClass]
-    public class SimleAircraftBehaviourAssessorTest
+    public class SimpleAircraftBehaviourAssessorTest
     {
         [TestMethod]
         public void InsufficientDataPointsTest()
