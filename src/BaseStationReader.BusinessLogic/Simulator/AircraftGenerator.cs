@@ -6,6 +6,7 @@ using BaseStationReader.Entities.Tracking;
 using System.Text;
 using System.Text.RegularExpressions;
 using BaseStationReader.Interfaces.Logging;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {
@@ -65,7 +66,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
             aircraft.Altitude = GenerateAltitude(flags, aircraft.VerticalRate.Value, aircraft.Lifespan);
 
             // Calculate the initial position of the aircraft
-            (decimal latitude, decimal longitude) = GenerateAircraftPostion(
+            (decimal latitude, decimal longitude) = GenerateAircraftPosition(
                 flags, aircraft.Track.Value, aircraft.GroundSpeed.Value, aircraft.Lifespan);
             aircraft.Latitude = latitude;
             aircraft.Longitude = longitude;
@@ -83,7 +84,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="addresses"></param>
         /// <returns></returns>
-        private List<string> CuratedAddressList(IEnumerable<string> addresses)
+        internal static List<string> CuratedAddressList(IEnumerable<string> addresses)
             => addresses?
                 .Where(x => Regex.IsMatch(x, @"^[A-Za-z0-9]{6}$"))
                 .Select(x => x.ToUpper())
@@ -94,6 +95,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// </summary>
         /// <param name="existingAddresses"></param>
         /// <returns></returns>
+        [ExcludeFromCodeCoverage]
         private string GenerateAddress(IEnumerable<string> existingAddresses)
         {
             string address = null;
@@ -119,20 +121,32 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <summary>
         /// Select the next address from the address list that is not currently in use
         /// </summary>
-        /// <param name="existingAddresses"></param>
         /// <returns></returns>
-        private string SelectAddress(IEnumerable<string> existingAddresses)
+        internal string SelectAddress(IEnumerable<string> existingAddresses)
         {
             string address = null;
 
             // Check we have some addresses
             if (_aircraftAddresses?.Count > 0)
             {
-                // Select the next address
-                address = _aircraftAddresses[_nextAddress];
+                // Capture the initial "next address" index
+                var initialIndex = _nextAddress;
 
-                // Increment the count and wrap round to the start if necessary
-                _nextAddress = _nextAddress >= _aircraftAddresses.Count ? 0 : _nextAddress + 1;
+                do
+                {
+                    // Select the next address
+                    address = _aircraftAddresses[_nextAddress];
+
+                    // Increment the count and wrap round to the start if necessary
+                    _nextAddress = _nextAddress == (_aircraftAddresses.Count - 1) ? 0 : _nextAddress + 1;
+
+                    // Check it's not in the existing list. If it is, try again
+                    if (existingAddresses?.Contains(address) == true)
+                    {
+                        address = null;
+                    }
+                }
+                while ((address == null) && (_nextAddress != initialIndex));
             }
 
             return address;
@@ -251,7 +265,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         /// <param name="heading"></param>
         /// <param name="speed"></param>
         /// <returns></returns>
-        private (decimal latitude, decimal longitude) GenerateAircraftPostion(
+        private (decimal latitude, decimal longitude) GenerateAircraftPosition(
             AircraftBehaviour behaviour,
             decimal heading,
             decimal speed,

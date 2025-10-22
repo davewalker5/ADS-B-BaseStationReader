@@ -25,13 +25,6 @@
     <InternalsVisibleTo Include="BaseStationReader.Tests" />
   </ItemGroup>
 
-  <!-- <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.105.0" />
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-  </ItemGroup> -->
-
   <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
     <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
