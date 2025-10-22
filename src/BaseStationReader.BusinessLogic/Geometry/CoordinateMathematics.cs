@@ -1,5 +1,3 @@
-using BaseStationReader.Entities.Geometry;
-
 namespace BaseStationReader.BusinessLogic.Geometry
 {
     public static class CoordinateMathematics
@@ -23,27 +21,6 @@ namespace BaseStationReader.BusinessLogic.Geometry
         /// <returns></returns>
         private static double ToDegrees(double radians)
             => radians * 180.0 / Math.PI;
-
-        /// <summary>
-        /// "Clamp" a latitude to the allowable range, which is -90 to +90 degrees
-        /// </summary>
-        /// <param name="latitudeDegrees"></param>
-        /// <returns></returns>
-        private static double ClampLatitude(double latitudeDegrees)
-            => Math.Max(-90.0, Math.Min(90.0, latitudeDegrees));
-
-        /// <summary>
-        /// Normalise a longitude to the canoncial range, -180 to 180
-        /// </summary>
-        /// <param name="longitudeDegrees"></param>
-        /// <returns></returns>
-        private static double NormalizeLongitude(double longitudeDegrees)
-        {
-            double longitude = longitudeDegrees % 360.0;
-            if (longitude <= -180.0) longitude += 360.0;
-            if (longitude > 180.0) longitude -= 360.0;
-            return longitude;
-        }
 
         /// <summary>
         /// Generate a starting position for an aircraft
@@ -142,63 +119,5 @@ namespace BaseStationReader.BusinessLogic.Geometry
 
             return (latitude, longitude);
         }
-
-        /// <summary>
-        /// Returns the four corners of a bounding box centered at coordinate specified as latitude and longitude
-        /// <param name="halfWidthMeters"></param>
-        /// <param name="halfHeightMeters"></param>
-        /// <param name="centerLatDeg"></param>
-        /// <param name="centerLonDeg"></param>
-        /// <param name="halfWidthMeters"></param>
-        /// <param name="halfHeightMeters"></param>
-        /// <returns></returns>
-        public static (Coordinate northWest, Coordinate northEast, Coordinate southEast, Coordinate southWest) GetBoundingBox(
-            double centerLatDeg,
-            double centerLonDeg,
-            double halfWidthMeters,
-            double halfHeightMeters)
-        {
-            // Latitude delta (degrees): meters / EarthRadius, then to degrees
-            double latitudeRadians = ToRadians(centerLatDeg);
-            double deltaLatitudeDegrees = ToDegrees(halfHeightMeters / EarthRadius);
-
-            // Longitude delta shrinks by cos(latitude) - longitude lines are not all the same length,
-            // depending on the latitude. This accounts for the shrinkage in length of longitude lines as
-            // the poles are approached
-            double cosLatitude = Math.Cos(latitudeRadians);
-            if (Math.Abs(cosLatitude) < 1e-12)
-            {
-                cosLatitude = 1e-12;
-            }
-
-            // This converts a distance in metres to an east/west distance along a line of longitude,
-            // expressed in degrees (the standard form for latitude and longitude)
-            double deltaLongitudeDegrees = ToDegrees(halfWidthMeters / (EarthRadius * cosLatitude));
-
-            // Make sure the calculated latitude remains in the valid range
-            double northLatitude = ClampLatitude(centerLatDeg + deltaLatitudeDegrees);
-            double southLatitude = ClampLatitude(centerLatDeg - deltaLatitudeDegrees);
-
-            // Normalise the longitude to the canonical range of -180 to 180
-            double westLongitude  = NormalizeLongitude(centerLonDeg - deltaLongitudeDegrees);
-            double eastLongitude  = NormalizeLongitude(centerLonDeg + deltaLongitudeDegrees);
-
-            // Create coordinate objects for each corner of the bounding box
-            var northWest = new Coordinate(northLatitude, westLongitude);
-            var northEast = new Coordinate(northLatitude, eastLongitude);
-            var southEast = new Coordinate(southLatitude, eastLongitude);
-            var southWest = new Coordinate(southLatitude, westLongitude);
-
-            return (northWest, northEast, southEast, southWest);
-        }
-
-        /// <summary>
-        /// Convenience overload for a square bbox: halfSideMeters used for both width and height.
-        /// </summary>
-        public static (Coordinate northWest, Coordinate northEast, Coordinate southEast, Coordinate southWest) GetBoundingBox(
-            double centerLatDeg,
-            double centerLonDeg,
-            double halfSideMeters)
-            => GetBoundingBox(centerLatDeg, centerLonDeg, halfSideMeters, halfSideMeters);
     }
 }
