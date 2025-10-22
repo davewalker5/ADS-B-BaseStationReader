@@ -49,7 +49,6 @@ namespace BaseStationReader.Tests.API
         [TestInitialize]
         public async Task InitialiseAsync()
         {
-
             // Create a factory that can be used to query the objects that are created during lookup
             var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
