@@ -75,7 +75,7 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
-        public async Task LookupTestAsync()
+        public async Task LookupEligibleTestAsync()
         {
             _client.AddResponse(AircraftResponse);
             _client.AddResponse(FlightResponse);
@@ -96,6 +96,44 @@ namespace BaseStationReader.Tests.API
             await AssertExpectedAircraftCreatedAsync();
             await AssertExpectedAirlineCreatedAsync();
             await AssertExpectedFlightCreatedAsync();
+        }
+
+        [TestMethod]
+        public async Task LookupIneligibleTestAsync()
+        {
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.HistoricalFlights,
+                AircraftAddress = "",
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
+        }
+
+        [TestMethod]
+        public async Task LookupFailureWithEligibleTestAsync()
+        {
+            _client.AddResponse("{}");
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.HistoricalFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
         }
 
         [TestMethod]

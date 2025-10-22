@@ -70,7 +70,7 @@ namespace BaseStationReader.Api.Wrapper
             var aircraft = await _aircraftApiWrapper.LookupAircraftAsync(request.AircraftAddress, "");
             if (aircraft == null)
             {
-                // If we can't find the aircraft locally or via the APU, not only has this lookup failed but
+                // If we can't find the aircraft locally or via the API, not only has this lookup failed but
                 // there's no point retrying
                 return new(false, false);
             }

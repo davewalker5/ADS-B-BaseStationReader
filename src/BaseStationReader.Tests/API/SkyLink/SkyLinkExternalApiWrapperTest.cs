@@ -166,6 +166,50 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
+        public async Task LookupWithExcludingDepartureAirportFiltersTestAsync()
+        {
+            _client.AddResponse(AircraftResponse);
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Destination],
+                ArrivalAirportCodes = [Destination],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
+        }
+
+        [TestMethod]
+        public async Task LookupWithExcludingArrivalAirportFiltersTestAsync()
+        {
+            _client.AddResponse(AircraftResponse);
+            _client.AddResponse(FlightResponse);
+            _client.AddResponse(AirlineResponse);
+
+            var request = new ApiLookupRequest()
+            {
+                FlightEndpointType = ApiEndpointType.ActiveFlights,
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = [Embarkation],
+                ArrivalAirportCodes = [Embarkation],
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
+        }
+
+        [TestMethod]
         public void GetCurrentWeatherTest()
         {
             _client.AddResponse(MetarResponse);
@@ -180,7 +224,7 @@ namespace BaseStationReader.Tests.API
         public void GetWeatherForecastTest()
         {
             _client.AddResponse(TafResponse);
-            var results = Task.Run(() => _wrapper.LookupCurrentAirportWeatherAsync(AirportICAO)).Result;
+            var results = Task.Run(() => _wrapper.LookupAirportWeatherForecastAsync(AirportICAO)).Result;
 
             Assert.IsNotNull(results);
             Assert.HasCount(1, results);
