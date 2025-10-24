@@ -4,7 +4,6 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Entities.Config;
@@ -217,10 +216,9 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             try
             {
-                var objectId = RuntimeHelpers.GetHashCode(queued);
-                if (await WriteTrackedAircraftAsync(queued, objectId)) return;
-                if (await WriteAircraftPositionAsync(queued, objectId)) return;
-                await ProcessAPILookupRequestAsync(queued, objectId, allowRequeues);
+                if (await WriteTrackedAircraftAsync(queued)) return;
+                if (await WriteAircraftPositionAsync(queued)) return;
+                await ProcessAPILookupRequestAsync(queued, allowRequeues);
             }
             catch (Exception ex)
             {
@@ -236,7 +234,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="queued"></param>
         /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteTrackedAircraftAsync(object queued, int objectId)
+        private async Task<bool> WriteTrackedAircraftAsync(object queued)
         {
             // Attempt to cast the queued object as a tracked aircraft and identify if that's what it is
             if (queued is not TrackedAircraft aircraft)
@@ -263,9 +261,8 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Attempt to handle a queued object as a tracked aircraft position
         /// </summary>
         /// <param name="queued"></param>
-        /// <param name="objectId"></param>
         /// <returns></returns>
-        private async Task<bool> WriteAircraftPositionAsync(object queued, int objectId)
+        private async Task<bool> WriteAircraftPositionAsync(object queued)
         {
             // Attempt to cast the queued object as a position and identify if that's what it is
             if (queued is not AircraftPosition position)
@@ -294,11 +291,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// external APIs
         /// </summary>
         /// <param name="queued"></param>
-        /// <param name="objectId"></param>
         /// <param name="allowRequeues"></param>
         /// <returns></returns>
         [ExcludeFromCodeCoverage]
-        private async Task<bool> ProcessAPILookupRequestAsync(object queued, int objectId, bool allowRequeues)
+        private async Task<bool> ProcessAPILookupRequestAsync(object queued, bool allowRequeues)
         {
             // Attempt to cast the queued object as a lookup request and identify if that's what it is
             if (queued is not ApiLookupRequest request)
