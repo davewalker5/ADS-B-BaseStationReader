@@ -102,14 +102,14 @@ namespace BaseStationReader.BusinessLogic.Database
                 Thread.Sleep(100);
             }
 
+            // Set the "processing batch" flag
+            _isProcessingBatch = true;
+
             // Notify subscribers that a batch is about to be processed
             NotifyBatchStartedSubscribers(initialQueueSize);
 
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
-
-            // Stop the timer first to avoid conflicts accessing the queue and writing to the database
-            _timer.Stop();
 
             // Process pending tracked aircraft, position update and API lookup requests
             await ProcessPendingAsync<TrackedAircraft>();
@@ -121,6 +121,9 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Stop the timer
             stopwatch.Stop();
+
+            // Clear the "processing batch" flag
+            _isProcessingBatch = true;
 
             // Notify subscribers that a batch has been processed
             NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
@@ -138,14 +141,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnTimer(object sender, EventArgs e)
-        {
-            _timer.Stop();
-
-            // Process the next batch from the queue
-            Task.Run(() => ProcessBatchAsync(_batchSize)).Wait();
-
-            _timer.Start();
-        }
+            => Task.Run(() => ProcessBatchAsync(_batchSize)).Wait();
 
         /// <summary>
         /// Process a batch from the queue
@@ -154,6 +150,12 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task ProcessBatchAsync(int batchSize)
         {
+            // If we're already processing a batch, do nothing
+            if (_isProcessingBatch)
+            {
+                return;
+            }
+
             // Set the flag indicating a batch is being processed
             _isProcessingBatch = true;
 
