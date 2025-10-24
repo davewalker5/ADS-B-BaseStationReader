@@ -3,7 +3,6 @@ using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Messages;
-using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -104,7 +103,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // details won't be written to the database
                 if (!string.IsNullOrEmpty(msg.Callsign) && _excludedCallsigns.Contains(msg.Callsign))
                 {
-                    _excludedAddresses.Add(msg.Address);
+                    lock (_excludedAddresses)
+                    {
+                        // Don't assume the address isn't present - check first
+                        if (!_excludedAddresses.Contains(msg.Address))
+                        {
+                            _excludedAddresses.Add(msg.Address);
+                        }
+                    }
                     return;
                 }
 
@@ -160,16 +166,26 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="msg"></param>
         private void AddNewAircraft(Message msg)
         {
-            var aircraft = new TrackedAircraft { FirstSeen = DateTime.Now };
-            _updater.UpdateProperties(aircraft, msg);
+            TrackedAircraft aircraft = null;
 
             lock (_aircraft)
             {
-                _aircraft.Add(msg.Address, aircraft);
+                // Don't assume the aircraft's not in the collection - it may have been added in another
+                // call to this method
+                if (!_aircraft.ContainsKey(msg.Address))
+                {
+                    // It's not in the collection, so add it
+                    aircraft = new TrackedAircraft { FirstSeen = DateTime.Now };
+                    _updater.UpdateProperties(aircraft, msg);
+                    _aircraft.Add(msg.Address, aircraft);
+                }
             }
-            
+
             // Send a notification to subscribers
-            _sender.SendAddedNotification(aircraft, this, AircraftAdded);
+            if (_aircraft != null)
+            {
+                _sender.SendAddedNotification(aircraft, this, AircraftAdded);
+            }
         }
 
         /// <summary>
