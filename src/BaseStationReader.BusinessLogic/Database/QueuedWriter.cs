@@ -23,7 +23,8 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IEnumerable<string> _departureAirportCodes;
         private readonly IEnumerable<string> _arrivalAirportCodes;
 
-        public event EventHandler<BatchWrittenEventArgs> BatchWritten;
+        public event EventHandler<BatchStartedEventArgs> BatchStarted;
+        public event EventHandler<BatchCompletedEventArgs> BatchCompleted;
         
         public int QueueSize { get => _queue.Count; }
 
@@ -101,6 +102,9 @@ namespace BaseStationReader.BusinessLogic.Database
                 Thread.Sleep(100);
             }
 
+            // Notify subscribers that a batch is about to be processed
+            NotifyBatchStartedSubscribers(initialQueueSize);
+
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -119,7 +123,7 @@ namespace BaseStationReader.BusinessLogic.Database
             stopwatch.Stop();
 
             // Notify subscribers that a batch has been processed
-            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -153,11 +157,14 @@ namespace BaseStationReader.BusinessLogic.Database
             // Set the flag indicating a batch is being processed
             _isProcessingBatch = true;
 
+            // Notify subscribers that a batch is about to be processed
+            var initialQueueSize = _queue.Count;
+            NotifyBatchStartedSubscribers(initialQueueSize);
+
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Iterate over at most the current batch size entries in the queue
-            var initialQueueSize = _queue.Count;
             for (int i = 0; i < batchSize; i++)
             {
                 // Attempt to get the next item and if it's not there break out
@@ -175,7 +182,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _isProcessingBatch = false;
 
             // Notify subscribers that a batch has been processed
-            NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -196,17 +203,39 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
+        /// Notify subscribers that a batch is about to be processed from the queue
+        /// </summary>
+        /// <param name="queueSize"></param>
+        private void NotifyBatchStartedSubscribers(int queueSize)
+        {
+            try
+            {
+                // Notify subscribers that batch processing is starting
+                BatchStarted?.Invoke(this, new BatchStartedEventArgs
+                {
+                    QueueSize = queueSize
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log and sink the exception. The writer has to be protected from errors in the
+                // subscriber callbacks or the application will stop updating
+                _factory.Logger.LogException(ex);
+            }
+        }
+
+        /// <summary>
         /// Notify subscribers that a batch has been processed from the queue
         /// </summary>
-        /// <param name="initialQueueSize"></param>
+        /// <param name="queueSize"></param>
         /// <param name="finalQueueSize"></param>
         /// <param name="elapsedMillisconds"></param>
-        private void NotifyBatchWrittenSubscribers(int initialQueueSize, int finalQueueSize, long elapsedMillisconds)
+        private void NotifyBatchCompletedSubscribers(int initialQueueSize, int finalQueueSize, long elapsedMillisconds)
         {
             try
             {
                 // Notify subscribers that a batch has been written
-                BatchWritten?.Invoke(this, new BatchWrittenEventArgs
+                BatchCompleted?.Invoke(this, new BatchCompletedEventArgs
                 {
                     InitialQueueSize = initialQueueSize,
                     FinalQueueSize = finalQueueSize,

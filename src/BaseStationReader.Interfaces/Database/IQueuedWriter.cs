@@ -4,7 +4,8 @@ namespace BaseStationReader.Interfaces.Database
 {
     public interface IQueuedWriter
     {
-        event EventHandler<BatchWrittenEventArgs> BatchWritten;
+        event EventHandler<BatchStartedEventArgs> BatchStarted;
+        event EventHandler<BatchCompletedEventArgs> BatchCompleted;
         int QueueSize { get; }
         void Push(object entity);
         Task StartAsync();

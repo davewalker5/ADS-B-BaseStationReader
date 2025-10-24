@@ -181,7 +181,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _arrivalAirportCodes,
                 _settings.WriterBatchSize,
                 true);
-            _writer.BatchWritten += OnBatchWritten;
+            _writer.BatchStarted += OnBatchStarted;
+            _writer.BatchCompleted += OnBatchCompleted;
 
             // If instructed, clear down aircraft tracking data while leaving aircraft details and airlines intact
             if (_settings.ClearDown)
@@ -225,12 +226,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
         }
 
         /// <summary>
-        /// Handle the event raised when a batch of aircraft updates are written to the database
+        /// Handle the event raised when a batch of queued updates are about to be processed
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
-            => _logger.LogMessage(Severity.Info, $"Aircraft batch written to the database. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
+        private void OnBatchStarted(object sender, BatchStartedEventArgs e)
+            => _logger.LogMessage(Severity.Info, $"Request batch is about to be processed. Queue size {e.QueueSize}");
+
+        /// <summary>
+        /// Handle the event raised when a batch of queued updates have been processed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnBatchCompleted(object sender, BatchCompletedEventArgs e)
+            => _logger.LogMessage(Severity.Info, $"Request batch has been processed. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
 
         /// <summary>
         /// Handle an aircraft addition or removal event

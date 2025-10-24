@@ -3,7 +3,7 @@
 namespace BaseStationReader.Entities.Events
 {
     [ExcludeFromCodeCoverage]
-    public class BatchWrittenEventArgs : EventArgs
+    public class BatchCompletedEventArgs : EventArgs
     {
         public int InitialQueueSize { get; set; }
         public int FinalQueueSize { get; set; }
