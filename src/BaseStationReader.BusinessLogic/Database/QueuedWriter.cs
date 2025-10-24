@@ -19,6 +19,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly ITrackerTimer _timer;
         private readonly int _batchSize = 0;
         private readonly bool _createSightings;
+        private bool _isProcessingBatch = false;
         private readonly IEnumerable<string> _departureAirportCodes;
         private readonly IEnumerable<string> _arrivalAirportCodes;
 
@@ -93,6 +94,13 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             var initialQueueSize = _queue.Count;
 
+            // It's conceivable a batch might be being processed - don't allow the flush to happen while
+            // that's in progress as it'll cause conflicts writing to the database
+            while (_isProcessingBatch)
+            {
+                Thread.Sleep(100);
+            }
+
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -142,6 +150,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task ProcessBatchAsync(int batchSize)
         {
+            // Set the flag indicating a batch is being processed
+            _isProcessingBatch = true;
+
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -159,6 +170,9 @@ namespace BaseStationReader.BusinessLogic.Database
                 await HandleDequeuedObjectAsync(queued, true);
             }
             stopwatch.Stop();
+
+            // Clear the flag indicating a batch is being processed
+            _isProcessingBatch = false;
 
             // Notify subscribers that a batch has been processed
             NotifyBatchWrittenSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);

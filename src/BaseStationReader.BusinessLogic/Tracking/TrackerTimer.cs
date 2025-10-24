@@ -21,7 +21,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             _timer = new System.Timers.Timer(interval: _interval);
             _timer.Elapsed += OnElapsed;
-            _timer.AutoReset = true;
+            _timer.AutoReset = false;
             _timer.Enabled = true;
             _timer.Start();
         }
