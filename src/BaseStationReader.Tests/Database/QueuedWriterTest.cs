@@ -41,7 +41,7 @@ namespace BaseStationReader.Tests.Database
             // Create a queued writer, wire up the event handlers and start it
             var writerTimer = new MockTrackerTimer(WriterInterval);
             _writer = new QueuedWriter(_factory, null, writerTimer, [], [], WriterBatchSize, true);
-            _writer.BatchWritten += OnBatchWritten;
+            _writer.BatchCompleted += OnBatchWritten;
 
             // Start the writer
             await _writer.StartAsync();
@@ -275,7 +275,7 @@ namespace BaseStationReader.Tests.Database
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnBatchWritten(object sender, BatchWrittenEventArgs e)
+        private void OnBatchWritten(object sender, BatchCompletedEventArgs e)
         {
             if ((e.InitialQueueSize > 0) && (e.FinalQueueSize == 0))
             {
