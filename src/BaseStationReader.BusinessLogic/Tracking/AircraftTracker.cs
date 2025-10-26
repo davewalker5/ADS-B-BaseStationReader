@@ -167,12 +167,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void AddNewAircraft(Message msg)
         {
             TrackedAircraft aircraft = null;
+            bool aircraftIsNotPresent;
 
             lock (_aircraft)
             {
                 // Don't assume the aircraft's not in the collection - it may have been added in another
                 // call to this method
-                if (!_aircraft.ContainsKey(msg.Address))
+                aircraftIsNotPresent = !_aircraft.ContainsKey(msg.Address);
+                if (aircraftIsNotPresent)
                 {
                     // It's not in the collection, so add it
                     aircraft = new TrackedAircraft { FirstSeen = DateTime.Now };
@@ -182,7 +184,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
 
             // Send a notification to subscribers
-            if (_aircraft != null)
+            if (aircraftIsNotPresent && (_aircraft != null))
             {
                 _sender.SendAddedNotification(aircraft, this, AircraftAdded);
             }
