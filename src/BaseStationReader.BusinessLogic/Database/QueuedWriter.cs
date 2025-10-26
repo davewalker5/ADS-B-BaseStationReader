@@ -112,9 +112,9 @@ namespace BaseStationReader.BusinessLogic.Database
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Process pending tracked aircraft, position update and API lookup requests
-            await ProcessPendingAsync<TrackedAircraft>();
-            await ProcessPendingAsync<AircraftPosition>();
-            await ProcessPendingAsync<ApiLookupRequest>();
+            var numberOfAircraft = await ProcessPendingAsync<TrackedAircraft>();
+            var numberOfPositions = await ProcessPendingAsync<AircraftPosition>();
+            var numberOfApiLookups = await ProcessPendingAsync<ApiLookupRequest>();
 
             // Clear the queue
             _queue.Clear();
@@ -126,7 +126,8 @@ namespace BaseStationReader.BusinessLogic.Database
             _isProcessingBatch = true;
 
             // Notify subscribers that a batch has been processed
-            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+            var totalProcessed = numberOfAircraft + numberOfPositions + numberOfApiLookups;
+            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, totalProcessed, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -167,6 +168,7 @@ namespace BaseStationReader.BusinessLogic.Database
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Iterate over at most the current batch size entries in the queue
+            int entriesProcessed = 0;
             for (int i = 0; i < batchSize; i++)
             {
                 // Attempt to get the next item and if it's not there break out
@@ -176,6 +178,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 }
 
                 // Process the dequeued request
+                entriesProcessed++;
                 await HandleDequeuedObjectAsync(queued, true);
             }
             stopwatch.Stop();
@@ -184,7 +187,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _isProcessingBatch = false;
 
             // Notify subscribers that a batch has been processed
-            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, stopwatch.ElapsedMilliseconds);
+            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, entriesProcessed, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -192,7 +195,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        private async Task ProcessPendingAsync<T>()
+        private async Task<int> ProcessPendingAsync<T>()
         {
             // Extract a list of requests from the queue
             var requests = _queue.OfType<T>();
@@ -202,6 +205,8 @@ namespace BaseStationReader.BusinessLogic.Database
             {
                 await HandleDequeuedObjectAsync(request, false);
             }
+
+            return requests.Count();
         }
 
         /// <summary>
@@ -229,10 +234,11 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <summary>
         /// Notify subscribers that a batch has been processed from the queue
         /// </summary>
-        /// <param name="queueSize"></param>
+        /// <param name="initialQueueSize"></param>
         /// <param name="finalQueueSize"></param>
+        /// <param name="totalProcessed"></param>
         /// <param name="elapsedMillisconds"></param>
-        private void NotifyBatchCompletedSubscribers(int initialQueueSize, int finalQueueSize, long elapsedMillisconds)
+        private void NotifyBatchCompletedSubscribers(int initialQueueSize, int finalQueueSize, int totalProcessed, long elapsedMillisconds)
         {
             try
             {
@@ -241,6 +247,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 {
                     InitialQueueSize = initialQueueSize,
                     FinalQueueSize = finalQueueSize,
+                    EntriesProcessed = totalProcessed,
                     Duration = elapsedMillisconds
                 });
             }
