@@ -7,6 +7,7 @@ namespace BaseStationReader.Entities.Events
     {
         public int InitialQueueSize { get; set; }
         public int FinalQueueSize { get; set; }
+        public int EntriesProcessed { get; set; }
         public long Duration { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Messages;
+using System.Collections.Concurrent;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -15,7 +16,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly INotificationSender _sender;
         private readonly IList<string> _excludedAddresses;
         private readonly IList<string> _excludedCallsigns;
-        private readonly Dictionary<string, TrackedAircraft> _aircraft = [];
+        private readonly ConcurrentDictionary<string, Lazy<TrackedAircraft>> _aircraft = [];
         private CancellationTokenSource _cancellationTokenSource = null;
         private readonly int _recentMs;
         private readonly int _staleMs;
@@ -133,7 +134,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void UpdateExistingAircraft(Message msg)
         {
             // Retrieve the existing aircraft
-            var aircraft = _aircraft[msg.Address];
+            var aircraft = _aircraft[msg.Address].Value;
             lock (aircraft)
             {
                 // Capture the previous position
@@ -166,25 +167,25 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="msg"></param>
         private void AddNewAircraft(Message msg)
         {
-            TrackedAircraft aircraft = null;
-
-            lock (_aircraft)
+            // Add a lazily-instantiated version of the tracked aircraft with minimal properties set
+            var newLazyAircraft = new Lazy<TrackedAircraft>(() => new()
             {
-                // Don't assume the aircraft's not in the collection - it may have been added in another
-                // call to this method
-                if (!_aircraft.ContainsKey(msg.Address))
-                {
-                    // It's not in the collection, so add it
-                    aircraft = new TrackedAircraft { FirstSeen = DateTime.Now };
-                    _updater.UpdateProperties(aircraft, msg);
-                    _aircraft.Add(msg.Address, aircraft);
-                }
-            }
+                Address = msg.Address,
+                FirstSeen = DateTime.UtcNow
+            }, isThreadSafe: true);
 
-            // Send a notification to subscribers
-            if (_aircraft != null)
+            // Now add it to the collection OR return the existing instance forthe specified 24-bit ICAO address
+            var lazyAircraft = _aircraft.GetOrAdd(msg.Address, _ => newLazyAircraft);
+
+            // Now see if the retrieving it returns the same instance - if it does, then the aircraft wasn't
+            // there before and is newly added
+            var existingLazyAircraft = _aircraft.GetOrAdd(msg.Address, lazyAircraft);
+            bool isNew = ReferenceEquals(existingLazyAircraft, lazyAircraft);
+
+            if (isNew)
             {
-                _sender.SendAddedNotification(aircraft, this, AircraftAdded);
+                // If it's new, send the "added" notification to subscribers
+                _sender.SendAddedNotification(existingLazyAircraft.Value, this, AircraftAdded);
             }
         }
 
@@ -200,13 +201,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 foreach (var entry in _aircraft)
                 {
                     // Determine how long it is since this aircraft updated
-                    var aircraft = entry.Value;
+                    var aircraft = entry.Value.Value;
                     var elapsed = (int)(DateTime.Now - aircraft.LastSeen).TotalMilliseconds;
 
                     // If it's now stale, remove it. Otherwise, set the staleness level and send an update
                     if (elapsed >= _removedMs)
                     {
-                        _aircraft.Remove(entry.Key);
+                        _aircraft.Remove(aircraft.Address, out _);
                         _sender.SendRemovedNotification(aircraft, this, AircraftRemoved);
                     }
                     else if (elapsed >= _staleMs)

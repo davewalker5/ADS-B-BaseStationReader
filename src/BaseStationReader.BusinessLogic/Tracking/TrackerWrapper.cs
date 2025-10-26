@@ -231,7 +231,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnBatchStarted(object sender, BatchStartedEventArgs e)
-            => _logger.LogMessage(Severity.Info, $"Request batch is about to be processed. Queue size {e.QueueSize}");
+            => _logger.LogMessage(Severity.Info, $"Request batch of up to {_settings.WriterBatchSize} entries is about to be processed. Queue size {e.QueueSize}");
 
         /// <summary>
         /// Handle the event raised when a batch of queued updates have been processed
