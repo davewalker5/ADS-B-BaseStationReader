@@ -199,6 +199,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // Extract a list of requests from the queue
             var requests = _queue.OfType<T>();
+            _factory.Logger.LogMessage(Severity.Info, $"Processing {requests.Count()} queued entries of type {typeof(T).Name}");
 
             // Iterate over and process the requests
             foreach (var request in requests)
