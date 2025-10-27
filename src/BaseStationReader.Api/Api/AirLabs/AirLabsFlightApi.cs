@@ -8,18 +8,13 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Api.AirLabs
 {
-    internal class AirLabsActiveFlightApi : AirLabsApiBase, IActiveFlightsApi
+    internal class AirLabsFlightApi : AirLabsApiBase, IFlightApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AirLabs;
-
-        private readonly List<ApiProperty> _supportedProperties = [
-            ApiProperty.AircraftAddress
-        ];
-
         private readonly string _baseAddress;
 
         [ExcludeFromCodeCoverage]
-        public AirLabsActiveFlightApi(
+        public AirLabsFlightApi(
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ExternalApiSettings settings) : base(client, factory)
@@ -28,7 +23,7 @@ namespace BaseStationReader.Api.AirLabs
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
 
             // Get the endpoint URL and set up the base address for requests
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == ServiceType)?.Url;
+            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ServiceType)?.Url;
             _baseAddress = $"{url}?api_key={definition?.Key}";
 
             // Set the rate limit for this service on the HTTP client
@@ -36,28 +31,20 @@ namespace BaseStationReader.Api.AirLabs
         }
 
         /// <summary>
-        /// Return true if this implementation supports flight lookup by the specified property
-        /// </summary>
-        /// <param name="propertyType"></param>
-        /// <returns></returns>
-        public bool SupportsLookupBy(ApiProperty propertyType)
-            => _supportedProperties.Contains(propertyType);
-
-        /// <summary>
         /// Lookup an active flight's details using the aircraft's ICAO 24-bit address
         /// </summary>
         /// <param name="propertyType"></param>
         /// <param name="propertyValue"></param>
         /// <returns></returns>
-        public async Task<Dictionary<ApiProperty, string>> LookupFlightAsync(ApiProperty propertyType, string propertyValue)
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsAsync(string address, DateTime date)
         {
             List<Dictionary<ApiProperty, string>> properties = [];
 
-            Factory.Logger.LogMessage(Severity.Info, $"Looking up active flight using {propertyType} {propertyValue}");
+            Factory.Logger.LogMessage(Severity.Info, $"Looking up flights for aircraft with address {address} at {date}");
 
             // Make a request for the data from the API
-            var url = $"{_baseAddress}&hex={propertyValue}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.ActiveFlights, url, propertyType, propertyValue);
+            var url = $"{_baseAddress}&hex={address}";
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Flights, url, ApiProperty.AircraftAddress, address);
             var node = await GetAsync(ServiceType, url, []);
 
             // Get the response array
@@ -80,7 +67,7 @@ namespace BaseStationReader.Api.AirLabs
                 properties.Add(flightProperties);
             }
 
-            return properties.Count > 0 ? properties.First() : null;
+            return properties.Count > 0 ? properties : null;
         }
 
         /// <summary>

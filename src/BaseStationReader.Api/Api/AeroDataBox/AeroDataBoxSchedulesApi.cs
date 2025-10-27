@@ -79,7 +79,7 @@ namespace BaseStationReader.Api.AeroDatabox
 
             // Construct the URL with query parameters and log the request
             var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.HistoricalFlights, url, ApiProperty.AirportIATA, iata);
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Flights, url, ApiProperty.AirportIATA, iata);
 
             // Make a request for the data from the API
             JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()

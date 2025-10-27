@@ -7,7 +7,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
-namespace BaseStationReader.Tests.API.SkyLink
+namespace BaseStationReader.Tests.API.Wrapper
 {
     [TestClass]
     public class AircraftLookupManagerTest

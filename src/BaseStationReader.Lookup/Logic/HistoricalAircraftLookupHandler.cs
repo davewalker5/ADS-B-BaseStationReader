@@ -27,7 +27,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAsync()
         {
             // Get an instance of the API wrapper
-            var wrapper = GetWrapperInstance(Settings.LiveApi, ApiEndpointType.HistoricalFlights, false);
+            var wrapper = GetWrapperInstance(Settings.LiveApi, ApiEndpointType.Flights, false);
 
             // Extract the lookup parameters from the command line
             var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
@@ -42,7 +42,7 @@ namespace BaseStationReader.Lookup.Logic
                 // Create the lookup request
                 var request = new ApiLookupRequest()
                 {
-                    FlightEndpointType = ApiEndpointType.HistoricalFlights,
+                    FlightEndpointType = ApiEndpointType.Flights,
                     AircraftAddress = a.Address,
                     DepartureAirportCodes = departureAirportCodes,
                     ArrivalAirportCodes = arrivalAirportCodes,

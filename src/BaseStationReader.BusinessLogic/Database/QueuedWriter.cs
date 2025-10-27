@@ -372,7 +372,7 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             // Populate additional lookup properties on the request
-            request.FlightEndpointType = ApiEndpointType.ActiveFlights;
+            request.FlightEndpointType = ApiEndpointType.Flights;
             request.DepartureAirportCodes = _departureAirportCodes;
             request.ArrivalAirportCodes = _arrivalAirportCodes;
             request.CreateSighting = _createSightings;

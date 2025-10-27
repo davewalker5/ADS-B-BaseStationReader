@@ -166,7 +166,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _client,
                 factory,
                 serviceType,
-                ApiEndpointType.ActiveFlights,
+                ApiEndpointType.Flights,
                 _settings);
 
             // Configure the queued writer

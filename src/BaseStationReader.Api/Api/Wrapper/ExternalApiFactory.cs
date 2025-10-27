@@ -24,14 +24,10 @@ namespace BaseStationReader.Api.Wrapper
         /// </summary>
         private readonly Dictionary<(ApiServiceType, ApiEndpointType), Type> _map = new()
         {
-            {(ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights), typeof(AeroDataBoxHistoricalFlightApi) },
+            {(ApiServiceType.AeroDataBox, ApiEndpointType.Flights), typeof(AeroDataBoxFlightApi) },
             {(ApiServiceType.AeroDataBox, ApiEndpointType.Aircraft), typeof(AeroDataBoxAircraftApi) },
             {(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules), typeof(AeroDataBoxSchedulesApi) },
-            {(ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights), typeof(AirLabsActiveFlightApi) },
-            {(ApiServiceType.AirLabs, ApiEndpointType.Airlines), typeof(AirLabsAirlinesApi) },
-            {(ApiServiceType.AirLabs, ApiEndpointType.Aircraft), typeof(AirLabsAircraftApi) },
-            {(ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights), typeof(SkyLinkActiveFlightApi) },
-            {(ApiServiceType.SkyLink, ApiEndpointType.HistoricalFlights), typeof(SkyLinkHistoricalFlightApi) },
+            {(ApiServiceType.AirLabs, ApiEndpointType.Flights), typeof(AirLabsFlightApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Airlines), typeof(SkyLinkAirlinesApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Aircraft), typeof(SkyLinkAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.METAR), typeof(SkyLinkMetarApi) },

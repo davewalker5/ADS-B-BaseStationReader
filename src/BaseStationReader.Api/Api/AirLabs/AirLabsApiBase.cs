@@ -7,9 +7,7 @@ namespace BaseStationReader.Api.AirLabs
 {
     internal abstract class AirLabsApiBase : ExternalApiBase
     {
-        public AirLabsApiBase(
-            ITrackerHttpClient client,
-            IDatabaseManagementFactory factory) : base(client, factory)
+        public AirLabsApiBase(ITrackerHttpClient client, IDatabaseManagementFactory factory) : base(client, factory)
         {
         }
 
