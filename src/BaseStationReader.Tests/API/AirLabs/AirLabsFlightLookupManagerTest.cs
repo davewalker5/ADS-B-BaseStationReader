@@ -61,14 +61,14 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task LookupTestAsync()
         {
             _client.AddResponse(Response);
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Status = TrackingStatus.Active,
                 LastSeen = LastSeen
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);

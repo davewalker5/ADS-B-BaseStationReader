@@ -55,25 +55,18 @@ namespace BaseStationReader.Tests.API.Wrapper
         }
 
         [TestMethod]
-        public async Task LookupWithNoTrackingRecordTestAsync()
-        {
-            _client.AddResponse("[]");
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
-            Assert.IsNull(flight);
-        }
-
-        [TestMethod]
         public async Task LookupWithInactiveTrackingRecordTestAsync()
         {
             _client.AddResponse("[]");
-            await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
-                Status = TrackingStatus.Inactive
+                Status = TrackingStatus.Inactive,
+                LastSeen = DateTime.UtcNow.AddDays(-1)
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
             Assert.IsNull(flight);
         }
 
@@ -81,14 +74,14 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupWithNoCallsignTestAsync()
         {
             _client.AddResponse("[]");
-            await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Status = TrackingStatus.Active,
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
             Assert.IsNull(flight);
         }
 
@@ -96,7 +89,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupWithNoMappingRecordTestAsync()
         {
             _client.AddResponse("[]");
-            await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -104,7 +97,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
             Assert.IsNull(flight);
         }
 
@@ -114,7 +107,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
             var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var local = await _factory.FlightManager.AddAsync(FlightIATA, Callsign, Embarkation, Destination, airline.Id);
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -122,7 +115,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
 
             Assert.IsNotNull(flight);
             Assert.AreEqual(local.Id, flight.Id);
@@ -140,7 +133,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         {
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
             _ = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -148,7 +141,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);
@@ -165,7 +158,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupFromDatabaseTestAsync()
         {
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -173,7 +166,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [], []);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);
@@ -190,7 +183,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupFromDatabaseWithAcceptingAirportFiltersTestAsync()
         {
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -198,7 +191,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [Embarkation], [Destination]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Destination]);
 
             Assert.IsNotNull(flight);
             Assert.IsGreaterThan(0, flight.Id);
@@ -216,7 +209,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         {
             _client.AddResponse("[]");
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -224,7 +217,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [Destination], [Destination]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Destination], [Destination]);
 
             Assert.IsNull(flight);
         }
@@ -234,7 +227,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         {
             _client.AddResponse("[]");
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -242,7 +235,7 @@ namespace BaseStationReader.Tests.API.Wrapper
                 LastSeen = DateTime.UtcNow
             });
 
-            var flight = await _manager.IdentifyFlightAsync(Address, [Embarkation], [Embarkation]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Embarkation]);
 
             Assert.IsNull(flight);
         }

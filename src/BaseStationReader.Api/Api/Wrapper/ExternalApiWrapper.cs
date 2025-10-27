@@ -50,25 +50,27 @@ namespace BaseStationReader.Api.Wrapper
                 return new(false, false);
             }
 
-            // Attempt to retrieve the tracked aircraft record for the specified address - the retrieval accounts for
-            // excluded addresses and callsigns
-            // TODO: This needs to be a "candidate result" or some such so it can relay information about requeue attempts
+            // See if the aircraft is a valid candidate for lookup - the retrieval accounts for exclusions
             var trackedAircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
             if (trackedAircraft == null)
             {
+                // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
+                // filled in, so allow requeues. Otherwise, the exclusion is more permanent so don't allow requeues
                 _factory.Logger.LogMessage(Severity.Warning, $"'{request.AircraftAddress}' is not a candidate for lookup");
-                return new(false, false);
+                var allowRequeue = string.IsNullOrEmpty(trackedAircraft.Callsign);
+                return new(false, allowRequeue);
             }
 
             // Lookup the aircraft
             var aircraft = await _aircraftLookupManager.IdentifyAircraftAsync(request.AircraftAddress);
             if (aircraft == null)
             {
+                // If an aircraft isn't identifiable, there's no point allowing requeues
                 return new(false, false);
             }
 
             // Lookup the flight
-            var flight = await _flightLookupManager.IdentifyFlightAsync(request.AircraftAddress, request.DepartureAirportCodes, request.ArrivalAirportCodes);
+            var flight = await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, request.DepartureAirportCodes, request.ArrivalAirportCodes);
             if (flight == null)
             {
                 return new(false, false);
@@ -80,7 +82,7 @@ namespace BaseStationReader.Api.Wrapper
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
             }
 
-            return new(false, false);
+            return new(true, false);
         }
 
         /// <summary>

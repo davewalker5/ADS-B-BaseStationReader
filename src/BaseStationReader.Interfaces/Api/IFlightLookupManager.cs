@@ -1,9 +1,10 @@
 using BaseStationReader.Entities.Api;
+using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Interfaces.Api
 {
     public interface IFlightLookupManager
     {
-        Task<Flight> IdentifyFlightAsync(string address, IEnumerable<string> departureAirportCodes, IEnumerable<string> arrivalAirportCodes);
+        Task<Flight> IdentifyFlightAsync(TrackedAircraft aircraft, IEnumerable<string> departureAirportCodes, IEnumerable<string> arrivalAirportCodes);
     }
 }

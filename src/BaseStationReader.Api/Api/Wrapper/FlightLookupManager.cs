@@ -24,18 +24,18 @@ namespace BaseStationReader.Api.Wrapper
         /// <summary>
         /// Identify a flight from an aircraft address
         /// </summary>
-        /// <param name="address"></param>
+        /// <param name="trackedAircraft"></param>
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
         public async Task<Flight> IdentifyFlightAsync(
-            string address,
+            TrackedAircraft trackedAircraft,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
             // Attempt to load the flight from the database or, if there's a callsign mapping for it, to create
             // a new one using that mapping
-            (TrackedAircraft aircraft, Flight flight) = await LoadOrCreateFlightAsync(address, departureAirportCodes, arrivalAirportCodes);
+            var flight = await LoadOrCreateFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
 
             // At this point, one of the following is true:
             //
@@ -46,15 +46,15 @@ namespace BaseStationReader.Api.Wrapper
             // With no mapping record, there's no way to identify a flight number so APIs supporting lookup by flight
             // number are of no use at this point. We now need an API that is able to lookup flights by aircraft
             // address - attempt that lookup
-            if ((aircraft != null) && (flight == null))
+            if (flight == null)
             {
-                flight = await LookupFlightAsync(aircraft, departureAirportCodes, arrivalAirportCodes);
+                flight = await LookupFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
             }
 
             // Log the flight details
             if (flight != null)
             {
-                LogFlightDetails(address, flight);
+                LogFlightDetails(trackedAircraft.Address, flight);
             }
 
             return flight;
@@ -67,60 +67,44 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        private async Task<(TrackedAircraft, Flight)> LoadOrCreateFlightAsync(
-            string address,
+        private async Task<Flight> LoadOrCreateFlightAsync(
+            TrackedAircraft trackedAircraft,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
-            // Load the aircraft tracking record for the specified aircraft address
-            LogMessage(Severity.Info, address, $"Attempting to retrieve the tracking record from the database");
-            var trackedAircraft = await _factory.TrackedAircraftWriter.GetAsync(x => (x.Address == address) && (x.Status != TrackingStatus.Inactive));
-            if (trackedAircraft == null)
-            {
-                LogMessage(Severity.Info, address, $"No tracking record found");
-                return (null, null);
-            }
-
-            // See if there's a callsign
-            if (string.IsNullOrEmpty(trackedAircraft.Callsign))
-            {
-                LogMessage(Severity.Info, address, $"Tracking record does not contain a valid callsign");
-                return (trackedAircraft, null);
-            }
-
             // Attempt to load the callsign mapping record
-            LogMessage(Severity.Info, address, trackedAircraft.Callsign, $"Attempting to retrieve callsign mapping record");
+            LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, $"Attempting to retrieve callsign mapping record");
             var mapping = await _factory.FlightIATACodeMappingManager.GetAsync(x => x.Callsign == trackedAircraft.Callsign);
             if (mapping == null)
             {
-                LogMessage(Severity.Info, address, trackedAircraft.Callsign, $"No callsign mapping record found");
-                return (trackedAircraft, null);
+                LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, $"No callsign mapping record found");
+                return null;
             }
 
             // Check the point of embarkation isn't filtered out
             if (!IsAirportAllowed(trackedAircraft.Address, departureAirportCodes, AirportType.Departure, mapping.Embarkation))
             {
-                return (trackedAircraft, null);
+                return null;
             }
 
             // Check the destination isn't filtered out
             if (!IsAirportAllowed(trackedAircraft.Address, arrivalAirportCodes, AirportType.Arrival, mapping.Destination))
             {
-                return (trackedAircraft, null);
+                return null;
             }
 
             // See if the flight already exists
-            LogMessage(Severity.Info, address, trackedAircraft.Callsign, mapping.FlightIATA, $"Attempting to retrieve the flight from the database");
+            LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, mapping.FlightIATA, $"Attempting to retrieve the flight from the database");
             var flight = await _factory.FlightManager.GetAsync(x => x.IATA == mapping.FlightIATA);
             if (flight != null)
             {
-                return (trackedAircraft, flight);
+                return flight;
             }
 
             // At this point, we have all the information necessary to create the airline and flight from the mapping record
             var airline = await _factory.AirlineManager.AddAsync(mapping.AirlineIATA, mapping.AirlineICAO, mapping.AirlineName);
             flight = await _factory.FlightManager.AddAsync(mapping.FlightIATA, null, mapping.Embarkation, mapping.Destination, airline.Id);
-                return (trackedAircraft, flight);
+            return flight;
         }
 
         /// <summary>
