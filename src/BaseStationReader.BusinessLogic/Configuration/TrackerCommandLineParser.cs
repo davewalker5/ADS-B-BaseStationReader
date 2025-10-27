@@ -24,7 +24,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.Port, false, "--port", "-p", "Port to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.Profile, false, "--tracking-profile", "-tpro", "Specify a JSON format tracking profile", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
-            Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
+            Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver longitude", 1, 1);
             Add(CommandLineOptionType.RestartOnTimeout, false, "--auto-restart", "-ar", "Automatically restart the tracker after a timeout", 1, 1);
             Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 1, 1);
             Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
