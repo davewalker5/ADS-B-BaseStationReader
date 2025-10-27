@@ -36,7 +36,7 @@ namespace BaseStationReader.BusinessLogic.Database
             }
             else if (!string.IsNullOrEmpty(name))
             {
-                model = await GetAsync(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                model = await GetAsync(x => x.Name.ToLower() == name.ToLower());
             }
 
             return model;
