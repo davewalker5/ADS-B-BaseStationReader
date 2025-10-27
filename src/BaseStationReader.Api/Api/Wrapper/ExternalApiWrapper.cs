@@ -14,11 +14,18 @@ namespace BaseStationReader.Api.Wrapper
 
         private readonly IExternalApiRegister _register;
         private readonly IDatabaseManagementFactory _factory;
+        private readonly IAircraftLookupManager _aircraftLookupManager;
+        private readonly IFlightLookupManager _flightLookupManager;
+        private readonly IWeatherLookupManager _weatherLookupManager;
 
         public ExternalApiWrapper(IDatabaseManagementFactory factory)
         {
             _factory = factory;
             _register = new ExternalApiRegister(factory.Logger);
+            var airlineLookupManager = new AirlineLookupManager(_register, factory);
+            _aircraftLookupManager = new AircraftLookupManager(_register, factory);
+            _flightLookupManager = new FlightLookupManager(_register, factory, airlineLookupManager);
+            _weatherLookupManager = new WeatherLookupManager(factory.Logger, _register);
         }
 
         /// <summary>
@@ -53,6 +60,26 @@ namespace BaseStationReader.Api.Wrapper
                 return new(false, false);
             }
 
+            // Lookup the aircraft
+            var aircraft = await _aircraftLookupManager.IdentifyAircraftAsync(request.AircraftAddress);
+            if (aircraft == null)
+            {
+                return new(false, false);
+            }
+
+            // Lookup the flight
+            var flight = await _flightLookupManager.IdentifyFlightAsync(request.AircraftAddress, request.DepartureAirportCodes, request.ArrivalAirportCodes);
+            if (flight == null)
+            {
+                return new(false, false);
+            }
+
+            // We have both an aircraft and a flight - if required, create a sighting
+            if (request.CreateSighting)
+            {
+                _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
+            }
+
             return new(false, false);
         }
 
@@ -62,7 +89,7 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="icao"></param>
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao)
-            => [];
+            => await _weatherLookupManager.LookupCurrentAirportWeatherAsync(icao);
 
         /// <summary>
         /// Lookup the weather forecast for an airport
@@ -70,6 +97,6 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="icao"></param>
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao)
-            => [];
+            => await _weatherLookupManager.LookupAirportWeatherForecastAsync(icao);
     }
 }

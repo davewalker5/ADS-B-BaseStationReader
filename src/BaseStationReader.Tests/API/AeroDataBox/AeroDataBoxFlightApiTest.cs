@@ -9,7 +9,7 @@ using BaseStationReader.Data;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
-    // [TestClass]
+    [TestClass]
     public class AeroDataBoxFlightApiTest
     {
         private const string Address = "4074B6";

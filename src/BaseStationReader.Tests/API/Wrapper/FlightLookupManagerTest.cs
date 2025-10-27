@@ -39,7 +39,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         };
 
         [TestInitialize]
-        public async Task Initialise()
+        public void Initialise()
         {
             // Construct a database management factory
             var logger = new MockFileLogger();
