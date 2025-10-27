@@ -37,7 +37,7 @@ namespace BaseStationReader.Tests.API.CheckWXApi
 
             // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
-            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, factory, ApiServiceType.CheckWXApi, ApiEndpointType.Flights, _settings);
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, factory, ApiServiceType.CheckWXApi, _settings);
         }
 
         [TestMethod]

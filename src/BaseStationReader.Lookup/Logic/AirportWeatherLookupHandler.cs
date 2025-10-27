@@ -26,7 +26,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleMetarAsync()
         {
             // Get an instance of the API wrapper
-            var wrapper = GetWrapperInstance(Settings.WeatherApi, ApiEndpointType.Flights);
+            var wrapper = GetWrapperInstance(Settings.WeatherApi);
 
             // Extract the lookup parameters from the command line
             var icao = Parser.GetValues(CommandLineOptionType.METAR)[0];

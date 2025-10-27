@@ -1,6 +1,5 @@
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Interfaces.Api
 {
@@ -10,7 +9,6 @@ namespace BaseStationReader.Interfaces.Api
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ApiServiceType service,
-            ApiEndpointType flightsEndpointType,
             ExternalApiSettings settings);
 
         IExternalApi GetApiInstance(

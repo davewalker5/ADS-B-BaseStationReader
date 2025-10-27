@@ -6,7 +6,6 @@ using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Api.Wrapper
 {
@@ -41,19 +40,15 @@ namespace BaseStationReader.Api.Wrapper
         /// Create and configure an instance of the external API wrapper class using the specified service
         /// and flights API type
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="client"></param>
         /// <param name="factory"></param>
         /// <param name="service"></param>
-        /// <param name="flightsEndpointType"></param>
         /// <param name="settings"></param>
-        /// <param name="ignoreTrackingStatus"></param>
         /// <returns></returns>
         public IExternalApiWrapper GetWrapperInstance(
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ApiServiceType service,
-            ApiEndpointType flightsEndpointType,
             ExternalApiSettings settings)
         {
             // Create an instance of the wrapper
@@ -62,14 +57,14 @@ namespace BaseStationReader.Api.Wrapper
             // Get an instance of the flights API and register it
             var flightsApi = GetApiInstance(
                 service,
-                flightsEndpointType,
+                ApiEndpointType.Flights,
                 client,
                 factory,
                 settings);
 
             if (flightsApi != null)
             {
-                wrapper.RegisterExternalApi(flightsEndpointType, flightsApi);
+                wrapper.RegisterExternalApi(ApiEndpointType.Flights, flightsApi);
             }
 
 

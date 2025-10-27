@@ -63,7 +63,7 @@ namespace BaseStationReader.Tests.API
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
             _client = new();
-            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.SkyLink, ApiEndpointType.Flights, _settings);
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.SkyLink, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
