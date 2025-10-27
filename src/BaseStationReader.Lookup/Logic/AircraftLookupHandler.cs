@@ -41,7 +41,6 @@ namespace BaseStationReader.Lookup.Logic
                 // Create the lookup request
                 var request = new ApiLookupRequest()
                 {
-                    FlightEndpointType = ApiEndpointType.Flights,
                     AircraftAddress = a.Address,
                     DepartureAirportCodes = departureAirportCodes,
                     ArrivalAirportCodes = arrivalAirportCodes,

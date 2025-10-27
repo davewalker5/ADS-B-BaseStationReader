@@ -28,6 +28,8 @@ namespace BaseStationReader.Api.Wrapper
             {(ApiServiceType.AeroDataBox, ApiEndpointType.Aircraft), typeof(AeroDataBoxAircraftApi) },
             {(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules), typeof(AeroDataBoxSchedulesApi) },
             {(ApiServiceType.AirLabs, ApiEndpointType.Flights), typeof(AirLabsFlightApi) },
+            {(ApiServiceType.AirLabs, ApiEndpointType.Aircraft), typeof(AirLabsAircraftApi) },
+            {(ApiServiceType.AirLabs, ApiEndpointType.Airlines), typeof(AirLabsAirlinesApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Airlines), typeof(SkyLinkAirlinesApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.Aircraft), typeof(SkyLinkAircraftApi) },
             {(ApiServiceType.SkyLink, ApiEndpointType.METAR), typeof(SkyLinkMetarApi) },

@@ -43,6 +43,16 @@ namespace BaseStationReader.Api.Wrapper
         /// <returns></returns>
         public async Task<LookupResult> LookupAsync(ApiLookupRequest request)
         {
+            var departureAirports = request.DepartureAirportCodes != null ? string.Join(", ", request.DepartureAirportCodes) : "";
+            var arrivalAirports = request.ArrivalAirportCodes != null ? string.Join(", ", request.ArrivalAirportCodes) : "";
+
+            _factory.Logger.LogMessage(Severity.Info,
+                $"Attempting lookup: " +
+                $"Aircraft Address = {request.AircraftAddress}, " +
+                $"Departure Airports = {departureAirports}, " +
+                $"Arrival Airports = {arrivalAirports}, " +
+                $"Create Sighting = {request.CreateSighting}");
+
             // Check the address matches the 24-bit ICAO address pattern
             if (!_addressRegex.IsMatch(request.AircraftAddress))
             {

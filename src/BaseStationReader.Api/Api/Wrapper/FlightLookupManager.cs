@@ -138,13 +138,8 @@ namespace BaseStationReader.Api.Wrapper
                 // Iterate over the retrieved flight details
                 foreach (var flightProperties in properties)
                 {
-                    // Get the flight times from the properties collection
-                    var departureTime = ExtractTimestamp(flightProperties, ApiProperty.DepartureTime);
-                    var arrivalTime = ExtractTimestamp(flightProperties, ApiProperty.ArrivalTime);
-
-                    // If the times are specified then we filter to check the flight matches the tracking time. If not,
-                    // just assume it's the right flight
-                    var matches = (departureTime == null) || (arrivalTime == null) || FilterFlight(aircraft, flightProperties, departureTime, arrivalTime, departureAirportCodes, arrivalAirportCodes);
+                    // Filter to check the flight matches the tracking time and airport filters
+                    var matches = FilterFlight(aircraft, flightProperties, departureAirportCodes, arrivalAirportCodes);
                     if (matches)
                     {
                         // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
@@ -183,8 +178,6 @@ namespace BaseStationReader.Api.Wrapper
         private bool FilterFlight(
             TrackedAircraft aircraft,
             Dictionary<ApiProperty, string> properties,
-            DateTime? departureTime,
-            DateTime? arrivalTime,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
@@ -202,16 +195,24 @@ namespace BaseStationReader.Api.Wrapper
                 return false;
             }
 
-            // Convert the last seen date on the aircraft to UTC and see if it passes the filters
-            var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
-            if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, lastSeenUtc))
+            // Get the flight times from the properties collection
+            var departureTime = ExtractTimestamp(properties, ApiProperty.DepartureTime);
+            var arrivalTime = ExtractTimestamp(properties, ApiProperty.ArrivalTime);
+
+            // Check we have some timings
+            if ((departure != null) && (arrivalTime != null))
             {
-                // The dates may have been returned as local time, marked as UTC in the response. Given the
-                // difference can be a maximum of 1 hour and seeing the same aircraft on two flights in that
-                // timeframe is unlikely, compare using local time as well
-                if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, aircraft.LastSeen))
+                // Convert the last seen date on the aircraft to UTC and see if it passes the filters
+                var lastSeenUtc = DateTime.SpecifyKind(aircraft.LastSeen, DateTimeKind.Local).ToUniversalTime();
+                if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, lastSeenUtc))
                 {
-                    return false;
+                    // The dates may have been returned as local time, marked as UTC in the response. Given the
+                    // difference can be a maximum of 1 hour and seeing the same aircraft on two flights in that
+                    // timeframe is unlikely, compare using local time as well
+                    if (!CompareFlightTimes(aircraft.Address, departureTime, arrivalTime, aircraft.LastSeen))
+                    {
+                        return false;
+                    }
                 }
             }
 
