@@ -23,7 +23,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.IsTrue(settings.EnableSqlWriter);
             Assert.IsFalse(settings.ClearDown);
             Assert.IsFalse(settings.AutoLookup);
-            Assert.AreEqual("AirLabs", settings.LiveApi);
+            Assert.AreEqual("AirLabs", settings.FlightApi);
             Assert.AreEqual(30000, settings.WriterInterval);
             Assert.AreEqual(20000, settings.WriterBatchSize);
             Assert.AreEqual(0, settings.MaximumRows);

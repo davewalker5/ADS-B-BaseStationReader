@@ -18,8 +18,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.ImportModels, false, "--import-models", "-imo", "Import a set of model definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportAircraft, false, "--import-aircraft", "-imac", "Import a set of aircraft definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.CreateSightings, false, "--create-sightings", "-cs", "If true, create sightings relating flights and aircraft when a lookup is completed", 1, 1);
-            Add(CommandLineOptionType.LiveApi, false, "--live-api", "-lapi", "Specify the name of an API to use for live flight lookups", 1, 1);
-            Add(CommandLineOptionType.HistoricalApi, false, "--historical-api", "-hapi", "Specify the name of an API to use for historical flight lookups", 1, 1);
+            Add(CommandLineOptionType.FlightApi, false, "--flight-api", "-fapi", "Specify the name of an API to use for flight lookups", 1, 1);
             Add(CommandLineOptionType.ReceiverLatitude, false, "--latitude", "-la", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.ReceiverLongitude, false, "--longitude", "-lo", "Receiver latitude", 1, 1);
             Add(CommandLineOptionType.HistoricalLookup, false, "--historical-lookup", "-hl", "Lookup all tracked aircraft that have not already been looked up", 0, 0);

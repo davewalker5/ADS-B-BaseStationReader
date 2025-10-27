@@ -26,7 +26,7 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAsync()
         {
             // Get an instance of the API wrapper
-            var wrapper = GetWrapperInstance(Settings.LiveApi, ApiEndpointType.Flights);
+            var wrapper = GetWrapperInstance(Settings.FlightApi, ApiEndpointType.Flights);
 
             // Extract the lookup parameters from the command line
             var address = Parser.GetValues(CommandLineOptionType.AircraftAddress)[0];

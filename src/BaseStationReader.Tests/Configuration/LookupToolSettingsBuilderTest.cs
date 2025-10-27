@@ -5,7 +5,7 @@ using BaseStationReader.Interfaces.Config;
 
 namespace BaseStationReader.Tests.Configuration
 {
-    // [TestClass]
+    [TestClass]
     public class LookupToolSettingsBuilderTest
     {
         private ILookupToolSettingsBuilder _builder = null;
@@ -27,8 +27,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.CreateSightings);
-            Assert.AreEqual("AirLabs", settings.LiveApi);
-            Assert.AreEqual("AeroDataBox", settings.HistoricalApi);
+            Assert.AreEqual("AirLabs", settings.FlightApi);
             Assert.AreEqual("CheckWXApi", settings.WeatherApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
@@ -84,21 +83,12 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideLiveApiTest()
+        public void OverrideFlightApiTest()
         {
-            var args = new string[] { "--live-api", "Missing" };
+            var args = new string[] { "--flight-api", "Missing" };
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
-            Assert.AreEqual("Missing", settings.LiveApi);
-        }
-
-        [TestMethod]
-        public void OverrideHistoricalApiTest()
-        {
-            var args = new string[] { "--historical-api", "Missing" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
-            Assert.AreEqual("Missing", settings.HistoricalApi);
+            Assert.AreEqual("Missing", settings.FlightApi);
         }
 
         [TestMethod]

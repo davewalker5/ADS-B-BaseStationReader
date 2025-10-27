@@ -161,7 +161,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private async Task ConfigureSqlWriter(IDatabaseManagementFactory factory)
         {
             // Configure the external API wrapper
-            var serviceType = _apiFactory.GetServiceTypeFromString(_settings.LiveApi);
+            var serviceType = _apiFactory.GetServiceTypeFromString(_settings.FlightApi);
             var apiWrapper = _apiFactory.GetWrapperInstance(
                 _client,
                 factory,

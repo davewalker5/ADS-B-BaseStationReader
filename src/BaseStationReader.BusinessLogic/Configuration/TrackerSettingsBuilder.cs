@@ -111,8 +111,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
                     .ToList();
             }
 
-            values = parser.GetValues(CommandLineOptionType.LiveApi);
-            if (values != null) settings.LiveApi = values[0];
+            values = parser.GetValues(CommandLineOptionType.FlightApi);
+            if (values != null) settings.FlightApi = values[0];
 
             // If a profile's been specified, read it and override the tracking parameters specified
             // in the settings file and/or via the command line
