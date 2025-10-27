@@ -25,7 +25,7 @@
     "MinimumTrackedAltitude": null,
     "MaximumTrackedAltitude": null,
     "TrackPosition": true,
-    "LiveApi": "AirLabs",
+    "FlightApi": "AirLabs",
     "TrackedBehaviours": [
       "Climbing",
       "Descending",

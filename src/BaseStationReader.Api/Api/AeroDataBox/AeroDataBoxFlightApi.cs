@@ -8,19 +8,16 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.Api.AirLabs
 {
-    internal class AeroDataBoxHistoricalFlightApi : ExternalApiBase, IHistoricalFlightsApi
+    internal class AeroDataBoxFlightApi : ExternalApiBase, IFlightApi
     {
         private const ApiServiceType ServiceType = ApiServiceType.AeroDataBox;
         private readonly string _baseAddress;
         private readonly string _host;
         private readonly string _key;
 
-        private readonly List<ApiProperty> _supportedProperties = [
-            ApiProperty.AircraftAddress
-        ];
 
         [ExcludeFromCodeCoverage]
-        public AeroDataBoxHistoricalFlightApi(
+        public AeroDataBoxFlightApi(
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ExternalApiSettings settings) : base(client, factory)
@@ -30,7 +27,7 @@ namespace BaseStationReader.Api.AirLabs
             _key = definition?.Key;
 
             // Get the endpoint URL, set up the base address for requests and extract the host name
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == ServiceType)?.Url;
+            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ServiceType)?.Url;
             _baseAddress = $"{url}/icao24/";
             _host = new Uri(url).Host;
 
@@ -39,22 +36,12 @@ namespace BaseStationReader.Api.AirLabs
         }
 
         /// <summary>
-        /// Return true if this implementation supports flight lookup by the specified property
-        /// </summary>
-        /// <param name="propertyType"></param>
-        /// <returns></returns>
-        public bool SupportsLookupBy(ApiProperty propertyType)
-            => _supportedProperties.Contains(propertyType);
-
-        /// <summary>
         /// Lookup flight details using a date and time
         /// </summary>
         /// <param name="address"></param>
         /// <param name="date"></param>
         /// <returns></returns>
-        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsByAircraftAsync(
-            string address,
-            DateTime date)
+        public async Task<List<Dictionary<ApiProperty, string>>> LookupFlightsAsync(string address, DateTime date)
         {
             List<Dictionary<ApiProperty, string>> properties = [];
 
@@ -66,7 +53,7 @@ namespace BaseStationReader.Api.AirLabs
 
             // Log the request
             var url = $"{_baseAddress}{address}/{fromDate}/{toDate}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.HistoricalFlights, url, ApiProperty.AircraftAddress, address);
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Flights, url, ApiProperty.AircraftAddress, address);
 
             // Make a request for the data from the API
             var node = await GetAsync(ServiceType, url, new Dictionary<string, string>()

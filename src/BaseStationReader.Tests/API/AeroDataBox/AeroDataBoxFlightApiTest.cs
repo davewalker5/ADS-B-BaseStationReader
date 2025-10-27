@@ -10,7 +10,7 @@ using BaseStationReader.Data;
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
     [TestClass]
-    public class AeroDataBoxHistoricalFlightApiTest
+    public class AeroDataBoxFlightApiTest
     {
         private const string Address = "4074B6";
         private const string Registration = "G-UZHF";
@@ -23,7 +23,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         );
 
         private MockTrackerHttpClient _client = null;
-        private IHistoricalFlightsApi _api = null;
+        private IFlightApi _api = null;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -31,7 +31,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
                 new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "an-api-key"}
             ],
             ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.HistoricalFlights, Url = "http://some.host.com/endpoint"}
+                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
             ]
         };
 
@@ -42,14 +42,14 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             var logger = new MockFileLogger();
             var factory = new DatabaseManagementFactory(logger, context, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new AeroDataBoxHistoricalFlightApi(_client, factory, _settings);
+            _api = new AeroDataBoxFlightApi(_client, factory, _settings);
         }
         
         [TestMethod]
         public async Task GetHistoricalFlightsTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
+            var properties = await _api.LookupFlightsAsync(Address, _lastSeenUtc);
 
             Assert.IsNotNull(properties);
             Assert.HasCount(2, properties);
@@ -87,7 +87,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public async Task InvalidJsonResponseTestAsync()
         {
             _client.AddResponse("{}");
-            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
+            var properties = await _api.LookupFlightsAsync(Address, _lastSeenUtc);
 
             Assert.IsNull(properties);
         }
@@ -96,7 +96,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = await _api.LookupFlightsByAircraftAsync(Address, _lastSeenUtc);
+            var properties = await _api.LookupFlightsAsync(Address, _lastSeenUtc);
 
             Assert.IsNull(properties);
         }

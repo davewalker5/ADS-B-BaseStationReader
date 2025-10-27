@@ -27,8 +27,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.CreateSightings);
-            Assert.AreEqual("AirLabs", settings.LiveApi);
-            Assert.AreEqual("AeroDataBox", settings.HistoricalApi);
+            Assert.AreEqual("AirLabs", settings.FlightApi);
             Assert.AreEqual("CheckWXApi", settings.WeatherApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
@@ -43,7 +42,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(ApiServiceType.AirLabs, aircraftEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/fleets", aircraftEndpoint.Url);
 
-            var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.ActiveFlights && x.Service == ApiServiceType.AirLabs);
+            var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ApiServiceType.AirLabs);
             Assert.AreEqual(ApiServiceType.AirLabs, flightsEndpoint.Service);
             Assert.AreEqual("https://airlabs.co/api/v9/flights", flightsEndpoint.Url);
 
@@ -51,7 +50,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(ApiServiceType.AeroDataBox, aircraftEndpoint.Service);
             Assert.AreEqual("https://aerodatabox.p.rapidapi.com/aircrafts", aircraftEndpoint.Url);
 
-            flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.HistoricalFlights && x.Service == ApiServiceType.AeroDataBox);
+            flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ApiServiceType.AeroDataBox);
             Assert.AreEqual(ApiServiceType.AeroDataBox, flightsEndpoint.Service);
             Assert.AreEqual("https://aerodatabox.p.rapidapi.com/flights", flightsEndpoint.Url);
         }
@@ -84,21 +83,12 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideLiveApiTest()
+        public void OverrideFlightApiTest()
         {
-            var args = new string[] { "--live-api", "Missing" };
+            var args = new string[] { "--flight-api", "Missing" };
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
-            Assert.AreEqual("Missing", settings.LiveApi);
-        }
-
-        [TestMethod]
-        public void OverrideHistoricalApiTest()
-        {
-            var args = new string[] { "--historical-api", "Missing" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
-            Assert.AreEqual("Missing", settings.HistoricalApi);
+            Assert.AreEqual("Missing", settings.FlightApi);
         }
 
         [TestMethod]

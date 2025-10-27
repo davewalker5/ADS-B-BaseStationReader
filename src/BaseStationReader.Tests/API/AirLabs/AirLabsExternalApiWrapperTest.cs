@@ -25,6 +25,7 @@ namespace BaseStationReader.Tests.API
         private const string AirlineICAO = "KLM";
         private const string AirlineName = "Klm Royal Dutch Airlines";
         private const string FlightIATA = "KL743";
+        private const string Callsign = "KLM743";
         private const string FlightResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"lat\": 51.17756, \"lng\": -2.833342, \"alt\": 9148, \"dir\": 253, \"speed\": 849, \"v_speed\": 0, \"flight_number\": \"743\", \"flight_icao\": \"KLM743\", \"flight_iata\": \"KL743\", \"dep_icao\": \"EHAM\", \"dep_iata\": \"AMS\", \"arr_icao\": \"SPJC\", \"arr_iata\": \"LIM\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"aircraft_icao\": \"B77W\", \"updated\": 1758446111, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
         private const string AirlineResponse = "{\"response\": [ { \"name\": \"KLM Royal Dutch Airlines\", \"iata_code\": \"KL\", \"icao_code\": \"KLM\" } ]}";
         private const string AircraftResponse = "{\"response\": [ { \"hex\": \"4851F6\", \"reg_number\": \"PH-BVS\", \"flag\": \"NL\", \"airline_icao\": \"KLM\", \"airline_iata\": \"KL\", \"seen\": 6777120, \"icao\": \"B77W\", \"iata\": \"77W\", \"model\": \"Boeing 777-300ER pax\", \"engine\": \"jet\", \"engine_count\": \"2\", \"manufacturer\": \"BOEING\", \"type\": \"landplane\", \"category\": \"H\", \"built\": 2018, \"age\": 3, \"msn\": \"61604\", \"line\": null, \"lat\": -20.645375, \"lng\": 17.240996, \"alt\": 9164, \"dir\": 354, \"speed\": 946, \"v_speed\": null, \"squawk\": null, \"last_seen\": \"2025-09-15 23:10:56\" } ]}";
@@ -41,7 +42,7 @@ namespace BaseStationReader.Tests.API
             ApiEndpoints = [
                 new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
                 new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.ActiveFlights, Url = "http://some.host.com/endpoint"}
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
             ]
         };
 
@@ -55,13 +56,14 @@ namespace BaseStationReader.Tests.API
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
             _client = new();
-            _wrapper = new ExternalApiFactory().GetWrapperInstance(
-                logger, _client, _factory, ApiServiceType.AirLabs, ApiEndpointType.ActiveFlights, _settings, false);
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.AirLabs, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
-                Address = AircraftAddress
+                Address = AircraftAddress,
+                Callsign = Callsign,
+                LastSeen = DateTime.UtcNow
             });
 
 
@@ -80,7 +82,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = null,
                 ArrivalAirportCodes = null,
@@ -105,7 +106,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Embarkation],
                 ArrivalAirportCodes = [Destination],
@@ -130,7 +130,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Destination],
                 ArrivalAirportCodes = [Embarkation],

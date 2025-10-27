@@ -264,12 +264,12 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideLiveApiTest()
+        public void OverrideFlightApiTest()
         {
-            var args = new string[] { "--live-api", "Missing" };
+            var args = new string[] { "--flight-api", "Missing" };
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.AreEqual("Missing", settings.LiveApi);
+            Assert.AreEqual("Missing", settings.FlightApi);
         }
 
         [TestMethod]

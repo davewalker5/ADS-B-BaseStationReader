@@ -6,12 +6,12 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.Api.Wrapper
 {
-    internal class AirportWeatherApiWrapper : IAirportWeatherApiWrapper
+    internal class WeatherLookupManager : IWeatherLookupManager
     {
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiRegister _register;
 
-        public AirportWeatherApiWrapper(ITrackerLogger logger, IExternalApiRegister register)
+        public WeatherLookupManager(ITrackerLogger logger, IExternalApiRegister register)
         {
             _logger = logger;
             _register = register;

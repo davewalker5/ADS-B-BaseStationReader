@@ -56,14 +56,11 @@ namespace BaseStationReader.Lookup.Logic
         /// <param name="flightsEndpointType"></param>
         /// <param name="ignoreTrackingStatus"></param>
         /// <returns></returns>
-        protected IExternalApiWrapper GetWrapperInstance(
-            string serviceTypeName,
-            ApiEndpointType flightsEndpointType = ApiEndpointType.None,
-            bool ignoreTrackingStatus = true)
+        protected IExternalApiWrapper GetWrapperInstance(string serviceTypeName)
         {
             var serviceType = ApiFactory.GetServiceTypeFromString(serviceTypeName);
             Logger.LogMessage(Severity.Info, $"Using the {serviceType} API");
-            return ApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, serviceType, flightsEndpointType, Settings, ignoreTrackingStatus);
+            return ApiFactory.GetWrapperInstance(TrackerHttpClient.Instance, Factory, serviceType, Settings);
 
         }
     }

@@ -10,13 +10,13 @@ using BaseStationReader.Data;
 namespace BaseStationReader.Tests.API.AirLabs
 {
     [TestClass]
-    public class AirLabsActiveFlightApiTest
+    public class AirLabsFlightApiTest
     {
         private const string Address = "4005C1";
         private const string Response = "{ \"response\": [ { \"hex\": \"4005C1\", \"flag\": \"UK\", \"lat\": 54.001557, \"lng\": -15.078022, \"alt\": 12516, \"dir\": 93, \"speed\": 900, \"flight_number\": \"172\", \"flight_icao\": \"BAW172\", \"flight_iata\": \"BA172\", \"dep_icao\": \"KJFK\", \"dep_iata\": \"JFK\", \"arr_icao\": \"EGLL\", \"arr_iata\": \"LHR\", \"airline_icao\": \"BAW\", \"airline_iata\": \"BA\", \"aircraft_icao\": \"B772\", \"updated\": 1758434637, \"status\": \"en-route\", \"type\": \"adsb\" } ]}";
 
         private MockTrackerHttpClient _client = null;
-        private IActiveFlightsApi _api = null;
+        private IFlightApi _api = null;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -24,7 +24,7 @@ namespace BaseStationReader.Tests.API.AirLabs
                 new ApiService() { Service = ApiServiceType.AirLabs, Key = "an-api-key"}
             ],
             ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.ActiveFlights, Url = "http://some.host.com/endpoint"}
+                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
             ]
         };
 
@@ -35,23 +35,22 @@ namespace BaseStationReader.Tests.API.AirLabs
             var logger = new MockFileLogger();
             var factory = new DatabaseManagementFactory(logger, context, 0, 0);
             _client = new MockTrackerHttpClient();
-            _api = new AirLabsActiveFlightApi(_client, factory, _settings);
+            _api = new AirLabsFlightApi(_client, factory, _settings);
         }
 
         [TestMethod]
         public async Task GetActiveFlightTestAsync()
         {
             _client.AddResponse(Response);
-            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
-            AssertPropertiesAreCorrect(properties);
+            var properties = await _api.LookupFlightsAsync(Address, DateTime.Now);
+            AssertPropertiesAreCorrect(properties[0]);
         }
 
         [TestMethod]
         public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);
-            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
-
+            var properties = await _api.LookupFlightsAsync(Address, DateTime.Now);
             Assert.IsNull(properties);
         }
 
@@ -59,8 +58,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task InvalidJsonResponseTest()
         {
             _client.AddResponse("{}");
-            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
-
+            var properties = await _api.LookupFlightsAsync(Address, DateTime.Now);
             Assert.IsNull(properties);
         }
 
@@ -68,8 +66,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         public async Task EmptyJsonResponseTestAsync()
         {
             _client.AddResponse("{\"response\": []}");
-            var properties = await _api.LookupFlightAsync(ApiProperty.AircraftAddress, Address);
-
+            var properties = await _api.LookupFlightsAsync(Address, DateTime.Now);
             Assert.IsNull(properties);
         }
 
@@ -82,7 +79,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
 
             Assert.AreEqual("BA222", iata);
         }
@@ -96,7 +93,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
 
             Assert.AreEqual("BA222", iata);
         }
@@ -110,7 +107,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "");
 
             Assert.IsEmpty(iata);
         }
@@ -124,7 +121,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
 
             Assert.AreEqual("BA222", iata);
         }
@@ -137,7 +134,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
 
             Assert.AreEqual("BA222", iata);
         }
@@ -150,7 +147,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
             Assert.IsEmpty(iata);
         }
 
@@ -161,7 +158,7 @@ namespace BaseStationReader.Tests.API.AirLabs
             }";
 
             var node = JsonNode.Parse(json);
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(node, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(node, "BA");
             Assert.IsEmpty(iata);
         }
 
@@ -169,7 +166,7 @@ namespace BaseStationReader.Tests.API.AirLabs
         [TestMethod]
         public void ExtractFlightIATAFromNullNodeTest()
         {
-            var iata = AirLabsActiveFlightApi.ExtractFlightIATA(null, "BA");
+            var iata = AirLabsFlightApi.ExtractFlightIATA(null, "BA");
             Assert.IsEmpty(iata);
         }
 

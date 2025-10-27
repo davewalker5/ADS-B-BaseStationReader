@@ -29,11 +29,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.CreateSightings);
             if (values != null) settings.CreateSightings = bool.Parse(values[0]);
 
-            values = parser.GetValues(CommandLineOptionType.LiveApi);
-            if (values != null) settings.LiveApi = values[0];
-
-            values = parser.GetValues(CommandLineOptionType.HistoricalApi);
-            if (values != null) settings.HistoricalApi = values[0];
+            values = parser.GetValues(CommandLineOptionType.FlightApi);
+            if (values != null) settings.FlightApi = values[0];
 
             values = parser.GetValues(CommandLineOptionType.WeatherApi);
             if (values != null) settings.WeatherApi = values[0];

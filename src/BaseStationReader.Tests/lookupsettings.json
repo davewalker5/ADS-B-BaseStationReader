@@ -3,8 +3,7 @@
     "LogFile": "AircraftLookup.log",
     "MinimumLogLevel": "Info",
     "CreateSightings": false,
-    "LiveApi": "AirLabs",
-    "HistoricalApi": "AeroDataBox",
+    "FlightApi": "AirLabs",
     "WeatherApi": "CheckWXApi",
     "ReceiverLatitude": 51.470020,
     "ReceiverLongitude": -0.454295,
@@ -17,7 +16,7 @@
         "Url": "https://aerodatabox.p.rapidapi.com/aircrafts"
       },
       {
-        "EndpointType": "HistoricalFlights",
+        "EndpointType": "Flights",
         "Service": "AeroDataBox",
         "Url": "https://aerodatabox.p.rapidapi.com/flights"
       },
@@ -32,14 +31,9 @@
         "Url": "https://airlabs.co/api/v9/fleets"
       },
       {
-        "EndpointType": "ActiveFlights",
+        "EndpointType": "Flights",
         "Service": "AirLabs",
         "Url": "https://airlabs.co/api/v9/flights"
-      },
-      {
-        "EndpointType": "METAR",
-        "Service": "CheckWXApi",
-        "Url": "https://api.checkwx.com/metar"
       },
       {
         "EndpointType": "METAR",

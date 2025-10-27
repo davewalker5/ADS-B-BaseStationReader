@@ -49,7 +49,6 @@ namespace BaseStationReader.Tests.API
             ApiEndpoints = [
                 new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
                 new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.ActiveFlights, Url = "http://some.host.com/endpoint"},
                 new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.METAR, Url = "http://some.host.com/endpoint"},
                 new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.TAF, Url = "http://some.host.com/endpoint"}
             ]
@@ -64,8 +63,7 @@ namespace BaseStationReader.Tests.API
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
             _client = new();
-            _wrapper = new ExternalApiFactory().GetWrapperInstance(
-                logger, _client, _factory, ApiServiceType.SkyLink, ApiEndpointType.ActiveFlights, _settings, false);
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.SkyLink, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
@@ -100,12 +98,9 @@ namespace BaseStationReader.Tests.API
         public async Task LookupTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = null,
                 ArrivalAirportCodes = null,
@@ -125,12 +120,9 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithAcceptingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Embarkation],
                 ArrivalAirportCodes = [Destination],
@@ -147,12 +139,9 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Destination],
                 ArrivalAirportCodes = [Embarkation],
@@ -169,12 +158,9 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingDepartureAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Destination],
                 ArrivalAirportCodes = [Destination],
@@ -191,12 +177,9 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingArrivalAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.ActiveFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Embarkation],
                 ArrivalAirportCodes = [Embarkation],

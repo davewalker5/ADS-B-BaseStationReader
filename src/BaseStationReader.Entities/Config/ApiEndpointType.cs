@@ -5,8 +5,7 @@
         None,
         Airlines,
         Aircraft,
-        ActiveFlights,
-        HistoricalFlights,
+        Flights,
         METAR,
         Schedules,
         TAF

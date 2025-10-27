@@ -88,16 +88,10 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAircraftImportAsync();
                 }
 
-                // If an aircraft address has been supplied, look it up and store the results
-                if (parser.IsPresent(CommandLineOptionType.AircraftAddress))
+                // Lookup flight details and store the results
+                if (parser.IsPresent(CommandLineOptionType.AircraftLookup))
                 {
                     await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
-                }
-
-                // Lookup historical flight details and store the results
-                if (parser.IsPresent(CommandLineOptionType.HistoricalLookup))
-                {
-                    await new HistoricalAircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Look up the current weather at a given airport

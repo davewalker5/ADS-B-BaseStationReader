@@ -104,7 +104,7 @@ namespace BaseStationReader.Lookup.Logic
             }
 
             // Construct the API instance
-            _api = ApiFactory.GetApiInstance(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules, Logger, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
+            _api = ApiFactory.GetApiInstance(ApiServiceType.AeroDataBox, ApiEndpointType.Schedules, TrackerHttpClient.Instance, Factory, Settings) as ISchedulesApi;
             if (_api == null)
             {
                 Logger.LogMessage(Severity.Error, $"API instance is not a schedule retrieval API");

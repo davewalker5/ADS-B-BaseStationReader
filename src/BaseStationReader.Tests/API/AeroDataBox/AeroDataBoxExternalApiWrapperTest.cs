@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.API
             ],
             ApiEndpoints = [
                 new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.HistoricalFlights, Url = "http://some.host.com/endpoint"}
+                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
             ]
         };
 
@@ -55,8 +55,7 @@ namespace BaseStationReader.Tests.API
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
             _client = new();
-            _wrapper = new ExternalApiFactory().GetWrapperInstance(
-                logger, _client, _factory, ApiServiceType.AeroDataBox, ApiEndpointType.HistoricalFlights, _settings, false);
+            _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.AeroDataBox, _settings);
 
             // Create a tracked aircraft that will match the first flight in the flights response
             DateTime.TryParse(DepartureTime, null, DateTimeStyles.AdjustToUniversal, out DateTime utc);
@@ -82,7 +81,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.HistoricalFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = null,
                 ArrivalAirportCodes = null,
@@ -103,7 +101,6 @@ namespace BaseStationReader.Tests.API
         {
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.HistoricalFlights,
                 AircraftAddress = "",
                 DepartureAirportCodes = null,
                 ArrivalAirportCodes = null,
@@ -123,7 +120,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.HistoricalFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = null,
                 ArrivalAirportCodes = null,
@@ -144,7 +140,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.HistoricalFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Embarkation],
                 ArrivalAirportCodes = [Destination],
@@ -168,7 +163,6 @@ namespace BaseStationReader.Tests.API
 
             var request = new ApiLookupRequest()
             {
-                FlightEndpointType = ApiEndpointType.HistoricalFlights,
                 AircraftAddress = AircraftAddress,
                 DepartureAirportCodes = [Destination],
                 ArrivalAirportCodes = [Embarkation],
