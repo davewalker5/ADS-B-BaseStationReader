@@ -63,7 +63,7 @@ namespace BaseStationReader.Lookup.Logic
         {
             var serviceType = ApiFactory.GetServiceTypeFromString(serviceTypeName);
             Logger.LogMessage(Severity.Info, $"Using the {serviceType} API");
-            return ApiFactory.GetWrapperInstance(Logger, TrackerHttpClient.Instance, Factory, serviceType, flightsEndpointType, Settings, ignoreTrackingStatus);
+            return ApiFactory.GetWrapperInstance(TrackerHttpClient.Instance, Factory, serviceType, flightsEndpointType, Settings);
 
         }
     }

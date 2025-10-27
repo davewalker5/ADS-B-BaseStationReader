@@ -7,18 +7,15 @@ namespace BaseStationReader.Interfaces.Api
     public interface IExternalApiFactory
     {
         IExternalApiWrapper GetWrapperInstance(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ApiServiceType service,
             ApiEndpointType flightsEndpointType,
-            ExternalApiSettings settings,
-            bool ignoreTrackingStatus);
+            ExternalApiSettings settings);
 
         IExternalApi GetApiInstance(
                     ApiServiceType service,
                     ApiEndpointType endpoint,
-                    ITrackerLogger logger,
                     ITrackerHttpClient client,
                     IDatabaseManagementFactory factory,
                     ExternalApiSettings settings);

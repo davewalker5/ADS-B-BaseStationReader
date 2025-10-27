@@ -52,22 +52,19 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="ignoreTrackingStatus"></param>
         /// <returns></returns>
         public IExternalApiWrapper GetWrapperInstance(
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ApiServiceType service,
             ApiEndpointType flightsEndpointType,
-            ExternalApiSettings settings,
-            bool ignoreTrackingStatus)
+            ExternalApiSettings settings)
         {
             // Create an instance of the wrapper
-            var wrapper = new ExternalApiWrapper(ignoreTrackingStatus, logger, factory);
+            var wrapper = new ExternalApiWrapper(factory);
 
             // Get an instance of the flights API and register it
             var flightsApi = GetApiInstance(
                 service,
                 flightsEndpointType,
-                logger,
                 client,
                 factory,
                 settings);
@@ -82,7 +79,6 @@ namespace BaseStationReader.Api.Wrapper
             var airlinesApi = GetApiInstance(
                 service,
                 ApiEndpointType.Airlines,
-                logger,
                 client,
                 factory,
                 settings);
@@ -96,7 +92,6 @@ namespace BaseStationReader.Api.Wrapper
             var aircraftApi = GetApiInstance(
                 service,
                 ApiEndpointType.Aircraft,
-                logger,
                 client,
                 factory,
                 settings);
@@ -110,7 +105,6 @@ namespace BaseStationReader.Api.Wrapper
             var metarApi = GetApiInstance(
                 service,
                 ApiEndpointType.METAR,
-                logger,
                 client,
                 factory,
                 settings);
@@ -124,7 +118,6 @@ namespace BaseStationReader.Api.Wrapper
             var tafApi = GetApiInstance(
                 service,
                 ApiEndpointType.TAF,
-                logger,
                 client,
                 factory,
                 settings);
@@ -150,7 +143,6 @@ namespace BaseStationReader.Api.Wrapper
         public IExternalApi GetApiInstance(
             ApiServiceType service,
             ApiEndpointType endpoint,
-            ITrackerLogger logger,
             ITrackerHttpClient client,
             IDatabaseManagementFactory factory,
             ExternalApiSettings settings)
@@ -158,24 +150,24 @@ namespace BaseStationReader.Api.Wrapper
             // Get the type for the service
             if (!_map.TryGetValue((service, endpoint), out Type type))
             {
-                logger.LogMessage(Severity.Warning, $"{endpoint} API for service {service} is not registered");
+                factory.Logger.LogMessage(Severity.Warning, $"{endpoint} API for service {service} is not registered");
                 return null;
             }
 
-            logger.LogMessage(Severity.Debug, $"{endpoint} API for service {service} is of type {type.Name}");
+            factory.Logger.LogMessage(Severity.Debug, $"{endpoint} API for service {service} is of type {type.Name}");
 
             // Create an instance of the type
             var instance = Activator.CreateInstance(type, client, factory, settings);
             if (instance == null)
             {
-                logger.LogMessage(Severity.Error, $"Failed to create instance of {type.Name}");
+                factory.Logger.LogMessage(Severity.Error, $"Failed to create instance of {type.Name}");
                 return null;
             }
 
             // Check the type of the instance is as expected
             if (instance is not IExternalApi typed)
             {
-                logger.LogMessage(Severity.Error, $"Created instance is of type {instance.GetType().Name}, expected {typeof(IExternalApi).Name}");
+                factory.Logger.LogMessage(Severity.Error, $"Created instance is of type {instance.GetType().Name}, expected {typeof(IExternalApi).Name}");
                 return null;
             }
 
