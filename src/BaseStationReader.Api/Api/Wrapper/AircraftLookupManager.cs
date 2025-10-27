@@ -39,30 +39,17 @@ namespace BaseStationReader.Api.Wrapper
         }
 
         /// <summary>
-        /// Log the details for an aircraft
-        /// </summary>
-        /// <param name="aircraft"></param>
-        private void LogAircraftDetails(Aircraft aircraft)
-            => _factory.Logger.LogMessage(Severity.Info,
-                $"Identified aircraft: " +
-                $"Address = {aircraft.Address}, " +
-                $"Registration = {aircraft.Registration}, " +
-                $"Model = {aircraft.Model.IATA}, {aircraft.Model.ICAO}, {aircraft.Model.Name}, " +
-                $"Manufacturer = {aircraft.Model.Manufacturer.Name}, " +
-                $"Manufactured = {aircraft.Manufactured}");
-
-        /// <summary>
         /// Attempt to load an aircraft from the database
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
         private async Task<Aircraft> LoadAircraftAsync(string address)
         {
-            _factory.Logger.LogMessage(Severity.Info, $"Looking up aircraft {address} in the database");
+            LogMessage(Severity.Info, address, $"Attempting to retrieve the aircraft from the database");
             var aircraft = await _factory.AircraftManager.GetAsync(x => x.Address == address);
             if (aircraft == null)
             {
-                _factory.Logger.LogMessage(Severity.Info, $"Aircraft '{address}' is not stored locally");
+                LogMessage(Severity.Info, address, $"Aircraft is not stored locally");
             }
 
             return aircraft;
@@ -80,11 +67,11 @@ namespace BaseStationReader.Api.Wrapper
             // Get the API instance
             if (_register.GetInstance(ApiEndpointType.Aircraft) is not IAircraftApi api)
             {
-                _factory.Logger.LogMessage(Severity.Error, $"Registered aircraft API is not an instance of {typeof(IAircraftApi).Name}");
+                LogMessage(Severity.Error, address, $"Registered aircraft API is not an instance of {typeof(IAircraftApi).Name}");
                 return null;
             }
 
-            _factory.Logger.LogMessage(Severity.Info, $"Using the API to look up details for aircraft '{address}'");
+            LogMessage(Severity.Info, address, $"Using the {api.GetType().Name} API to look up aircraft details");
 
             // Not stored locally, so use the API to look it up
             var properties = await api.LookupAircraftAsync(address);
@@ -103,11 +90,32 @@ namespace BaseStationReader.Api.Wrapper
             }
             else
             {
-                _factory.Logger.LogMessage(Severity.Info, $"API lookup for aircraft {address} produced no results");
+                LogMessage(Severity.Info, address, "API lookup produced no results");
             }
 
             return aircraft;
         }
+
+        /// <summary>
+        /// Output a message formatted with the aircraft address
+        /// </summary>
+        /// <param name="severity"></param>
+        /// <param name="address"></param>
+        /// <param name="message"></param>
+        private void LogMessage(Severity severity, string address, string message)
+            => _factory.Logger.LogMessage(severity, $"Aircraft '{address}': {message}");
+
+        /// <summary>
+        /// Log the details for an aircraft
+        /// </summary>
+        /// <param name="aircraft"></param>
+        private void LogAircraftDetails(Aircraft aircraft)
+            => LogMessage(Severity.Info, aircraft.Address, 
+                $"Identified aircraft: " +
+                $"Registration = {aircraft.Registration}, " +
+                $"Model = {aircraft.Model.IATA}, {aircraft.Model.ICAO}, {aircraft.Model.Name}, " +
+                $"Manufacturer = {aircraft.Model.Manufacturer.Name}, " +
+                $"Manufactured = {aircraft.Manufactured}");
 
         /// <summary>
         /// Extract the year of manufacture from a string representation of either the integer year or

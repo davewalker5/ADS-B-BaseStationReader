@@ -12,7 +12,7 @@ namespace BaseStationReader.Tests.API.SkyLink
     [TestClass]
     public class AircraftLookupManagerTest
     {
-        private readonly string Address = "8963E6";
+        private const string Address = "8963E6";
         private const string Manufacturer = "Airbus";
         private const string ModelIATA = "388";
         private const string ModelICAO = "A388";
