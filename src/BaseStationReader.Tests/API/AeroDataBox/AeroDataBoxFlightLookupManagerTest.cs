@@ -7,7 +7,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
 
-namespace BaseStationReader.Tests.API.Wrapper
+namespace BaseStationReader.Tests.API.AeroDataBox
 {
     [TestClass]
     public class AeroDataBoxFlightLookupManagerTest
@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             // Add the airline to the database
             _ = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
 
-            // Construct the aircraft lookup management instance
+            // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
             var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.AeroDataBox, ApiEndpointType.Flights, _client, _factory, _settings);
             var register = new ExternalApiRegister(logger);

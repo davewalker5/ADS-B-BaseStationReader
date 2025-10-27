@@ -39,7 +39,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
-            // Construct the airline lookup management instance
+            // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
             var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.SkyLink, ApiEndpointType.Airlines, _client, _factory, _settings);
             var register = new ExternalApiRegister(logger);

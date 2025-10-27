@@ -47,7 +47,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             var manufacturer = await _factory.ManufacturerManager.AddAsync(Manufacturer);
             _model = await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
 
-            // Construct the aircraft lookup management instance
+            // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
             var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.SkyLink, ApiEndpointType.Aircraft, _client, _factory, _settings);
             var register = new ExternalApiRegister(logger);
