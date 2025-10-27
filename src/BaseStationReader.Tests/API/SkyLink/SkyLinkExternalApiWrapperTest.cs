@@ -98,8 +98,6 @@ namespace BaseStationReader.Tests.API
         public async Task LookupTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
@@ -122,8 +120,6 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithAcceptingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
@@ -143,8 +139,6 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
@@ -164,8 +158,6 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingDepartureAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
@@ -185,8 +177,6 @@ namespace BaseStationReader.Tests.API
         public async Task LookupWithExcludingArrivalAirportFiltersTestAsync()
         {
             _client.AddResponse(AircraftResponse);
-            _client.AddResponse(FlightResponse);
-            _client.AddResponse(AirlineResponse);
 
             var request = new ApiLookupRequest()
             {
