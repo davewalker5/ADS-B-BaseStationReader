@@ -14,6 +14,8 @@ namespace BaseStationReader.Entities.Config
         /// </summary>
         public int RateLimit { get; set; } = 0;
 
+        public List<ApiEndpoint> ApiEndpoints { get; set; }
+
         public override string ToString()
             => $"{Service} : Key = {Key}";
     }

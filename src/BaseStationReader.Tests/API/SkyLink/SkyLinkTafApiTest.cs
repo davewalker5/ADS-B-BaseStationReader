@@ -20,10 +20,13 @@ namespace BaseStationReader.Tests.API.SkyLink
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServices = [
-                new ApiService() { Service = ApiServiceType.SkyLink, Key = "an-api-key"}
-            ],
-            ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.TAF, Url = "http://some.host.com/endpoint"}
+                new ApiService()
+                {
+                    Service = ApiServiceType.SkyLink, Key = "an-api-key",
+                    ApiEndpoints = [
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.TAF, Url = "http://some.host.com/endpoint"}
+                    ]
+                }
             ]
         };
 

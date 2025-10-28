@@ -28,10 +28,13 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServices = [
-                new ApiService() { Service = ApiServiceType.AeroDataBox, Key = "an-api-key"}
-            ],
-            ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.AeroDataBox, EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
+                new ApiService()
+                {
+                    Service = ApiServiceType.AeroDataBox, Key = "an-api-key",
+                    ApiEndpoints = [
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.Flights, Url = "http://some.host.com/endpoint"}
+                    ]
+                }
             ]
         };
 
