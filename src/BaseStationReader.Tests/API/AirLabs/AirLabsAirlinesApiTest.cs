@@ -21,10 +21,13 @@ namespace BaseStationReader.Tests.API.AirLabs
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServices = [
-                new ApiService() { Service = ApiServiceType.AirLabs, Key = "an-api-key"}
-            ],
-            ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.AirLabs, EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"}
+                new ApiService()
+                {
+                    Service = ApiServiceType.AirLabs, Key = "an-api-key",
+                    ApiEndpoints = [
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"}
+                    ]
+                }
             ]
         };
 

@@ -22,7 +22,7 @@ namespace BaseStationReader.Api.AirLabs
             var definition = settings.ApiServices.FirstOrDefault(x => x.Service == ServiceType);
 
             // Get the endpoint URL and set up the base address for requests
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
+            var url = definition.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft)?.Url;
             _baseAddress = $"{url}?api_key={definition?.Key}";
 
             // Set the rate limit for this service on the HTTP client

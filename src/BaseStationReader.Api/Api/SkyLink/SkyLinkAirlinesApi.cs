@@ -25,7 +25,7 @@ namespace BaseStationReader.Api.SkyLink
             _key = definition?.Key;
 
             // Get the endpoint URL, set up the base address for requests and extract the host name
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Airlines && x.Service == ServiceType)?.Url;
+            var url = definition.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Airlines)?.Url;
             _baseAddress = $"{url}";
             _host = new Uri(url).Host;
 
