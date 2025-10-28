@@ -27,7 +27,7 @@ namespace BaseStationReader.Api.AeroDatabox
             _key = definition?.Key;
 
             // Get the endpoint URL, set up the base address for requests and extract the host name
-            var url = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ServiceType)?.Url;
+            var url = definition.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.Aircraft)?.Url;
             _baseAddress = $"{url}/icao24/";
             _host = new Uri(url).Host;
 

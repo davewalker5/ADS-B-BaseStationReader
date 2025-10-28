@@ -24,7 +24,7 @@ namespace BaseStationReader.Api.CheckWXApi
             _key = definition?.Key;
 
             // Get the endpoint URL and set up the base address for requests
-            _baseAddress = settings.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.METAR && x.Service == ServiceType)?.Url;
+            _baseAddress = definition.ApiEndpoints.FirstOrDefault(x => x.EndpointType == ApiEndpointType.METAR)?.Url;
 
             // Set the rate limit for this service on the HTTP client
             client.SetRateLimits(ServiceType, definition?.RateLimit ?? 0);            

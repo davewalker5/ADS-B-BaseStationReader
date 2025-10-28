@@ -45,13 +45,16 @@ namespace BaseStationReader.Tests.API
         private readonly ExternalApiSettings _settings = new()
         {
             ApiServices = [
-                new ApiService() { Service = ApiServiceType.SkyLink, Key = "an-api-key"}
-            ],
-            ApiEndpoints = [
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.METAR, Url = "http://some.host.com/endpoint"},
-                new ApiEndpoint() { Service = ApiServiceType.SkyLink, EndpointType = ApiEndpointType.TAF, Url = "http://some.host.com/endpoint"}
+                new ApiService()
+                {
+                    Service = ApiServiceType.SkyLink, Key = "an-api-key",
+                    ApiEndpoints = [
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.Aircraft, Url = "http://some.host.com/endpoint"},
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.Airlines, Url = "http://some.host.com/endpoint"},
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.METAR, Url = "http://some.host.com/endpoint"},
+                        new ApiEndpoint() { EndpointType = ApiEndpointType.TAF, Url = "http://some.host.com/endpoint"}
+                    ]
+                }
             ]
         };
 

@@ -147,9 +147,9 @@ namespace BaseStationReader.BusinessLogic.Logging
                 LogMessage(Severity.Debug, service.ToString(), caller);
 
                 // Iterate over the service endpoints and log each one
-                foreach (var endpoint in settings.ApiEndpoints.Where(x => x.Service == service.Service))
+                foreach (var endpoint in service.ApiEndpoints)
                 {
-                    LogMessage(Severity.Debug, endpoint.ToString(), caller);
+                    LogMessage(Severity.Debug, $"{service.Service} API : {endpoint}", caller);
                 }
             }
         }

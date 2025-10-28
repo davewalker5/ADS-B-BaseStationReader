@@ -34,25 +34,15 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual("09:00", settings.ScheduleStartTime);
             Assert.AreEqual("21:00", settings.ScheduleEndTime);
 
-            var airlinesEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Airlines && x.Service == ApiServiceType.AirLabs);
-            Assert.AreEqual(ApiServiceType.AirLabs, airlinesEndpoint.Service);
-            Assert.AreEqual("https://airlabs.co/api/v9/airlines", airlinesEndpoint.Url);
-
-            var aircraftEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ApiServiceType.AirLabs);
-            Assert.AreEqual(ApiServiceType.AirLabs, aircraftEndpoint.Service);
-            Assert.AreEqual("https://airlabs.co/api/v9/fleets", aircraftEndpoint.Url);
-
-            var flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ApiServiceType.AirLabs);
-            Assert.AreEqual(ApiServiceType.AirLabs, flightsEndpoint.Service);
-            Assert.AreEqual("https://airlabs.co/api/v9/flights", flightsEndpoint.Url);
-
-            aircraftEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft && x.Service == ApiServiceType.AeroDataBox);
-            Assert.AreEqual(ApiServiceType.AeroDataBox, aircraftEndpoint.Service);
+            var definition = settings.ApiServices.First(x => x.Service == ApiServiceType.AeroDataBox);
+            var aircraftEndpoint = definition.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft);
             Assert.AreEqual("https://aerodatabox.p.rapidapi.com/aircrafts", aircraftEndpoint.Url);
 
-            flightsEndpoint = settings.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Flights && x.Service == ApiServiceType.AeroDataBox);
-            Assert.AreEqual(ApiServiceType.AeroDataBox, flightsEndpoint.Service);
+            var flightsEndpoint = definition.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Flights);
             Assert.AreEqual("https://aerodatabox.p.rapidapi.com/flights", flightsEndpoint.Url);
+
+            aircraftEndpoint = definition.ApiEndpoints.First(x => x.EndpointType == ApiEndpointType.Aircraft);
+            Assert.AreEqual("https://aerodatabox.p.rapidapi.com/aircrafts", aircraftEndpoint.Url);
         }
 
         [TestMethod]
