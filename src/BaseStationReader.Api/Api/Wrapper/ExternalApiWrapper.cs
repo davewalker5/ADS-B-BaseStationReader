@@ -64,11 +64,10 @@ namespace BaseStationReader.Api.Wrapper
             var trackedAircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
             if (trackedAircraft == null)
             {
-                // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
-                // filled in, so allow requeues. Otherwise, the exclusion is more permanent so don't allow requeues
+                // As we didn't find a tracked aircraft record, there's no point attempting to update the lookup properties
+                // but requeues are allowed in case the tracked aircraft record hasn't been written yet
                 _factory.Logger.LogMessage(Severity.Warning, $"'{request.AircraftAddress}' is not a candidate for lookup");
-                var allowRequeue = string.IsNullOrEmpty(trackedAircraft.Callsign);
-                return new(false, allowRequeue);
+                return new(false, true);
             }
 
             // Lookup the aircraft
@@ -76,6 +75,7 @@ namespace BaseStationReader.Api.Wrapper
             if (aircraft == null)
             {
                 // If an aircraft isn't identifiable, there's no point allowing requeues
+                await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, false);
                 return new(false, false);
             }
 
@@ -83,7 +83,11 @@ namespace BaseStationReader.Api.Wrapper
             var flight = await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, request.DepartureAirportCodes, request.ArrivalAirportCodes);
             if (flight == null)
             {
-                return new(false, false);
+                // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
+                // filled in, so allow requeues. Otherwise, the exclusion is more permanent so don't allow requeues
+                await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, false);
+                var allowRequeue = string.IsNullOrEmpty(trackedAircraft?.Callsign);
+                return new(false, allowRequeue);
             }
 
             // We have both an aircraft and a flight - if required, create a sighting
@@ -92,6 +96,7 @@ namespace BaseStationReader.Api.Wrapper
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
             }
 
+            await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, true);
             return new(true, false);
         }
 

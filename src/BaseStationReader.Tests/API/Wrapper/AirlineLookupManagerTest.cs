@@ -20,6 +20,8 @@ namespace BaseStationReader.Tests.API.Wrapper
         private IDatabaseManagementFactory _factory;
         private IAirlineLookupManager _manager;
         private MockTrackerHttpClient _client;
+        private IExternalApi _api;
+        private IExternalApiRegister _register;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -41,15 +43,31 @@ namespace BaseStationReader.Tests.API.Wrapper
 
             // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
-            var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.SkyLink, ApiEndpointType.Airlines, _client, _factory, _settings);
-            var register = new ExternalApiRegister(logger);
-            register.RegisterExternalApi(ApiEndpointType.Airlines, api);
-            _manager = new AirlineLookupManager(register, _factory);
+            _api = new ExternalApiFactory().GetApiInstance(ApiServiceType.SkyLink, ApiEndpointType.Airlines, _client, _factory, _settings);
+            _register = new ExternalApiRegister(logger);
+            _manager = new AirlineLookupManager(_register, _factory);
+        }
+
+        [TestMethod]
+        public async Task LookupWithInvalidPropertiesTestAsyc()
+        {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
+            var airline = await _manager.IdentifyAirlineAsync(null, null, null);
+            Assert.IsNull(airline);
+        }
+
+        [TestMethod]
+        public async Task LookupWithInvalidApiTestAsyc()
+        {
+            _client.AddResponse(Response);
+            var airline = await _manager.IdentifyAirlineAsync(IATA, null, null);
+            Assert.IsNull(airline);
         }
 
         [TestMethod]
         public async Task LookupFromDatabaseUsingIATACodeTestAsyc()
         {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
             var local = await _factory.AirlineManager.AddAsync(IATA, ICAO, Name);
 
             var airline = await _manager.IdentifyAirlineAsync(IATA, null, null);
@@ -64,6 +82,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseUsingICAOCodeTestAsyc()
         {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
             var local = await _factory.AirlineManager.AddAsync(IATA, ICAO, Name);
 
             var airline = await _manager.IdentifyAirlineAsync(null, ICAO, null);
@@ -78,6 +97,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseUsingNameTestAsyc()
         {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
             var local = await _factory.AirlineManager.AddAsync(IATA, ICAO, Name);
 
             var airline = await _manager.IdentifyAirlineAsync(null, null, Name);
@@ -92,6 +112,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupViaApiUsingIATACodeTestAsync()
         {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
             _client.AddResponse(Response);
 
             var airline = await _manager.IdentifyAirlineAsync(IATA, null, null);
@@ -106,6 +127,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupViaApiUsingICAOCodeTestAsync()
         {
+            _register.RegisterExternalApi(ApiEndpointType.Airlines, _api);
             _client.AddResponse(Response);
 
             var airline = await _manager.IdentifyAirlineAsync(null, ICAO, null);

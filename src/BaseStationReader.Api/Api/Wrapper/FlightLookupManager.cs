@@ -126,7 +126,7 @@ namespace BaseStationReader.Api.Wrapper
                 return null;
             }
 
-            LogMessage(Severity.Info, aircraft?.Address, $"Using the {api.GetType().Name} API to look up flight details");
+            LogMessage(Severity.Info, aircraft.Address, $"Using the {api.GetType().Name} API to look up flight details");
 
             // Lookup flights for this aircraft - this may return multiple flights
             var properties = await api.LookupFlightsAsync(aircraft.Address, aircraft.LastSeen);

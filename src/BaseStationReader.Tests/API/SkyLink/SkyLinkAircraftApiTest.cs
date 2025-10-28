@@ -58,6 +58,24 @@ namespace BaseStationReader.Tests.API.SkyLink
         }
 
         [TestMethod]
+        public async Task EmptyResponseTestAsync()
+        {
+            _client.AddResponse("{\"aircraft\": []}");
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
+        public async Task NullAircraftTestAsync()
+        {
+            _client.AddResponse("{\"aircraft\": [ null ]}");
+            var properties = await _api.LookupAircraftAsync(Address);
+
+            Assert.IsNull(properties);
+        }
+
+        [TestMethod]
         public async Task NullResponseTestAsync()
         {
             _client.AddResponse(null);

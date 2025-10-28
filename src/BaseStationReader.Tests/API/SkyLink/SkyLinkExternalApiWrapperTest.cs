@@ -40,6 +40,7 @@ namespace BaseStationReader.Tests.API
         private MockTrackerHttpClient _client;
         private IExternalApiWrapper _wrapper;
         private IDatabaseManagementFactory _factory;
+        private TrackedAircraft _trackedAircraft;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -65,14 +66,14 @@ namespace BaseStationReader.Tests.API
             _client = new();
             _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.SkyLink, _settings);
 
-            // Create a tracked aircraft that will match the first flight in the flights response
-            _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            // Create a tracked aircraft that will match the first flight in the flights response but don't
+            // write it to the database yet, as one test is a lookup with that record missing
+            _trackedAircraft = new()
             {
                 Address = AircraftAddress,
                 Callsign = Callsign,
-                LastSeen = DateTime.Today,
-                Status = TrackingStatus.Active
-            });
+                LastSeen = DateTime.UtcNow
+            };
 
             // Add the flight IATA code mapping
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(
@@ -97,6 +98,7 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupTestAsync()
         {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
             _client.AddResponse(AircraftResponse);
 
             var request = new ApiLookupRequest()
@@ -117,8 +119,47 @@ namespace BaseStationReader.Tests.API
         }
 
         [TestMethod]
+        public async Task LookupWithNoTrackedAircraftTestAsync()
+        {
+            _client.AddResponse(AircraftResponse);
+            _client.AddResponse(FlightResponse);
+
+            var request = new ApiLookupRequest()
+            {
+                AircraftAddress = AircraftAddress,
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsTrue(result.Requeue);
+        }
+
+        [TestMethod]
+        public async Task LookupInvalidAddressTestAsync()
+        {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
+            var request = new ApiLookupRequest()
+            {
+                AircraftAddress = "",
+                DepartureAirportCodes = null,
+                ArrivalAirportCodes = null,
+                CreateSighting = true
+            };
+
+            var result = await _wrapper.LookupAsync(request);
+
+            Assert.IsFalse(result.Successful);
+            Assert.IsFalse(result.Requeue);
+        }
+
+        [TestMethod]
         public async Task LookupWithAcceptingAirportFiltersTestAsync()
         {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
             _client.AddResponse(AircraftResponse);
 
             var request = new ApiLookupRequest()
@@ -138,6 +179,7 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupWithExcludingAirportFiltersTestAsync()
         {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
             _client.AddResponse(AircraftResponse);
 
             var request = new ApiLookupRequest()
@@ -157,6 +199,7 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupWithExcludingDepartureAirportFiltersTestAsync()
         {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
             _client.AddResponse(AircraftResponse);
 
             var request = new ApiLookupRequest()
@@ -176,6 +219,7 @@ namespace BaseStationReader.Tests.API
         [TestMethod]
         public async Task LookupWithExcludingArrivalAirportFiltersTestAsync()
         {
+            await _factory.TrackedAircraftWriter.WriteAsync(_trackedAircraft);
             _client.AddResponse(AircraftResponse);
 
             var request = new ApiLookupRequest()
