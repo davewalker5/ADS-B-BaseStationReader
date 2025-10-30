@@ -166,11 +166,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var apiWrapper = _apiFactory.GetWrapperInstance(_client, factory, serviceType, _settings);
 
             // Configure the queued writer
+            var queuedWriterNotificationSender = new QueuedWriterNotificationSender(factory.Logger);
             var writerTimer = new TrackerTimer(_settings.WriterInterval);
             _writer = new QueuedWriter(
                 factory,
                 apiWrapper,
                 writerTimer,
+                queuedWriterNotificationSender,
                 _departureAirportCodes,
                 _arrivalAirportCodes,
                 _settings.WriterBatchSize,

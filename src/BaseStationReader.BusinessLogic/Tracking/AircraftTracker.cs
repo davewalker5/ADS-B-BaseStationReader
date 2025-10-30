@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Messages;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Messages;
 using System.Collections.Concurrent;
+using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {

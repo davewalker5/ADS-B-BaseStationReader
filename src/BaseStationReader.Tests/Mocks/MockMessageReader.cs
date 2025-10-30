@@ -1,22 +1,24 @@
 ﻿using BaseStationReader.Entities.Events;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Entities.Messages;
+using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Tests.Mocks
 {
     internal class MockMessageReader : IMessageReader
     {
+        private readonly ITrackerLogger _logger;
         private readonly IEnumerable<string> _messages;
-        private readonly int _interval;
-        private readonly bool _sendEmptyMessages;
+        private readonly int _delay;
 
         public event EventHandler<MessageReadEventArgs> MessageRead;
 
-        public MockMessageReader(IEnumerable<string> messages, int interval, bool sendEmptyMessages)
+        public MockMessageReader(ITrackerLogger logger, IEnumerable<string> messages, int delay)
         {
+            _logger = logger;
             _messages = messages;
-            _interval = interval;
-            _sendEmptyMessages = sendEmptyMessages;
+            _delay = delay;
         }
 
         /// <summary>
@@ -49,16 +51,21 @@ namespace BaseStationReader.Tests.Mocks
 
                     // Reconstruct the message and notify subscribers
                     var reconstructed = string.Join(",", fields);
+                    _logger.LogMessage(Severity.Info, $"Sending message: {reconstructed}");
                     MessageRead?.Invoke(this, new MessageReadEventArgs { Message = reconstructed });
+
+                    // Allow some time for the (asynchronous) message propagation from the Aircraft Tracker
+                    // to arrive
+                    Thread.Sleep(_delay);
                 }
 
                 // If the message queue's been emptied, send empty messages at the defined interval. This is
                 // needed because in the context of the tests the aircraft tracker test exits prematurely if
                 // the reader stops sending messages
-                //while (_sendEmptyMessages && !token.IsCancellationRequested)
-                //{
+                // while (!token.IsCancellationRequested)
+                // {
                 //    MessageRead?.Invoke(this, new MessageReadEventArgs { Message = "" });
-                //}
+                // }
 
             }, token);
         }

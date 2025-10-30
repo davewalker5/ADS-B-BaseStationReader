@@ -1,8 +1,8 @@
 using BaseStationReader.Entities.Events;
-using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Events
 {
@@ -21,7 +21,7 @@ namespace BaseStationReader.BusinessLogic.Events
             int? maximumDistance,
             int? minimumAltitude,
             int? maximumAltitude,
-            bool trackPosition)
+            bool trackPosition) : base(logger)
         {
             _logger = logger;
             _maximumDistance = maximumDistance;

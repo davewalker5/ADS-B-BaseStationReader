@@ -6,8 +6,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;
-using BaseStationReader.Entities.Config;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
@@ -17,6 +17,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
         private readonly ITrackerTimer _timer;
+        private readonly IQueuedWriterNotificationSender _notifier;
         private readonly int _batchSize = 0;
         private readonly bool _createSightings;
         private bool _isProcessingBatch = false;
@@ -32,6 +33,7 @@ namespace BaseStationReader.BusinessLogic.Database
             IDatabaseManagementFactory factory,
             IExternalApiWrapper apiWrapper,
             ITrackerTimer timer,
+            IQueuedWriterNotificationSender notifier,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalArportCodes,
             int batchSize,
@@ -41,6 +43,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _apiWrapper = apiWrapper;
             _timer = timer;
             _timer.Tick += OnTimer;
+            _notifier = notifier;
             _batchSize = batchSize;
             _createSightings = createSightings;
             _departureAirportCodes = departureAirportCodes;
@@ -106,7 +109,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _isProcessingBatch = true;
 
             // Notify subscribers that a batch is about to be processed
-            NotifyBatchStartedSubscribers(initialQueueSize);
+            _notifier.SendBatchStartedNotification(this, BatchStarted, initialQueueSize);
 
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -127,7 +130,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Notify subscribers that a batch has been processed
             var totalProcessed = numberOfAircraft + numberOfPositions + numberOfApiLookups;
-            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, totalProcessed, stopwatch.ElapsedMilliseconds);
+            _notifier.SendBatchCompletedNotification(this, BatchCompleted, initialQueueSize, _queue.Count, totalProcessed, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -162,7 +165,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Notify subscribers that a batch is about to be processed
             var initialQueueSize = _queue.Count;
-            NotifyBatchStartedSubscribers(initialQueueSize);
+            _notifier.SendBatchStartedNotification(this, BatchStarted, initialQueueSize);
 
             // Time how long the batch processing
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -187,7 +190,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _isProcessingBatch = false;
 
             // Notify subscribers that a batch has been processed
-            NotifyBatchCompletedSubscribers(initialQueueSize, _queue.Count, entriesProcessed, stopwatch.ElapsedMilliseconds);
+            _notifier.SendBatchCompletedNotification(this, BatchCompleted, initialQueueSize, _queue.Count, entriesProcessed, stopwatch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -208,56 +211,6 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             return requests.Count();
-        }
-
-        /// <summary>
-        /// Notify subscribers that a batch is about to be processed from the queue
-        /// </summary>
-        /// <param name="queueSize"></param>
-        private void NotifyBatchStartedSubscribers(int queueSize)
-        {
-            try
-            {
-                // Notify subscribers that batch processing is starting
-                BatchStarted?.Invoke(this, new BatchStartedEventArgs
-                {
-                    QueueSize = queueSize
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log and sink the exception. The writer has to be protected from errors in the
-                // subscriber callbacks or the application will stop updating
-                _factory.Logger.LogException(ex);
-            }
-        }
-
-        /// <summary>
-        /// Notify subscribers that a batch has been processed from the queue
-        /// </summary>
-        /// <param name="initialQueueSize"></param>
-        /// <param name="finalQueueSize"></param>
-        /// <param name="totalProcessed"></param>
-        /// <param name="elapsedMillisconds"></param>
-        private void NotifyBatchCompletedSubscribers(int initialQueueSize, int finalQueueSize, int totalProcessed, long elapsedMillisconds)
-        {
-            try
-            {
-                // Notify subscribers that a batch has been written
-                BatchCompleted?.Invoke(this, new BatchCompletedEventArgs
-                {
-                    InitialQueueSize = initialQueueSize,
-                    FinalQueueSize = finalQueueSize,
-                    EntriesProcessed = totalProcessed,
-                    Duration = elapsedMillisconds
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log and sink the exception. The writer has to be protected from errors in the
-                // subscriber callbacks or the application will stop updating
-                _factory.Logger.LogException(ex);
-            }
         }
 
         /// <summary>

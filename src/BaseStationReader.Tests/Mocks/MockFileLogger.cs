@@ -14,7 +14,7 @@ namespace BaseStationReader.Tests.Mocks
 
         public void LogMessage(Severity severity, string message, [CallerMemberName] string caller = "")
         {
-            Debug.Print($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [{severity.ToString()}] {caller} : {message}");
+            Debug.Print($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} [{severity.ToString()}] {caller} : {message}");
         }
 
         public void LogException(Exception ex, [CallerMemberName] string caller = "")

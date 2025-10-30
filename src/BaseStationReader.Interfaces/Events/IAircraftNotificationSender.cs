@@ -1,7 +1,7 @@
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.Interfaces.Tracking
+namespace BaseStationReader.Interfaces.Events
 {
     public interface IAircraftNotificationSender
     {

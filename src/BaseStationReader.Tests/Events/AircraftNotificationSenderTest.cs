@@ -10,6 +10,7 @@ namespace BaseStationReader.Tests.Tracking
     [TestClass]
     public class AircraftNotificationSenderTest
     {
+        private const int DelayMs = 100;
         private const string Address = "485876";
         private const decimal Altitude = 29000M;
         private const decimal Latitude = 51.68825M;
@@ -37,148 +38,164 @@ namespace BaseStationReader.Tests.Tracking
         }
 
         [TestMethod]
-        public void SendAddNotificationWithNoCriteriaTest()
+        public async Task SendAddNotificationWithNoCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithNoDistanceCriteriaTest()
+        public async Task SendAddNotificationWithNoDistanceCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, null, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithNoMinimumAltitudeCriteriaTest()
+        public async Task SendAddNotificationWithNoMinimumAltitudeCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, null, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithNoMaximumAltitudeCriteriaTest()
+        public async Task SendAddNotificationWithNoMaximumAltitudeCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, null, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithMatchingCriteriaTest()
+        public async Task SendAddNotificationWithMatchingCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithMisMatchingBehaviourTest()
+        public async Task SendAddNotificationWithMisMatchingBehaviourTestAsync()
         {
             List<AircraftBehaviour> behaviours = [AircraftBehaviour.Descending];
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             Assert.HasCount(0, _notifications);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithDistanceTooFarTest()
+        public async Task SendAddNotificationWithDistanceTooFarTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 10, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             Assert.HasCount(0, _notifications);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithAltitudeTooLowTest()
+        public async Task SendAddNotificationWithAltitudeTooLowTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 30000, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             Assert.HasCount(0, _notifications);
         }
 
         [TestMethod]
-        public void SendAddNotificationWithAltitudeTooHighTest()
+        public async Task SendAddNotificationWithAltitudeTooHighTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 20000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             Assert.HasCount(0, _notifications);
         }
 
         [TestMethod]
-        public void SendUpdatedNotificationWithMatchingCriteriaWithPositionTest()
+        public async Task SendUpdatedNotificationWithMatchingCriteriaWithPositionTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude - 0.5M, Longitude - 0.5M, Altitude - 1000, Distance - 10);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, true);
         }
 
         [TestMethod]
-        public void SendUpdatedNotificationWithMatchingCriteriaWithoutPositionTrackingTest()
+        public async Task SendUpdatedNotificationWithMatchingCriteriaWithoutPositionTrackingTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, false);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude - 0.5M, Longitude - 0.5M, Altitude - 1000, Distance - 10);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
 
         [TestMethod]
-        public void SendUpdatedNotificationWthMatchingCriteriaWithNoChangeInPositionTest()
+        public async Task SendUpdatedNotificationWthMatchingCriteriaWithNoChangeInPositionTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude, Longitude, Altitude, Distance);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
 
         [TestMethod]
-        public void SendUpdatedNotificationWthMatchingCriteriaWithInvalidPositionTest()
+        public async Task SendUpdatedNotificationWthMatchingCriteriaWithInvalidPositionTestAsync()
         {
             _aircraft.Latitude = _aircraft.Longitude = _aircraft.Altitude = null;
             _aircraft.Distance = null;
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude, Longitude, Altitude, Distance);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
 
         [TestMethod]
-        public void SendStaleNotificationWithMatchingCriteriaTest()
+        public async Task SendStaleNotificationWithMatchingCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendStaleNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Stale, false);
         }
 
         [TestMethod]
-        public void SendInactiveNotificationWithMatchingCriteriaTest()
+        public async Task SendInactiveNotificationWithMatchingCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendInactiveNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Recent, false);
         }
 
         [TestMethod]
-        public void SendRemovedNotificationWithMatchingCriteriaTest()
+        public async Task SendRemovedNotificationWithMatchingCriteriaTestAsync()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
             var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendRemovedNotification(_aircraft, this, OnAircraftNotification);
+            await Task.Delay(DelayMs);
             AssertCorrectNotificationSent(AircraftNotificationType.Removed, false);
         }
 

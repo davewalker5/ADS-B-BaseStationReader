@@ -1,7 +1,15 @@
+using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Logging;
+
 namespace BaseStationReader.BusinessLogic.Events
 {
     public abstract class SubscriberNotifier
     {
+        protected ITrackerLogger Logger { get; private set; }
+
+        public SubscriberNotifier(ITrackerLogger logger)
+            => Logger = logger;
+
         /// <summary>
         /// Fire-and-forget notification of subscribers to an event
         /// </summary>
@@ -9,7 +17,7 @@ namespace BaseStationReader.BusinessLogic.Events
         /// <param name="sender"></param>
         /// <param name="handlers"></param>
         /// <param name="eventArgs"></param>
-        public void NotifySubscribers<T>(object sender, EventHandler<T> handlers, T eventArgs) where T : EventArgs
+        protected void NotifySubscribers<T>(object sender, EventHandler<T> handlers, T eventArgs) where T : EventArgs
         {
             // Get the invocation list for the event handlers
             var invocationList = handlers?.GetInvocationList();
@@ -23,10 +31,10 @@ namespace BaseStationReader.BusinessLogic.Events
                         // Fire-and-forget subscriber notification
                         _ = Task.Run(() => ((EventHandler<T>)handler)?.Invoke(sender, eventArgs));
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        // In principle, as the async notification isn't awaited so exceptions shouldn't bubble up but
-                        // it's good practice to be defensive here
+                        Logger.LogMessage(Severity.Error, ex.Message);
+                        Logger.LogException(ex);
                     }
                 }
             }

@@ -1,7 +1,6 @@
 ﻿using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Messages;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BaseStationReader.Tests.Mocks
 {
@@ -20,7 +19,8 @@ namespace BaseStationReader.Tests.Mocks
             };
 
             // Create a mock reader and wire up the message read event
-            var reader = new MockMessageReader(messages, 100, false);
+            var logger = new MockFileLogger();
+            var reader = new MockMessageReader(logger, messages, 100);
             reader.MessageRead += OnMessageRead;
 
             // Start a stopwatch, that's used to make sure the test doesn't run continuously if
