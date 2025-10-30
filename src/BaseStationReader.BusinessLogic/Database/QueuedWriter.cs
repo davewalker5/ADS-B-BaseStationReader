@@ -1,5 +1,4 @@
 ﻿using BaseStationReader.Entities.Events;
-using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Collections.Concurrent;
@@ -16,7 +15,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly IDatabaseManagementFactory _factory;
         private readonly IExternalApiWrapper _apiWrapper;
         private readonly ConcurrentQueue<object> _queue = new ConcurrentQueue<object>();
-        private readonly ITrackerTimer _timer;
+        private readonly System.Timers.Timer _timer;
         private readonly IQueuedWriterNotificationSender _notifier;
         private readonly int _batchSize = 0;
         private readonly bool _createSightings;
@@ -32,17 +31,25 @@ namespace BaseStationReader.BusinessLogic.Database
         public QueuedWriter(
             IDatabaseManagementFactory factory,
             IExternalApiWrapper apiWrapper,
-            ITrackerTimer timer,
             IQueuedWriterNotificationSender notifier,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalArportCodes,
             int batchSize,
+            int writerInterval,
             bool createSightings)
         {
+            // Initialise the timer
+            _timer = new System.Timers.Timer(writerInterval)
+            {
+                AutoReset = true,
+                Enabled = false
+            };
+
+            // Hook up the method called on each "tick"
+            _timer.Elapsed += OnTimer;
+
             _factory = factory;
             _apiWrapper = apiWrapper;
-            _timer = timer;
-            _timer.Tick += OnTimer;
             _notifier = notifier;
             _batchSize = batchSize;
             _createSightings = createSightings;

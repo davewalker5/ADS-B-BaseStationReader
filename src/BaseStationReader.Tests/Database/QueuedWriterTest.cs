@@ -40,9 +40,8 @@ namespace BaseStationReader.Tests.Database
             _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
 
             // Create a queued writer, wire up the event handlers and start it
-            var writerTimer = new MockTrackerTimer(WriterInterval);
             var sender = new QueuedWriterNotificationSender(logger);
-            _writer = new QueuedWriter(_factory, null, writerTimer, sender, [], [], WriterBatchSize, true);
+            _writer = new QueuedWriter(_factory, null, sender, [], [], WriterBatchSize, WriterInterval, true);
             _writer.BatchCompleted += OnBatchWritten;
 
             // Start the writer

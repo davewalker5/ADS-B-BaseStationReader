@@ -1,5 +1,4 @@
 ﻿using BaseStationReader.BusinessLogic.Geometry;
-using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
@@ -23,7 +22,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly List<TrackedAircraft> _aircraft = new();
 
         private readonly ITrackerLogger _logger;
-        private readonly ITrackerTimer _timer;
+        private readonly System.Timers.Timer _timer;
         private readonly IAircraftGenerator _aircraftGenerator;
         private readonly IMessageGeneratorWrapper _messageGeneratorWrapper;
 
@@ -33,21 +32,29 @@ namespace BaseStationReader.BusinessLogic.Simulator
 
         public ReceiverSimulator(
             ITrackerLogger logger,
-            ITrackerTimer timer,
             IAircraftGenerator aircraftGenerator,
             IMessageGeneratorWrapper generatorWrapper,
             int maximumAltitude,
             int port,
-            int numberOfAircraft)
+            int numberOfAircraft,
+            int sendInterval)
         {
+            // Initialise the timer
+            _timer = new System.Timers.Timer(sendInterval)
+            {
+                AutoReset = true,
+                Enabled = false
+            };
+
+            // Hook up the method called on each "tick"
+            _timer.Elapsed += OnTimer;
+
             _listener = new TcpListener(IPAddress.Loopback, port);
             _logger = logger;
-            _timer = timer;
             _aircraftGenerator = aircraftGenerator;
             _messageGeneratorWrapper = generatorWrapper;
             _maximumAltitude = maximumAltitude;
             _numberOfAircraft = numberOfAircraft;
-            _timer.Tick += OnTimer;
         }
 
         /// <summary>

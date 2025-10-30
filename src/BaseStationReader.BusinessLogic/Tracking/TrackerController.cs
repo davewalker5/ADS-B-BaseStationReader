@@ -173,15 +173,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
             // Configure the queued writer
             var queuedWriterNotificationSender = new QueuedWriterNotificationSender(factory.Logger);
-            var writerTimer = new TrackerTimer(_settings.WriterInterval);
             _writer = new QueuedWriter(
                 factory,
                 apiWrapper,
-                writerTimer,
                 queuedWriterNotificationSender,
                 _departureAirportCodes,
                 _arrivalAirportCodes,
                 _settings.WriterBatchSize,
+                _settings.WriterInterval,
                 true);
             _writer.BatchStarted += OnBatchStarted;
             _writer.BatchCompleted += OnBatchCompleted;
