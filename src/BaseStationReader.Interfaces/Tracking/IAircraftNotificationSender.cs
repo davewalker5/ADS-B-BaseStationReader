@@ -3,7 +3,7 @@ using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Interfaces.Tracking
 {
-    public interface INotificationSender
+    public interface IAircraftNotificationSender
     {
         void SendAddedNotification(
             TrackedAircraft aircraft,

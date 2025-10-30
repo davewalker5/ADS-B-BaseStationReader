@@ -4,9 +4,9 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
 
-namespace BaseStationReader.BusinessLogic.Tracking
+namespace BaseStationReader.BusinessLogic.Events
 {
-    public class NotificationSender : INotificationSender
+    public class AircraftNotificationSender : SubscriberNotifier, IAircraftNotificationSender
     {
         private readonly ITrackerLogger _logger;
         private readonly int? _maximumDistance;
@@ -15,7 +15,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly bool _trackPosition;
         private readonly IEnumerable<AircraftBehaviour> _behaviours;
 
-        public NotificationSender(
+        public AircraftNotificationSender(
             ITrackerLogger logger,
             IEnumerable<AircraftBehaviour> behaviours,
             int? maximumDistance,
@@ -36,18 +36,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         /// <param name="type"></param>
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
         public void SendAddedNotification(
             TrackedAircraft aircraft,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler)
+            EventHandler<AircraftNotificationEventArgs> handlers)
         {
             if (CheckTrackingCriteria(aircraft))
             {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Added);
+                SendAircraftNotification(aircraft, null, sender, handlers, AircraftNotificationType.Added);
             }
         }
 
@@ -56,7 +56,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         /// <param name="type"></param>
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
@@ -65,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public void SendUpdatedNotification(
             TrackedAircraft aircraft,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler,
+            EventHandler<AircraftNotificationEventArgs> handlers,
             decimal? previousLatitude,
             decimal? previousLongitude,
             decimal? previousAltitude,
@@ -85,7 +85,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 }
 
                 // Send the notification
-                SendNotification(aircraft, position, sender, handler, AircraftNotificationType.Updated);
+                SendAircraftNotification(aircraft, position, sender, handlers, AircraftNotificationType.Updated);
             }
         }
 
@@ -94,17 +94,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         public void SendStaleNotification(
             TrackedAircraft aircraft,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler)
+            EventHandler<AircraftNotificationEventArgs> handlers)
         {
             // Messages regarding staleness and removal aren't subject to the distance and altitude
             // constraints, only the aircraft behaviour constraints
             if (CheckBehaviourMatches(aircraft))
             {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Stale);
+                SendAircraftNotification(aircraft, null, sender, handlers, AircraftNotificationType.Stale);
             }
         }
 
@@ -113,17 +113,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         public void SendInactiveNotification(
             TrackedAircraft aircraft,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler)
+            EventHandler<AircraftNotificationEventArgs> handlers)
         {
             // Messages regarding staleness and removal aren't subject to the distance and altitude
             // constraints, only the aircraft behaviour constraints
             if (CheckBehaviourMatches(aircraft))
             {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Recent);
+                SendAircraftNotification(aircraft, null, sender, handlers, AircraftNotificationType.Recent);
             }
         }
 
@@ -132,17 +132,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         public void SendRemovedNotification(
             TrackedAircraft aircraft,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler)
+            EventHandler<AircraftNotificationEventArgs> handlers)
         {
             // Messages regarding staleness and removal aren't subject to the distance and altitude
             // constraints, only the aircraft behaviour constraints
             if (CheckBehaviourMatches(aircraft))
             {
-                SendNotification(aircraft, null, sender, handler, AircraftNotificationType.Removed);
+                SendAircraftNotification(aircraft, null, sender, handlers, AircraftNotificationType.Removed);
             }
         }
 
@@ -170,35 +170,29 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="sender"></param>
-        /// <param name="handler"></param>
+        /// <param name="handlers"></param>
         /// <param name="type"></param>
         /// <param name="previousLatitude"></param>
         /// <param name="previousLongitude"></param>
-        private void SendNotification(
+        private void SendAircraftNotification(
             TrackedAircraft aircraft,
             AircraftPosition position,
             object sender,
-            EventHandler<AircraftNotificationEventArgs> handler,
+            EventHandler<AircraftNotificationEventArgs> handlers,
             AircraftNotificationType type)
         {
             _logger.LogMessage(Severity.Verbose, $"Sending {type} message for aircraft {aircraft.Address} {aircraft.Behaviour}");
 
-            try
+            // Construct the event arguments
+            var eventArgs = new AircraftNotificationEventArgs
             {
-                // Send the notification to subscribers
-                handler?.Invoke(sender, new AircraftNotificationEventArgs
-                {
-                    Aircraft = aircraft,
-                    Position = position,
-                    NotificationType = type
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log and sink the exception. The tracker has to be protected from errors in the
-                // subscriber callbacks or the application will stop updating
-                _logger.LogException(ex);
-            }
+                Aircraft = aircraft,
+                Position = position,
+                NotificationType = type
+            };
+
+            // Notify subscribers
+            NotifySubscribers(this, handlers, eventArgs);
         }
 
         /// <summary>

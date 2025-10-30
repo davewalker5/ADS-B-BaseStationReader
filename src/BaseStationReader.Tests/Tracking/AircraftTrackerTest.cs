@@ -7,6 +7,7 @@ using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Entities;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
+using BaseStationReader.BusinessLogic.Events;
 
 namespace BaseStationReader.Tests.Tracking
 {
@@ -42,7 +43,7 @@ namespace BaseStationReader.Tests.Tracking
             var assessor = new SimpleAircraftBehaviourAssessor();
             var updater = new AircraftPropertyUpdater(logger, null, assessor);
             
-            var notificationSender = new NotificationSender(
+            var notificationSender = new AircraftNotificationSender(
                 logger,
                 Enum.GetValues<AircraftBehaviour>(),
                 null,

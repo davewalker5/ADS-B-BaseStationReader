@@ -13,7 +13,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly Dictionary<MessageType, IMessageParser> _parsers;
         private readonly ITrackerTimer _timer;
         private readonly IAircraftPropertyUpdater _updater;
-        private readonly INotificationSender _sender;
+        private readonly IAircraftNotificationSender _sender;
         private readonly IList<string> _excludedAddresses;
         private readonly IList<string> _excludedCallsigns;
         private readonly ConcurrentDictionary<string, Lazy<TrackedAircraft>> _aircraft = [];
@@ -33,7 +33,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             Dictionary<MessageType, IMessageParser> parsers,
             ITrackerTimer timer,
             IAircraftPropertyUpdater updater,
-            INotificationSender sender,
+            IAircraftNotificationSender sender,
             IList<string> excludedAddresses,
             IList<string> excludedCallsigns,
             int recentMilliseconds,

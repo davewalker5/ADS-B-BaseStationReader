@@ -14,6 +14,7 @@ using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Interfaces.Api;
+using BaseStationReader.BusinessLogic.Events;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -78,7 +79,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var distanceCalculator = CreateDistanceCalculator();
             var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
 
-            var notificationSender = new NotificationSender(
+            var notificationSender = new AircraftNotificationSender(
                 _logger,
                 _settings.TrackedBehaviours,
                 _settings.MaximumTrackedDistance,

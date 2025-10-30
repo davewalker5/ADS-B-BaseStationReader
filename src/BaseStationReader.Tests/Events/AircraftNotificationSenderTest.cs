@@ -1,4 +1,4 @@
-using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
@@ -8,7 +8,7 @@ using BaseStationReader.Tests.Mocks;
 namespace BaseStationReader.Tests.Tracking
 {
     [TestClass]
-    public class NotificationSenderTest
+    public class AircraftNotificationSenderTest
     {
         private const string Address = "485876";
         private const decimal Altitude = 29000M;
@@ -40,7 +40,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithNoCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, null, null, null, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
@@ -49,7 +49,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithNoDistanceCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, null, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, null, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
@@ -58,7 +58,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithNoMinimumAltitudeCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, null, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, null, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
@@ -67,7 +67,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithNoMaximumAltitudeCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, null, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, null, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
@@ -76,7 +76,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithMatchingCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Added, false);
         }
@@ -85,7 +85,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithMisMatchingBehaviourTest()
         {
             List<AircraftBehaviour> behaviours = [AircraftBehaviour.Descending];
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             Assert.HasCount(0, _notifications);
         }
@@ -94,7 +94,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithDistanceTooFarTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 10, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 10, 0, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             Assert.HasCount(0, _notifications);
         }
@@ -103,7 +103,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithAltitudeTooLowTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 30000, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 30000, 40000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             Assert.HasCount(0, _notifications);
         }
@@ -112,7 +112,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendAddNotificationWithAltitudeTooHighTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 20000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 20000, true);
             sender.SendAddedNotification(_aircraft, this, OnAircraftNotification);
             Assert.HasCount(0, _notifications);
         }
@@ -121,7 +121,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendUpdatedNotificationWithMatchingCriteriaWithPositionTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude - 0.5M, Longitude - 0.5M, Altitude - 1000, Distance - 10);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, true);
         }
@@ -130,7 +130,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendUpdatedNotificationWithMatchingCriteriaWithoutPositionTrackingTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, false);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, false);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude - 0.5M, Longitude - 0.5M, Altitude - 1000, Distance - 10);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
@@ -139,7 +139,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendUpdatedNotificationWthMatchingCriteriaWithNoChangeInPositionTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude, Longitude, Altitude, Distance);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
@@ -150,7 +150,7 @@ namespace BaseStationReader.Tests.Tracking
             _aircraft.Latitude = _aircraft.Longitude = _aircraft.Altitude = null;
             _aircraft.Distance = null;
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, null, null, null, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
             sender.SendUpdatedNotification(_aircraft, this, OnAircraftNotification, Latitude, Longitude, Altitude, Distance);
             AssertCorrectNotificationSent(AircraftNotificationType.Updated, false);
         }
@@ -159,7 +159,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendStaleNotificationWithMatchingCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendStaleNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Stale, false);
         }
@@ -168,7 +168,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendInactiveNotificationWithMatchingCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendInactiveNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Recent, false);
         }
@@ -177,7 +177,7 @@ namespace BaseStationReader.Tests.Tracking
         public void SendRemovedNotificationWithMatchingCriteriaTest()
         {
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var sender = new NotificationSender(_logger, behaviours, 100, 0, 40000, true);
+            var sender = new AircraftNotificationSender(_logger, behaviours, 100, 0, 40000, true);
             sender.SendRemovedNotification(_aircraft, this, OnAircraftNotification);
             AssertCorrectNotificationSent(AircraftNotificationType.Removed, false);
         }
