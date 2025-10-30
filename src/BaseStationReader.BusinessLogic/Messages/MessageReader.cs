@@ -2,22 +2,25 @@ using BaseStationReader.Entities.Events;
 using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Interfaces.Logging;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.Sockets;
+using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.BusinessLogic.Messages
 {
     [ExcludeFromCodeCoverage]
     public class MessageReader : IMessageReader
     {
+        private readonly ITrackerTcpClient _client;
         private readonly ITrackerLogger _logger;
         private readonly string _server;
         private readonly int _port;
         private readonly int _readTimeout;
+        private bool _timedOut = false;
 
         public event EventHandler<MessageReadEventArgs> MessageRead;
 
-        public MessageReader(ITrackerLogger logger, string server, int port, int readTimeout)
+        public MessageReader(ITrackerTcpClient client, ITrackerLogger logger, string server, int port, int readTimeout)
         {
+            _client = client;
             _logger = logger;
             _server = server;
             _port = port;
@@ -32,49 +35,38 @@ namespace BaseStationReader.BusinessLogic.Messages
         /// <returns></returns>
         public async Task StartAsync(CancellationToken token)
         {
-            // Continue until cancellation's requested
-            while (!token.IsCancellationRequested)
-            {
-                // Get a TCP client used to read the message stream
-                using (var client = new TcpClient(_server, _port))
-                {
-                    // Get a network stream and set the timeout
-                    NetworkStream stream = client.GetStream();
-                    stream.ReadTimeout = _readTimeout;
+            // Connect to the server
+            _client.Connect(_server, _port, _readTimeout);
 
-                    // Create a stream reader and begin reading messages
-                    using (var reader = new StreamReader(stream))
+            // Enter the message reader loop
+            while (!token.IsCancellationRequested && !_timedOut)
+            {
+                try
+                {
+                    // Read the next message
+                    var message = await _client.ReadLineAsync(token).ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(message))
                     {
-                        // Wait for cancellation to be requested or for a read timeout
-                        var timedOut = false;
-                        while (!token.IsCancellationRequested && !timedOut)
+                        try
                         {
-                            try
-                            {
-                                // Read the next message and notify subscribers
-                                string message = await reader.ReadLineAsync(token);
-                                if (!string.IsNullOrEmpty(message))
-                                {
-                                    try
-                                    {
-                                        MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        // Log and sink the exception. The reader has to be protected from errors in the
-                                        // subscriber callbacks or the application will stop updating
-                                        _logger.LogException(ex);
-                                    }
-                                }
-                            }
-                            catch (IOException)
-                            {
-                                // The read has timed out - set the flag that will break out of the loop
-                                // and cause the application to reconnect and try again
-                                timedOut = true;
-                            }
+                            // Notify subscribers
+                            MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogMessage(Severity.Error, ex.Message);
+                            _logger.LogException(ex);
                         }
                     }
+                }
+                catch (IOException ex)
+                {
+                    // The read has timed out - set the flag that will break out of the read loop and cause the
+                    // application to reconnect and try again
+                    _logger.LogMessage(Severity.Error, $"Message reading has timed out");
+                    _logger.LogMessage(Severity.Error, ex.Message);
+                    _logger.LogException(ex);
+                    _timedOut = true;
                 }
             }
         }

@@ -2,15 +2,37 @@ using BaseStationReader.Interfaces.Messages;
 
 namespace BaseStationReader.Tests.Mocks
 {
-    internal class MockTrackerTcpClient : MemoryStream, ITrackerTcpClient
+    internal class MockTrackerTcpClient : ITrackerTcpClient
     {
-        public MockTrackerTcpClient(byte[] buffer) : base(buffer) { }
+        private readonly MockNetworkStream _stream;
 
-        public void Connect(string host, int port)
+        public MockTrackerTcpClient(byte[] buffer)
+        {
+            _stream = new MockNetworkStream(buffer);
+        }
+
+        /// <summary>
+        /// Mock connection to a server and port
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        public void Connect(string host, int port, int readTimeout)
         {
         }
 
-        public Stream GetStream()
-            => this;
+        /// <summary>
+        /// Read the next line from the stream
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<string> ReadLineAsync(CancellationToken token)
+            => await _stream.ReadLineAsync(token);
+
+        /// <summary>
+        /// IDisposable implementation
+        /// </summary>
+        public void Dispose()
+        {
+        }
     }
 }

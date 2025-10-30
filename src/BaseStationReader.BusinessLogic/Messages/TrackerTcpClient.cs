@@ -8,26 +8,38 @@ namespace BaseStationReader.BusinessLogic.Messages
     public class TrackerTcpClient : ITrackerTcpClient
     {
         private TcpClient _client;
+        private NetworkStream _stream;
+        private StreamReader _reader;
 
         /// <summary>
         /// Connect to a host and port
         /// </summary>
         /// <param name="host"></param>
         /// <param name="port"></param>
-        public void Connect(string host, int port)
-            => _client = new TcpClient(host, port);
+        public void Connect(string host, int port, int readTimeoutMs)
+        {
+            _client = new TcpClient(host, port);
+            _stream = _client.GetStream();
+            _stream.ReadTimeout = readTimeoutMs;
+            _reader = new StreamReader(_stream);
+        }
 
         /// <summary>
-        /// Get the network stream for the connection
+        /// Read the next line from the network stream
         /// </summary>
+        /// <param name="token"></param>
         /// <returns></returns>
-        public Stream GetStream()
-            =>  _client?.GetStream();
+        public async Task<string> ReadLineAsync(CancellationToken token)
+            => await _reader.ReadLineAsync(token);
 
         /// <summary>
         /// Dispose the client
         /// </summary>
         public void Dispose()
-            => _client?.Dispose();
+        {
+            _reader?.Dispose();
+            _stream?.Dispose();
+            _client?.Dispose();
+        }
     }
 }

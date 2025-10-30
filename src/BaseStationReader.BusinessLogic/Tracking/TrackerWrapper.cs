@@ -59,7 +59,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public async Task InitialiseAsync()
         {
             // Set up the message reader and parser
-            var reader = new MessageReader(_logger, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
+            var client = new TrackerTcpClient();
+            var reader = new MessageReader(client, _logger, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
