@@ -81,6 +81,21 @@ namespace BaseStationReader.Entities.Tracking
         [NotMapped]
         public FixedSizeQueue<decimal> AltitudeHistory { get; private set; } = new(MaximumHistoryEntries);
 
+        public override string ToString()
+            =>  $"{Address} : " +
+                $"Callsign = {Callsign}, " +
+                $"Squawk = {Squawk}, " +
+                $"Altitude = {Altitude}, " +
+                $"Speed = {GroundSpeed}, " +
+                $"Heading = {Track}, " +
+                $"Callsign = {Callsign}, " +
+                $"Position = ({Latitude}, {Longitude} ) " +
+                $"Distance = {Distance}, " +
+                $"First Seen = {FirstSeen}, " +
+                $"Last Seen = {LastSeen}, " +
+                $"Messages = {Messages}, " +
+                $"Status = {Status}";
+
         public object Clone()
         {
             return MemberwiseClone();

@@ -2,6 +2,7 @@
 
 namespace BaseStationReader.Tests.Mocks
 {
+    [Obsolete]
     internal class MockTrackerTimer : ITrackerTimer
     {
         private CancellationTokenSource _tokenSource = null;

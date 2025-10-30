@@ -1,7 +1,6 @@
 using BaseStationReader.Api.Wrapper;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Interfaces.Database;

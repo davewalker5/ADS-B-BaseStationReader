@@ -5,6 +5,7 @@ using System.Timers;
 namespace BaseStationReader.BusinessLogic.Tracking
 {
     [ExcludeFromCodeCoverage]
+    [Obsolete]
     public class TrackerTimer : ITrackerTimer
     {
         private System.Timers.Timer _timer = null;

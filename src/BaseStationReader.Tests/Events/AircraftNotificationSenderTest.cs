@@ -201,15 +201,12 @@ namespace BaseStationReader.Tests.Tracking
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
-            lock (_notifications)
+            _notifications.Add(new AircraftNotificationData
             {
-                _notifications.Add(new AircraftNotificationData
-                {
-                    Aircraft = e.Aircraft,
-                    Position = e.Position,
-                    NotificationType = e.NotificationType
-                });
-            }
+                Aircraft = e.Aircraft,
+                Position = e.Position,
+                NotificationType = e.NotificationType
+            });
         }
 
         private void AssertCorrectNotificationSent(AircraftNotificationType type, bool expectPosition)

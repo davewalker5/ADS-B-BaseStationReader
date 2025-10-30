@@ -19,7 +19,7 @@ using BaseStationReader.BusinessLogic.Events;
 namespace BaseStationReader.BusinessLogic.Tracking
 {
     [ExcludeFromCodeCoverage]
-    public class TrackerWrapper : ITrackerWrapper
+    public class TrackerController : ITrackerController
     {
         private readonly ITrackerLogger _logger;
         private readonly IExternalApiFactory _apiFactory;
@@ -35,9 +35,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
         public ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; private set; } = new();
-        public bool IsTracking { get { return (_tracker != null) && _tracker.IsTracking; } }
 
-        public TrackerWrapper(
+        public TrackerController(
             ITrackerLogger logger,
             IExternalApiFactory apiFactory,
             ITrackerHttpClient client,
@@ -60,7 +59,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             // Set up the message reader and parser
             var client = new TrackerTcpClient();
-            var reader = new MessageReader(client, _logger, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
+            var sender = new MessageReaderNotificationSender(_logger);
+            var reader = new MessageReader(client, _logger, sender, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
@@ -75,7 +75,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
             var excludedCallsigns = (await factory.ExcludedCallsignManager.ListAsync(x => true)).Select(x => x.Callsign).ToList();
 
             // Set up the aircraft tracker
-            var trackerTimer = new TrackerTimer(_settings.TimeToRecent / 10.0);
             var assessor = new SimpleAircraftBehaviourAssessor();
             var distanceCalculator = CreateDistanceCalculator();
             var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
@@ -89,9 +88,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.TrackPosition);
 
             _tracker = new AircraftTracker(
+                // _logger,
                 reader,
                 parsers,
-                trackerTimer,
                 propertyUpdater,
                 notificationSender,
                 excludedAddresses,
@@ -116,13 +115,19 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// Start reading messages
         /// </summary>
         public void Start()
-            => _tracker.Start();
+        {
+            
+        }
+            // => _tracker.Start();
 
         /// <summary>
         /// Stop reading messages
         /// </summary>
         public void Stop()
-            => _tracker.Stop();
+        {
+            
+        }
+            // => _tracker.Stop();
 
         /// <summary>
         /// Return the number of pending requests in the writer queue

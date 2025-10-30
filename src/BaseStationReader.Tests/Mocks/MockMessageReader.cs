@@ -6,6 +6,7 @@ using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Tests.Mocks
 {
+    [Obsolete]
     internal class MockMessageReader : IMessageReader
     {
         private readonly ITrackerLogger _logger;

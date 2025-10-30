@@ -3,7 +3,6 @@ using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Api.AeroDatabox;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.Entities.Config;
-using System.Threading.Tasks;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 

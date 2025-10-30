@@ -8,9 +8,6 @@ namespace BaseStationReader.Interfaces.Tracking
         event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
         event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
 
-        bool IsTracking { get; }
-        void Start();
-        void Stop();
-
+        Task StartAsync(CancellationToken token);
     }
 }

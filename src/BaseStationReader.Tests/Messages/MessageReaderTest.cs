@@ -1,4 +1,5 @@
 using System.Text;
+using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Logging;
@@ -40,16 +41,23 @@ namespace BaseStationReader.Tests.Messages
             var stream = new MockNetworkStream(_buffer);
 
             string line;
-            do
+            try
             {
-                line = await stream.ReadLineAsync(source.Token);
-                if (!string.IsNullOrEmpty(line))
+                do
                 {
-                    _received.Add(line);
-                    _logger.LogMessage(Severity.Info, line);
+                    line = await stream.ReadLineAsync(source.Token);
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        _received.Add(line);
+                        _logger.LogMessage(Severity.Info, line);
+                    }
                 }
+                while (true);
             }
-            while (!source.Token.IsCancellationRequested);
+            catch (TaskCanceledException)
+            {
+                // Expected exception when the token expires
+            }
 
             AssertExpectedMessagesReceived();
         }
@@ -85,7 +93,8 @@ namespace BaseStationReader.Tests.Messages
         public async Task TestMessageReaderAsync()
         {
             var source = new CancellationTokenSource(TokenLifespanMs);
-            var reader = new MessageReader(_client, _logger, "", 0, 100);
+            var sender = new MessageReaderNotificationSender(_logger);
+            var reader = new MessageReader(_client, _logger, sender, "", 0, 100);
             reader.MessageRead += OnMessageRead;
 
             try

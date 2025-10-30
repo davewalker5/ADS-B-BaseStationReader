@@ -25,7 +25,7 @@ namespace BaseStationReader.Terminal
         private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerTableManager _tableManager = null;
         private static ITrackerLogger _logger = null;
-        private static ITrackerWrapper _wrapper = null;
+        private static ITrackerController _controller = null;
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
@@ -68,11 +68,11 @@ namespace BaseStationReader.Terminal
 
                 // Initialise the tracker wrapper
                 var apiFactory = new ExternalApiFactory();
-                _wrapper = new TrackerWrapper(_logger, apiFactory, TrackerHttpClient.Instance, _settings, departureAirports, arrivalAirports);
-                await _wrapper.InitialiseAsync();
-                _wrapper.AircraftAdded += OnAircraftAdded;
-                _wrapper.AircraftUpdated += OnAircraftUpdated;
-                _wrapper.AircraftRemoved += OnAircraftRemoved;
+                _controller = new TrackerController(_logger, apiFactory, TrackerHttpClient.Instance, _settings, departureAirports, arrivalAirports);
+                await _controller.InitialiseAsync();
+                _controller.AircraftAdded += OnAircraftAdded;
+                _controller.AircraftUpdated += OnAircraftUpdated;
+                _controller.AircraftRemoved += OnAircraftRemoved;
 
                 var cancelled = false;
                 do
@@ -97,8 +97,8 @@ namespace BaseStationReader.Terminal
                 // Process all pending requests in the queued writer queue
                 if (_settings.EnableSqlWriter)
                 {
-                    Console.WriteLine($"Processing {_wrapper.QueueSize} pending database updates and API requests ...");
-                    await _wrapper.FlushQueueAsync();
+                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates and API requests ...");
+                    await _controller.FlushQueueAsync();
                 }
             }
         }
@@ -117,7 +117,7 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Start the wrapper and continuously update the table
-            _wrapper.Start();
+            _controller.Start();
             while ((elapsed <= _settings.ApplicationTimeout) && !cancelled)
             {
                 // See if there's a keypress available
@@ -142,7 +142,7 @@ namespace BaseStationReader.Terminal
             }
 
             // Stop the wrapper
-            _wrapper.Stop();
+            _controller.Stop();
 
             return cancelled;
         }

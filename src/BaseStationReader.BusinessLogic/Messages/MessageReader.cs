@@ -3,6 +3,7 @@ using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Interfaces.Logging;
 using System.Diagnostics.CodeAnalysis;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Messages
 {
@@ -11,6 +12,7 @@ namespace BaseStationReader.BusinessLogic.Messages
     {
         private readonly ITrackerTcpClient _client;
         private readonly ITrackerLogger _logger;
+        private readonly IMessageReaderNotificationSender _sender;
         private readonly string _server;
         private readonly int _port;
         private readonly int _readTimeout;
@@ -18,10 +20,17 @@ namespace BaseStationReader.BusinessLogic.Messages
 
         public event EventHandler<MessageReadEventArgs> MessageRead;
 
-        public MessageReader(ITrackerTcpClient client, ITrackerLogger logger, string server, int port, int readTimeout)
+        public MessageReader(
+            ITrackerTcpClient client,
+            ITrackerLogger logger,
+            IMessageReaderNotificationSender sender,
+            string server,
+            int port,
+            int readTimeout)
         {
             _client = client;
             _logger = logger;
+            _sender = sender;
             _server = server;
             _port = port;
             _readTimeout = readTimeout;
@@ -50,7 +59,7 @@ namespace BaseStationReader.BusinessLogic.Messages
                         try
                         {
                             // Notify subscribers
-                            MessageRead?.Invoke(this, new MessageReadEventArgs { Message = message });
+                            _sender.SendMessageReadNotification(this, MessageRead, message);
                         }
                         catch (Exception ex)
                         {

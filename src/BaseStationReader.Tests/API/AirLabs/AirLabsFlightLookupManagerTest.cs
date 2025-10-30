@@ -84,60 +84,60 @@ namespace BaseStationReader.Tests.API.AirLabs
             Assert.AreEqual(AirlineName, flight.Airline.Name);
         }
 
-        // [TestMethod]
-        // public async Task LookupWithAcceptingAirportFiltersTestAsync()
-        // {
-        //     _client.AddResponse(Response);
-        //     _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
-        //     {
-        //         Address = Address,
-        //         Status = TrackingStatus.Active,
-        //         LastSeen = LastSeen
-        //     });
+        [TestMethod]
+        public async Task LookupWithAcceptingAirportFiltersTestAsync()
+        {
+            _client.AddResponse(Response);
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            {
+                Address = Address,
+                Status = TrackingStatus.Active,
+                LastSeen = LastSeen
+            });
 
-        //     var flight = await _manager.IdentifyFlightAsync(Address, [Embarkation], [Destination]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Destination]);
 
-        //     Assert.IsNotNull(flight);
-        //     Assert.IsGreaterThan(0, flight.Id);
-        //     Assert.AreEqual(FlightIATA, flight.IATA);
-        //     Assert.AreEqual(FlightICAO, flight.ICAO);
-        //     Assert.AreEqual(Embarkation, flight.Embarkation);
-        //     Assert.AreEqual(Destination, flight.Destination);
-        //     Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
-        //     Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
-        //     Assert.AreEqual(AirlineName, flight.Airline.Name);
-        // }
+            Assert.IsNotNull(flight);
+            Assert.IsGreaterThan(0, flight.Id);
+            Assert.AreEqual(FlightIATA, flight.IATA);
+            Assert.AreEqual(FlightICAO, flight.ICAO);
+            Assert.AreEqual(Embarkation, flight.Embarkation);
+            Assert.AreEqual(Destination, flight.Destination);
+            Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
+            Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
+            Assert.AreEqual(AirlineName, flight.Airline.Name);
+        }
 
-        // [TestMethod]
-        // public async Task LookupWithRejectingEmbarkationFiltersTestAsync()
-        // {
-        //     _client.AddResponse("[]");
-        //     _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
-        //     {
-        //         Address = Address,
-        //         Status = TrackingStatus.Active,
-        //         LastSeen = LastSeen
-        //     });
+        [TestMethod]
+        public async Task LookupWithRejectingEmbarkationFiltersTestAsync()
+        {
+            _client.AddResponse(Response);
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            {
+                Address = Address,
+                Status = TrackingStatus.Active,
+                LastSeen = LastSeen
+            });
 
-        //     var flight = await _manager.IdentifyFlightAsync(Address, [Destination], [Destination]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Destination], [Destination]);
 
-        //     Assert.IsNull(flight);
-        // }
+            Assert.IsNull(flight);
+        }
 
-        // [TestMethod]
-        // public async Task LookupWithRejectingDestinationFiltersTestAsync()
-        // {
-        //     _client.AddResponse("[]");
-        //     _ = await _factory.TrackedAircraftWriter.WriteAsync(new()
-        //     {
-        //         Address = Address,
-        //         Status = TrackingStatus.Active,
-        //         LastSeen = LastSeen
-        //     });
+        [TestMethod]
+        public async Task LookupWithRejectingDestinationFiltersTestAsync()
+        {
+            _client.AddResponse(Response);
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            {
+                Address = Address,
+                Status = TrackingStatus.Active,
+                LastSeen = LastSeen
+            });
 
-        //     var flight = await _manager.IdentifyFlightAsync(Address, [Embarkation], [Embarkation]);
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Embarkation]);
 
-        //     Assert.IsNull(flight);
-        // }
+            Assert.IsNull(flight);
+        }
     }
 }

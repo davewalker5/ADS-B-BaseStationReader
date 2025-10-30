@@ -192,7 +192,7 @@ namespace BaseStationReader.BusinessLogic.Events
             };
 
             // Notify subscribers
-            NotifySubscribers(this, handlers, eventArgs);
+            NotifySubscribers(sender, handlers, eventArgs);
         }
 
         /// <summary>
