@@ -2,6 +2,7 @@ using BaseStationReader.Entities.Events;
 
 namespace BaseStationReader.Interfaces.Events
 {
+    [Obsolete]
     public interface IQueuedWriterNotificationSender
     {
         void SendBatchStartedNotification(
