@@ -120,7 +120,10 @@ namespace BaseStationReader.Terminal
             _controller.AircraftRemoved += OnAircraftRemoved;
 
             // Create a cancellation token and start the controller task
-            using var source = new CancellationTokenSource(_settings.ApplicationTimeout);
+            // TODO: Temporarily remove the application timeout to avoid Semaphore disposal issues in
+            // TODO: the continuous writer
+            // using var source = new CancellationTokenSource(_settings.ApplicationTimeout);
+            using var source = new CancellationTokenSource();
             var controllerTask = _controller.StartAsync(source.Token);
 
             // Define the interval at which the display will refresh
