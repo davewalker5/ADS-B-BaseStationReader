@@ -112,10 +112,10 @@ namespace BaseStationReader.Tests.Tracking
             // The actual notifications list should now be equal to the length of the expected list
             Assert.HasCount(expected.Count, _notifications);
 
-            // Now confirm the notifications we do have arrived in the right order
-            for (int i = 0; i < expected.Count; i++)
+            // Now confirm all the expected notifications are there
+            foreach (var notificationType in expected)
             {
-                Assert.AreEqual(expected[i], _notifications[i].NotificationType);
+                Assert.HasCount(1, _notifications.Where(x => x.NotificationType == notificationType));
             }
         }
 

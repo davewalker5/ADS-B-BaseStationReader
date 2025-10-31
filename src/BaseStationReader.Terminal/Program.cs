@@ -15,6 +15,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Api.Wrapper;
 using BaseStationReader.Api;
+using BaseStationReader.BusinessLogic.Messages;
 
 namespace BaseStationReader.Terminal
 {
@@ -68,11 +69,9 @@ namespace BaseStationReader.Terminal
 
                 // Initialise the tracker wrapper
                 var apiFactory = new ExternalApiFactory();
-                _controller = new TrackerController(_logger, apiFactory, TrackerHttpClient.Instance, _settings, departureAirports, arrivalAirports);
-                await _controller.InitialiseAsync();
-                _controller.AircraftAdded += OnAircraftAdded;
-                _controller.AircraftUpdated += OnAircraftUpdated;
-                _controller.AircraftRemoved += OnAircraftRemoved;
+                var httpClient = TrackerHttpClient.Instance;
+                var tcpClient = new TrackerTcpClient();
+                _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
 
                 var cancelled = false;
                 do
@@ -116,8 +115,9 @@ namespace BaseStationReader.Terminal
             int elapsed = 0;
             _lastUpdate = DateTime.Now;
 
-            // Start the wrapper and continuously update the table
-            _controller.Start();
+            // TODO:
+            // Start the controller and continuously update the table
+            // _controller.Start();
             while ((elapsed <= _settings.ApplicationTimeout) && !cancelled)
             {
                 // See if there's a keypress available
@@ -140,9 +140,6 @@ namespace BaseStationReader.Terminal
                 // Check we've not exceeded the application timeout
                 elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
             }
-
-            // Stop the wrapper
-            _controller.Stop();
 
             return cancelled;
         }
