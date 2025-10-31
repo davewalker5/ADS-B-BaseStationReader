@@ -10,6 +10,7 @@ using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
+    [Obsolete]
     public class QueuedWriter : IQueuedWriter
     {
         private readonly IDatabaseManagementFactory _factory;

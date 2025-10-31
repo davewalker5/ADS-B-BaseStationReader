@@ -5,6 +5,7 @@ using BaseStationReader.Interfaces.Logging;
 
 namespace BaseStationReader.BusinessLogic.Events
 {
+    [Obsolete]
     public class QueuedWriterNotificationSender : SubscriberNotifier, IQueuedWriterNotificationSender
     {
         public QueuedWriterNotificationSender(ITrackerLogger logger) : base(logger)

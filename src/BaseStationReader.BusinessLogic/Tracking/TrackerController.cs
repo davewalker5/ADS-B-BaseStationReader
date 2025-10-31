@@ -25,7 +25,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly IDatabaseManagementFactory _factory;
         private readonly TrackerApplicationSettings _settings;
         private IAircraftTracker _tracker = null;
-        private IQueuedWriter _writer = null;
+        private IContinuousWriter _writer = null;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
         public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
@@ -89,16 +89,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     apiWrapper = apiFactory.GetWrapperInstance(httpClient, _factory, serviceType, _settings);
                 }
 
-                var writerSender = new QueuedWriterNotificationSender(logger);
-                _writer = new QueuedWriter(
-                    _factory,
-                    apiWrapper,
-                    writerSender,
-                    departureAirportCodes,
-                    arrivalAirportCodes,
-                    _settings.WriterBatchSize,
-                    _settings.WriterInterval,
-                    true);
+                _writer = new ContinuousWriter(_factory, apiWrapper, departureAirportCodes, arrivalAirportCodes, true);
             }
 
             // Set up the aircraft tracked helpers
@@ -133,9 +124,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public async Task StartAsync(CancellationToken token)
         {
-            // Clear the queued writer queue, in case we're restartig the same instance
-            _writer.ClearQueue();
-
             // If the queued writer is enabled and clear-down is configured, clear down previous
             // tracking data
             if ((_writer != null) && _settings.ClearDown)
@@ -143,17 +131,16 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 await _factory.Context<BaseStationReaderDbContext>()?.ClearDown();
             }
 
-            // Attach the queued writer event handlers
-            _writer.BatchStarted += OnBatchStarted;
-            _writer.BatchCompleted += OnBatchCompleted;
-
             // Attach the aircraft tracking event handlers
             _tracker.AircraftAdded += OnAircraftAdded;
             _tracker.AircraftUpdated += OnAircraftUpdated;
             _tracker.AircraftRemoved += OnAircraftRemoved;
 
             // Start the queued writer
-            await _writer.StartAsync();
+            if (_writer != null)
+            {
+                await _writer.StartAsync(token);
+            }
 
             try
             {
@@ -167,19 +154,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
             finally
             {
-                // Stop the queued writer
-                _writer.Stop();
-                
-                // Detach the queued writer event handlers
-                _writer.BatchStarted -= OnBatchStarted;
-                _writer.BatchCompleted -= OnBatchCompleted;
+                // Stop the continuous writer
+                await _writer.StopAsync();
+                await _writer.DisposeAsync();
 
                 // Detach the aircraft tracking event handlers
                 _tracker.AircraftAdded -= OnAircraftAdded;
                 _tracker.AircraftUpdated -= OnAircraftUpdated;
                 _tracker.AircraftRemoved -= OnAircraftRemoved;
             }
-
         }
 
         /// <summary>

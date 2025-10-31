@@ -2,6 +2,7 @@
 
 namespace BaseStationReader.Interfaces.Database
 {
+    [Obsolete]
     public interface IQueuedWriter
     {
         event EventHandler<BatchStartedEventArgs> BatchStarted;
