@@ -151,7 +151,8 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
-            TryRelease();
+            // Wait for the loop to stop then dispose the Semaphore
+            await StopAsync().ConfigureAwait(false);
             _signal.Dispose();
             await Task.CompletedTask;
         }
@@ -168,6 +169,10 @@ namespace BaseStationReader.BusinessLogic.Database
             catch (SemaphoreFullException)
             {
                 // Already signalled, so sink the exception
+            }
+            catch (ObjectDisposedException)
+            {
+                // Shutting down, so sink the exception
             }
         }
 
@@ -201,6 +206,12 @@ namespace BaseStationReader.BusinessLogic.Database
                 }
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
                 {
+                    // Shutting down, so sink the exception
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Semaphore disposed, shutting down, so sink the exception
                     break;
                 }
                 catch (Exception ex)
