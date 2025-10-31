@@ -112,34 +112,76 @@ namespace BaseStationReader.Terminal
             bool cancelled = false;
 
             // Reset the elapsed time since the last update
-            int elapsed = 0;
             _lastUpdate = DateTime.Now;
 
-            // TODO:
-            // Start the controller and continuously update the table
-            // _controller.Start();
-            while ((elapsed <= _settings.ApplicationTimeout) && !cancelled)
+            // Wire up the aircraft notificarion event handlers
+            _controller.AircraftAdded += OnAircraftAdded;
+            _controller.AircraftUpdated += OnAircraftUpdated;
+            _controller.AircraftRemoved += OnAircraftRemoved;
+
+            // Create a cancellation token and start the controller task
+            using var source = new CancellationTokenSource(_settings.ApplicationTimeout);
+            var controllerTask = _controller.StartAsync(source.Token);
+
+            // Define the interval at which the display will refresh
+            var interval = TimeSpan.FromMilliseconds(100);
+
+            try
             {
-                // See if there's a keypress available
-                if (Console.KeyAvailable)
+                while (!cancelled)
                 {
-                    // There is, so read it
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.Escape)
+                    var delayTask = Task.Delay(interval, source.Token);
+                    var winner = await Task.WhenAny(controllerTask, delayTask).ConfigureAwait(false);
+
+                    if (winner == controllerTask)
                     {
-                        // It's the ESC key so set the cancelled flag and break out
-                        cancelled = true;
+                        // This propagates completion/exception/cancellation
+                        await controllerTask.ConfigureAwait(false); 
                         break;
                     }
+
+                    // Refresh the display and check for the cancellation keypress 
+                    cancelled = RefreshTable(ctx);
                 }
-
-                // Refresh and wait for a while
-                ctx.Refresh();
-                await Task.Delay(100);
-
-                // Check we've not exceeded the application timeout
-                elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
             }
+            catch (OperationCanceledException)
+            {
+                // Expected when the token is cancelled
+            }
+            finally
+            {
+                // Detach from the tracker controller
+                _controller.AircraftAdded += OnAircraftAdded;
+                _controller.AircraftUpdated += OnAircraftUpdated;
+                _controller.AircraftRemoved += OnAircraftRemoved;
+            }
+
+            return cancelled;
+        }
+
+        /// <summary>
+        /// Refresh the display and check for the cancellation keypress
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        private static bool RefreshTable(LiveDisplayContext ctx)
+        {
+            bool cancelled = false;
+
+            // See if there's a keypress available
+            if (Console.KeyAvailable)
+            {
+                // There is, so read it
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    // It's the ESC key so set the cancelled flag and break out
+                    cancelled = true;
+                }
+            }
+
+            // Refresh
+            ctx.Refresh();
 
             return cancelled;
         }

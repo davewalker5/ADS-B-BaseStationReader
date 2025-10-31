@@ -124,6 +124,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Add the new aircraft to the collection OR return the existing instance for the specified 24-bit
                 // ICAO address if it's already been added
                 var trackedAircraft = _aircraft.GetOrAdd(msg.Address, _ => newTrackedAircraft);
+                var isNew = ReferenceEquals(trackedAircraft, newTrackedAircraft);
+
+                // If it's not a new aircraft, capture the position before updating properties from the message.
+                // Otherwise, just use the position from the message
+                decimal? previousLatitude = null;
+                decimal? previousLongitude = null;
+                decimal? previousAltitude = null;
+                double? previousDistance = null;
+                if (!isNew)
+                {
+                    previousLatitude = trackedAircraft.Latitude;
+                    previousLongitude = trackedAircraft.Longitude;
+                    previousAltitude = trackedAircraft.Altitude;
+                    previousDistance = trackedAircraft.Distance;
+                }
 
                 // Update the properties on the aircraft from the message
                 _updater.UpdateProperties(trackedAircraft, msg);
@@ -131,19 +146,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // If the new aircraft and the instance returned by GetOrAdd() are the same instance, then the
                 // aircraft wasn't in the collection before so send an "added" notification. Otherwise, update
                 // the existing entry's properties from the message and send an "updated" notification
-                if (ReferenceEquals(trackedAircraft, newTrackedAircraft))
+                if (isNew)
                 {
                     // Send the "added" notification to subscribers
                     _sender.SendAddedNotification(trackedAircraft, this, AircraftAdded);
                 }
                 else
                 {
-                    // Capture the previous position
-                    var previousLatitude = trackedAircraft.Latitude;
-                    var previousLongitude = trackedAircraft.Longitude;
-                    var previousAltitude = trackedAircraft.Altitude;
-                    var previousDistance = trackedAircraft.Distance;
-
                     // Assess the aircraft behaviour
                     _updater.UpdateBehaviour(trackedAircraft, previousAltitude);
 

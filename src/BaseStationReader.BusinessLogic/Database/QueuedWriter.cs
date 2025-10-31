@@ -109,7 +109,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // that's in progress as it'll cause conflicts writing to the database
             while (_isProcessingBatch)
             {
-                Thread.Sleep(100);
+                await Task.Delay(100);
             }
 
             // Set the "processing batch" flag
