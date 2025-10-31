@@ -120,9 +120,6 @@ namespace BaseStationReader.Terminal
             _controller.AircraftRemoved += OnAircraftRemoved;
 
             // Create a cancellation token and start the controller task
-            // TODO: Temporarily remove the application timeout to avoid Semaphore disposal issues in
-            // TODO: the continuous writer
-            // using var source = new CancellationTokenSource(_settings.ApplicationTimeout);
             using var source = new CancellationTokenSource();
             var controllerTask = _controller.StartAsync(source.Token);
 
@@ -131,8 +128,15 @@ namespace BaseStationReader.Terminal
 
             try
             {
-                while (!cancelled)
+                while (!cancelled && !source.Token.IsCancellationRequested)
                 {
+                    // If we've exceeded the application timeout since the last update, request cancellation
+                    var elapsed = (DateTime.Now - _lastUpdate).TotalMilliseconds;
+                    if ((_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
+                    {
+                        source.Cancel();
+                    }
+
                     var delayTask = Task.Delay(interval, source.Token);
                     var winner = await Task.WhenAny(controllerTask, delayTask).ConfigureAwait(false);
 
