@@ -3,9 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
-    <ReleaseVersion>2.0.0.0</ReleaseVersion>
-    <FileVersion>2.0.0.0</FileVersion>
-    <ProductVersion>2.0.0</ProductVersion>
+    <ReleaseVersion>2.1.0.0</ReleaseVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <ProductVersion>2.1.0</ProductVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <WarningsAsErrors>CS4014</WarningsAsErrors>
     <NoWarn>$(NoWarn);NU1900</NoWarn>

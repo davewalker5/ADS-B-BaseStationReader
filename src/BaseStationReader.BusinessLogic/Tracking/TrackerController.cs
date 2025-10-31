@@ -15,11 +15,13 @@ using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.Interfaces.Api;
 using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
+using BaseStationReader.Interfaces.Events;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
     public class TrackerController : ITrackerController
     {
+        private readonly IControllerNotificationSender _sender;
         private readonly IDatabaseManagementFactory _factory;
         private readonly TrackerApplicationSettings _settings;
         private IAircraftTracker _tracker = null;
@@ -121,6 +123,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.TimeToRecent,
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
+
+            // Create the controller notification sender
+            _sender = new ControllerNotificationSender(logger);
         }
 
         /// <summary>
@@ -197,7 +202,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
             HandleAircraftEvent(e.Aircraft, e.Position);
-            AircraftAdded?.Invoke(this, e);
+            _sender.SendAddedNotification(e.Aircraft, e.Position, this, AircraftAdded);
         }
 
         /// <summary>
@@ -208,7 +213,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
             HandleAircraftEvent(e.Aircraft, e.Position);
-            AircraftUpdated?.Invoke(this, e);
+            _sender.SendUpdatedNotification(e.Aircraft, e.Position, this, AircraftUpdated);
         }
         /// <summary>
         /// Handle the event raised when an existing aircraft is removed
@@ -218,7 +223,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
         {
             _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
-            AircraftRemoved?.Invoke(this, e);
+            _sender.SendRemovedNotification(e.Aircraft, e.Position, this, AircraftRemoved);
         }
 
         /// <summary>

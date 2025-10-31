@@ -112,8 +112,6 @@ namespace BaseStationReader.Tests.Tracking
             {
                 AircraftNotificationType.Added,
                 AircraftNotificationType.Updated,
-                AircraftNotificationType.Recent,
-                AircraftNotificationType.Stale,
                 AircraftNotificationType.Removed
             };
 
