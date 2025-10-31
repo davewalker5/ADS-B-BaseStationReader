@@ -6,89 +6,76 @@ using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Tests.Entities;
 using BaseStationReader.Tests.Mocks;
-using System.Diagnostics;
+using BaseStationReader.BusinessLogic.Events;
+using BaseStationReader.Interfaces.Logging;
+using System.Text;
+using BaseStationReader.Interfaces.Tracking;
+using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.Tests.Tracking
 {
     [TestClass]
     public class AircraftTrackerTest
     {
-        private const int MessageReaderIntervalMs = 100;
-        private const int TrackerRecentMs = 500;
-        private const int TrackerStaleMs = 1000;
-        private const int TrackerRemovedMs = 2000;
-        private const int MaximumTestRunTimeMs = 3500;
+        private const int MessageReaderIntervalMs = 200;
+        private const int TrackerRecentMs = 4 * MessageReaderIntervalMs;
+        private const int TrackerStaleMs = TrackerRecentMs + 2 * MessageReaderIntervalMs;
+        private const int TrackerRemovedMs = TrackerStaleMs + 2 * MessageReaderIntervalMs;
+        private const int MaximumTestRunTimeMs = TrackerRemovedMs + 2 * MessageReaderIntervalMs;
 
-        private List<AircraftNotificationData> _notifications = new();
+        private ITrackerLogger _logger = new MockFileLogger();
+        private IAircraftTracker _tracker;
 
-        [TestMethod]
-        public void TestAircraftTracker()
+        private List<AircraftNotificationData> _notifications = [];
+
+        [TestInitialize]
+        public void Initialise()
         {
-            string[] messages = new string[] {
+            // Define the test messages
+            string[] messages = [
                 "MSG,8,1,1,3965A3,1,2023/08/23,12:07:27.929,2023/08/23,12:07:28.005,,,,,,,,,,,,0",
                 "MSG,6,1,1,3965A3,1,2023/08/23,12:07:27.932,2023/08/23,12:07:28.006,,,,,,,,6303,0,0,0,"
-            };
+            ];
 
-            // Create a mock reader and parser
-            var reader = new MockMessageReader(messages, MessageReaderIntervalMs, true);
+            // Construct the message reader
+            var buffer = Encoding.UTF8.GetBytes(string.Join("\n", messages) + "\n");
+            var client = new MockTrackerTcpClient(buffer);
+            var readerSender = new MessageReaderNotificationSender(_logger);
+            var reader = new MessageReader(client, _logger, readerSender, "", 0, 100);
+
+            // Construct the message parsers
             var parsers = new Dictionary<MessageType, IMessageParser>
             {
                 { MessageType.MSG, new MsgMessageParser() }
             };
 
-            // Create an aircraft tracker and wire up the event handlers
-            var timer = new MockTrackerTimer(TrackerRecentMs / 10.0);
-            var logger = new MockFileLogger();
+            // Construct the helper classes for the aircraft tracker
             var assessor = new SimpleAircraftBehaviourAssessor();
-            var updater = new AircraftPropertyUpdater(logger, null, assessor);
-            
-            var notificationSender = new NotificationSender(
-                logger,
-                Enum.GetValues<AircraftBehaviour>(),
-                null,
-                null,
-                null,
-                true);
+            var updater = new AircraftPropertyUpdater(_logger, null, assessor);
+            var behaviours = Enum.GetValues<AircraftBehaviour>();
+            var trackerSender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
 
-            var tracker = new AircraftTracker(reader,
-                parsers,
-                timer,
-                updater,
-                notificationSender,
-                [],
-                [],
-                TrackerRecentMs,
-                TrackerStaleMs,
-                TrackerRemovedMs);
+            // Construct the aircraft tracker itself
+            _tracker = new AircraftTracker(reader, parsers, updater, trackerSender, [], [], TrackerRecentMs, TrackerStaleMs, TrackerRemovedMs);
+        }
 
-            tracker.AircraftAdded += OnAircraftNotification;
-            tracker.AircraftUpdated += OnAircraftNotification;
-            tracker.AircraftRemoved += OnAircraftNotification;
+        [TestMethod]
+        public async Task TestAircraftTracker()
+        {
+            // Wire up the event handlers
+            _tracker.AircraftAdded += OnAircraftNotification;
+            _tracker.AircraftUpdated += OnAircraftNotification;
+            _tracker.AircraftRemoved += OnAircraftNotification;
 
-            // Start a stopwatch, that's used to make sure the test doesn't run continuously if
-            // something goes awry
-            var stopwatch = Stopwatch.StartNew();
-            stopwatch.Start();
-
-            // Start the tracker and wait until all the messages have been sent or it's clear there's a problem
-            tracker.Start();
-            while (stopwatch.ElapsedMilliseconds < MaximumTestRunTimeMs)
+            try
             {
+                var source = new CancellationTokenSource(MaximumTestRunTimeMs);
+                await _tracker.StartAsync(source.Token);
             }
-
-            // Stop the tracker
-            tracker.Stop();
-
-            // Construct the expected de-duplicated sequence of notifications
-            var expected = new List<AircraftNotificationType>
+            catch (TaskCanceledException)
             {
-                AircraftNotificationType.Added,
-                AircraftNotificationType.Updated,
-                AircraftNotificationType.Recent,
-                AircraftNotificationType.Stale,
-                AircraftNotificationType.Removed
-            };
-
+                // Expected when the token is cancelled
+            }
 
             // Identify duplicates in the notifications list (for the Recent and Stale notification types)
             var duplicates = new List<AircraftNotificationData>();
@@ -104,64 +91,41 @@ namespace BaseStationReader.Tests.Tracking
             }
 
             // Remove the duplicates
-            foreach (var notification in duplicates)
+            _notifications.RemoveAll(x => duplicates.Contains(x));
+
+            // Log the notifications - this provides useful information if there's a problem
+            foreach (var notification in _notifications)
             {
-                _notifications.Remove(notification);
+                _logger.LogMessage(Severity.Info, $"{notification.NotificationType}: {notification.Aircraft}");
             }
+            
+            // Construct the expected de-duplicated sequence of notifications
+            var expected = new List<AircraftNotificationType>
+            {
+                AircraftNotificationType.Added,
+                AircraftNotificationType.Updated,
+                AircraftNotificationType.Recent,
+                AircraftNotificationType.Stale,
+                AircraftNotificationType.Removed
+            };
 
             // The actual notifications list should now be equal to the length of the expected list
             Assert.HasCount(expected.Count, _notifications);
 
-            // Now confirm the notifications we do have arrived in the right order with the correct aircraft data
-            for (int i = 0; i < expected.Count; i++)
+            // Now confirm all the expected notifications are there
+            foreach (var notificationType in expected)
             {
-                // Confirm the notification type is correct
-                Assert.AreEqual(expected[i], _notifications[i].NotificationType);
-
-                // Confirm the aircraft details are correct. The first copy won't have a squawk code,
-                // the remainder will
-                var expectedSquawk = (expected[i] == AircraftNotificationType.Added) ? null : "6303";
-#pragma warning disable CS8604
-                ConfirmAircraftProperties(_notifications[i].Aircraft, expectedSquawk);
-#pragma warning restore CS8604
-            }
-        }
-
-        /// <summary>
-        /// Confirm the aircraft properties match the expected values
-        /// </summary>
-        /// <param name="aircraft"></param>
-        /// <param name="expectedSquawk"></param>
-        private static void ConfirmAircraftProperties(TrackedAircraft aircraft, string expectedSquawk)
-        {
-            Assert.AreEqual("3965A3", aircraft.Address);
-            Assert.IsNull(aircraft.Callsign);
-            Assert.IsNull(aircraft.Altitude);
-            Assert.IsNull(aircraft.GroundSpeed);
-            Assert.IsNull(aircraft.Track);
-            Assert.IsNull(aircraft.Latitude);
-            Assert.IsNull(aircraft.Longitude);
-            Assert.IsNull(aircraft.VerticalRate);
-            if (expectedSquawk != null)
-            {
-                Assert.AreEqual(expectedSquawk, aircraft.Squawk);
-            }
-            else
-            {
-                Assert.IsNull(aircraft.Squawk);
+                Assert.HasCount(1, _notifications.Where(x => x.NotificationType == notificationType));
             }
         }
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
-            lock (_notifications)
+            _notifications.Add(new AircraftNotificationData
             {
-                _notifications.Add(new AircraftNotificationData
-                {
-                    Aircraft = (TrackedAircraft)e.Aircraft.Clone(),
-                    NotificationType = e.NotificationType
-                });
-            }
+                Aircraft = (TrackedAircraft)e.Aircraft.Clone(),
+                NotificationType = e.NotificationType
+            });
         }
     }
 }

@@ -1,9 +1,8 @@
 ﻿using BaseStationReader.Entities.Messages;
 using BaseStationReader.BusinessLogic.Messages;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
-namespace BaseStationReader.Tests.Tracking
+namespace BaseStationReader.Tests.Messages
 {
     [TestClass]
     public class MsgMessageParserTest
@@ -23,9 +22,6 @@ namespace BaseStationReader.Tests.Tracking
 
             var expectedGenerated = DateTime.ParseExact("2023-08-23 10:37:32.733", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
             Assert.AreEqual(expectedGenerated, message.Generated);
-
-            var expectedLastSeen = DateTime.ParseExact("2023-08-23 10:37:32.807", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            Assert.AreEqual(expectedLastSeen, message.LastSeen);
 
             Assert.IsNull(message.Callsign);
             Assert.AreEqual(32000M, message.Altitude);

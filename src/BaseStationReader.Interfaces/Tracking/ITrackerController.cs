@@ -1,22 +1,15 @@
 ﻿using BaseStationReader.Entities.Events;
-using BaseStationReader.Entities.Tracking;
-using System.Collections.Concurrent;
 
 namespace BaseStationReader.Interfaces.Tracking
 {
-    public interface ITrackerWrapper
+    public interface ITrackerController
     {
         event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
         event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
         event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
 
-        ConcurrentDictionary<string, TrackedAircraft> TrackedAircraft { get; }
-        bool IsTracking { get; }
-        Task InitialiseAsync();
-        void Start();
-        void Stop();
+        Task StartAsync(CancellationToken token);
         int QueueSize { get; }
         Task FlushQueueAsync();
-        void ClearQueue();
     }
 }

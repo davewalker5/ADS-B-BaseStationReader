@@ -37,9 +37,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Increment the message count
             aircraft.Messages++;
 
-            // Capture the vertical rate before the aircraft is updated
-            decimal? originalAltitude = aircraft.Altitude;
-
             // Iterate over the aircraft propertues
             foreach (var aircraftProperty in _aircraftProperties)
             {

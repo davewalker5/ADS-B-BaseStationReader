@@ -17,14 +17,15 @@ namespace BaseStationReader.BusinessLogic.Messages
         {
             var address = GetStringValue(fields, MessageField.HexIdent) ?? "";
             var generated = GetTimestamp(fields, MessageField.DateGenerated, MessageField.TimeGenerated);
-            var logged = GetTimestamp(fields, MessageField.DateLogged, MessageField.TimeLogged);
 
+            // Note that we override the "last seen" timestamp (logged) in the incoming message as the application
+            // has last seen the aircraft now, irrespective of what the message says
             var msg = new Message
             {
                 MessageType = messageType,
                 Address = address,
                 Generated = generated,
-                LastSeen = logged
+                LastSeen = DateTime.Now
             };
 
             return msg;

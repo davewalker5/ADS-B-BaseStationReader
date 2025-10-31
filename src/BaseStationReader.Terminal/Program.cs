@@ -15,6 +15,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Api.Wrapper;
 using BaseStationReader.Api;
+using BaseStationReader.BusinessLogic.Messages;
 
 namespace BaseStationReader.Terminal
 {
@@ -25,7 +26,7 @@ namespace BaseStationReader.Terminal
         private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerTableManager _tableManager = null;
         private static ITrackerLogger _logger = null;
-        private static ITrackerWrapper _wrapper = null;
+        private static ITrackerController _controller = null;
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
@@ -68,11 +69,9 @@ namespace BaseStationReader.Terminal
 
                 // Initialise the tracker wrapper
                 var apiFactory = new ExternalApiFactory();
-                _wrapper = new TrackerWrapper(_logger, apiFactory, TrackerHttpClient.Instance, _settings, departureAirports, arrivalAirports);
-                await _wrapper.InitialiseAsync();
-                _wrapper.AircraftAdded += OnAircraftAdded;
-                _wrapper.AircraftUpdated += OnAircraftUpdated;
-                _wrapper.AircraftRemoved += OnAircraftRemoved;
+                var httpClient = TrackerHttpClient.Instance;
+                var tcpClient = new TrackerTcpClient();
+                _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
 
                 var cancelled = false;
                 do
@@ -97,8 +96,8 @@ namespace BaseStationReader.Terminal
                 // Process all pending requests in the queued writer queue
                 if (_settings.EnableSqlWriter)
                 {
-                    Console.WriteLine($"Processing {_wrapper.QueueSize} pending database updates and API requests ...");
-                    await _wrapper.FlushQueueAsync();
+                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates and API requests ...");
+                    await _controller.FlushQueueAsync();
                 }
             }
         }
@@ -113,36 +112,76 @@ namespace BaseStationReader.Terminal
             bool cancelled = false;
 
             // Reset the elapsed time since the last update
-            int elapsed = 0;
             _lastUpdate = DateTime.Now;
 
-            // Start the wrapper and continuously update the table
-            _wrapper.Start();
-            while ((elapsed <= _settings.ApplicationTimeout) && !cancelled)
+            // Wire up the aircraft notificarion event handlers
+            _controller.AircraftAdded += OnAircraftAdded;
+            _controller.AircraftUpdated += OnAircraftUpdated;
+            _controller.AircraftRemoved += OnAircraftRemoved;
+
+            // Create a cancellation token and start the controller task
+            using var source = new CancellationTokenSource(_settings.ApplicationTimeout);
+            var controllerTask = _controller.StartAsync(source.Token);
+
+            // Define the interval at which the display will refresh
+            var interval = TimeSpan.FromMilliseconds(100);
+
+            try
             {
-                // See if there's a keypress available
-                if (Console.KeyAvailable)
+                while (!cancelled)
                 {
-                    // There is, so read it
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.Escape)
+                    var delayTask = Task.Delay(interval, source.Token);
+                    var winner = await Task.WhenAny(controllerTask, delayTask).ConfigureAwait(false);
+
+                    if (winner == controllerTask)
                     {
-                        // It's the ESC key so set the cancelled flag and break out
-                        cancelled = true;
+                        // This propagates completion/exception/cancellation
+                        await controllerTask.ConfigureAwait(false); 
                         break;
                     }
+
+                    // Refresh the display and check for the cancellation keypress 
+                    cancelled = RefreshTable(ctx);
                 }
-
-                // Refresh and wait for a while
-                ctx.Refresh();
-                await Task.Delay(100);
-
-                // Check we've not exceeded the application timeout
-                elapsed = (int)(DateTime.Now - _lastUpdate).TotalMilliseconds;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when the token is cancelled
+            }
+            finally
+            {
+                // Detach from the tracker controller
+                _controller.AircraftAdded += OnAircraftAdded;
+                _controller.AircraftUpdated += OnAircraftUpdated;
+                _controller.AircraftRemoved += OnAircraftRemoved;
             }
 
-            // Stop the wrapper
-            _wrapper.Stop();
+            return cancelled;
+        }
+
+        /// <summary>
+        /// Refresh the display and check for the cancellation keypress
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        private static bool RefreshTable(LiveDisplayContext ctx)
+        {
+            bool cancelled = false;
+
+            // See if there's a keypress available
+            if (Console.KeyAvailable)
+            {
+                // There is, so read it
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    // It's the ESC key so set the cancelled flag and break out
+                    cancelled = true;
+                }
+            }
+
+            // Refresh
+            ctx.Refresh();
 
             return cancelled;
         }

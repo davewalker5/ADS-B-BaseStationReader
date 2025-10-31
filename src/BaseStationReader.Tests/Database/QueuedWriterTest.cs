@@ -5,6 +5,7 @@ using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Tests.Mocks;
 using System.Diagnostics;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.BusinessLogic.Events;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -39,8 +40,8 @@ namespace BaseStationReader.Tests.Database
             _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
 
             // Create a queued writer, wire up the event handlers and start it
-            var writerTimer = new MockTrackerTimer(WriterInterval);
-            _writer = new QueuedWriter(_factory, null, writerTimer, [], [], WriterBatchSize, true);
+            var sender = new QueuedWriterNotificationSender(logger);
+            _writer = new QueuedWriter(_factory, null, sender, [], [], WriterBatchSize, WriterInterval, true);
             _writer.BatchCompleted += OnBatchWritten;
 
             // Start the writer

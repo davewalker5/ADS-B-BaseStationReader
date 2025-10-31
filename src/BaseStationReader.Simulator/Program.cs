@@ -74,15 +74,14 @@ namespace BaseStationReader.Simulator
                 IMessageGeneratorWrapper messageGeneratorWrapper = new MessageGeneratorWrapper(generators);
 
                 // Configure a timer, aircraft and message generatorand the simulator
-                ITrackerTimer timer = new TrackerTimer(settings.SendInterval);
                 using (var simulator = new ReceiverSimulator(
                     logger,
-                    timer,
                     aircraftGenerator,
                     messageGeneratorWrapper,
                     settings.MaximumAltitude,
                     settings.Port,
-                    settings.NumberOfAircraft))
+                    settings.NumberOfAircraft,
+                    settings.SendInterval))
                 {
                     // Run the simulator
                     Task.Run(() => simulator.StartAsync());
