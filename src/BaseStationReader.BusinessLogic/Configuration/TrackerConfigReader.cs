@@ -30,9 +30,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 column.TypeName = column.Info.PropertyType.Name;
                 if (column.TypeName.Contains("Nullable"))
                 {
-#pragma warning disable CS8602
                     column.TypeName = Nullable.GetUnderlyingType(column.Info.PropertyType).Name;
-#pragma warning restore CS8602
                 }
             }
 

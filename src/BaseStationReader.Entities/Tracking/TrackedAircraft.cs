@@ -79,6 +79,9 @@ namespace BaseStationReader.Entities.Tracking
         public DateTime PositionLastUpdated { get; set; }
 
         [NotMapped]
+        public DateTime? LastNotified { get; set; }
+
+        [NotMapped]
         public FixedSizeQueue<decimal> AltitudeHistory { get; private set; } = new(MaximumHistoryEntries);
 
         public override string ToString()
