@@ -35,8 +35,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.TrackedBehaviours, false, "--behaviours", "-b", "Specify a list of aircraft behaviours to track", 1, 1);
             Add(CommandLineOptionType.TrackPosition, false, "--track-position", "-tpos", "Set to true to record aircraft position over time", 1, 1);
             Add(CommandLineOptionType.VerboseLogging, false, "--verbose", "-v", "Enable verbose logging at debug log level", 1, 1);
-            Add(CommandLineOptionType.WriterBatchSize, false, "--writer-batch-size", "-bs", "SQL write batch size", 1, 1);
-            Add(CommandLineOptionType.WriterInterval, false, "--writer-interval", "-i", "SQL write interval (ms)", 1, 1);
         }
     }
 }

@@ -20,7 +20,7 @@
 - The AircraftTracker subscribes to these events and passes each new message to the message parsers to have the information it contains extracted into an aircraft tracking object
 - The AircraftTracker enqueues each new tracking object for asynchronous writing to the SQLite database
 - It also exposes events to notify subscribers when aircraft are added, updated and removed
-- On a timed interval, the QueuedWriter processes pending writes from the the queue
+- The ContinuousWriter processes pending requests from the queue, in strictly serial order
 - External API integrations are supported for automatic/manual lookup of:
   - Live and historical flight details
   - Airline details

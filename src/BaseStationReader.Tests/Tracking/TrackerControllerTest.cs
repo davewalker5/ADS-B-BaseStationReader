@@ -32,8 +32,6 @@ namespace BaseStationReader.Tests.Tracking
             ReceiverLongitude = -0.19027799367905,
             EnableSqlWriter = true,
             AutoLookup = false,
-            WriterBatchSize = 20000,
-            WriterInterval = 30000,
             TrackedBehaviours = [.. Enum.GetValues<AircraftBehaviour>()],
             TrackPosition = true,
             TimeToRecent = TrackerRecentMs,

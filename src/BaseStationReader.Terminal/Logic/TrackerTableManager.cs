@@ -125,8 +125,8 @@ namespace BaseStationReader.Terminal.Logic
         {
             var rowNumber = -1;
 
-            // Check we've not exceeded the row limit
-            if ((_maximumRows == 0) || (Table.Rows.Count < _maximumRows))
+            // Check we've not exceeded the row limit and that the aircraft isn't already in the table
+            if ((_maximumRows == 0) || (Table.Rows.Count < _maximumRows) && (_indexManager.FindAircraft(aircraft.Address) == -1))
             {
                 // Add the aircraft to the table
                 rowNumber = 0;

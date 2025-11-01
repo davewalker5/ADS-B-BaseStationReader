@@ -24,8 +24,6 @@ namespace BaseStationReader.Tests.Configuration
             Assert.IsFalse(settings.ClearDown);
             Assert.IsFalse(settings.AutoLookup);
             Assert.AreEqual("AirLabs", settings.FlightApi);
-            Assert.AreEqual(30000, settings.WriterInterval);
-            Assert.AreEqual(20000, settings.WriterBatchSize);
             Assert.AreEqual(0, settings.MaximumRows);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));

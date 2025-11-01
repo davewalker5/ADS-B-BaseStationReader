@@ -210,22 +210,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         }
 
         /// <summary>
-        /// Handle the event raised when a batch of queued updates are about to be processed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnBatchStarted(object sender, BatchStartedEventArgs e)
-            => _factory.Logger.LogMessage(Severity.Info, $"Request batch of up to {_settings.WriterBatchSize} entries is about to be processed. Queue size {e.QueueSize}");
-
-        /// <summary>
-        /// Handle the event raised when a batch of queued updates have been processed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnBatchCompleted(object sender, BatchCompletedEventArgs e)
-            => _factory.Logger.LogMessage(Severity.Info, $"Request batch has been processed. Queue size {e.InitialQueueSize} -> {e.FinalQueueSize} in {e.Duration} ms");
-
-        /// <summary>
         /// Handle an aircraft addition or removal event
         /// </summary>
         /// <param name="aircraft"></param>
