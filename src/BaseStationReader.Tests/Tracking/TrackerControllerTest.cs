@@ -83,21 +83,8 @@ namespace BaseStationReader.Tests.Tracking
                 // Expected when the token is cancelled
             }
 
-            // Identify duplicates in the notifications list (for the Recent and Stale notification types)
-            var duplicates = new List<AircraftNotificationData>();
-            var previous = AircraftNotificationType.Unknown;
-            foreach (var notification in _notifications)
-            {
-                if (notification.NotificationType == previous)
-                {
-                    duplicates.Add(notification);
-                }
-
-                previous = notification.NotificationType;
-            }
-
-            // Remove the duplicates
-            _notifications.RemoveAll(x => duplicates.Contains(x));
+            // De-duplicate the notifications
+            _notifications = _notifications.GroupBy(p => p.NotificationType).Select(g => g.First()).ToList();
 
             // Log the notifications - this provides useful information if there's a problem
             foreach (var notification in _notifications)
