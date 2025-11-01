@@ -184,8 +184,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="e"></param>
         private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
         {
-            HandleAircraftEvent(e.Aircraft, e.Position);
-            _sender.SendAddedNotification(e.Aircraft, e.Position, this, AircraftAdded);
+            if (ShouldNotify(e.Aircraft))
+            {
+                e.Aircraft.LastNotified = DateTime.Now;
+                HandleAircraftEvent(e.Aircraft, e.Position);
+                _sender.SendAddedNotification(e.Aircraft, e.Position, this, AircraftAdded);
+            }
         }
 
         /// <summary>
@@ -195,8 +199,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="e"></param>
         private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
         {
-            HandleAircraftEvent(e.Aircraft, e.Position);
-            _sender.SendUpdatedNotification(e.Aircraft, e.Position, this, AircraftUpdated);
+            if (ShouldNotify(e.Aircraft))
+            {
+                e.Aircraft.LastNotified = DateTime.Now;
+                HandleAircraftEvent(e.Aircraft, e.Position);
+                _sender.SendUpdatedNotification(e.Aircraft, e.Position, this, AircraftUpdated);
+            }
         }
         /// <summary>
         /// Handle the event raised when an existing aircraft is removed
@@ -207,6 +215,26 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
             _sender.SendRemovedNotification(e.Aircraft, e.Position, this, AircraftRemoved);
+        }
+
+        /// <summary>
+        /// Return true if a notification should be sent for a specified aircraft and updates pushed to the
+        /// queue for writing/processing
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        private bool ShouldNotify(TrackedAircraft aircraft)
+        {
+            // If it's never notified before, send the notification
+            if (aircraft.LastNotified == null)
+            {
+                return true;
+            }
+
+            // Calculate the time since the last notification and notify if the aircraft notification interval
+            // has been reached
+            var elapsed = (DateTime.Now - aircraft.LastNotified.Value).TotalMilliseconds;
+            return elapsed >= _settings.AircraftNotificationInterval;
         }
 
         /// <summary>
@@ -230,18 +258,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Push the aircraft and its position to the SQL writer, if enabled
             if (_writer != null)
             {
-                // Push the aircraft to the queued writer queue
+                // Push the aircraft to the writer queue
                 _factory.Logger.LogMessage(Severity.Verbose, $"Queueing aircraft {aircraft.Address} {aircraft.Behaviour} for writing");
                 _writer.Push(aircraft);
 
-                // If this is a new aircraft, push a lookup request to the queued writer queue
+                // If this is a new aircraft, push a lookup request to the writer queue
                 if (!existingAircraft && _settings.AutoLookup)
                 {
                     _factory.Logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {aircraft.Address} {aircraft.Behaviour}");
                     _writer.Push(new ApiLookupRequest() { AircraftAddress = aircraft.Address });
                 }
 
-                // Push the aircraft position to the queued writer queue
+                // Push the aircraft position to the writer queue
                 if (position != null)
                 {
                     _factory.Logger.LogMessage(Severity.Verbose, $"Queueing position with ID {position.Id} for aircraft {aircraft.Address} {aircraft.Behaviour} for writing");
