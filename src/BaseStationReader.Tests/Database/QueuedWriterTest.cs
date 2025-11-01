@@ -10,6 +10,7 @@ using BaseStationReader.BusinessLogic.Events;
 namespace BaseStationReader.Tests.Database
 {
     [TestClass]
+    [Obsolete]
     public class QueuedWriterTest
     {
         private const int WriterInterval = 10;

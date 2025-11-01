@@ -23,8 +23,6 @@ namespace BaseStationReader.Entities.Config
         public bool ClearDown { get; set; }
         public bool AutoLookup { get; set; }
         public string FlightApi { get; set; } = nameof(ApiServiceType.None);
-        public int WriterInterval { get; set; }
-        public int WriterBatchSize { get; set; }
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }

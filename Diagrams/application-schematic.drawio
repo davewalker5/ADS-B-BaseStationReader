@@ -22,7 +22,7 @@
         <mxCell id="7MFFMG4wqqLVnOx0IA_3-4" value="Message Parsers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="450" y="560" width="180" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="7MFFMG4wqqLVnOx0IA_3-5" value="QueuedWriter" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="7MFFMG4wqqLVnOx0IA_3-5" value="ContinuousWriter" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="890" y="430" width="180" height="40" as="geometry" />
         </mxCell>
         <mxCell id="7MFFMG4wqqLVnOx0IA_3-6" value="" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="1" vertex="1">
@@ -172,33 +172,33 @@
         <mxCell id="L-Om1blV-5k6JluWc7AN-1" value="dump1090 Host" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="126.68" y="250" width="203.32" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-1" value="External API Wrapper" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-1" value="External API Wrapper" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="890" y="320" width="180" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="7MFFMG4wqqLVnOx0IA_3-5" target="N0Jagr4uKvsnuennWBeG-1">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="7MFFMG4wqqLVnOx0IA_3-5" target="N0Jagr4uKvsnuennWBeG-1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="670" y="370" as="sourcePoint" />
             <mxPoint x="720" y="320" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-3" value="Flight, Aircraft, Airline Lookup" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="N0Jagr4uKvsnuennWBeG-2">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-3" value="Flight, Aircraft, Airline Lookup" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="N0Jagr4uKvsnuennWBeG-2" vertex="1" connectable="0">
           <mxGeometry x="-0.1429" y="-3" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-4" value="" style="points=[];aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.webplus_web_app_service;" vertex="1" parent="1">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-4" value="" style="points=[];aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.webplus_web_app_service;" parent="1" vertex="1">
           <mxGeometry x="955.1" y="100" width="54.900000000000006" height="54.900000000000006" as="geometry" />
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-5" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.49;entryY=1.018;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="N0Jagr4uKvsnuennWBeG-1" target="N0Jagr4uKvsnuennWBeG-4">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-5" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.49;entryY=1.018;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="N0Jagr4uKvsnuennWBeG-1" target="N0Jagr4uKvsnuennWBeG-4" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="670" y="370" as="sourcePoint" />
             <mxPoint x="720" y="320" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-6" value="Lookup Tool" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-6" value="Lookup Tool" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1080" y="430" width="180" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-7" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="7MFFMG4wqqLVnOx0IA_3-6" target="N0Jagr4uKvsnuennWBeG-6">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-7" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="7MFFMG4wqqLVnOx0IA_3-6" target="N0Jagr4uKvsnuennWBeG-6" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="880" y="370" as="sourcePoint" />
             <mxPoint x="930" y="320" as="targetPoint" />
@@ -207,7 +207,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-8" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="N0Jagr4uKvsnuennWBeG-6" target="N0Jagr4uKvsnuennWBeG-1">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-8" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="N0Jagr4uKvsnuennWBeG-6" target="N0Jagr4uKvsnuennWBeG-1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="880" y="370" as="sourcePoint" />
             <mxPoint x="930" y="320" as="targetPoint" />
@@ -216,7 +216,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="N0Jagr4uKvsnuennWBeG-9" value="Flight, Aircraft, Airline Lookup" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="N0Jagr4uKvsnuennWBeG-8">
+        <mxCell id="N0Jagr4uKvsnuennWBeG-9" value="Flight, Aircraft, Airline Lookup" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="N0Jagr4uKvsnuennWBeG-8" vertex="1" connectable="0">
           <mxGeometry x="-0.4" y="2" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>

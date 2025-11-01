@@ -62,8 +62,6 @@
         TrackedBehaviours,
         TrackPosition,
         VerboseLogging,
-        WeatherApi,
-        WriterBatchSize,
-        WriterInterval
+        WeatherApi
     }
 }

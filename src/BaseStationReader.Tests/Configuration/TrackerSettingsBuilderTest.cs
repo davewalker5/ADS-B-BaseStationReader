@@ -138,24 +138,6 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideWriterIntervalTest()
-        {
-            var args = new string[] { "--writer-interval", "15000" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.AreEqual(15000, settings.WriterInterval);
-        }
-
-        [TestMethod]
-        public void OverrideWriterBatchSizeTest()
-        {
-            var args = new string[] { "--writer-batch-size", "5000" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.AreEqual(5000, settings.WriterBatchSize);
-        }
-
-        [TestMethod]
         public void OverrideMaximumRowsTest()
         {
             var args = new string[] { "--max-rows", "0" };

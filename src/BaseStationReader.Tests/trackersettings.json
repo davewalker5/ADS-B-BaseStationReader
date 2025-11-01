@@ -15,8 +15,6 @@
     "EnableSqlWriter": true,
     "ClearDown": false,
     "AutoLookup": false,
-    "WriterInterval": 30000,
-    "WriterBatchSize": 20000,
     "RefreshInterval": 1000,
     "MaximumRows": 0,
     "ReceiverLatitude": 51.470020,
