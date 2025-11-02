@@ -47,28 +47,10 @@ namespace BaseStationReader.Terminal.Logic
         }
 
         /// <summary>
-        /// Add an aircraft to the table and return its row number, which will either be 0 if successful or
-        /// -1 if the maximum row limit has been exceeded
-        /// </summary>
-        /// <param name="aircraft"></param>
-        /// <returns></returns>
-        public int AddAircraft(TrackedAircraft aircraft)
-        {
-            var rowNumber = -1;
-
-            lock (_lock)
-            {
-                rowNumber = AddTableRow(aircraft);
-            }
-
-            return rowNumber;
-        }
-
-        /// <summary>
         /// Update an aircraft's entry in the table
         /// </summary>
         /// <param name="aircraft"></param>
-        public int UpdateAircraft(TrackedAircraft aircraft)
+        public int AddOrUpdateAircraft(TrackedAircraft aircraft)
         {
             var rowNumber = -1;
 

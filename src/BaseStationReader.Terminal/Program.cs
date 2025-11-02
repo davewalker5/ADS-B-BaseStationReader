@@ -115,9 +115,7 @@ namespace BaseStationReader.Terminal
             _lastUpdate = DateTime.Now;
 
             // Wire up the aircraft notificarion event handlers
-            _controller.AircraftAdded += OnAircraftAdded;
-            _controller.AircraftUpdated += OnAircraftUpdated;
-            _controller.AircraftRemoved += OnAircraftRemoved;
+            _controller.AircraftEvent += OnAircraftEvent;
 
             // Create a cancellation token and start the controller task
             using var source = new CancellationTokenSource();
@@ -158,9 +156,7 @@ namespace BaseStationReader.Terminal
             finally
             {
                 // Detach from the tracker controller
-                _controller.AircraftAdded += OnAircraftAdded;
-                _controller.AircraftUpdated += OnAircraftUpdated;
-                _controller.AircraftRemoved += OnAircraftRemoved;
+                _controller.AircraftEvent += OnAircraftEvent;
             }
 
             return cancelled;
@@ -194,51 +190,30 @@ namespace BaseStationReader.Terminal
         }
 
         /// <summary>
-        /// Handle the event raised when a new aircraft is detected
+        /// Handle an aircraft event
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
+        private static void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
 
-            // Add the aircraft to the bottom of the table
-            var rowNumber = _tableManager.AddAircraft(e.Aircraft);
-            if (rowNumber != -1)
+            // If this is a removal event, remove the aircraft from the index
+            if (e.NotificationType == AircraftNotificationType.Removed)
             {
-                _logger.LogMessage(Severity.Info, $"Added new aircraft {e.Aircraft.Address} at row {rowNumber}");
+                var rowNumber = _tableManager.RemoveAircraft(e.Aircraft);
+                _logger.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
             }
-        }
-
-        /// <summary>
-        /// Handle the event raised when an existing aircraft is updated
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
-        {
-            // Update the timestamp used to implement the application timeout
-            _lastUpdate = DateTime.Now;
-
-            // Update the row
-            var rowNumber = _tableManager.UpdateAircraft(e.Aircraft);
-            _logger.LogMessage(Severity.Verbose, $"Updated aircraft {e.Aircraft.Address} at row {rowNumber}");
-        }
-
-        /// <summary>
-        /// Handle the event raised when an existing aircraft is removed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
-        {
-            // Update the timestamp used to implement the application timeout
-            _lastUpdate = DateTime.Now;
-
-            // Remove the aircraft from the index
-            var rowNumber = _tableManager.RemoveAircraft(e.Aircraft);
-            _logger.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
+            else
+            {
+                // Not a removal, so update the aircraft entry in the table
+                var rowNumber = _tableManager.AddOrUpdateAircraft(e.Aircraft);
+                if (rowNumber != -1)
+                {
+                    _logger.LogMessage(Severity.Info, $"Handled event for aircraft {e.Aircraft.Address} at row {rowNumber}");
+                }
+            }
         }
 
         /// <summary>

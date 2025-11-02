@@ -53,7 +53,7 @@ namespace BaseStationReader.Tests.Tracking
             var assessor = new SimpleAircraftBehaviourAssessor();
             var updater = new AircraftPropertyUpdater(_logger, null, assessor);
             var behaviours = Enum.GetValues<AircraftBehaviour>();
-            var trackerSender = new AircraftNotificationSender(_logger, behaviours, null, null, null, true);
+            var trackerSender = new AircraftTrackerNotificationSender(_logger, behaviours, null, null, null);
 
             // Construct the aircraft tracker itself
             _tracker = new AircraftTracker(reader, parsers, updater, trackerSender, [], [], TrackerRecentMs, TrackerStaleMs, TrackerRemovedMs);
@@ -63,9 +63,7 @@ namespace BaseStationReader.Tests.Tracking
         public async Task TestAircraftTracker()
         {
             // Wire up the event handlers
-            _tracker.AircraftAdded += OnAircraftNotification;
-            _tracker.AircraftUpdated += OnAircraftNotification;
-            _tracker.AircraftRemoved += OnAircraftNotification;
+            _tracker.AircraftEvent += OnAircraftNotification;
 
             try
             {

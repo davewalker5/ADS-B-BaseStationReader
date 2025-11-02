@@ -19,7 +19,7 @@ namespace BaseStationReader.Tests.Tracking
         private const int TrackerRecentMs = 4 * MessageReaderIntervalMs;
         private const int TrackerStaleMs = TrackerRecentMs + 2 * MessageReaderIntervalMs;
         private const int TrackerRemovedMs = TrackerStaleMs + 2 * MessageReaderIntervalMs;
-        private const int MaximumTestRunTimeMs = TrackerRemovedMs + 2 * MessageReaderIntervalMs;
+        private const int MaximumTestRunTimeMs = TrackerRemovedMs + 5 * MessageReaderIntervalMs;
 
         private readonly TrackerApplicationSettings _settings = new()
         {
@@ -69,9 +69,7 @@ namespace BaseStationReader.Tests.Tracking
         public async Task TestAircraftTracker()
         {
             // Wire up the event handlers
-            _controller.AircraftAdded += OnAircraftNotification;
-            _controller.AircraftUpdated += OnAircraftNotification;
-            _controller.AircraftRemoved += OnAircraftNotification;
+            _controller.AircraftEvent += OnAircraftNotification;
 
             try
             {
@@ -97,6 +95,8 @@ namespace BaseStationReader.Tests.Tracking
             {
                 AircraftNotificationType.Added,
                 AircraftNotificationType.Updated,
+                AircraftNotificationType.Recent,
+                AircraftNotificationType.Stale,
                 AircraftNotificationType.Removed
             };
 
@@ -112,6 +112,7 @@ namespace BaseStationReader.Tests.Tracking
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
+            _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} notification");
             _notifications.Add(new AircraftNotificationData
             {
                 Aircraft = (TrackedAircraft)e.Aircraft.Clone(),

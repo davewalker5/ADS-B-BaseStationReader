@@ -23,9 +23,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _staleMs;
         private readonly int _removedMs;
 
-        public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
-        public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
-        public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
         public AircraftTracker(
             IMessageReader reader,
@@ -128,44 +126,24 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 // If it's not a new aircraft, capture the position before updating properties from the message.
                 // Otherwise, just use the position from the message
-                decimal? previousLatitude = null;
-                decimal? previousLongitude = null;
-                decimal? previousAltitude = null;
-                double? previousDistance = null;
-                if (!isNew)
+                AircraftPosition position = isNew ? null : new()
                 {
-                    previousLatitude = trackedAircraft.Latitude;
-                    previousLongitude = trackedAircraft.Longitude;
-                    previousAltitude = trackedAircraft.Altitude;
-                    previousDistance = trackedAircraft.Distance;
-                }
+                    Address = trackedAircraft.Address,
+                    Latitude = trackedAircraft.Latitude,
+                    Longitude = trackedAircraft.Longitude,
+                    Altitude = trackedAircraft.Altitude,
+                    Distance = trackedAircraft.Distance
+                };
 
                 // Update the properties on the aircraft from the message
                 _updater.UpdateProperties(trackedAircraft, msg);
 
-                // If the new aircraft and the instance returned by GetOrAdd() are the same instance, then the
-                // aircraft wasn't in the collection before so send an "added" notification. Otherwise, update
-                // the existing entry's properties from the message and send an "updated" notification
-                if (isNew)
-                {
-                    // Send the "added" notification to subscribers
-                    _sender.SendAddedNotification(trackedAircraft, this, AircraftAdded);
-                }
-                else
-                {
-                    // Assess the aircraft behaviour
-                    _updater.UpdateBehaviour(trackedAircraft, previousAltitude);
+                // Assess the aircraft behaviour
+                _updater.UpdateBehaviour(trackedAircraft, position?.Altitude);
 
-                    // Send an update notification to subscribers
-                    _sender.SendUpdatedNotification(
-                        trackedAircraft,
-                        this,
-                        AircraftUpdated,
-                        previousLatitude,
-                        previousLongitude,
-                        previousAltitude,
-                        previousDistance);
-                }
+                // Send the notification
+                var type = isNew ? AircraftNotificationType.Added : AircraftNotificationType.Updated;
+                _sender.SendAircraftNotification(trackedAircraft, position, this, type, AircraftEvent);
             }
         }
 
@@ -186,17 +164,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 if (elapsed >= _removedMs)
                 {
                     _aircraft.Remove(aircraft.Address, out _);
-                    _sender.SendRemovedNotification(aircraft, this, AircraftRemoved);
+                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Removed, AircraftEvent);
                 }
                 else if (elapsed >= _staleMs)
                 {
                     aircraft.Status = TrackingStatus.Stale;
-                    _sender.SendStaleNotification(aircraft, this, AircraftUpdated);
+                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Stale, AircraftEvent);
                 }
                 else if (elapsed >= _recentMs)
                 {
                     aircraft.Status = TrackingStatus.Inactive;
-                    _sender.SendInactiveNotification(aircraft, this, AircraftUpdated);
+                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Recent, AircraftEvent);
                 }
             }
         }
