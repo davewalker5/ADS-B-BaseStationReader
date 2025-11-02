@@ -27,9 +27,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
 
-        public event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
-        public event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
-        public event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
+        public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
         private ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
 
@@ -95,13 +93,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Set up the aircraft tracked helpers
             var assessor = new SimpleAircraftBehaviourAssessor();
             var propertyUpdater = new AircraftPropertyUpdater(logger, distanceCalculator, assessor);
-            var trackerSender = new AircraftNotificationSender(
+            var trackerSender = new AircraftTrackerNotificationSender(
                 logger,
                 _settings.TrackedBehaviours,
                 _settings.MaximumTrackedDistance,
                 _settings.MinimumTrackedAltitude,
-                _settings.MaximumTrackedAltitude,
-                _settings.TrackPosition);
+                _settings.MaximumTrackedAltitude);
 
             // Construct the aircraft tracker
             _tracker = new AircraftTracker(
@@ -132,9 +129,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
 
             // Attach the aircraft tracking event handlers
-            _tracker.AircraftAdded += OnAircraftAdded;
-            _tracker.AircraftUpdated += OnAircraftUpdated;
-            _tracker.AircraftRemoved += OnAircraftRemoved;
+            _tracker.AircraftEvent += OnAircraftEvent;
 
             // Start the queued writer
             if (_writer != null)
@@ -159,9 +154,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 await _writer.DisposeAsync();
 
                 // Detach the aircraft tracking event handlers
-                _tracker.AircraftAdded -= OnAircraftAdded;
-                _tracker.AircraftUpdated -= OnAircraftUpdated;
-                _tracker.AircraftRemoved -= OnAircraftRemoved;
+                _tracker.AircraftEvent -= OnAircraftEvent;
             }
         }
 
@@ -178,43 +171,26 @@ namespace BaseStationReader.BusinessLogic.Tracking
             => await _writer.FlushQueueAsync();
 
         /// <summary>
-        /// Handle the event raised when a new aircraft is detected
+        /// Handle aircraft events
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAircraftAdded(object sender, AircraftNotificationEventArgs e)
+        private void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
-            if (ShouldNotify(e.Aircraft))
+            // If this is a removal event, remove the aircraft from the tracking collection
+            var isRemoval = e.NotificationType == AircraftNotificationType.Removed;
+            if (isRemoval)
             {
-                e.Aircraft.LastNotified = DateTime.Now;
-                HandleAircraftEvent(e.Aircraft, e.Position);
-                _sender.SendAddedNotification(e.Aircraft, e.Position, this, AircraftAdded);
+                _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
             }
-        }
 
-        /// <summary>
-        /// Handle the event raised when an existing aircraft is updated
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnAircraftUpdated(object sender, AircraftNotificationEventArgs e)
-        {
-            if (ShouldNotify(e.Aircraft))
+            // Send the notification if the aircraft qualifies or this is a removal event
+            if (isRemoval || ShouldNotify(e.Aircraft))
             {
                 e.Aircraft.LastNotified = DateTime.Now;
                 HandleAircraftEvent(e.Aircraft, e.Position);
-                _sender.SendUpdatedNotification(e.Aircraft, e.Position, this, AircraftUpdated);
+                _sender.SendAircraftNotification(e.Aircraft, e.Position, this, e.NotificationType, AircraftEvent);
             }
-        }
-        /// <summary>
-        /// Handle the event raised when an existing aircraft is removed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnAircraftRemoved(object sender, AircraftNotificationEventArgs e)
-        {
-            _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
-            _sender.SendRemovedNotification(e.Aircraft, e.Position, this, AircraftRemoved);
         }
 
         /// <summary>

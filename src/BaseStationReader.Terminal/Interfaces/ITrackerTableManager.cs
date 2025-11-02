@@ -7,9 +7,8 @@ namespace BaseStationReader.Terminal.Interfaces
     {
         Table Table { get; }
 
-        int AddAircraft(TrackedAircraft aircraft);
         void CreateTable(string title);
+        int AddOrUpdateAircraft(TrackedAircraft aircraft);
         int RemoveAircraft(TrackedAircraft aircraft);
-        int UpdateAircraft(TrackedAircraft aircraft);
     }
 }

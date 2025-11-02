@@ -4,10 +4,7 @@ namespace BaseStationReader.Interfaces.Tracking
 {
     public interface IAircraftTracker
     {
-        event EventHandler<AircraftNotificationEventArgs> AircraftAdded;
-        event EventHandler<AircraftNotificationEventArgs> AircraftUpdated;
-        event EventHandler<AircraftNotificationEventArgs> AircraftRemoved;
-
+        event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
         Task StartAsync(CancellationToken token);
     }
 }
