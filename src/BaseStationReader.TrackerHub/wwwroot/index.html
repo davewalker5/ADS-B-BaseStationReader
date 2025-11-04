@@ -48,15 +48,15 @@
           <th>Callsign</th>
           <th>Sqk</th>
           <th>Alt</th>
+          <th>VR</th>
+          <th>Bhv</th>
           <th>Spd</th>
           <th>Hdg</th>
           <th>Lat</th>
           <th>Lon</th>
           <th>Dst</th>
-          <th>VR</th>
           <th>Msgs</th>
           <th>Seen</th>
-          <th>Stat</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -87,15 +87,15 @@
       td[1].textContent = aircraft.callsign;
       td[2].textContent = aircraft.squawk;
       td[3].textContent = aircraft.altitude?.toFixed?.(0) ?? "";
-      td[4].textContent = aircraft.groundSpeed?.toFixed?.(0) ?? "";
-      td[5].textContent = aircraft.track?.toFixed?.(0) ?? "";
-      td[6].textContent = aircraft.latitude?.toFixed?.(5) ?? "";
-      td[7].textContent = aircraft.longitude?.toFixed?.(5) ?? "";
-      td[8].textContent = aircraft.distance?.toFixed?.(5) ?? "";
-      td[9].textContent = aircraft.verticalRate?.toFixed?.(0) ?? "";
-      td[10].textContent = aircraft.messages;
-      td[11].textContent = new Date(aircraft.lastSeen).toISOString().replace("T", " ").replace("Z", "");
-      td[12].textContent = aircraft.status;
+      td[4].textContent = aircraft.verticalRate?.toFixed?.(0) ?? "";
+      td[5].textContent = behaviours[aircraft.behaviour];
+      td[6].textContent = aircraft.groundSpeed?.toFixed?.(0) ?? "";
+      td[7].textContent = aircraft.track?.toFixed?.(0) ?? "";
+      td[8].textContent = aircraft.latitude?.toFixed?.(5) ?? "";
+      td[9].textContent = aircraft.longitude?.toFixed?.(5) ?? "";
+      td[10].textContent = aircraft.distance?.toFixed?.(5) ?? "";
+      td[11].textContent = aircraft.messages;
+      td[12].textContent = new Date(aircraft.lastSeen).toISOString().replace("T", " ").replace("Z", "");
 
       // Set the styling appropriate to the aircraft state
       tr.dataset.status = statusNames[aircraft.status];
@@ -112,6 +112,9 @@
 
     // Define named statuses mapping to aircraft status value
     const statusNames = ["active", "inactive", "stale"];
+
+    // Define the characters associated with aircraft behaviours
+    const behaviours = ["?", "=", "\u2191", "\u2193"];
 
     // Build the connection (default JSON protocol)
     const connection = new signalR.HubConnectionBuilder()
