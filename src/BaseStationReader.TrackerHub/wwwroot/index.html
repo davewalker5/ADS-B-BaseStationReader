@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Aircraft Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="/lib/signalr/signalr.min.js"></script>
+    <script src="/lib/signalr/signalr-protocol-msgpack.min.js"></script>
+    <style>
+      :root {
+        --inactive-bg: #fff7cc;
+        --stale-bg:    #ffd6d6;
+      }
+
+      /* Smooth fade between states */
+      #grid tbody tr,
+      #grid tbody tr td { transition: background-color .35s ease; }
+
+      /* Status-driven colours (use td to defeat many table themes) */
+      #grid tbody tr[data-status="inactive"],
+      #grid tbody tr[data-status="inactive"] td {
+        background: var(--inactive-bg) !important;
+      }
+      #grid tbody tr[data-status="stale"],
+      #grid tbody tr[data-status="stale"] td {
+        background: var(--stale-bg) !important;
+      }
+  
+      body { font-family: system-ui, sans-serif; margin: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border-bottom: 1px solid #ccc; padding: .3rem .5rem; text-align: left; }
+      th { background: #f0f0f0; }
+      .mono { font-family: ui-monospace, SFMono-Regular, monospace; }
+    </style>
+  </head>
+  <body>
+    <h1>Aircraft Tracker</h1>
+
+    <p id="status">Connecting...</p>
+
+    <table id="grid">
+      <thead>
+        <tr>
+          <th>ICAO</th>
+          <th>Callsign</th>
+          <th>Sqk</th>
+          <th>Alt</th>
+          <th>VR</th>
+          <th>Bhv</th>
+          <th>Spd</th>
+          <th>Hdg</th>
+          <th>Lat</th>
+          <th>Lon</th>
+          <th>Dst</th>
+          <th>Msgs</th>
+          <th>Seen</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </body>
+
+  <script>
+    // Function to add or insert a row
+    function upsertRow(aircraft) {
+      // Find the row for the aircraft the event references
+      let tr = rows.get(aircraft.address);
+      if (!tr) {
+        // Not found, so create a new row
+        tr = document.createElement("tr");
+        tr.innerHTML = "";
+        for (i = 0; i < 13; i++) {
+          tr.innerHTML += "<td></td>";
+        }
+
+        // Add the row to the map, indexed by aircraft address, and append the row to the table
+        rows.set(aircraft.address, tr);
+        tbody.appendChild(tr);
+      }
+
+      // Get the children of the row (the cells) and update their content
+      const td = tr.children;
+      td[0].textContent = aircraft.address;
+      td[1].textContent = aircraft.callsign;
+      td[2].textContent = aircraft.squawk;
+      td[3].textContent = aircraft.altitude?.toFixed?.(0) ?? "";
+      td[4].textContent = aircraft.verticalRate?.toFixed?.(0) ?? "";
+      td[5].textContent = behaviours[aircraft.behaviour];
+      td[6].textContent = aircraft.groundSpeed?.toFixed?.(0) ?? "";
+      td[7].textContent = aircraft.track?.toFixed?.(0) ?? "";
+      td[8].textContent = aircraft.latitude?.toFixed?.(5) ?? "";
+      td[9].textContent = aircraft.longitude?.toFixed?.(5) ?? "";
+      td[10].textContent = aircraft.distance?.toFixed?.(5) ?? "";
+      td[11].textContent = aircraft.messages;
+      td[12].textContent = new Date(aircraft.lastSeen).toISOString().replace("T", " ").replace("Z", "");
+
+      // Set the styling appropriate to the aircraft state
+      tr.dataset.status = statusNames[aircraft.status];
+    }
+
+    // Function to remove an aircraft from the table
+    function removeRow(aircraft) {
+      const tr = rows.get(aircraft.address);
+      if (tr) {
+        tr.remove();
+        rows.delete(aircraft.address);
+      }
+    }
+
+    // Define named statuses mapping to aircraft status value
+    const statusNames = ["active", "inactive", "stale"];
+
+    // Define the characters associated with aircraft behaviours
+    const behaviours = ["?", "=", "\u2191", "\u2193"];
+
+    // Build the connection (default JSON protocol)
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("/hubs/aircraft")
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+
+    // Capture the key elements on the page
+    const statusEl = document.getElementById("status");
+    const tbody = document.querySelector("#grid tbody");
+    const rows = new Map();
+
+    // Register handlers before the connection is started
+    connection.on("snapshot", list => {
+      console.log("snapshot", list);
+      statusEl.textContent = `Snapshot received: ${list.length} aircraft`;
+      list.forEach(upsertRow);
+    });
+
+    connection.on("aircraftUpdate", msg => {
+      console.log("aircraftUpdate", msg);
+      upsertRow(msg);
+    });
+
+    connection.on("aircraftRemoved", msg => {
+      console.log("aircraftRemoved", msg);
+      removeRow(msg);
+    });
+
+    connection.onclose(err => {
+      statusEl.textContent = "Disconnected";
+      console.warn("Connection closed", err);
+    });
+
+    connection.onreconnecting(err => {
+      statusEl.textContent = "Reconnecting...";
+      console.warn("Reconnecting", err);
+    });
+
+    connection.onreconnected(id => {
+      statusEl.textContent = "Reconnected";
+      console.log("Reconnected", id);
+    });
+
+    // Start the connection
+    connection.start()
+      .then(() => {
+        statusEl.textContent = "Connected to hub";
+        console.log("Connected");
+      })
+      .catch(err => {
+        statusEl.textContent = "Failed to connect";
+        console.error("Connection failed:", err);
+      });
+  </script>
+</html>
