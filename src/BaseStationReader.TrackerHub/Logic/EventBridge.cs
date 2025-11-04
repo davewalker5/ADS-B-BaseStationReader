@@ -1,9 +1,9 @@
 using System.Threading.Channels;
 using BaseStationReader.Entities.Events;
+using BaseStationReader.Entities.Hub;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Interfaces.Hub;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.TrackerHub.Entities;
-using BaseStationReader.TrackerHub.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BaseStationReader.BusinessLogic.TrackerHub.Logic

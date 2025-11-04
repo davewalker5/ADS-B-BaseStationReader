@@ -110,6 +110,13 @@
       }
     }
 
+    // Function to remove all rows from the table
+    function removeAllRows() {
+      for (const key of map.keys()) {
+        removeRow(key);
+      }
+    }
+
     // Define named statuses mapping to aircraft status value
     const statusNames = ["active", "inactive", "stale"];
 
@@ -129,13 +136,20 @@
     const rows = new Map();
 
     // Register handlers before the connection is started
+    connection.on("snapshot", list => {
+      console.log("snapshot", list);
+      const now = new Date();
+      statusEl.textContent = `Snapshot received at ${now.toLocaleTimeString()} on ${now.toLocaleDateString()}`;
+      removeAllRows();
+      list.forEach(upsertRow);
+    });
+
     connection.on("aircraftUpdate", msg => {
-      console.log("aircraftUpdate", msg);
       upsertRow(msg);
     });
 
     connection.on("aircraftRemoved", msg => {
-      console.log("aircraftRemoved", msg);
+      statusEl.textContent = `Removed aircraft: ${msg.address}`;
       removeRow(msg);
     });
 

@@ -1,6 +1,6 @@
 using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.TrackerHub.Entities
+namespace BaseStationReader.Entities.Hub
 {
     public class TrackedAircraftDto
     {
