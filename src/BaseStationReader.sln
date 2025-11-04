@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Lookup", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Interfaces", "BaseStationReader.Interfaces\BaseStationReader.Interfaces.csproj", "{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Hub", "BaseStationReader.Hub\BaseStationReader.Hub.csproj", "{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Tests", "BaseStationReader.Tests\BaseStationReader.Tests.csproj", "{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}"
 EndProject
 Global
@@ -63,6 +65,10 @@ Global
 		{6E5C5E47-F35D-4BDC-A81C-D0D1FF198FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E5C5E47-F35D-4BDC-A81C-D0D1FF198FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E5C5E47-F35D-4BDC-A81C-D0D1FF198FE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
