@@ -1,6 +1,6 @@
 using BaseStationReader.Entities.Events;
 
-namespace BaseStationReader.TrackerHub.Interfaces
+namespace BaseStationReader.Interfaces.Hub
 {
     public interface IEventBridge
     {

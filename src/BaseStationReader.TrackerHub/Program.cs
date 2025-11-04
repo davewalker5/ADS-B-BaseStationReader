@@ -15,8 +15,8 @@ using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.TrackerHub.Logic;
 using BaseStationReader.BusinessLogic.TrackerHub.Logic;
-using BaseStationReader.TrackerHub.Interfaces;
 using Microsoft.AspNetCore.StaticFiles;
+using BaseStationReader.Interfaces.Hub;
 
 namespace BaseStationReader.TrackerHub
 {
@@ -101,6 +101,7 @@ namespace BaseStationReader.TrackerHub
 
                 // Register the aircraft state and event bridge
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();
+                builder.Services.AddSingleton<ITrackerController>(_controller);
                 builder.Services.AddSingleton<ITrackerLogger>(_logger);
                 builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
 

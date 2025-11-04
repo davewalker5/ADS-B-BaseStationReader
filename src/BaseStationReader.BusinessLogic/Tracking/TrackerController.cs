@@ -16,6 +16,7 @@ using BaseStationReader.Interfaces.Api;
 using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Events;
+using BaseStationReader.Entities.Hub;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -30,6 +31,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
         private ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
+
+        public IEnumerable<TrackedAircraftDto> State
+        {
+            get
+            {
+                var snapshot = _trackedAircraft.Values.ToList();
+                return snapshot.Select(TrackedAircraftDto.FromTrackedAircraft);
+            }
+        }
 
         public TrackerController(
             ITrackerLogger logger,
