@@ -2,7 +2,7 @@
 using BaseStationReader.Interfaces.Config;
 using Spectre.Console;
 
-namespace BaseStationReader.Hub.Logic
+namespace BaseStationReader.TrackerHub.Logic
 {
     public class HelpTabulator : IHelpGenerator
     {

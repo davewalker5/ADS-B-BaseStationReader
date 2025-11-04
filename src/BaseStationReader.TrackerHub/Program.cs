@@ -13,9 +13,12 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Api.Wrapper;
 using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Messages;
-using BaseStationReader.Hub.Logic;
+using BaseStationReader.TrackerHub.Logic;
+using BaseStationReader.BusinessLogic.TrackerHub.Logic;
+using BaseStationReader.TrackerHub.Interfaces;
+using Microsoft.AspNetCore.StaticFiles;
 
-namespace BaseStationReader.Terminal
+namespace BaseStationReader.TrackerHub
 {
     public static class Program
     {
@@ -24,7 +27,8 @@ namespace BaseStationReader.Terminal
         private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerLogger _logger = null;
         private static ITrackerIndexManager _trackerIndexManager = null;
-        private static TrackerController _controller = null;
+        private static ITrackerController _controller = null;
+        private static IEventBridge _bridge = null;
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
@@ -77,7 +81,49 @@ namespace BaseStationReader.Terminal
                 var tcpClient = new TrackerTcpClient();
                 _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
 
-                var cancelled = false;
+                // Create a web application builder
+                var builder = WebApplication.CreateBuilder(args);
+
+                // Register SignalR
+                builder.Services.AddSignalR().AddMessagePackProtocol();
+                builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
+
+                // Register the aircraft state and event bridge
+                builder.Services.AddSingleton<IAircraftState, AircraftState>();
+                builder.Services.AddSingleton<IEventBridge, EventBridge>();
+                builder.Services.AddSingleton<ITrackerLogger>(_logger);
+                builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
+
+                // Configure a CORS policy
+                builder.Services.AddCors(o => o.AddPolicy("development", p => p
+                    .WithOrigins("http://localhost:5000", "http://127.0.0.1:5000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()));
+
+                // Build the web application
+                var app = builder.Build();
+                app.UseResponseCompression();
+                app.UseCors("development");
+                app.UseDefaultFiles();
+
+                // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
+                var provider = new FileExtensionContentTypeProvider();
+                provider.Mappings[".map"] = "application/json";
+                app.UseStaticFiles(new StaticFileOptions {
+                    ContentTypeProvider = provider
+                });
+
+                // Map the endpoint
+                app.MapHub<AircraftHub>("/hubs/aircraft");
+
+                // Run the application
+                _ = Task.Run(() => app.Run());
+
+                // // Get the event bridge so the event handler can publish to it
+                _bridge = app.Services.GetRequiredService<IEventBridge>();
+
+                bool cancelled;
                 do
                 {
                     // Configure the table
@@ -174,8 +220,9 @@ namespace BaseStationReader.Terminal
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
 
-            // TODO : Log and signal the event
+            // Log and signal the event
             _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} event for aircraft {e.Aircraft.Address}");
+            _ = Task.Run(() => _bridge.PublishAsync(e));
 
             if (e.NotificationType == AircraftNotificationType.Removed)
             {

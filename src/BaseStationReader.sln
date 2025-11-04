@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Lookup", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Interfaces", "BaseStationReader.Interfaces\BaseStationReader.Interfaces.csproj", "{215408BE-1159-4ABC-9B98-21A5E7DFCFBD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Hub", "BaseStationReader.Hub\BaseStationReader.Hub.csproj", "{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.TrackerHub", "BaseStationReader.TrackerHub\BaseStationReader.TrackerHub.csproj", "{F1CAC0F1-A82F-4F1C-8D9D-5DB533D17A64}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BaseStationReader.Tests", "BaseStationReader.Tests\BaseStationReader.Tests.csproj", "{09C85700-F0E0-4A21-B5F1-B2B9BC656A6A}"
 EndProject
