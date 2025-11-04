@@ -82,7 +82,18 @@ namespace BaseStationReader.TrackerHub
                 _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
 
                 // Create a web application builder
-                var builder = WebApplication.CreateBuilder(args);
+                var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+                {
+                    Args = args,
+                    ContentRootPath = AppContext.BaseDirectory,
+                    WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
+                });
+
+                // Bind Kestrel options from the applicatiokn settings file
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    builder.Configuration.GetSection("Kestrel").Bind(options);
+                });
 
                 // Register SignalR
                 builder.Services.AddSignalR().AddMessagePackProtocol();
@@ -94,9 +105,13 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<ITrackerLogger>(_logger);
                 builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
 
-                // Configure a CORS policy
+                // Configure CORS policy
+                var allowedOrigins = builder.Configuration
+                    .GetSection("Cors:AllowedOrigins")
+                    .Get<string[]>() ?? [];
+
                 builder.Services.AddCors(o => o.AddPolicy("development", p => p
-                    .WithOrigins("http://localhost:5000", "http://127.0.0.1:5000")
+                    .WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()));
