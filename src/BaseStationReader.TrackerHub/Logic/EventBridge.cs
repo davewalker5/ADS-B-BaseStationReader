@@ -61,7 +61,7 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
                             break;
                         default:
                             _state.Upsert(e.Aircraft);
-                            _logger.LogMessage(Severity.Info, $"Sending update message for aircraft {e.Aircraft.Address}");
+                            _logger.LogMessage(Severity.Verbose, $"Sending update message for aircraft {e.Aircraft.Address}");
                             await _hub.Clients.All.SendAsync("aircraftUpdate", e.Aircraft, token);
                             break;
                     }
