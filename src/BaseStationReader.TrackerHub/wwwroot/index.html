@@ -138,7 +138,8 @@
     // Register handlers before the connection is started
     connection.on("snapshot", list => {
       console.log("snapshot", list);
-      statusEl.textContent = `Snapshot received: ${list.length} aircraft`;
+      const now = new Date();
+      statusEl.textContent = `Snapshot received at ${now.toLocaleTimeString()} on ${now.toLocaleDateString()}`;
       removeAllRows();
       list.forEach(upsertRow);
     });
