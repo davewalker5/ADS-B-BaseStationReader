@@ -156,7 +156,7 @@ namespace BaseStationReader.Terminal
             finally
             {
                 // Detach from the tracker controller
-                _controller.AircraftEvent += OnAircraftEvent;
+                _controller.AircraftEvent -= OnAircraftEvent;
             }
 
             return cancelled;
