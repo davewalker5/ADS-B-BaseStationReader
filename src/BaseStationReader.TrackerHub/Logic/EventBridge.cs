@@ -2,9 +2,9 @@ using System.Threading.Channels;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.TrackerHub.Entities;
 using BaseStationReader.TrackerHub.Interfaces;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Hosting;
 
 namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
 {
@@ -19,15 +19,13 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
             });
 
         private readonly IHubContext<AircraftHub> _hub;
-        private readonly IAircraftState _state;
         private readonly ITrackerLogger _logger;
 
-        public EventBridge(IHubContext<AircraftHub> hub, IAircraftState state, ITrackerLogger logger)
-            {
-                _hub = hub;
-                _state = state;
-                _logger = logger;
-            }
+        public EventBridge(IHubContext<AircraftHub> hub, ITrackerLogger logger)
+        {
+            _hub = hub;
+            _logger = logger;
+        }
 
         /// <summary>
         /// Publish an incoming tracked aircraft event on the channel
@@ -50,20 +48,22 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
             {
                 while (reader.TryRead(out var e))
                 {
-                    switch (e.NotificationType)
+                    if (e.Aircraft != null)
                     {
-                        case AircraftNotificationType.Unknown:
-                            break;
-                        case AircraftNotificationType.Removed:
-                            _state.Remove(e.Aircraft.Address, DateTime.UtcNow);
-                            _logger.LogMessage(Severity.Info, $"Sending removal message for aircraft {e.Aircraft.Address}");
-                            await _hub.Clients.All.SendAsync("aircraftRemoved", e.Aircraft, token);
-                            break;
-                        default:
-                            _state.Upsert(e.Aircraft);
-                            _logger.LogMessage(Severity.Verbose, $"Sending update message for aircraft {e.Aircraft.Address}");
-                            await _hub.Clients.All.SendAsync("aircraftUpdate", e.Aircraft, token);
-                            break;
+                        var aircraft = TrackedAircraftDto.FromTrackedAircraft(e.Aircraft);
+                        switch (e.NotificationType)
+                        {
+                            case AircraftNotificationType.Unknown:
+                                break;
+                            case AircraftNotificationType.Removed:
+                                _logger.LogMessage(Severity.Info, $"Handling removal message for aircraft {aircraft.Address}");
+                                await _hub.Clients.All.SendAsync("aircraftRemoved", aircraft, token);
+                                break;
+                            default:
+                                _logger.LogMessage(Severity.Verbose, $"Handling update message for aircraft {aircraft.Address}");
+                                await _hub.Clients.All.SendAsync("aircraftUpdate", aircraft, token);
+                                break;
+                        }
                     }
                 }
             }

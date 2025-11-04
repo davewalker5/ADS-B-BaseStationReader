@@ -129,12 +129,6 @@
     const rows = new Map();
 
     // Register handlers before the connection is started
-    connection.on("snapshot", list => {
-      console.log("snapshot", list);
-      statusEl.textContent = `Snapshot received: ${list.length} aircraft`;
-      list.forEach(upsertRow);
-    });
-
     connection.on("aircraftUpdate", msg => {
       console.log("aircraftUpdate", msg);
       upsertRow(msg);

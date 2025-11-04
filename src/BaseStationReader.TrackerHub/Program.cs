@@ -100,7 +100,6 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
 
                 // Register the aircraft state and event bridge
-                builder.Services.AddSingleton<IAircraftState, AircraftState>();
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();
                 builder.Services.AddSingleton<ITrackerLogger>(_logger);
                 builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
