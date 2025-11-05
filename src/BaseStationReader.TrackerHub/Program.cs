@@ -17,6 +17,7 @@ using BaseStationReader.TrackerHub.Logic;
 using BaseStationReader.BusinessLogic.TrackerHub.Logic;
 using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
+using System.Runtime.Loader;
 
 namespace BaseStationReader.TrackerHub
 {
@@ -81,12 +82,15 @@ namespace BaseStationReader.TrackerHub
                 var tcpClient = new TrackerTcpClient();
                 _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
 
+                // Locate the static files root
+                var contentRootPath = Path.Exists("wwwroot") ? Directory.GetCurrentDirectory() : AppContext.BaseDirectory;
+
                 // Create a web application builder
                 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
                 {
                     Args = args,
-                    ContentRootPath = AppContext.BaseDirectory,
-                    WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
+                    ContentRootPath = contentRootPath,
+                    WebRootPath = Path.Combine(contentRootPath, "wwwroot")
                 });
 
                 // Bind Kestrel options from the applicatiokn settings file
@@ -105,31 +109,16 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<ITrackerLogger>(_logger);
                 builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
 
-                // Configure CORS policy
-                var allowedHosts = builder.Configuration
-                    .GetSection("Cors:Hosts")
-                    .Get<string[]>() ?? [];
-
-                builder.Services.AddCors(o => o.AddPolicy("corspolicy", p => p
-                    .SetIsOriginAllowed(origin =>
-                    {
-                        var allowed = false;
-                        if (!string.IsNullOrEmpty(origin))
-                        {
-                            var uri = new Uri(origin);
-                            allowed = allowedHosts.Contains(uri.Host, StringComparer.OrdinalIgnoreCase);
-                        }
-
-                        return allowed;
-                    })
+                // Set the CORS policy
+                builder.Services.AddCors(o => o.AddPolicy("development", p => p
+                    .AllowAnyOrigin()
                     .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials()));
+                    .AllowAnyMethod()));
 
                 // Build the web application
                 var app = builder.Build();
                 app.UseResponseCompression();
-                app.UseCors("corspolicy");
+                app.UseCors("development");
                 app.UseDefaultFiles();
 
                 // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
@@ -142,20 +131,52 @@ namespace BaseStationReader.TrackerHub
                 // Map the endpoint
                 app.MapHub<AircraftHub>("/hubs/aircraft");
 
-                // Run the application
-                _ = Task.Run(() => app.Run());
+                // Configure cancellation
+                using var source = new CancellationTokenSource();
 
-                // // Get the event bridge so the event handler can publish to it
+                // Cancel on Ctrl-C (SIGINT)
+                Console.CancelKeyPress += (s, e) =>
+                {
+                    // Shut down gracefully rather than immediately killing the process
+                    e.Cancel = true;
+                    if (!source.IsCancellationRequested) source.Cancel();
+                };
+
+                // Cancel on SIGTERM / docker stop
+                AssemblyLoadContext.Default.Unloading += _ =>
+                {
+                    if (!source.IsCancellationRequested) source.Cancel();
+                };
+
+                // Cancel on app lifetime stop signals (e.g., triggered by Kestrel or hosting)
+                app.Lifetime.ApplicationStopping.Register(() =>
+                {
+                    if (!source.IsCancellationRequested) source.Cancel();
+                });
+
+                // Treat Ctrl-C as a cancel signal, not a keypress
+                Console.TreatControlCAsInput = false;
+
+                // Get the event bridge so the event handler can publish to it
                 _bridge = app.Services.GetRequiredService<IEventBridge>();
 
-                bool cancelled;
-                do
+                // Start the web application and the tracker controller tasks on the same token
+                var webAppTask = app.RunAsync(source.Token);
+                var trackerControllerTask = RunMainAsync(source.Token);
+
+                // Wait for one of the tasks to complete
+                await Task.WhenAny(webAppTask, trackerControllerTask);
+
+                // If one side ends due to e.g. error, ESC, timeout, cancel the other and wait a moment to flush
+                source.Cancel();
+                try
                 {
-                    // Configure the table
-                    _trackerIndexManager = new TrackerIndexManager();
-                    cancelled = await RunEventLoopAsync();
+                    await Task.WhenAll(webAppTask, trackerControllerTask);
                 }
-                while (_settings.RestartOnTimeout && !cancelled);
+                catch (OperationCanceledException)
+                {
+                    // Expected on cancellation
+                }
 
                 // Process all pending requests in the queued writer queue
                 if (_settings.EnableSqlWriter)
@@ -167,14 +188,47 @@ namespace BaseStationReader.TrackerHub
         }
         
         /// <summary>
+        /// Run the main event loop for the cancellation keypress and tracker controller
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        static async Task RunMainAsync(CancellationToken token)
+        {
+            // Kick off a background key listener
+            var keyListenerTask = ListenForCancellationKeypressAsync(token);
+
+            bool restart;
+            do
+            {
+                // Create a linked token source for the tracker loop
+                using (var trackerLoopTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token))
+                {
+                    // Run the tracker loop - this will return 
+                    restart = await RunTrackerEventLoopAsync(trackerLoopTokenSource.Token).ConfigureAwait(false)
+                            && _settings.RestartOnTimeout
+                            && !token.IsCancellationRequested;
+                }
+            }
+            while (restart);
+
+            // Wait for the key listener (ignore cancellation)
+            try
+            {
+                await keyListenerTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected on cancellation
+            }
+        }
+
+        /// <summary>
         /// Display and continuously update the tracking table
         /// </summary>
-        /// <param name="ctx"></param>
+        /// <param name="token"></param>
         /// <returns></returns>
-        private static async Task<bool> RunEventLoopAsync()
+        private static async Task<bool> RunTrackerEventLoopAsync(CancellationToken token)
         {
-            bool cancelled = false;
-
             // Reset the elapsed time since the last update
             _lastUpdate = DateTime.Now;
 
@@ -182,24 +236,23 @@ namespace BaseStationReader.TrackerHub
             _controller.AircraftEvent += OnAircraftEvent;
 
             // Create a cancellation token and start the controller task
-            using var source = new CancellationTokenSource();
-            var controllerTask = _controller.StartAsync(source.Token);
+            var controllerTask = _controller.StartAsync(token);
 
             // Define the interval at which the display will refresh
             var interval = TimeSpan.FromMilliseconds(100);
 
             try
             {
-                while (!cancelled && !source.Token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
-                    // If we've exceeded the application timeout since the last update, request cancellation
+                    // If we've exceeded the application timeout since the last update, break out to the caller
                     var elapsed = (DateTime.Now - _lastUpdate).TotalMilliseconds;
                     if ((_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
                     {
-                        source.Cancel();
+                        throw new OperationCanceledException(token);
                     }
 
-                    var delayTask = Task.Delay(interval, source.Token);
+                    var delayTask = Task.Delay(interval, token);
                     var winner = await Task.WhenAny(controllerTask, delayTask).ConfigureAwait(false);
 
                     if (winner == controllerTask)
@@ -207,18 +260,6 @@ namespace BaseStationReader.TrackerHub
                         // This propagates completion/exception/cancellation
                         await controllerTask.ConfigureAwait(false);
                         break;
-                    }
-
-                    // See if there's a keypress available
-                    if (!cancelled && Console.KeyAvailable)
-                    {
-                        // There is, so read it
-                        var key = Console.ReadKey(true);
-                        if (key.Key == ConsoleKey.Escape)
-                        {
-                            // It's the ESC key so set the cancelled flag and break out
-                            cancelled = true;
-                        }
                     }
                 }
             }
@@ -232,7 +273,29 @@ namespace BaseStationReader.TrackerHub
                 _controller.AircraftEvent -= OnAircraftEvent;
             }
 
-            return cancelled;
+            return !token.IsCancellationRequested && _settings.RestartOnTimeout;
+        }
+        
+        /// <summary>
+        /// Background key listener that is safe on the console and a no-op if there is no console
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="OperationCanceledException"></exception>
+        private static async Task ListenForCancellationKeypressAsync(CancellationToken token)
+        {
+            if (!Console.IsInputRedirected)
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    // ReadKey is blocking; run it on a thread pool thread
+                    var keyInfo = await Task.Run(() => Console.ReadKey(intercept: true), token);
+                    if (keyInfo.Key == ConsoleKey.Escape)
+                    {
+                        throw new OperationCanceledException(token);
+                    }
+                }
+            }
         }
 
         /// <summary>
