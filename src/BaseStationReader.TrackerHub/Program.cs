@@ -106,12 +106,22 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddHostedService(sp => (EventBridge)sp.GetRequiredService<IEventBridge>());
 
                 // Configure CORS policy
-                var allowedOrigins = builder.Configuration
-                    .GetSection("Cors:AllowedOrigins")
+                var allowedHosts = builder.Configuration
+                    .GetSection("Cors:Hosts")
                     .Get<string[]>() ?? [];
 
-                builder.Services.AddCors(o => o.AddPolicy("development", p => p
-                    .WithOrigins(allowedOrigins)
+                builder.Services.AddCors(o => o.AddPolicy("corspolicy", p => p
+                    .SetIsOriginAllowed(origin =>
+                    {
+                        var allowed = false;
+                        if (!string.IsNullOrEmpty(origin))
+                        {
+                            var uri = new Uri(origin);
+                            allowed = allowedHosts.Contains(uri.Host, StringComparer.OrdinalIgnoreCase);
+                        }
+
+                        return allowed;
+                    })
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()));
@@ -119,7 +129,7 @@ namespace BaseStationReader.TrackerHub
                 // Build the web application
                 var app = builder.Build();
                 app.UseResponseCompression();
-                app.UseCors("development");
+                app.UseCors("corspolicy");
                 app.UseDefaultFiles();
 
                 // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
