@@ -124,9 +124,12 @@ namespace BaseStationReader.TrackerHub
                 // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
                 var provider = new FileExtensionContentTypeProvider();
                 provider.Mappings[".map"] = "application/json";
-                app.UseStaticFiles(new StaticFileOptions {
+                app.UseStaticFiles(new StaticFileOptions
+                {
                     ContentTypeProvider = provider
                 });
+                
+                app.UseHttpsRedirection();
 
                 // Map the endpoint
                 app.MapHub<AircraftHub>("/hubs/aircraft");
