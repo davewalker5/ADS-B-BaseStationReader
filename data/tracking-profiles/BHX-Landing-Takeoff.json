@@ -1,0 +1,13 @@
+{
+  "Name": "Birmingham International - Landing and Taking Off",
+  "ReceiverLatitude": 52.45389938354492,
+  "ReceiverLongitude": -1.74802994728088,
+  "ReceiverElevation": 327,
+  "MaximumTrackedDistance": 15,
+  "MinimumTrackedAltitude": 200,
+  "MaximumTrackedAltitude": 5000,
+  "TrackedBehaviours": [
+    "Descending",
+    "Climbing"
+  ]
+}
