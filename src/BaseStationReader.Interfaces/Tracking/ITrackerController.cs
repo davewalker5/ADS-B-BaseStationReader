@@ -8,6 +8,7 @@ namespace BaseStationReader.Interfaces.Tracking
         event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
         IEnumerable<TrackedAircraftDto> State { get; }
+        TrackingOptions TrackingOptions {get; }
 
         Task StartAsync(CancellationToken token);
         int QueueSize { get; }

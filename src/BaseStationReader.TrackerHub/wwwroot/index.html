@@ -124,6 +124,21 @@
     <br/>
 
     <details>
+        <summary><strong>Tracking Options</strong></summary>
+        <br/>
+        <table id="optionsTable" border="1" cellspacing="0" cellpadding="6" style="width: 50%; border-collapse:collapse;">
+        <thead>
+            <tr>
+            <th>Option</th>
+            <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    </details>
+    <br/>
+
+    <details>
         <summary><strong>Tracking Log</strong></summary>
         <br/>
         <pre id="log" data-log-max="100" style="height: 100px; overflow:auto; border:1px solid #ccc; padding:.75rem; background:#fafafa;"></pre>
@@ -134,6 +149,7 @@
     const hubUrl = "/hubs/aircraft";
 
     // UI elements
+    const optionsTableBody = document.querySelector("#optionsTable tbody");
     const logEl = document.getElementById("log");
     const tableBody = document.querySelector("#aircraftTable tbody");
 
@@ -168,6 +184,35 @@
         // Construct and apply the log content and scroll to the bottom
         logEl.textContent = logBuffer.join("\n");
         logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Function to populate the options table
+    function populateOptions(options) {
+        // Log the options
+        log("Tracking Options", options);
+
+        // Iterate over properties of the options object
+        Object.entries(options).forEach(([key, value]) => {
+            console.log(optionsTableBody);
+            console.log(key);
+            console.log(value);
+            // Create a new row
+            const tr = document.createElement("tr");
+            tr.innerHTML = "";
+
+            // Add the property name to the row
+            const nameCell = document.createElement("td");
+            nameCell.textContent = key;
+
+            // Add the value to the row
+            const valueCell = document.createElement("td");
+            valueCell.textContent = (value === null || value === undefined) ? "" : String(value);
+
+            // Append the row to the options table
+            tr.appendChild(nameCell);
+            tr.appendChild(valueCell);
+            optionsTableBody.appendChild(tr);
+        });
     }
 
     // Function to add or insert a row containing aircraft data
@@ -250,6 +295,11 @@
             log("Snapshot", { list });
             removeAllRows();
             list.forEach(upsertRow);
+        });
+
+        connection.on("trackingOptions", raw => {
+            options = (typeof rawOptions === "string") ? JSON.parse(raw) : raw;
+            populateOptions(options);
         });
 
         connection.on("aircraftUpdate", aircraft => {

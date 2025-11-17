@@ -41,6 +41,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
         }
 
+        public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(_settings);
+
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,

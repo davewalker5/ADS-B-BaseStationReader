@@ -25,6 +25,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
 
             // Read the config file to provide default settings
             var settings = new TrackerConfigReader().Read(configJsonPath);
+            settings.TrackingProfile = Path.GetFileName(configJsonPath);
 
             // Apply the command line values over the defaults
             values = parser.GetValues(CommandLineOptionType.Host);
@@ -114,6 +115,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             if (values != null)
             {
                 var profile = reader.Read(values[0]);
+                settings.TrackingProfile = Path.GetFileName(values[0]);
                 settings.ReceiverLatitude = profile.ReceiverLatitude;
                 settings.ReceiverLongitude = profile.ReceiverLongitude;
                 settings.MinimumTrackedAltitude = profile.MinimumTrackedAltitude;
