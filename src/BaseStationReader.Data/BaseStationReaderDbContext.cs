@@ -63,16 +63,16 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
                 entity.Property(e => e.Callsign).HasColumnName("Callsign");
-                entity.Property(e => e.Altitude).HasColumnName("Altitude");
-                entity.Property(e => e.GroundSpeed).HasColumnName("GroundSpeed");
-                entity.Property(e => e.Track).HasColumnName("Track");
-                entity.Property(e => e.Latitude).HasColumnName("Latitude");
-                entity.Property(e => e.Longitude).HasColumnName("Longitude");
-                entity.Property(e => e.VerticalRate).HasColumnName("VerticalRate");
+                entity.Property(e => e.Altitude).HasColumnType("REAL").HasColumnName("Altitude");
+                entity.Property(e => e.GroundSpeed).HasColumnType("REAL").HasColumnName("GroundSpeed");
+                entity.Property(e => e.Track).HasColumnType("REAL").HasColumnName("Track");
+                entity.Property(e => e.Latitude).HasColumnType("REAL").HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).HasColumnType("REAL").HasColumnName("Longitude");
+                entity.Property(e => e.VerticalRate).HasColumnType("REAL").HasColumnName("VerticalRate");
                 entity.Property(e => e.Squawk).HasColumnName("Squawk");
                 entity.Property(e => e.Status).HasColumnName("Status");
                 entity.Property(e => e.Messages).HasColumnName("Messages");
-                entity.Property(e => e.Distance).HasColumnName("Distance");
+                entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
 
                 entity.Property(e => e.FirstSeen)
                     .HasColumnName("LookupTimestamp")
@@ -95,10 +95,10 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
-                entity.Property(e => e.Altitude).HasColumnName("Altitude");
-                entity.Property(e => e.Latitude).HasColumnName("Latitude");
-                entity.Property(e => e.Longitude).HasColumnName("Longitude");
-                entity.Property(e => e.Distance).HasColumnName("Distance");
+                entity.Property(e => e.Altitude).HasColumnType("REAL").HasColumnName("Altitude");
+                entity.Property(e => e.Latitude).HasColumnType("REAL").HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).HasColumnType("REAL").HasColumnName("Longitude");
+                entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
                 entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
 
                 entity.HasOne(e => e.Aircraft)
