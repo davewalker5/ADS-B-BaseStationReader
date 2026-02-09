@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Messages;
 using System.Collections.Concurrent;
 using BaseStationReader.Interfaces.Events;
+using DocumentFormat.OpenXml.Office2019.Presentation;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -124,22 +125,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var trackedAircraft = _aircraft.GetOrAdd(msg.Address, _ => newTrackedAircraft);
                 var isNew = ReferenceEquals(trackedAircraft, newTrackedAircraft);
 
-                // If it's not a new aircraft, capture the position before updating properties from the message.
-                // Otherwise, just use the position from the message
-                AircraftPosition position = isNew ? null : new()
-                {
-                    Address = trackedAircraft.Address,
-                    Latitude = trackedAircraft.Latitude,
-                    Longitude = trackedAircraft.Longitude,
-                    Altitude = trackedAircraft.Altitude,
-                    Distance = trackedAircraft.Distance
-                };
+                // If it's not a new aircraft, capture the altitude before updating properties from the message
+                decimal? altitude = isNew ? null : trackedAircraft.Altitude;
 
                 // Update the properties on the aircraft from the message
                 _updater.UpdateProperties(trackedAircraft, msg);
 
                 // Assess the aircraft behaviour
-                _updater.UpdateBehaviour(trackedAircraft, position?.Altitude);
+                _updater.UpdateBehaviour(trackedAircraft, altitude);
+
+                // Capture the aircraft position
+                AircraftPosition position = AircraftPosition.FromTrackedAircraft(trackedAircraft);
 
                 // Send the notification
                 var type = isNew ? AircraftNotificationType.Added : AircraftNotificationType.Updated;

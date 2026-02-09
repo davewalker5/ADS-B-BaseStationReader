@@ -35,5 +35,21 @@ namespace BaseStationReader.Entities.Tracking
         public int AircraftId { get; set; }
 
         public TrackedAircraft Aircraft { get; set; }
+
+        /// <summary>
+        /// Create an aircraft position from a tracked aircraft
+        /// </summary>
+        /// <param name="aircraft"></param>
+        /// <returns></returns>
+        public static AircraftPosition FromTrackedAircraft(TrackedAircraft aircraft)
+            => new ()
+            {
+                Address = aircraft.Address,
+                Altitude = aircraft.Altitude,
+                Distance = aircraft.Distance,
+                Latitude = aircraft.Latitude,
+                Longitude = aircraft.Longitude,
+                Timestamp = aircraft.LastSeen
+            };
     }
 }
