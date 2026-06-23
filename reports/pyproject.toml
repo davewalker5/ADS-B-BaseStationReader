@@ -1,0 +1,15 @@
+[dependency-groups]
+reports = [
+    "ipykernel",
+    "jupyter-server",
+    "matplotlib",
+    "notebook",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "papermill",
+    "pillow",
+    "plotly",
+    "requests",
+    "sqlparse",
+]
