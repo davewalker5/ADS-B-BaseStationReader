@@ -1,0 +1,255 @@
+@using System.Globalization
+
+<section class="chart-card" aria-label="@Title">
+    <div class="chart-heading">
+        <div><h2>@Title</h2><p>@Description</p></div>
+        <span>@_points.Count plotted points</span>
+    </div>
+
+    @if (_points.Count < 2)
+    {
+        <div class="chart-empty" role="status">
+            <strong>Insufficient position data</strong>
+            <p>At least two positions with altitude and @RequiredDimension are needed for this chart.</p>
+        </div>
+    }
+    else
+    {
+        <div class="chart-scroll">
+            <svg xmlns="http://www.w3.org/2000/svg" class="profile-chart" viewBox="0 0 920 390" role="img" aria-labelledby="@_titleId @_descriptionId">
+                <title id="@_titleId">@Title</title>
+                <desc id="@_descriptionId">@Description The first point is green and the final point is pink.</desc>
+
+                @foreach (var tick in _yTicks)
+                {
+                    <g>
+                        <line class="chart-grid" x1="70" y1="@Format(tick.Position)" x2="895" y2="@Format(tick.Position)" />
+                        <text class="chart-tick y" x="60" y="@Format(tick.Position + 4)">@tick.Label</text>
+                    </g>
+                }
+                @foreach (var tick in _xTicks)
+                {
+                    <g>
+                        <line class="chart-grid vertical" x1="@Format(tick.Position)" y1="20" x2="@Format(tick.Position)" y2="330" />
+                        <text class="chart-tick" x="@Format(tick.Position)" y="350">@tick.Label</text>
+                    </g>
+                }
+
+                <line class="chart-axis" x1="70" y1="330" x2="895" y2="330" />
+                <line class="chart-axis" x1="70" y1="20" x2="70" y2="330" />
+                <polyline class="chart-line" points="@PolylinePoints" />
+
+                @foreach (var point in _points)
+                {
+                    <circle class="chart-point @MarkerClass(point)" cx="@Format(point.XPosition)" cy="@Format(point.YPosition)" r="@MarkerRadius(point)" tabindex="0">
+                        <title>@Tooltip(point)</title>
+                    </circle>
+                }
+
+                <text class="chart-axis-label" x="482" y="382">@XAxisLabel</text>
+                <text class="chart-axis-label" x="18" y="175" transform="rotate(-90 18 175)">Altitude (feet)</text>
+            </svg>
+        </div>
+        <div class="chart-legend"><span><i class="first"></i> First position</span><span><i class="path"></i> Recorded path</span><span><i class="final"></i> Final position</span><small>Hover or focus a point for details</small></div>
+    }
+</section>
+
+@code {
+    private const double Left = 70;
+    private const double Right = 895;
+    private const double Top = 20;
+    private const double Bottom = 330;
+    private readonly string _titleId = $"chart-title-{Guid.NewGuid():N}";
+    private readonly string _descriptionId = $"chart-description-{Guid.NewGuid():N}";
+    private IReadOnlyList<ChartPoint> _points = [];
+    private IReadOnlyList<AxisTick> _xTicks = [];
+    private IReadOnlyList<AxisTick> _yTicks = [];
+
+    [Parameter, EditorRequired] public FlightProfileDto Profile { get; set; } = new();
+    [Parameter] public FlightProfileChartMode Mode { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Description { get; set; } = string.Empty;
+
+    private string RequiredDimension => Mode == FlightProfileChartMode.Distance ? "distance" : "a timestamp";
+    private string XAxisLabel => Mode == FlightProfileChartMode.Distance ? "Distance from receiver (nautical miles)" : "Elapsed time";
+    private string PolylinePoints => string.Join(" ", _points.Select(point => $"{Format(point.XPosition)},{Format(point.YPosition)}"));
+
+    /// <summary>
+    /// Rebuilds chart geometry whenever the supplied profile or mode changes.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        // Filter incomplete values at the rendering boundary while retaining chronological DTO order.
+        var validPoints = Profile.Points
+            .Where(point => point.Altitude.HasValue &&
+                (Mode == FlightProfileChartMode.Time || point.Distance.HasValue))
+            .ToArray();
+
+        if (validPoints.Length == 0)
+        {
+            _points = [];
+            _xTicks = [];
+            _yTicks = [];
+            return;
+        }
+
+        var firstTimestamp = validPoints[0].Timestamp;
+        var xValues = validPoints.Select(point => Mode == FlightProfileChartMode.Distance
+            ? point.Distance!.Value
+            : (point.Timestamp - firstTimestamp).TotalSeconds).ToArray();
+        var yValues = validPoints.Select(point => (double)point.Altitude!.Value).ToArray();
+        var (minimumX, maximumX) = ExpandRange(xValues.Min(), xValues.Max());
+        var (minimumY, maximumY) = ExpandRange(yValues.Min(), yValues.Max());
+
+        // Convert domain values into fixed SVG view-box coordinates for responsive rendering.
+        _points = validPoints.Select((point, index) => new ChartPoint
+        {
+            Point = point,
+            XPosition = Scale(xValues[index], minimumX, maximumX, Left, Right),
+            YPosition = Scale(yValues[index], minimumY, maximumY, Bottom, Top),
+            IsFirst = index == 0,
+            IsFinal = index == validPoints.Length - 1
+        }).ToArray();
+
+        _xTicks = CreateTicks(minimumX, maximumX, Left, Right, FormatXAxisTick);
+        _yTicks = CreateTicks(minimumY, maximumY, Bottom, Top, value => $"{value:N0}");
+    }
+
+    /// <summary>
+    /// Expands a zero-width domain and adds a small visual margin around real data.
+    /// </summary>
+    /// <param name="minimum">Observed minimum.</param>
+    /// <param name="maximum">Observed maximum.</param>
+    /// <returns>The expanded domain boundaries.</returns>
+    private static (double Minimum, double Maximum) ExpandRange(double minimum, double maximum)
+    {
+        // A non-zero range is required to avoid division by zero during coordinate scaling.
+        var span = maximum - minimum;
+        var padding = span > 0 ? span * 0.06 : Math.Max(Math.Abs(maximum) * 0.05, 1);
+        return (minimum - padding, maximum + padding);
+    }
+
+    /// <summary>
+    /// Maps a domain value into an SVG coordinate range.
+    /// </summary>
+    /// <param name="value">Domain value.</param>
+    /// <param name="domainMinimum">Domain lower boundary.</param>
+    /// <param name="domainMaximum">Domain upper boundary.</param>
+    /// <param name="rangeMinimum">SVG range start.</param>
+    /// <param name="rangeMaximum">SVG range end.</param>
+    /// <returns>The scaled SVG coordinate.</returns>
+    private static double Scale(double value, double domainMinimum, double domainMaximum, double rangeMinimum, double rangeMaximum)
+    {
+        // Apply a linear scale because both flight-profile axes represent continuous measurements.
+        return rangeMinimum + ((value - domainMinimum) / (domainMaximum - domainMinimum) * (rangeMaximum - rangeMinimum));
+    }
+
+    /// <summary>
+    /// Creates evenly spaced axis ticks and their formatted labels.
+    /// </summary>
+    /// <param name="minimum">Domain minimum.</param>
+    /// <param name="maximum">Domain maximum.</param>
+    /// <param name="rangeStart">SVG range start.</param>
+    /// <param name="rangeEnd">SVG range end.</param>
+    /// <param name="formatter">Tick-label formatter.</param>
+    /// <returns>Five axis ticks.</returns>
+    private static IReadOnlyList<AxisTick> CreateTicks(
+        double minimum,
+        double maximum,
+        double rangeStart,
+        double rangeEnd,
+        Func<double, string> formatter)
+    {
+        // Five ticks balance readable values with the compact desktop chart size.
+        return Enumerable.Range(0, 5).Select(index =>
+        {
+            var fraction = index / 4d;
+            var value = minimum + ((maximum - minimum) * fraction);
+            return new AxisTick
+            {
+                Position = rangeStart + ((rangeEnd - rangeStart) * fraction),
+                Label = formatter(value)
+            };
+        }).ToArray();
+    }
+
+    /// <summary>
+    /// Formats a horizontal-axis tick for the selected chart mode.
+    /// </summary>
+    /// <param name="value">Distance or elapsed seconds.</param>
+    /// <returns>A compact axis label.</returns>
+    private string FormatXAxisTick(double value)
+    {
+        // Time uses clock notation while distance retains one decimal place.
+        return Mode == FlightProfileChartMode.Distance
+            ? $"{value:N1}"
+            : TimeSpan.FromSeconds(Math.Max(0, value)).ToString(value >= 3600 ? "h\\:mm\\:ss" : "m\\:ss");
+    }
+
+    /// <summary>
+    /// Builds detailed hover text for a plotted position.
+    /// </summary>
+    /// <param name="point">The rendered chart point.</param>
+    /// <returns>Accessible hover and focus text.</returns>
+    private string Tooltip(ChartPoint point)
+    {
+        // Include source sequence and available geographic context for inspection without another query.
+        var source = point.Point;
+        var horizontal = Mode == FlightProfileChartMode.Distance
+            ? $"Distance {source.Distance:N1} nm"
+            : $"Time {source.Timestamp.ToLocalTime():HH:mm:ss}";
+        var bearing = source.Bearing.HasValue ? $", bearing {source.Bearing:N0}°" : string.Empty;
+        var coordinates = source.Latitude.HasValue && source.Longitude.HasValue
+            ? $", {source.Latitude:N5}, {source.Longitude:N5}"
+            : string.Empty;
+        return $"Point {source.Sequence}: {horizontal}, altitude {source.Altitude:N0} ft{bearing}{coordinates}";
+    }
+
+    /// <summary>
+    /// Selects the visual class for path endpoints and intermediate points.
+    /// </summary>
+    /// <param name="point">The rendered chart point.</param>
+    /// <returns>The marker CSS class.</returns>
+    private static string MarkerClass(ChartPoint point)
+    {
+        // Endpoint classes override the standard path-point colour in the stylesheet.
+        return point.IsFirst ? "first" : point.IsFinal ? "final" : "path";
+    }
+
+    /// <summary>
+    /// Selects a larger radius for first and final markers.
+    /// </summary>
+    /// <param name="point">The rendered chart point.</param>
+    /// <returns>Marker radius in SVG units.</returns>
+    private static int MarkerRadius(ChartPoint point)
+    {
+        // Larger endpoints make chronology apparent without relying on colour alone.
+        return point.IsFirst || point.IsFinal ? 6 : 3;
+    }
+
+    /// <summary>
+    /// Formats an SVG coordinate using culture-independent decimal punctuation.
+    /// </summary>
+    /// <param name="value">Coordinate value.</param>
+    /// <returns>A compact SVG number.</returns>
+    private static string Format(double value)
+    {
+        // SVG always requires a dot decimal separator regardless of server culture.
+        return value.ToString("0.###", CultureInfo.InvariantCulture);
+    }
+
+    private sealed class ChartPoint
+    {
+        public FlightProfilePointDto Point { get; init; } = new();
+        public double XPosition { get; init; }
+        public double YPosition { get; init; }
+        public bool IsFirst { get; init; }
+        public bool IsFinal { get; init; }
+    }
+
+    private sealed class AxisTick
+    {
+        public double Position { get; init; }
+        public string Label { get; init; } = string.Empty;
+    }
+}

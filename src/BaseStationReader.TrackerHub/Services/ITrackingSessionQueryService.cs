@@ -28,4 +28,14 @@ public interface ITrackingSessionQueryService
     Task<TrackingSessionDetailDto?> GetAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves and prepares the ordered flight profile for one tracking session.
+    /// </summary>
+    /// <param name="trackingRecordId">The tracking record identifier.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The flight profile, or <see langword="null"/> when the record does not exist.</returns>
+    Task<FlightProfileDto?> GetFlightProfileAsync(
+        int trackingRecordId,
+        CancellationToken cancellationToken = default);
 }

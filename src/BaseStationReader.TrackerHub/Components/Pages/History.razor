@@ -32,7 +32,7 @@
         <label><span>Position history</span><InputSelect @bind-Value="_filter.HasPositions"><option value="">Any</option><option value="true">With positions</option><option value="false">Without positions</option></InputSelect></label>
     </div>
     <div class="filter-actions">
-        <label class="checkbox"><InputCheckbox @bind-Value="_filter.CompletedOnly" /><span>Completed records only</span></label>
+        <label class="checkbox"><InputCheckbox @bind-Value="_filter.CompletedOnly" /><span>Locked/completed records only</span></label>
         <button class="primary-button" type="button" @onclick="SearchAsync" disabled="@_loading">@(_loading ? "Searching…" : "Search database")</button>
     </div>
 </section>
@@ -115,7 +115,7 @@
     }
 
     /// <summary>
-    /// Resets all search fields to the safe completed-record default.
+    /// Resets all search fields to their unfiltered defaults.
     /// </summary>
     private Task ClearFiltersAsync()
     {

@@ -14,14 +14,20 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
 {
     private const int MaximumPageSize = 100;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
+    private readonly IFlightProfileBuilder _flightProfileBuilder;
 
     /// <summary>
     /// Initialises a query service with a factory for short-lived database contexts.
     /// </summary>
     /// <param name="contextFactory">The Tracker Hub database-context factory.</param>
-    public TrackingSessionQueryService(IDbContextFactory<BaseStationReaderDbContext> contextFactory)
+    /// <param name="flightProfileBuilder">The chart-data preparation service.</param>
+    public TrackingSessionQueryService(
+        IDbContextFactory<BaseStationReaderDbContext> contextFactory,
+        IFlightProfileBuilder flightProfileBuilder)
     {
+        // Keep persistence querying and reusable chart preparation behind injected abstractions.
         _contextFactory = contextFactory;
+        _flightProfileBuilder = flightProfileBuilder;
     }
 
     /// <inheritdoc />
@@ -331,5 +337,43 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
             Destination = flightInfo?.Destination ?? string.Empty,
             AirlineName = flightInfo?.AirlineName ?? string.Empty
         };
+    }
+
+    /// <inheritdoc />
+    public async Task<FlightProfileDto?> GetFlightProfileAsync(
+        int trackingRecordId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+        // Load only identity fields before requesting the selected record's position history.
+        var record = await context.TrackedAircraft
+            .AsNoTracking()
+            .Where(aircraft => aircraft.Id == trackingRecordId)
+            .Select(aircraft => new { aircraft.Id, aircraft.Address, aircraft.Callsign })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (record is null)
+        {
+            return null;
+        }
+
+        var points = await context.Positions
+            .AsNoTracking()
+            .Where(position => position.AircraftId == trackingRecordId)
+            .OrderBy(position => position.Timestamp)
+            .ThenBy(position => position.Id)
+            .Select(position => new FlightProfilePointDto
+            {
+                Timestamp = position.Timestamp,
+                Latitude = position.Latitude,
+                Longitude = position.Longitude,
+                Altitude = position.Altitude,
+                Distance = position.Distance
+            })
+            .ToListAsync(cancellationToken);
+
+        // Delegate ordering, enrichment, and summaries to independently testable preparation logic.
+        return _flightProfileBuilder.Build(record.Id, record.Address, record.Callsign ?? string.Empty, points);
     }
 }

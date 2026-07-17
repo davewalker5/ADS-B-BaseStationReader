@@ -20,7 +20,7 @@ public sealed class TrackingSessionFilter
     public double? MaximumDistance { get; set; }
     public TrackingStatus? Status { get; set; }
     public bool? HasPositions { get; set; }
-    public bool CompletedOnly { get; set; } = true;
+    public bool CompletedOnly { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 25;
 }

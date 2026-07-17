@@ -50,7 +50,7 @@ else
         <section class="info-card"><h2>Position boundaries</h2><div class="position-pair"><div><h3>First recorded</h3>@PositionContent(_record.FirstPosition)</div><div><h3>Final recorded</h3>@PositionContent(_record.FinalPosition)</div></div></section>
     </div>
 
-    <section class="future-actions"><h2>Analysis</h2><p>Charts and flight-path visualisation will be enabled in future Integrated UI releases.</p><button disabled>Flight profile</button><button disabled>Flight path</button></section>
+    <section class="future-actions"><h2>Analysis</h2><p>Inspect this session's recorded altitude profile or return in a later release for flight-path visualisation.</p><a class="analysis-link" href="history/@_record.Id/profile">Flight profile →</a><button disabled>Flight path</button></section>
 }
 
 @code {

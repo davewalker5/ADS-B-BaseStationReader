@@ -109,6 +109,9 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
+                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
 
                 // Register the aircraft state and event bridge

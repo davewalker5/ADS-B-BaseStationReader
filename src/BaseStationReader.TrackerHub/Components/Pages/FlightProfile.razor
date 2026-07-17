@@ -1,0 +1,104 @@
+@page "/history/{Id:int}/profile"
+@inject ITrackingSessionQueryService QueryService
+
+<PageTitle>Flight profile #@Id · ADS-B Tracker</PageTitle>
+
+<a class="back-link" href="history/@Id">← Back to tracking record</a>
+
+@if (_loading)
+{
+    <section class="empty-state"><h1>Preparing flight profile…</h1></section>
+}
+else if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Flight profile unavailable</strong><span>@_error</span></div>
+}
+else if (_profile is null)
+{
+    <section class="empty-state"><h1>Record not found</h1><p>Tracking record #@Id does not exist.</p></section>
+}
+else
+{
+    <section class="page-heading record-heading">
+        <div><p class="eyebrow">Flight profile · Record #@_profile.TrackingRecordId</p><h1>@Display(_profile.Callsign)</h1><p class="lede"><span class="mono">@_profile.Address</span> · @_profile.Points.Count.ToString("N0") recorded positions</p></div>
+        <div class="profile-time"><small>Track duration</small><strong>@FormatDuration(_profile.Duration)</strong></div>
+    </section>
+
+    <section class="profile-summary" aria-label="Flight profile summary">
+        <div><span>Initial altitude</span><strong>@FormatNumber(_profile.InitialAltitude, "N0", " ft")</strong></div>
+        <div><span>Final altitude</span><strong>@FormatNumber(_profile.FinalAltitude, "N0", " ft")</strong></div>
+        <div><span>Minimum altitude</span><strong>@FormatNumber(_profile.MinimumAltitude, "N0", " ft")</strong></div>
+        <div><span>Maximum altitude</span><strong>@FormatNumber(_profile.MaximumAltitude, "N0", " ft")</strong></div>
+        <div><span>Closest distance</span><strong>@FormatNumber(_profile.ClosestDistance, "N1", " nm")</strong></div>
+        <div><span>Furthest distance</span><strong>@FormatNumber(_profile.FurthestDistance, "N1", " nm")</strong></div>
+    </section>
+
+    <FlightProfileChart Profile="_profile" Mode="FlightProfileChartMode.Distance" Title="Altitude versus distance" Description="Chronological altitude profile plotted against distance from the configured receiver." />
+    <FlightProfileChart Profile="_profile" Mode="FlightProfileChartMode.Time" Title="Altitude versus time" Description="Chronological altitude profile plotted against elapsed tracking time." />
+}
+
+@code {
+#nullable enable
+    [Parameter] public int Id { get; set; }
+    private FlightProfileDto? _profile;
+    private bool _loading = true;
+    private string? _error;
+
+    /// <summary>
+    /// Loads and prepares the requested tracking record whenever its route parameter changes.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // Request the full position history only for this explicitly selected chart page.
+            _profile = await QueryService.GetFlightProfileAsync(Id);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Formats an elapsed track duration.
+    /// </summary>
+    /// <param name="duration">Elapsed tracking time.</param>
+    /// <returns>A compact duration.</returns>
+    private static string FormatDuration(TimeSpan duration)
+    {
+        // Include days only for sessions longer than twenty-four hours.
+        return duration.TotalDays >= 1 ? $"{(int)duration.TotalDays}d {duration:hh\\:mm\\:ss}" : duration.ToString("hh\\:mm\\:ss");
+    }
+
+    /// <summary>
+    /// Formats nullable profile measurements and their units.
+    /// </summary>
+    /// <typeparam name="T">Numeric value type.</typeparam>
+    /// <param name="value">Nullable measurement.</param>
+    /// <param name="format">Numeric display format.</param>
+    /// <param name="unit">Unit suffix.</param>
+    /// <returns>The formatted value or an em dash.</returns>
+    private static string FormatNumber<T>(T? value, string format, string unit) where T : struct, IFormattable
+    {
+        // Missing position telemetry must not be presented as a measured zero.
+        return value.HasValue ? $"{value.Value.ToString(format, null)}{unit}" : "—";
+    }
+
+    /// <summary>
+    /// Returns a non-empty aircraft display value.
+    /// </summary>
+    /// <param name="value">Potentially empty callsign.</param>
+    /// <returns>The callsign or an em dash.</returns>
+    private static string Display(string? value)
+    {
+        // Callsigns may be absent from historical tracking records.
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
+}
