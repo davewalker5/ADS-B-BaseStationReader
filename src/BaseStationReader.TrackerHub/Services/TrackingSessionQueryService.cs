@@ -15,19 +15,23 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     private const int MaximumPageSize = 100;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly IFlightProfileBuilder _flightProfileBuilder;
+    private readonly IFlightPathBuilder _flightPathBuilder;
 
     /// <summary>
     /// Initialises a query service with a factory for short-lived database contexts.
     /// </summary>
     /// <param name="contextFactory">The Tracker Hub database-context factory.</param>
     /// <param name="flightProfileBuilder">The chart-data preparation service.</param>
+    /// <param name="flightPathBuilder">The geographic path preparation service.</param>
     public TrackingSessionQueryService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        IFlightProfileBuilder flightProfileBuilder)
+        IFlightProfileBuilder flightProfileBuilder,
+        IFlightPathBuilder flightPathBuilder)
     {
         // Keep persistence querying and reusable chart preparation behind injected abstractions.
         _contextFactory = contextFactory;
         _flightProfileBuilder = flightProfileBuilder;
+        _flightPathBuilder = flightPathBuilder;
     }
 
     /// <inheritdoc />
@@ -375,5 +379,51 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
 
         // Delegate ordering, enrichment, and summaries to independently testable preparation logic.
         return _flightProfileBuilder.Build(record.Id, record.Address, record.Callsign ?? string.Empty, points);
+    }
+
+    /// <inheritdoc />
+    public async Task<FlightPathDto?> GetFlightPathAsync(
+        int trackingRecordId,
+        CancellationToken cancellationToken = default)
+    {
+        // Reuse the detail projection for consistent aircraft and flight metadata.
+        var detail = await GetAsync(trackingRecordId, cancellationToken);
+        if (detail is null)
+        {
+            return null;
+        }
+
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var points = await context.Positions
+            .AsNoTracking()
+            .Where(position => position.AircraftId == trackingRecordId)
+            .OrderBy(position => position.Timestamp)
+            .ThenBy(position => position.Id)
+            .Select(position => new FlightProfilePointDto
+            {
+                Timestamp = position.Timestamp,
+                Latitude = position.Latitude,
+                Longitude = position.Longitude,
+                Altitude = position.Altitude,
+                Distance = position.Distance
+            })
+            .ToListAsync(cancellationToken);
+
+        var flightNumber = !string.IsNullOrWhiteSpace(detail.FlightIata) ? detail.FlightIata : detail.FlightIcao;
+        var route = string.IsNullOrWhiteSpace(detail.Embarkation) && string.IsNullOrWhiteSpace(detail.Destination)
+            ? string.Empty
+            : $"{detail.Embarkation} → {detail.Destination}";
+
+        // Delegate all notebook-derived transformations to independently testable C# logic.
+        return _flightPathBuilder.Build(
+            detail.Id,
+            detail.Address,
+            detail.Callsign,
+            detail.Registration,
+            detail.ModelName,
+            flightNumber,
+            detail.AirlineName,
+            route,
+            points);
     }
 }

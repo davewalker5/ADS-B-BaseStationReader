@@ -38,4 +38,14 @@ public interface ITrackingSessionQueryService
     Task<FlightProfileDto?> GetFlightProfileAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves and prepares the geographic and 3D flight path for one tracking session.
+    /// </summary>
+    /// <param name="trackingRecordId">The tracking record identifier.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The flight path, or <see langword="null"/> when the record does not exist.</returns>
+    Task<FlightPathDto?> GetFlightPathAsync(
+        int trackingRecordId,
+        CancellationToken cancellationToken = default);
 }

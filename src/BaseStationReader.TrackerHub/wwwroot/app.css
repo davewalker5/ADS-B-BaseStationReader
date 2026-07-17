@@ -128,6 +128,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .future-actions p { display: inline-block; margin: 0 20px 0 0; color: var(--muted); font-size: 12px; }
 .future-actions button { margin-right: 7px; padding: 7px 10px; color: #60758a; background: #101e2e; border: 1px solid var(--line); border-radius: 6px; }
 .analysis-link { display: inline-block; margin-right: 7px; padding: 7px 10px; color: #041316; background: var(--cyan); border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 700; }
+.analysis-link.secondary { color: var(--cyan); background: rgba(53,212,208,.08); border: 1px solid rgba(53,212,208,.35); }
 .profile-time { min-width: 150px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .profile-time small, .profile-time strong { display: block; }
 .profile-time small { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
@@ -167,6 +168,29 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .chart-empty { padding: 55px 22px; text-align: center; }
 .chart-empty strong { font-size: 16px; }
 .chart-empty p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+.colour-selector { min-width: 175px; }
+.colour-selector span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+.colour-selector select { width: 100%; padding: 9px 11px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; }
+.path-info-strip { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 34px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.path-info-strip div { padding: 14px 17px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.path-info-strip div:nth-child(4n) { border-right: 0; }
+.path-info-strip div:nth-last-child(-n+4) { border-bottom: 0; }
+.path-info-strip span, .path-info-strip strong { display: block; }
+.path-info-strip span { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+.path-info-strip strong { margin-top: 6px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.ground-state { display: inline-flex; align-items: center; gap: 8px; margin-top: 15px; padding: 7px 10px; color: var(--muted); background: rgba(143,166,190,.06); border-radius: 999px; font-size: 10px; }
+.ground-state .connection-dot { width: 7px; height: 7px; color: var(--muted); background: var(--muted); }
+.ground-state.available { color: var(--green); }
+.ground-state.available .connection-dot { color: var(--green); background: var(--green); }
+.scene-container { position: relative; min-height: 560px; }
+.scene-loading { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 13px; color: var(--text); background: rgba(8,21,36,.82); backdrop-filter: blur(3px); transition: opacity .18s; }
+.scene-loading.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+.scene-loading span:last-child { display: grid; gap: 3px; }
+.scene-loading small { color: var(--muted); }
+.scene-loading-spinner { width: 24px; height: 24px; border: 3px solid rgba(53,212,208,.22); border-top-color: var(--cyan); border-radius: 50%; animation: scene-spin .8s linear infinite; }
+@keyframes scene-spin { to { transform: rotate(360deg); } }
+.plotly-path { width: 100%; min-height: 560px; }
+.plotly-path.scene { min-height: 720px; }
 
 @media (max-width: 850px) {
     main { width: min(100% - 24px, 1500px); padding-top: 25px; }
@@ -180,6 +204,10 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .profile-summary { grid-template-columns: repeat(3, 1fr); }
     .profile-summary div:nth-child(3) { border-right: 0; }
     .profile-summary div:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+    .path-info-strip { grid-template-columns: repeat(2, 1fr); }
+    .path-info-strip div:nth-child(2n) { border-right: 0; }
+    .path-info-strip div:nth-last-child(-n+4) { border-bottom: 1px solid var(--line); }
+    .path-info-strip div:nth-last-child(-n+2) { border-bottom: 0; }
 }
 
 @media (max-width: 520px) {
@@ -193,4 +221,6 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .profile-summary div:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
     .chart-legend { align-items: flex-start; flex-wrap: wrap; }
     .chart-legend small { width: 100%; margin: 0; }
+    .plotly-path { min-height: 430px; }
+    .plotly-path.scene { min-height: 540px; }
 }

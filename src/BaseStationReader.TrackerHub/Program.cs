@@ -112,7 +112,12 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(
                     _settings.ReceiverLatitude,
                     _settings.ReceiverLongitude));
+                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
+                builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(30));
 
                 // Register the aircraft state and event bridge
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();
@@ -146,6 +151,26 @@ namespace BaseStationReader.TrackerHub
                 // Map the existing external hub and the new interactive server UI.
                 app.MapHub<AircraftHub>("/hubs/aircraft");
                 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+                app.MapGet("/api/mapbox/static", async (
+                    double north,
+                    double south,
+                    double east,
+                    double west,
+                    IMapboxStaticMapService mapbox,
+                    CancellationToken token) =>
+                {
+                    // Reject invalid or inverted bounds before attempting a remote Mapbox request.
+                    if (!double.IsFinite(north) || !double.IsFinite(south) ||
+                        !double.IsFinite(east) || !double.IsFinite(west) ||
+                        north <= south || east <= west ||
+                        north > 90 || south < -90 || east > 180 || west < -180)
+                    {
+                        return Results.BadRequest();
+                    }
+
+                    var image = await mapbox.GetMapAsync(north, south, east, west, token);
+                    return image is null ? Results.NotFound() : Results.File(image, "image/png");
+                });
 
                 // Configure cancellation
                 using var source = new CancellationTokenSource();
