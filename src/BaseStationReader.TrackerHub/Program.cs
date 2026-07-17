@@ -6,8 +6,6 @@ using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Tracking;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.BusinessLogic.Messages;
@@ -17,6 +15,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
 using System.Runtime.Loader;
 using BaseStationReader.TrackerHub.Components;
+using BaseStationReader.TrackerHub.Models;
 using BaseStationReader.TrackerHub.Services;
 
 namespace BaseStationReader.TrackerHub
@@ -53,10 +52,8 @@ namespace BaseStationReader.TrackerHub
                 _logger = new FileLogger();
                 _logger.Initialise(_settings.LogFile, _settings.MinimumLogLevel, _settings.VerboseLogging);
 
-                // Get the version number and application title
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-                var title = $"Aircraft Tracker Hub v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
+                // Build the application title from the same assembly metadata displayed by the web UI.
+                var title = $"Aircraft Tracker Hub v{TrackerHubVersion.Current}: {_settings?.Host}:{_settings?.Port}";
 
                 // Log the startup messages
                 _logger.LogMessage(Severity.Info, new string('=', 80));
@@ -107,12 +104,16 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
+                builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
                 builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(
                     _settings.ReceiverLatitude,
                     _settings.ReceiverLongitude));
                 builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
+                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(
                     _settings.ReceiverLatitude,
                     _settings.ReceiverLongitude));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
@@ -136,8 +137,7 @@ namespace BaseStationReader.TrackerHub
                 app.UseResponseCompression();
                 app.UseCors("development");
 
-                // Serve static assets without redirecting the root URL to the legacy index.html demonstration.
-                // The old page remains directly accessible at /index.html for compatibility testing.
+                // Serve the unified UI assets; the legacy standalone index page has been retired.
                 var provider = new FileExtensionContentTypeProvider();
                 provider.Mappings[".map"] = "application/json";
                 app.UseStaticFiles(new StaticFileOptions

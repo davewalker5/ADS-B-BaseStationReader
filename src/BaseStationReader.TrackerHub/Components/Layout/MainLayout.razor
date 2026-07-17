@@ -2,15 +2,16 @@
 
 <div class="app-shell">
     <header class="topbar">
-        <a class="brand" href="/" aria-label="ADS-B Tracker home">
+        <a class="brand" href="/" aria-label="ADS-B Tracker Home">
             <span class="brand-mark" aria-hidden="true">✈</span>
             <span>
                 <strong>ADS-B Tracker</strong>
-                <small>Unified Web UI <span class="version">0.4.0</span></small>
+                <small>Unified Web UI <span class="version">@TrackerHubVersion.Current</span></small>
             </span>
         </a>
         <nav aria-label="Primary navigation">
             <NavLink href="/" Match="NavLinkMatch.All">Live tracker</NavLink>
+            <NavLink href="radar">Radar</NavLink>
             <NavLink href="history">Database</NavLink>
         </nav>
     </header>

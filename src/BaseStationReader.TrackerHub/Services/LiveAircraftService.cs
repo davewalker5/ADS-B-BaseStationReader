@@ -13,6 +13,7 @@ public sealed class LiveAircraftService : ILiveAircraftService
 {
     private readonly NavigationManager _navigation;
     private readonly Dictionary<string, TrackedAircraftDto> _aircraft = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _aircraftOrder = [];
     private readonly object _stateLock = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private HubConnection? _connection;
@@ -22,10 +23,13 @@ public sealed class LiveAircraftService : ILiveAircraftService
     {
         get
         {
-            // Return an immutable point-in-time copy so a callback cannot mutate an active render enumeration.
+            // Return a point-in-time copy in explicit arrival order so updates cannot move existing rows.
             lock (_stateLock)
             {
-                return _aircraft.Values.ToArray();
+                return _aircraftOrder
+                    .Where(_aircraft.ContainsKey)
+                    .Select(address => _aircraft[address])
+                    .ToArray();
             }
         }
     }
@@ -154,8 +158,15 @@ public sealed class LiveAircraftService : ILiveAircraftService
         lock (_stateLock)
         {
             _aircraft.Clear();
+            _aircraftOrder.Clear();
             foreach (var aircraft in snapshot)
             {
+                if (!_aircraft.ContainsKey(aircraft.Address))
+                {
+                    // Preserve the authoritative snapshot order while guarding against duplicate addresses.
+                    _aircraftOrder.Add(aircraft.Address);
+                }
+
                 _aircraft[aircraft.Address] = aircraft;
             }
         }
@@ -174,6 +185,12 @@ public sealed class LiveAircraftService : ILiveAircraftService
         // ICAO address is the stable identity shared by snapshots and incremental updates.
         lock (_stateLock)
         {
+            if (!_aircraft.ContainsKey(aircraft.Address))
+            {
+                // Append a newly observed aircraft once; replacing later DTOs leaves its position unchanged.
+                _aircraftOrder.Add(aircraft.Address);
+            }
+
             _aircraft[aircraft.Address] = aircraft;
         }
         LastUpdated = DateTimeOffset.Now;
@@ -189,7 +206,11 @@ public sealed class LiveAircraftService : ILiveAircraftService
         // Ignore duplicate removal notifications while still recording transport activity.
         lock (_stateLock)
         {
-            _aircraft.Remove(aircraft.Address);
+            if (_aircraft.Remove(aircraft.Address))
+            {
+                // Remove ordering state with the aircraft so a future reappearance is treated as newly added.
+                _aircraftOrder.RemoveAll(address => address.Equals(aircraft.Address, StringComparison.OrdinalIgnoreCase));
+            }
         }
         LastUpdated = DateTimeOffset.Now;
         NotifyStateChanged();

@@ -191,6 +191,39 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 @keyframes scene-spin { to { transform: rotate(360deg); } }
 .plotly-path { width: 100%; min-height: 560px; }
 .plotly-path.scene { min-height: 720px; }
+.radar-range { min-width: 150px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.radar-range span { display: block; margin-bottom: 7px; }
+.radar-range select { width: 100%; padding: 9px 11px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; }
+.radar-summary { display: flex; align-items: center; gap: 22px; margin: 28px 0 16px; padding: 12px 17px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-size: 11px; }
+.radar-summary strong { margin-right: 4px; color: var(--text); }
+.radar-summary .connection { min-width: 0; margin-left: auto; padding: 0; background: none; border: 0; }
+.radar-summary .connection-dot { display: inline-block; }
+.radar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: start; }
+.radar-scope-wrap { position: relative; overflow: hidden; min-height: 680px; background: #06121d; border: 1px solid var(--line); border-radius: 14px; box-shadow: inset 0 0 75px rgba(0,0,0,.35); }
+.radar-scope { display: block; width: 100%; height: min(76vh, 800px); min-height: 680px; }
+.radar-background { stroke: rgba(53,212,208,.45); stroke-width: 2; }
+.radar-ring { fill: none; stroke: rgba(53,212,208,.24); stroke-width: 1.5; }
+.radar-axis { fill: none; stroke: rgba(53,212,208,.15); stroke-width: 1; stroke-dasharray: 7 9; }
+.radar-cardinal { fill: var(--cyan); font-size: 19px; font-weight: 700; text-anchor: middle; }
+.radar-range-label { fill: #58798e; font-size: 14px; }
+.radar-receiver circle { fill: #06121d; stroke: var(--cyan); stroke-width: 3; }
+.radar-receiver path { stroke: var(--cyan); stroke-width: 2; }
+.radar-trail { fill: none; stroke: var(--green); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .36; }
+.radar-trail.inactive { stroke: var(--amber); }.radar-trail.stale { stroke: var(--red); }
+.radar-target { color: var(--green); cursor: pointer; outline: none; }
+.radar-target.inactive { color: var(--amber); }.radar-target.stale { color: var(--red); }
+.radar-aircraft { fill: currentColor; stroke: #041018; stroke-width: 1.5; filter: drop-shadow(0 0 5px currentColor); }
+.radar-hit-area { fill: transparent; }
+.radar-target-label { fill: var(--text); font-size: 15px; font-weight: 700; paint-order: stroke; stroke: #06121d; stroke-width: 4px; }
+.radar-target-altitude { fill: #89a5b8; font-size: 12px; paint-order: stroke; stroke: #06121d; stroke-width: 4px; }
+.radar-target:hover .radar-aircraft, .radar-target:focus .radar-aircraft, .radar-target.selected .radar-aircraft { stroke: #fff; stroke-width: 4; }
+.radar-disconnected { position: absolute; inset: 0; display: grid; place-content: center; gap: 5px; color: var(--muted); background: rgba(6,18,29,.72); backdrop-filter: blur(2px); text-align: center; }
+.radar-disconnected strong { color: var(--red); font-size: 18px; }
+.radar-detail { min-height: 300px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--cyan); border-radius: 12px; }
+.radar-detail h2 { margin: 4px 0; }.radar-detail > .mono { color: var(--muted); }
+.radar-detail-grid { grid-template-columns: 1fr; margin-top: 20px; }
+.radar-detail-empty { display: grid; gap: 7px; padding: 70px 10px; color: var(--muted); text-align: center; }
+.radar-detail-empty strong { color: var(--text); font-size: 16px; }
 
 @media (max-width: 850px) {
     main { width: min(100% - 24px, 1500px); padding-top: 25px; }
@@ -208,6 +241,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .path-info-strip div:nth-child(2n) { border-right: 0; }
     .path-info-strip div:nth-last-child(-n+4) { border-bottom: 1px solid var(--line); }
     .path-info-strip div:nth-last-child(-n+2) { border-bottom: 0; }
+    .radar-layout { grid-template-columns: 1fr; }
+    .radar-detail-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 520px) {
@@ -223,4 +258,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .chart-legend small { width: 100%; margin: 0; }
     .plotly-path { min-height: 430px; }
     .plotly-path.scene { min-height: 540px; }
+    .radar-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .radar-summary .connection { margin-left: 0; }
+    .radar-scope-wrap, .radar-scope { min-height: 480px; }
 }

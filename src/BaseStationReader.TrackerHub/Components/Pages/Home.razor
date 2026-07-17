@@ -133,7 +133,7 @@
     private TrackedAircraftDto? _selected;
     private string _filter = string.Empty;
     private string? _startError;
-    private SortColumn _sortColumn = SortColumn.LastSeen;
+    private SortColumn _sortColumn = SortColumn.Arrival;
     private bool _ascending;
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
@@ -157,7 +157,8 @@
                 (SortColumn.Distance, true) => aircraft.OrderBy(a => a.Distance),
                 (SortColumn.Distance, false) => aircraft.OrderByDescending(a => a.Distance),
                 (SortColumn.LastSeen, true) => aircraft.OrderBy(a => a.LastSeen),
-                _ => aircraft.OrderByDescending(a => a.LastSeen)
+                (SortColumn.LastSeen, false) => aircraft.OrderByDescending(a => a.LastSeen),
+                _ => aircraft
             };
         }
     }
@@ -337,6 +338,7 @@
 
     private enum SortColumn
     {
+        Arrival,
         Address,
         Callsign,
         Altitude,

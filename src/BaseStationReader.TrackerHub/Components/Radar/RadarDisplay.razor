@@ -1,0 +1,217 @@
+@inject IRadarProjectionService Projection
+
+<div class="radar-layout">
+    <div class="radar-scope-wrap">
+        <svg class="radar-scope" viewBox="-570 -570 1140 1140" role="img" aria-label="Live receiver-centred aircraft radar">
+            <defs>
+                <radialGradient id="@_gradientId"><stop offset="0" stop-color="#0b2431" /><stop offset="1" stop-color="#06121d" /></radialGradient>
+            </defs>
+            <circle class="radar-background" cx="0" cy="0" r="500" fill="url(#@_gradientId)" />
+            @foreach (var ring in RangeRings)
+            {
+                <g>
+                    <circle class="radar-ring" cx="0" cy="0" r="@(ring * 500)" />
+                    <text class="radar-range-label" x="8" y="@RingLabelY(ring)">@FormatRange(ring)</text>
+                </g>
+            }
+            <path class="radar-axis" d="M -500 0 H 500 M 0 -500 V 500" />
+            <text class="radar-cardinal" x="0" y="-520">N</text><text class="radar-cardinal" x="520" y="7">E</text>
+            <text class="radar-cardinal" x="0" y="540">S</text><text class="radar-cardinal" x="-525" y="7">W</text>
+
+            @foreach (var trail in VisibleTrails)
+            {
+                <polyline class="radar-trail @StatusClass(trail.Point.Status)" points="@TrailCoordinates(trail.History)" />
+            }
+
+            <g class="radar-receiver" aria-label="Receiver"><circle r="12" /><path d="M -20 0 H 20 M 0 -20 V 20" /></g>
+            @foreach (var point in VisiblePoints)
+            {
+                var x = point.X * 500;
+                var y = point.Y * 500;
+                <g class="radar-target @StatusClass(point.Status) @(IsSelected(point) ? "selected" : null)"
+                   transform="translate(@Invariant(x) @Invariant(y))" role="button" tabindex="0"
+                   aria-label="@($"{point.Label}, {point.Distance:N1} nautical miles, {point.Altitude:N0} feet")"
+                   @onclick="() => Select(point)" @onkeydown="args => SelectFromKeyboard(args, point)">
+                    <path class="radar-aircraft" transform="rotate(@Invariant((double)(point.Track ?? (decimal)point.Bearing)))" d="M 0 -16 L 7 10 L 0 6 L -7 10 Z" />
+                    <circle class="radar-hit-area" r="25" />
+                    <text class="radar-target-label" x="18" y="-7">@point.Label</text>
+                    <text class="radar-target-altitude" x="18" y="10">@FormatAltitude(point.Altitude)</text>
+                </g>
+            }
+        </svg>
+        @if (ConnectionState != ConnectionState.Connected)
+        {
+            <div class="radar-disconnected" role="status"><strong>@ConnectionLabel</strong><span>Displayed positions may not be current.</span></div>
+        }
+    </div>
+
+    <aside class="radar-detail" aria-live="polite">
+        @if (SelectedPoint is null)
+        {
+            <div class="radar-detail-empty"><strong>Select an aircraft</strong><span>Choose a target to inspect its current telemetry.</span></div>
+        }
+        else
+        {
+            <p class="eyebrow">Selected target</p><h2>@SelectedPoint.Label</h2><span class="mono">@SelectedPoint.Address</span>
+            <dl class="detail-grid radar-detail-grid">
+                <div><dt>Status</dt><dd><span class="status-pill @StatusClass(SelectedPoint.Status)">@SelectedPoint.Status</span></dd></div>
+                <div><dt>Range</dt><dd>@SelectedPoint.Distance.ToString("N1") nm</dd></div>
+                <div><dt>Bearing</dt><dd>@SelectedPoint.Bearing.ToString("N0")°</dd></div>
+                <div><dt>Altitude</dt><dd>@FormatAltitude(SelectedPoint.Altitude)</dd></div>
+                <div><dt>Track</dt><dd>@FormatTrack(SelectedPoint.Track)</dd></div>
+                <div><dt>Last seen</dt><dd>@SelectedPoint.Timestamp.ToLocalTime().ToString("HH:mm:ss")</dd></div>
+            </dl>
+        }
+    </aside>
+</div>
+
+@code {
+#nullable enable
+    private readonly Dictionary<string, List<RadarPointDto>> _trails = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string _gradientId = $"radar-gradient-{Guid.NewGuid():N}";
+    private string? _selectedAddress;
+
+    [Parameter, EditorRequired] public IReadOnlyCollection<TrackedAircraftDto> Aircraft { get; set; } = Array.Empty<TrackedAircraftDto>();
+    [Parameter] public double MaximumRange { get; set; } = 50;
+    [Parameter] public RadarOptions Options { get; set; } = new();
+    [Parameter] public ConnectionState ConnectionState { get; set; }
+
+    private static double[] RangeRings => [0.25, 0.5, 0.75, 1];
+    private IReadOnlyList<RadarPointDto> ProjectedPoints => Aircraft.Select(a => Projection.Project(a, MaximumRange)).OfType<RadarPointDto>().ToArray();
+    private IEnumerable<RadarPointDto> VisiblePoints => ProjectedPoints.Where(p => p.Distance <= MaximumRange);
+    private IEnumerable<(RadarPointDto Point, IReadOnlyList<RadarPointDto> History)> VisibleTrails => VisiblePoints.Select(p => (p, (IReadOnlyList<RadarPointDto>)(_trails.GetValueOrDefault(p.Address) ?? [])));
+    private RadarPointDto? SelectedPoint => ProjectedPoints.FirstOrDefault(p => p.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
+    private string ConnectionLabel => ConnectionState == ConnectionState.Reconnecting ? "Radar reconnecting…" : ConnectionState == ConnectionState.Connecting ? "Radar connecting…" : "Radar disconnected";
+
+    /// <summary>
+    /// Captures new positions and prunes bounded UI-memory trails whenever live parameters change.
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        var now = DateTime.UtcNow;
+        var activeAddresses = Aircraft.Select(a => a.Address).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Remove aircraft immediately when they leave the authoritative live collection.
+        foreach (var address in _trails.Keys.Where(address => !activeAddresses.Contains(address)).ToArray())
+        {
+            _trails.Remove(address);
+        }
+
+        foreach (var point in ProjectedPoints.OrderByDescending(p => p.Timestamp).Take(Math.Max(0, Options.MaximumTrailAircraft)))
+        {
+            var trail = _trails.GetValueOrDefault(point.Address);
+            if (trail is null)
+            {
+                trail = [];
+                _trails[point.Address] = trail;
+            }
+
+            // Avoid duplicating a position when unrelated component parameters cause a rerender.
+            if (trail.Count == 0 || trail[^1].Timestamp != point.Timestamp || trail[^1].X != point.X || trail[^1].Y != point.Y)
+            {
+                trail.Add(point);
+            }
+
+            trail.RemoveAll(item => now - item.Timestamp.ToUniversalTime() > TimeSpan.FromSeconds(Math.Max(0, Options.TrailSeconds)));
+            var maximumTrailPoints = Math.Max(0, Options.MaximumTrailPoints);
+            if (trail.Count > maximumTrailPoints)
+            {
+                trail.RemoveRange(0, trail.Count - maximumTrailPoints);
+            }
+        }
+
+        if (_selectedAddress is not null && !activeAddresses.Contains(_selectedAddress))
+        {
+            // Clear selection along with an aircraft removed by the live tracker.
+            _selectedAddress = null;
+        }
+    }
+
+    /// <summary>
+    /// Selects one live target by its stable ICAO address.
+    /// </summary>
+    /// <param name="point">Projected target selected by the user.</param>
+    private void Select(RadarPointDto point)
+    {
+        // Store identity rather than the DTO so incoming updates refresh the detail panel.
+        _selectedAddress = point.Address;
+    }
+
+    /// <summary>
+    /// Provides keyboard selection for an SVG radar target.
+    /// </summary>
+    /// <param name="args">Keyboard event.</param>
+    /// <param name="point">Target receiving the event.</param>
+    private void SelectFromKeyboard(KeyboardEventArgs args, RadarPointDto point)
+    {
+        if (args.Key is "Enter" or " ")
+        {
+            // Match native button activation keys for accessible SVG interaction.
+            Select(point);
+        }
+    }
+
+    /// <summary>
+    /// Converts trail points into SVG polyline coordinates.
+    /// </summary>
+    /// <param name="history">Bounded target history.</param>
+    /// <returns>SVG coordinate pairs.</returns>
+    private static string TrailCoordinates(IReadOnlyList<RadarPointDto> history)
+    {
+        // Normalised coordinates become pixels within the fixed 500-unit radar radius.
+        return string.Join(" ", history.Select(point => $"{Invariant(point.X * 500)},{Invariant(point.Y * 500)}"));
+    }
+
+    /// <summary>
+    /// Formats one range-ring label for the selected scale.
+    /// </summary>
+    /// <param name="fraction">Ring radius as a fraction of maximum range.</param>
+    /// <returns>Range label in nautical miles.</returns>
+    private string FormatRange(double fraction) => $"{MaximumRange * fraction:N0} nm";
+
+    /// <summary>
+    /// Calculates a range label's invariant SVG Y coordinate.
+    /// </summary>
+    /// <param name="fraction">Ring radius as a fraction of maximum range.</param>
+    /// <returns>Invariant Y coordinate.</returns>
+    private static string RingLabelY(double fraction)
+    {
+        // Place the label just inside the upper edge of its ring.
+        return Invariant(-fraction * 500 + 18);
+    }
+
+    /// <summary>
+    /// Formats altitude without implying missing telemetry is zero.
+    /// </summary>
+    /// <param name="altitude">Altitude in feet.</param>
+    /// <returns>Compact altitude label.</returns>
+    private static string FormatAltitude(decimal? altitude) => altitude.HasValue ? $"{altitude:N0} ft" : "Altitude —";
+
+    /// <summary>
+    /// Formats aircraft track without implying missing telemetry is north.
+    /// </summary>
+    /// <param name="track">Track in degrees.</param>
+    /// <returns>Track label.</returns>
+    private static string FormatTrack(decimal? track) => track.HasValue ? $"{track:N0}°" : "—";
+
+    /// <summary>
+    /// Returns the CSS status token used throughout the live UI.
+    /// </summary>
+    /// <param name="status">Tracking status.</param>
+    /// <returns>Lower-case status name.</returns>
+    private static string StatusClass(TrackingStatus status) => status.ToString().ToLowerInvariant();
+
+    /// <summary>
+    /// Tests whether a projected point is currently selected.
+    /// </summary>
+    /// <param name="point">Projected target.</param>
+    /// <returns>True when selected.</returns>
+    private bool IsSelected(RadarPointDto point) => point.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Formats SVG numeric values using invariant culture.
+    /// </summary>
+    /// <param name="value">Numeric coordinate.</param>
+    /// <returns>Invariant numeric text.</returns>
+    private static string Invariant(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+}
