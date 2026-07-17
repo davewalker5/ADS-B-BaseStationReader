@@ -1,0 +1,82 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JavaScript
+
+<section class="flight-path-plots">
+    @if (Path.Points.Count < 2)
+    {
+        <div class="chart-empty" role="status">
+            <strong>Insufficient flight-path data</strong>
+            <p>At least two positions containing timestamp, coordinates, altitude, and distance are required.</p>
+        </div>
+    }
+    else
+    {
+        <section class="chart-card">
+            <div class="chart-heading"><div><h2>Geographic flight path</h2><p>Two-dimensional latitude and longitude trace.</p></div><span>@Path.Points.Count.ToString("N0") points</span></div>
+            <div id="@_mapElementId" class="plotly-path map" aria-label="Two-dimensional geographic flight path"></div>
+        </section>
+        <section class="chart-card">
+            <div class="chart-heading"><div><h2>Three-dimensional flight ribbon</h2><p>Local east/north position with altitude in metres.</p></div><span>@Path.SegmentCount segments</span></div>
+            <div class="scene-container">
+                <div id="@_sceneLoadingElementId" class="scene-loading" role="status" aria-live="polite">
+                    <span class="scene-loading-spinner" aria-hidden="true"></span>
+                    <span><strong>Preparing 3D view…</strong><small>Rendering the detailed ground texture may take a moment.</small></span>
+                </div>
+                <div id="@_sceneElementId" class="plotly-path scene" aria-label="Interactive three-dimensional flight path" aria-busy="true"></div>
+            </div>
+        </section>
+    }
+</section>
+
+@code {
+#nullable enable
+    private readonly string _instanceId = $"flight-path-{Guid.NewGuid():N}";
+    private IJSObjectReference? _module;
+    private string _mapElementId => $"{_instanceId}-map";
+    private string _sceneElementId => $"{_instanceId}-scene";
+    private string _sceneLoadingElementId => $"{_instanceId}-scene-loading";
+
+    [Parameter, EditorRequired] public FlightPathDto Path { get; set; } = new();
+    [Parameter] public FlightPathColourMode ColourMode { get; set; } = FlightPathColourMode.Altitude;
+    [Parameter] public string? GroundImageUrl { get; set; }
+
+    /// <summary>
+    /// Imports the contained renderer and refreshes both plots after each parameter render.
+    /// </summary>
+    /// <param name="firstRender">Whether this is the component's first completed render.</param>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Path.Points.Count < 2)
+        {
+            // No browser renderer is needed for the server-rendered insufficient-data state.
+            return;
+        }
+
+        // Cache the JavaScript module while allowing parameter changes to update plots without a page reload.
+        // The revision ensures browsers do not retain an earlier texture implementation after an application update.
+        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/flightPathPlot.js?v=0.4.0-ground-2");
+        await _module.InvokeVoidAsync(
+            "renderFlightPath",
+            _mapElementId,
+            _sceneElementId,
+            _sceneLoadingElementId,
+            Path,
+            ColourMode.ToString().ToLowerInvariant(),
+            GroundImageUrl);
+    }
+
+    /// <summary>
+    /// Releases Plotly canvases and the imported JavaScript module with the component.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null)
+        {
+            // Disposal can occur before browser interactivity is established.
+            return;
+        }
+
+        await _module.InvokeVoidAsync("disposeFlightPath", _mapElementId, _sceneElementId);
+        await _module.DisposeAsync();
+    }
+}

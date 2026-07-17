@@ -6,8 +6,6 @@ using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Tracking;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.BusinessLogic.Messages;
@@ -16,6 +14,9 @@ using BaseStationReader.BusinessLogic.TrackerHub.Logic;
 using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
 using System.Runtime.Loader;
+using BaseStationReader.TrackerHub.Components;
+using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.TrackerHub.Services;
 
 namespace BaseStationReader.TrackerHub
 {
@@ -29,6 +30,10 @@ namespace BaseStationReader.TrackerHub
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
+        /// <summary>
+        /// Starts the tracker, SignalR hub, and unified browser interface.
+        /// </summary>
+        /// <param name="args">Command-line arguments used to configure the tracker.</param>
         public static async Task Main(string[] args)
         {
             // Process the command line arguments. If help's been requested, show help and exit
@@ -47,10 +52,8 @@ namespace BaseStationReader.TrackerHub
                 _logger = new FileLogger();
                 _logger.Initialise(_settings.LogFile, _settings.MinimumLogLevel, _settings.VerboseLogging);
 
-                // Get the version number and application title
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                FileVersionInfo info = FileVersionInfo.GetVersionInfo(assembly.Location);
-                var title = $"Aircraft Tracker Hub v{info.FileVersion}: {_settings?.Host}:{_settings?.Port}";
+                // Build the application title from the same assembly metadata displayed by the web UI.
+                var title = $"Aircraft Tracker Hub v{TrackerHubVersion.Current}: {_settings?.Host}:{_settings?.Port}";
 
                 // Log the startup messages
                 _logger.LogMessage(Severity.Info, new string('=', 80));
@@ -62,26 +65,33 @@ namespace BaseStationReader.TrackerHub
                 Console.WriteLine($"Output will be logged to {_settings.LogFile}");
                 Console.WriteLine("Press ESC to stop the hub");
 
-                // Make sure the latest migrations have been applied - this ensures the DB is created and in the
-                // correct state if it's absent or stale on startup
-                var context = new BaseStationReaderDbContextFactory().CreateDbContext([]);
-                context.Database.Migrate();
-                _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
-
-                // Initialise the tracker wrapper
-                var tcpClient = new TrackerTcpClient();
-                _controller = new TrackerController(_logger, context, tcpClient, _settings);
-
-                // Locate the static files root
+                // Build the environment-aware ASP.NET Core configuration before creating any database context.
                 var contentRootPath = Path.Exists("wwwroot") ? Directory.GetCurrentDirectory() : AppContext.BaseDirectory;
-
-                // Create a web application builder
                 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
                 {
                     Args = args,
                     ContentRootPath = contentRootPath,
                     WebRootPath = Path.Combine(contentRootPath, "wwwroot")
                 });
+
+                // Resolve one connection string for migrations, live writes, and historical UI reads.
+                var connectionString = builder.Configuration.GetConnectionString("BaseStationReaderDB")
+                    ?? throw new InvalidOperationException("Connection string 'BaseStationReaderDB' is not configured.");
+                var contextOptions = new DbContextOptionsBuilder<BaseStationReaderDbContext>()
+                    .UseSqlite(connectionString)
+                    .Options;
+
+                // Make sure the latest migrations have been applied - this ensures the DB is created and in the
+                // correct state if it's absent or stale on startup
+                var context = new BaseStationReaderDbContext(contextOptions);
+                context.Database.Migrate();
+                context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+                context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+                _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
+
+                // Initialise the tracker wrapper
+                var tcpClient = new TrackerTcpClient();
+                _controller = new TrackerController(_logger, context, tcpClient, _settings);
 
                 // Bind Kestrel options from the applicatiokn settings file
                 builder.WebHost.ConfigureKestrel(options =>
@@ -92,6 +102,23 @@ namespace BaseStationReader.TrackerHub
                 // Register SignalR
                 builder.Services.AddSignalR().AddMessagePackProtocol();
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
+                builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+                builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
+                builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
+                builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
+                    options.UseSqlite(connectionString));
+                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
+                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
+                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude));
+                builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
+                builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(30));
 
                 // Register the aircraft state and event bridge
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();
@@ -109,9 +136,8 @@ namespace BaseStationReader.TrackerHub
                 var app = builder.Build();
                 app.UseResponseCompression();
                 app.UseCors("development");
-                app.UseDefaultFiles();
 
-                // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
+                // Serve the unified UI assets; the legacy standalone index page has been retired.
                 var provider = new FileExtensionContentTypeProvider();
                 provider.Mappings[".map"] = "application/json";
                 app.UseStaticFiles(new StaticFileOptions
@@ -120,9 +146,31 @@ namespace BaseStationReader.TrackerHub
                 });
                 
                 app.UseHttpsRedirection();
+                app.UseAntiforgery();
 
-                // Map the endpoint
+                // Map the existing external hub and the new interactive server UI.
                 app.MapHub<AircraftHub>("/hubs/aircraft");
+                app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+                app.MapGet("/api/mapbox/static", async (
+                    double north,
+                    double south,
+                    double east,
+                    double west,
+                    IMapboxStaticMapService mapbox,
+                    CancellationToken token) =>
+                {
+                    // Reject invalid or inverted bounds before attempting a remote Mapbox request.
+                    if (!double.IsFinite(north) || !double.IsFinite(south) ||
+                        !double.IsFinite(east) || !double.IsFinite(west) ||
+                        north <= south || east <= west ||
+                        north > 90 || south < -90 || east > 180 || west < -180)
+                    {
+                        return Results.BadRequest();
+                    }
+
+                    var image = await mapbox.GetMapAsync(north, south, east, west, token);
+                    return image is null ? Results.NotFound() : Results.File(image, "image/png");
+                });
 
                 // Configure cancellation
                 using var source = new CancellationTokenSource();

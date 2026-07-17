@@ -1,0 +1,223 @@
+@page "/history"
+@inject ITrackingSessionQueryService QueryService
+
+<PageTitle>Database · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Recorded surveillance</p>
+        <h1>Tracking database</h1>
+        <p class="lede">Search completed and historical aircraft tracking sessions.</p>
+    </div>
+    <div class="read-only-badge"><span>●</span> Read-only access</div>
+</section>
+
+<section class="filter-panel">
+    <div class="filter-heading">
+        <div><h2>Search filters</h2><p>Refine results using one or more fields.</p></div>
+        <button class="text-button" type="button" @onclick="ClearFiltersAsync">Clear filters</button>
+    </div>
+    <div class="filter-grid">
+        <label><span>From date</span><InputDate @bind-Value="_filter.FromDate" /></label>
+        <label><span>To date</span><InputDate @bind-Value="_filter.ToDate" /></label>
+        <label><span>ICAO address</span><input @bind="_filter.Address" placeholder="e.g. 406B90" maxlength="12" /></label>
+        <label><span>Callsign</span><input @bind="_filter.Callsign" placeholder="e.g. BAW123" maxlength="20" /></label>
+        <label><span>Registration</span><input @bind="_filter.Registration" placeholder="e.g. G-EUOA" maxlength="20" /></label>
+        <label><span>Airline</span><input @bind="_filter.Airline" placeholder="Name, IATA or ICAO" maxlength="50" /></label>
+        <label><span>Flight number</span><input @bind="_filter.FlightNumber" placeholder="IATA or ICAO" maxlength="20" /></label>
+        <label><span>Status</span><InputSelect @bind-Value="_filter.Status"><option value="">Any status</option>@foreach (var status in Enum.GetValues<TrackingStatus>()) { <option value="@status">@status</option> }</InputSelect></label>
+        <label><span>Minimum altitude</span><InputNumber @bind-Value="_filter.MinimumAltitude" placeholder="feet" /></label>
+        <label><span>Maximum altitude</span><InputNumber @bind-Value="_filter.MaximumAltitude" placeholder="feet" /></label>
+        <label><span>Maximum distance</span><InputNumber @bind-Value="_filter.MaximumDistance" placeholder="nautical miles" /></label>
+        <label><span>Position history</span><InputSelect @bind-Value="_filter.HasPositions"><option value="">Any</option><option value="true">With positions</option><option value="false">Without positions</option></InputSelect></label>
+    </div>
+    <div class="filter-actions">
+        <label class="checkbox"><InputCheckbox @bind-Value="_filter.CompletedOnly" /><span>Locked/completed records only</span></label>
+        <button class="primary-button" type="button" @onclick="SearchAsync" disabled="@_loading">@(_loading ? "Searching…" : "Search database")</button>
+    </div>
+</section>
+
+@if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Database query failed</strong><span>@_error</span></div>
+}
+
+<section class="tracker-panel history-panel" aria-busy="@_loading">
+    <div class="panel-heading">
+        <div><h2>Tracking records</h2><p>@ResultDescription</p></div>
+        <label class="page-size"><span>Rows</span><select value="@_filter.PageSize" @onchange="ChangePageSizeAsync"><option>10</option><option>25</option><option>50</option><option>100</option></select></label>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Record</th><th>Aircraft</th><th>First seen</th><th>Last seen</th><th>Duration</th><th class="numeric">Altitude range</th><th class="numeric">Distance range</th><th class="numeric">Positions</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @if (_loading)
+            {
+                <tr><td colspan="10" class="table-empty">Loading historical records…</td></tr>
+            }
+            else if (_result.Items.Count == 0)
+            {
+                <tr><td colspan="10" class="table-empty">No tracking records match these filters.</td></tr>
+            }
+            else
+            {
+                @foreach (var record in _result.Items)
+                {
+                    <tr>
+                        <td class="mono">#@record.Id</td>
+                        <td><strong>@Display(record.Callsign)</strong><small class="table-subtitle">@record.Address · @Display(record.Registration)</small></td>
+                        <td>@FormatDateTime(record.FirstSeen)</td>
+                        <td>@FormatDateTime(record.LastSeen)</td>
+                        <td>@FormatDuration(record.Duration)</td>
+                        <td class="numeric">@FormatRange(record.MinimumAltitude, record.MaximumAltitude, "N0", " ft")</td>
+                        <td class="numeric">@FormatRange(record.MinimumDistance, record.MaximumDistance, "N1", " nm")</td>
+                        <td class="numeric">@record.PositionCount.ToString("N0")</td>
+                        <td><span class="status-pill @record.Status.ToString().ToLowerInvariant()">@record.Status</span></td>
+                        <td><a class="row-link" href="history/@record.Id">View →</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination">
+        <button @onclick="PreviousPageAsync" disabled="@(_loading || _result.Page <= 1)">← Previous</button>
+        <span>Page <strong>@(_result.TotalPages == 0 ? 0 : _result.Page)</strong> of <strong>@_result.TotalPages</strong></span>
+        <button @onclick="NextPageAsync" disabled="@(_loading || _result.Page >= _result.TotalPages)">Next →</button>
+    </div>
+</section>
+
+@code {
+#nullable enable
+    private TrackingSessionFilter _filter = new();
+    private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 25 };
+    private bool _loading;
+    private string? _error;
+    private string ResultDescription => _result.TotalCount == 1 ? "1 matching record" : $"{_result.TotalCount:N0} matching records";
+
+    /// <summary>
+    /// Loads the default completed-record search when the page opens.
+    /// </summary>
+    protected override Task OnInitializedAsync()
+    {
+        // Use the same guarded search path as all later filter and paging actions.
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Applies the current filters from the first page.
+    /// </summary>
+    private Task SearchAsync()
+    {
+        // A changed filter invalidates the current page position.
+        _filter.Page = 1;
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Resets all search fields to their unfiltered defaults.
+    /// </summary>
+    private Task ClearFiltersAsync()
+    {
+        // Retain the selected page size because it is a display preference, not a search criterion.
+        var pageSize = _filter.PageSize;
+        _filter = new TrackingSessionFilter { PageSize = pageSize };
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Loads the preceding result page.
+    /// </summary>
+    private Task PreviousPageAsync()
+    {
+        // The disabled state prevents the page number moving below one.
+        _filter.Page--;
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Loads the next result page.
+    /// </summary>
+    private Task NextPageAsync()
+    {
+        // The disabled state prevents navigation past the known final page.
+        _filter.Page++;
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Applies a new bounded result-page size.
+    /// </summary>
+    /// <param name="args">The browser change event.</param>
+    private Task ChangePageSizeAsync(ChangeEventArgs args)
+    {
+        // Values originate from fixed options, but TryParse keeps malformed input harmless.
+        if (int.TryParse(args.Value?.ToString(), out var pageSize))
+        {
+            _filter.PageSize = pageSize;
+        }
+
+        _filter.Page = 1;
+        return LoadAsync();
+    }
+
+    /// <summary>
+    /// Executes the current query while exposing loading and error state to the page.
+    /// </summary>
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // The service validates page bounds and returns DTOs rather than persistence entities.
+            _result = await QueryService.SearchAsync(_filter);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Formats a local date and time for a compact result cell.
+    /// </summary>
+    private static string FormatDateTime(DateTime value)
+    {
+        // Stored tracker timestamps are displayed consistently with the live tracker.
+        return value.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss");
+    }
+
+    /// <summary>
+    /// Formats an elapsed tracking duration.
+    /// </summary>
+    private static string FormatDuration(TimeSpan value)
+    {
+        // Include days only for unusually long tracking sessions.
+        return value.TotalDays >= 1 ? $"{(int)value.TotalDays}d {value:hh\\:mm\\:ss}" : value.ToString("hh\\:mm\\:ss");
+    }
+
+    /// <summary>
+    /// Formats a nullable minimum and maximum as a compact range.
+    /// </summary>
+    private static string FormatRange<T>(T? minimum, T? maximum, string format, string unit) where T : struct, IFormattable
+    {
+        // Use an em dash when the session contains no value for the requested measure.
+        return minimum.HasValue || maximum.HasValue
+            ? $"{minimum?.ToString(format, null) ?? "—"}–{maximum?.ToString(format, null) ?? "—"}{unit}"
+            : "—";
+    }
+
+    /// <summary>
+    /// Returns a non-empty display string.
+    /// </summary>
+    private static string Display(string? value)
+    {
+        // Historical lookup metadata may legitimately be unavailable.
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
+}

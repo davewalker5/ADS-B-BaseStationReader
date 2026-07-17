@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="9.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <PrivateAssets>all</PrivateAssets>
@@ -30,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BaseStationReader.Entities\BaseStationReader.Entities.csproj" />
+    <ProjectReference Include="..\BaseStationReader.Data\BaseStationReader.Data.csproj" />
     <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
   </ItemGroup>
 

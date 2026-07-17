@@ -1,0 +1,99 @@
+@page "/history/{Id:int}/path"
+@inject ITrackingSessionQueryService QueryService
+@inject IMapboxStaticMapService Mapbox
+
+<PageTitle>Flight path #@Id · ADS-B Tracker</PageTitle>
+
+<a class="back-link" href="history/@Id">← Back to tracking record</a>
+
+@if (_loading)
+{
+    <section class="empty-state"><h1>Preparing flight path…</h1></section>
+}
+else if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Flight path unavailable</strong><span>@_error</span></div>
+}
+else if (_path is null)
+{
+    <section class="empty-state"><h1>Record not found</h1><p>Tracking record #@Id does not exist.</p></section>
+}
+else
+{
+    <section class="page-heading record-heading">
+        <div><p class="eyebrow">Flight path · Record #@_path.TrackingRecordId</p><h1>@Display(_path.Callsign)</h1><p class="lede"><span class="mono">@_path.Address</span> · @Display(_path.Registration) · @_path.Points.Count.ToString("N0") valid positions</p></div>
+        <label class="colour-selector"><span>Colour path by</span><InputSelect @bind-Value="_colourMode">@foreach (var mode in Enum.GetValues<FlightPathColourMode>()) { <option value="@mode">@mode</option> }</InputSelect></label>
+    </section>
+
+    <section class="path-info-strip">
+        <div><span>Callsign</span><strong>@Display(_path.Callsign)</strong></div>
+        <div><span>Registration</span><strong>@Display(_path.Registration)</strong></div>
+        <div><span>Model</span><strong>@Display(_path.Model)</strong></div>
+        <div><span>Flight</span><strong>@Display(_path.FlightNumber)</strong></div>
+        <div><span>Airline</span><strong>@Display(_path.Airline)</strong></div>
+        <div><span>Route</span><strong>@Display(_path.Route)</strong></div>
+        <div><span>Start</span><strong>@FormatTimestamp(_path.FirstTimestamp)</strong></div>
+        <div><span>End</span><strong>@FormatTimestamp(_path.FinalTimestamp)</strong></div>
+    </section>
+
+    <div class="ground-state @(Mapbox.IsConfigured ? "available" : "blank")">
+        <span class="connection-dot"></span>
+        <span>@(Mapbox.IsConfigured ? "Mapbox ground texture enabled" : "Mapbox API key not configured — ground left blank")</span>
+    </div>
+
+    <FlightPathPlot Path="_path" ColourMode="_colourMode" GroundImageUrl="@GroundImageUrl" />
+}
+
+@code {
+#nullable enable
+    [Parameter] public int Id { get; set; }
+    private FlightPathDto? _path;
+    private FlightPathColourMode _colourMode = FlightPathColourMode.Altitude;
+    private bool _loading = true;
+    private string? _error;
+
+    private string? GroundImageUrl => _path is not null && Mapbox.IsConfigured &&
+        _path.North.HasValue && _path.South.HasValue && _path.East.HasValue && _path.West.HasValue
+        ? FormattableString.Invariant($"/api/mapbox/static?north={_path.North}&south={_path.South}&east={_path.East}&west={_path.West}")
+        : null;
+
+    /// <summary>
+    /// Loads and prepares the requested tracking record's complete geographic path.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // Position history is retrieved only after the user explicitly opens this path page.
+            _path = await QueryService.GetFlightPathAsync(Id);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Formats an optional path timestamp in local time.
+    /// </summary>
+    private static string FormatTimestamp(DateTime? timestamp)
+    {
+        // Empty paths retain record metadata but have no meaningful time boundary.
+        return timestamp?.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss") ?? "—";
+    }
+
+    /// <summary>
+    /// Returns a non-empty metadata display value.
+    /// </summary>
+    private static string Display(string? value)
+    {
+        // Aircraft lookup and flight association metadata is optional.
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
+}

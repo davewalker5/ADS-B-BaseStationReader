@@ -1,0 +1,348 @@
+@page "/"
+@implements IAsyncDisposable
+@inject ILiveAircraftService LiveAircraft
+
+<PageTitle>Live tracker · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Real-time surveillance</p>
+        <h1>Live tracker</h1>
+        <p class="lede">Aircraft currently visible to the Tracker Hub receiver.</p>
+    </div>
+    <div class="connection @ConnectionClass" role="status" aria-live="polite">
+        <span class="connection-dot"></span>
+        <span>
+            <small>Tracker connection</small>
+            <strong>@ConnectionLabel</strong>
+        </span>
+    </div>
+</section>
+
+@if (_startError is not null)
+{
+    <div class="alert" role="alert">
+        <strong>Tracker connection unavailable</strong>
+        <span>@_startError</span>
+        <button @onclick="RetryAsync">Try again</button>
+    </div>
+}
+
+<section class="summary-grid" aria-label="Tracker summary">
+    <article class="summary-card accent">
+        <span>Aircraft</span>
+        <strong>@LiveAircraft.Aircraft.Count</strong>
+        <small>currently tracked</small>
+    </article>
+    <article class="summary-card">
+        <span>Tracking profile</span>
+        <strong class="text-value">@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong>
+        <small>active receiver profile</small>
+    </article>
+    <article class="summary-card">
+        <span>Most recent update</span>
+        <strong class="text-value">@FormatUpdated(LiveAircraft.LastUpdated)</strong>
+        <small>@FormatUpdateAge(LiveAircraft.LastUpdated)</small>
+    </article>
+</section>
+
+<section class="tracker-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Tracked aircraft</h2>
+            <p>Select a row to inspect its latest details.</p>
+        </div>
+        <label class="search">
+            <span class="sr-only">Filter aircraft</span>
+            <input type="search" @bind="_filter" @bind:event="oninput" placeholder="Filter callsign or ICAO…" />
+        </label>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th><button @onclick="() => SortBy(SortColumn.Callsign)">Callsign @SortIndicator(SortColumn.Callsign)</button></th>
+                    <th><button @onclick="() => SortBy(SortColumn.Address)">ICAO @SortIndicator(SortColumn.Address)</button></th>
+                    <th>Status</th>
+                    <th class="numeric"><button @onclick="() => SortBy(SortColumn.Altitude)">Altitude @SortIndicator(SortColumn.Altitude)</button></th>
+                    <th class="numeric">V/S</th>
+                    <th class="numeric">Speed</th>
+                    <th class="numeric">Heading</th>
+                    <th class="numeric"><button @onclick="() => SortBy(SortColumn.Distance)">Distance @SortIndicator(SortColumn.Distance)</button></th>
+                    <th class="numeric">Messages</th>
+                    <th><button @onclick="() => SortBy(SortColumn.LastSeen)">Last seen @SortIndicator(SortColumn.LastSeen)</button></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!FilteredAircraft.Any())
+                {
+                    <tr><td colspan="10" class="table-empty">@EmptyMessage</td></tr>
+                }
+                else
+                {
+                    @foreach (var aircraft in FilteredAircraft)
+                    {
+                        <tr class="@StatusClass(aircraft.Status) @SelectedClass(aircraft)" @onclick="() => SelectAircraft(aircraft)">
+                            <td><strong>@Display(aircraft.Callsign)</strong></td>
+                            <td class="mono">@aircraft.Address</td>
+                            <td><span class="status-pill @StatusClass(aircraft.Status)">@aircraft.Status</span></td>
+                            <td class="numeric">@FormatNumber(aircraft.Altitude, "N0", " ft")</td>
+                            <td class="numeric behaviour">@BehaviourIndicator(aircraft.Behaviour) @FormatNumber(aircraft.VerticalRate, "N0", " fpm")</td>
+                            <td class="numeric">@FormatNumber(aircraft.GroundSpeed, "N0", " kt")</td>
+                            <td class="numeric">@FormatNumber(aircraft.Track, "N0", "°")</td>
+                            <td class="numeric">@FormatNumber(aircraft.Distance, "N1", " nm")</td>
+                            <td class="numeric">@aircraft.Messages.ToString("N0")</td>
+                            <td><time datetime="@aircraft.LastSeen.ToString("O")">@aircraft.LastSeen.ToLocalTime().ToString("HH:mm:ss")</time></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if (_selected is not null)
+{
+    <aside class="detail-panel" aria-label="Selected aircraft details">
+        <div class="detail-heading">
+            <div>
+                <p class="eyebrow">Selected aircraft</p>
+                <h2>@Display(_selected.Callsign)</h2>
+                <span class="mono">@_selected.Address</span>
+            </div>
+            <button class="icon-button" @onclick="ClearSelection" aria-label="Close aircraft details">×</button>
+        </div>
+        <dl class="detail-grid">
+            <div><dt>Status</dt><dd><span class="status-pill @StatusClass(_selected.Status)">@_selected.Status</span></dd></div>
+            <div><dt>Squawk</dt><dd>@Display(_selected.Squawk)</dd></div>
+            <div><dt>Behaviour</dt><dd>@_selected.Behaviour</dd></div>
+            <div><dt>Altitude</dt><dd>@FormatNumber(_selected.Altitude, "N0", " ft")</dd></div>
+            <div><dt>Latitude</dt><dd>@FormatNumber(_selected.Latitude, "N5")</dd></div>
+            <div><dt>Longitude</dt><dd>@FormatNumber(_selected.Longitude, "N5")</dd></div>
+            <div><dt>Ground speed</dt><dd>@FormatNumber(_selected.GroundSpeed, "N0", " kt")</dd></div>
+            <div><dt>Vertical rate</dt><dd>@FormatNumber(_selected.VerticalRate, "N0", " fpm")</dd></div>
+            <div><dt>Track</dt><dd>@FormatNumber(_selected.Track, "N0", "°")</dd></div>
+            <div><dt>Distance</dt><dd>@FormatNumber(_selected.Distance, "N1", " nm")</dd></div>
+        </dl>
+    </aside>
+}
+
+@code {
+#nullable enable
+    private TrackedAircraftDto? _selected;
+    private string _filter = string.Empty;
+    private string? _startError;
+    private SortColumn _sortColumn = SortColumn.Arrival;
+    private bool _ascending;
+
+    private IEnumerable<TrackedAircraftDto> FilteredAircraft
+    {
+        get
+        {
+            // Filter before sorting to minimise work as the live collection grows.
+            var aircraft = LiveAircraft.Aircraft.Where(a =>
+                string.IsNullOrWhiteSpace(_filter) ||
+                a.Address.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
+                (a.Callsign?.Contains(_filter, StringComparison.OrdinalIgnoreCase) ?? false));
+
+            return (_sortColumn, _ascending) switch
+            {
+                (SortColumn.Address, true) => aircraft.OrderBy(a => a.Address),
+                (SortColumn.Address, false) => aircraft.OrderByDescending(a => a.Address),
+                (SortColumn.Callsign, true) => aircraft.OrderBy(a => a.Callsign),
+                (SortColumn.Callsign, false) => aircraft.OrderByDescending(a => a.Callsign),
+                (SortColumn.Altitude, true) => aircraft.OrderBy(a => a.Altitude),
+                (SortColumn.Altitude, false) => aircraft.OrderByDescending(a => a.Altitude),
+                (SortColumn.Distance, true) => aircraft.OrderBy(a => a.Distance),
+                (SortColumn.Distance, false) => aircraft.OrderByDescending(a => a.Distance),
+                (SortColumn.LastSeen, true) => aircraft.OrderBy(a => a.LastSeen),
+                (SortColumn.LastSeen, false) => aircraft.OrderByDescending(a => a.LastSeen),
+                _ => aircraft
+            };
+        }
+    }
+
+    private string ConnectionClass => LiveAircraft.ConnectionState.ToString().ToLowerInvariant();
+    private string ConnectionLabel => LiveAircraft.ConnectionState switch
+    {
+        ConnectionState.Connected => "Connected",
+        ConnectionState.Reconnecting => "Reconnecting…",
+        ConnectionState.Connecting => "Connecting…",
+        _ => "Disconnected"
+    };
+    private string EmptyMessage => string.IsNullOrWhiteSpace(_filter)
+        ? "Waiting for aircraft messages…"
+        : "No aircraft match this filter.";
+
+    /// <summary>
+    /// Subscribes to service changes and starts the live transport.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe before starting so the connecting state is rendered immediately.
+        LiveAircraft.StateChanged += OnLiveStateChanged;
+        await StartAsync();
+    }
+
+    /// <summary>
+    /// Unsubscribes the component when its circuit is released.
+    /// </summary>
+    public ValueTask DisposeAsync()
+    {
+        // The scoped service owns its connection and is disposed with the circuit.
+        LiveAircraft.StateChanged -= OnLiveStateChanged;
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Starts the live service and captures a user-readable connection error.
+    /// </summary>
+    private async Task StartAsync()
+    {
+        try
+        {
+            // Clear an earlier failure before attempting a fresh connection.
+            _startError = null;
+            await LiveAircraft.StartAsync();
+        }
+        catch (Exception exception)
+        {
+            _startError = exception.Message;
+        }
+    }
+
+    /// <summary>
+    /// Retries a failed initial Tracker Hub connection.
+    /// </summary>
+    private Task RetryAsync()
+    {
+        // Re-run the same guarded startup path used during initialisation.
+        return StartAsync();
+    }
+
+    /// <summary>
+    /// Schedules a render when live state changes on a SignalR callback thread.
+    /// </summary>
+    private void OnLiveStateChanged(object? sender, EventArgs args)
+    {
+        // Marshal the render onto Blazor's component dispatcher.
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Selects an aircraft for the detail panel.
+    /// </summary>
+    private void SelectAircraft(TrackedAircraftDto aircraft)
+    {
+        // Retain the latest DTO; subsequent events refresh it through the render lookup.
+        _selected = aircraft;
+    }
+
+    /// <summary>
+    /// Closes the selected-aircraft detail panel.
+    /// </summary>
+    private void ClearSelection()
+    {
+        // Removing the reference is enough to hide the conditional panel.
+        _selected = null;
+    }
+
+    /// <summary>
+    /// Changes the active table sort or reverses its direction.
+    /// </summary>
+    private void SortBy(SortColumn column)
+    {
+        // Repeated clicks toggle direction; a new column starts ascending.
+        _ascending = _sortColumn == column ? !_ascending : true;
+        _sortColumn = column;
+    }
+
+    /// <summary>
+    /// Returns the direction marker for a sortable column.
+    /// </summary>
+    private string SortIndicator(SortColumn column)
+    {
+        // Leave inactive headings unadorned to reduce visual noise.
+        return _sortColumn == column ? (_ascending ? "↑" : "↓") : string.Empty;
+    }
+
+    /// <summary>
+    /// Returns a CSS class matching an aircraft tracking status.
+    /// </summary>
+    private static string StatusClass(TrackingStatus status)
+    {
+        // Enum names map directly to the status colour tokens in the stylesheet.
+        return status.ToString().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Marks the currently selected table row.
+    /// </summary>
+    private string SelectedClass(TrackedAircraftDto aircraft)
+    {
+        // ICAO address provides stable selection as DTO instances are replaced by updates.
+        return _selected?.Address == aircraft.Address ? "selected" : string.Empty;
+    }
+
+    /// <summary>
+    /// Converts aircraft behaviour to a compact directional indicator.
+    /// </summary>
+    private static string BehaviourIndicator(AircraftBehaviour behaviour)
+    {
+        // Match the familiar indicators used by the console tracker.
+        return behaviour switch
+        {
+            AircraftBehaviour.Climbing => "↑",
+            AircraftBehaviour.Descending => "↓",
+            AircraftBehaviour.LevelFlight => "→",
+            _ => "·"
+        };
+    }
+
+    /// <summary>
+    /// Formats a nullable numeric value and optional unit.
+    /// </summary>
+    private static string FormatNumber<T>(T? value, string format, string unit = "") where T : struct, IFormattable
+    {
+        // Use an em dash for unavailable telemetry rather than suggesting a zero value.
+        return value.HasValue ? $"{value.Value.ToString(format, null)}{unit}" : "—";
+    }
+
+    /// <summary>
+    /// Returns a non-empty display string.
+    /// </summary>
+    private static string Display(string? value)
+    {
+        // Callsigns and squawks can legitimately be absent from partial messages.
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
+
+    /// <summary>
+    /// Formats the most recent service update as local time.
+    /// </summary>
+    private static string FormatUpdated(DateTimeOffset? updated)
+    {
+        // Keep the dashboard compact while preserving second-level precision.
+        return updated?.ToLocalTime().ToString("HH:mm:ss") ?? "No updates yet";
+    }
+
+    /// <summary>
+    /// Describes how long ago the latest live update arrived.
+    /// </summary>
+    private static string FormatUpdateAge(DateTimeOffset? updated)
+    {
+        // Exact age continually changes, so communicate the known timestamp's date instead.
+        return updated.HasValue ? updated.Value.ToLocalTime().ToString("dd MMM yyyy") : "waiting for tracker data";
+    }
+
+    private enum SortColumn
+    {
+        Arrival,
+        Address,
+        Callsign,
+        Altitude,
+        Distance,
+        LastSeen
+    }
+}

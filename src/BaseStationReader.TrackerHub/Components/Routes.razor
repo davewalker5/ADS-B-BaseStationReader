@@ -1,0 +1,16 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <section class="empty-state">
+                <h1>Page not found</h1>
+                <p>The requested Tracker Hub page does not exist.</p>
+                <a class="button" href="/">Return to live tracker</a>
+            </section>
+        </LayoutView>
+    </NotFound>
+</Router>

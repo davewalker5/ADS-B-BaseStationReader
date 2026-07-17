@@ -102,6 +102,7 @@
     <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
     <ProjectReference Include="..\BaseStationReader.Api\BaseStationReader.Api.csproj" />
     <ProjectReference Include="..\BaseStationReader.Terminal\BaseStationReader.Terminal.csproj" />
+    <ProjectReference Include="..\BaseStationReader.TrackerHub\BaseStationReader.TrackerHub.csproj" />
   </ItemGroup>
 
 </Project>

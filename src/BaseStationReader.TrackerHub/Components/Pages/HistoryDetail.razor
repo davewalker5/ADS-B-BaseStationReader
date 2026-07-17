@@ -1,0 +1,152 @@
+@page "/history/{Id:int}"
+@inject ITrackingSessionQueryService QueryService
+
+<PageTitle>Tracking record #@Id · ADS-B Tracker</PageTitle>
+
+<a class="back-link" href="history">← Back to tracking database</a>
+
+@if (_loading)
+{
+    <section class="empty-state"><h1>Loading record…</h1></section>
+}
+else if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Database query failed</strong><span>@_error</span></div>
+}
+else if (_record is null)
+{
+    <section class="empty-state"><h1>Record not found</h1><p>Tracking record #@Id does not exist.</p></section>
+}
+else
+{
+    <section class="page-heading record-heading">
+        <div><p class="eyebrow">Tracking record #@_record.Id</p><h1>@Display(_record.Callsign)</h1><p class="lede"><span class="mono">@_record.Address</span> · @Display(_record.Registration)</p></div>
+        <span class="status-pill large @_record.Status.ToString().ToLowerInvariant()">@_record.Status</span>
+    </section>
+
+    <section class="summary-grid detail-summary">
+        <article class="summary-card"><span>Session duration</span><strong class="text-value">@FormatDuration(_record.Duration)</strong><small>@_record.FirstSeen.ToLocalTime().ToString("dd MMM yyyy")</small></article>
+        <article class="summary-card"><span>Recorded positions</span><strong>@_record.PositionCount.ToString("N0")</strong><small>@_record.Messages.ToString("N0") messages received</small></article>
+        <article class="summary-card"><span>Altitude range</span><strong class="text-value">@FormatRange(_record.MinimumAltitude, _record.MaximumAltitude, "N0", " ft")</strong><small>minimum to maximum</small></article>
+        <article class="summary-card"><span>Distance range</span><strong class="text-value">@FormatRange(_record.MinimumDistance, _record.MaximumDistance, "N1", " nm")</strong><small>from receiver</small></article>
+    </section>
+
+    <div class="record-grid">
+        <section class="info-card"><h2>Session</h2><dl class="info-list">
+            <div><dt>First seen</dt><dd>@FormatDateTime(_record.FirstSeen)</dd></div><div><dt>Last seen</dt><dd>@FormatDateTime(_record.LastSeen)</dd></div>
+            <div><dt>Squawk</dt><dd>@Display(_record.Squawk)</dd></div><div><dt>Final altitude</dt><dd>@FormatNumber(_record.Altitude, "N0", " ft")</dd></div>
+            <div><dt>Final speed</dt><dd>@FormatNumber(_record.GroundSpeed, "N0", " kt")</dd></div><div><dt>Final track</dt><dd>@FormatNumber(_record.Track, "N0", "°")</dd></div>
+            <div><dt>Vertical rate</dt><dd>@FormatNumber(_record.VerticalRate, "N0", " fpm")</dd></div><div><dt>Final distance</dt><dd>@FormatNumber(_record.Distance, "N1", " nm")</dd></div>
+        </dl></section>
+        <section class="info-card"><h2>Aircraft</h2><dl class="info-list">
+            <div><dt>Registration</dt><dd>@Display(_record.Registration)</dd></div><div><dt>ICAO address</dt><dd class="mono">@_record.Address</dd></div>
+            <div><dt>Manufacturer</dt><dd>@Display(_record.Manufacturer)</dd></div><div><dt>Model</dt><dd>@Display(_record.ModelName)</dd></div>
+            <div><dt>Model ICAO</dt><dd>@Display(_record.ModelIcao)</dd></div><div><dt>Manufactured</dt><dd>@(_record.Manufactured?.ToString() ?? "—")</dd></div>
+        </dl></section>
+        <section class="info-card"><h2>Flight</h2><dl class="info-list">
+            <div><dt>IATA flight</dt><dd>@Display(_record.FlightIata)</dd></div><div><dt>ICAO flight</dt><dd>@Display(_record.FlightIcao)</dd></div>
+            <div><dt>Airline</dt><dd>@Display(_record.AirlineName)</dd></div><div><dt>Route</dt><dd>@FormatRoute(_record.Embarkation, _record.Destination)</dd></div>
+        </dl></section>
+        <section class="info-card"><h2>Position boundaries</h2><div class="position-pair"><div><h3>First recorded</h3>@PositionContent(_record.FirstPosition)</div><div><h3>Final recorded</h3>@PositionContent(_record.FinalPosition)</div></div></section>
+    </div>
+
+    <section class="future-actions"><h2>Analysis</h2><p>Inspect this session's altitude profile or interactive geographic flight path.</p><a class="analysis-link" href="history/@_record.Id/profile">Flight profile →</a><a class="analysis-link secondary" href="history/@_record.Id/path">Flight path →</a></section>
+}
+
+@code {
+#nullable enable
+    [Parameter] public int Id { get; set; }
+    private TrackingSessionDetailDto? _record;
+    private bool _loading = true;
+    private string? _error;
+
+    /// <summary>
+    /// Reloads the detail whenever the route record identifier changes.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // Fetch one projected detail DTO; no persistence entity reaches the component.
+            _record = await QueryService.GetAsync(Id);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Renders a compact read-only position summary.
+    /// </summary>
+    private static RenderFragment PositionContent(PositionSummaryDto? position) => builder =>
+    {
+        // Build simple text content because position history charting belongs to later releases.
+        builder.OpenElement(0, "p");
+        builder.AddContent(1, position is null ? "No position recorded" : $"{position.Timestamp.ToLocalTime():dd MMM HH:mm:ss} · {FormatNumber(position.Altitude, "N0", " ft")} · {FormatNumber(position.Distance, "N1", " nm")}");
+        builder.CloseElement();
+        builder.OpenElement(2, "p");
+        builder.AddContent(3, position is null ? "—" : $"{FormatNumber(position.Latitude, "N5")}, {FormatNumber(position.Longitude, "N5")}");
+        builder.CloseElement();
+    };
+
+    /// <summary>
+    /// Formats an elapsed tracking duration.
+    /// </summary>
+    private static string FormatDuration(TimeSpan value)
+    {
+        // Include days only when the duration crosses a calendar day.
+        return value.TotalDays >= 1 ? $"{(int)value.TotalDays}d {value:hh\\:mm\\:ss}" : value.ToString("hh\\:mm\\:ss");
+    }
+
+    /// <summary>
+    /// Formats a tracking timestamp in local time.
+    /// </summary>
+    private static string FormatDateTime(DateTime value)
+    {
+        // Match the result-list timestamp convention.
+        return value.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss");
+    }
+
+    /// <summary>
+    /// Formats a nullable numeric telemetry value.
+    /// </summary>
+    private static string FormatNumber<T>(T? value, string format, string unit = "") where T : struct, IFormattable
+    {
+        // Missing telemetry is distinct from a measured zero.
+        return value.HasValue ? $"{value.Value.ToString(format, null)}{unit}" : "—";
+    }
+
+    /// <summary>
+    /// Formats nullable minimum and maximum values as a range.
+    /// </summary>
+    private static string FormatRange<T>(T? minimum, T? maximum, string format, string unit) where T : struct, IFormattable
+    {
+        // Preserve a partial range if only one boundary was recorded.
+        return minimum.HasValue || maximum.HasValue ? $"{minimum?.ToString(format, null) ?? "—"}–{maximum?.ToString(format, null) ?? "—"}{unit}" : "—";
+    }
+
+    /// <summary>
+    /// Formats an embarkation and destination pair.
+    /// </summary>
+    private static string FormatRoute(string embarkation, string destination)
+    {
+        // Do not display a misleading route arrow when both endpoints are absent.
+        return string.IsNullOrWhiteSpace(embarkation) && string.IsNullOrWhiteSpace(destination) ? "—" : $"{Display(embarkation)} → {Display(destination)}";
+    }
+
+    /// <summary>
+    /// Returns a non-empty display string.
+    /// </summary>
+    private static string Display(string? value)
+    {
+        // Related aircraft and flight lookup information is optional.
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
+}
