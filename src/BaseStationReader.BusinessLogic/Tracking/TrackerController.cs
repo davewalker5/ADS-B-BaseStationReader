@@ -12,7 +12,6 @@ using System.Collections.Concurrent;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Messages;
-using BaseStationReader.Interfaces.Api;
 using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Events;
@@ -46,17 +45,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
-            IExternalApiFactory apiFactory,
-            ITrackerHttpClient httpClient,
             ITrackerTcpClient tcpClient,
-            TrackerApplicationSettings settings,
-            IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+            TrackerApplicationSettings settings)
         {
             _settings = settings;
 
             // Configure the database management classes
-            _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock, _settings.MaximumLookups);
+            _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock, 0);
 
             // Load the current exclusions
             var excludedAddresses = Task.Run(() => _factory.ExcludedAddressManager.ListAsync(x => true))
@@ -91,15 +86,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Configure the SQL writer, if enabled
             if (_settings.EnableSqlWriter)
             {
-                // If auto lookup is enabled, configure the external API wrapper
-                IExternalApiWrapper apiWrapper = null;
-                if (_settings.AutoLookup)
-                {
-                    var serviceType = apiFactory.GetServiceTypeFromString(_settings.FlightApi);
-                    apiWrapper = apiFactory.GetWrapperInstance(httpClient, _factory, serviceType, _settings);
-                }
-
-                _writer = new ContinuousWriter(_factory, apiWrapper, departureAirportCodes, arrivalAirportCodes, true);
+                _writer = new ContinuousWriter(_factory);
             }
 
             // Set up the aircraft tracked helpers
@@ -249,13 +236,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Push the aircraft to the writer queue
                 _factory.Logger.LogMessage(Severity.Verbose, $"Queueing aircraft {aircraft.Address} {aircraft.Behaviour} for writing");
                 _writer.Push(aircraft);
-
-                // If this is a new aircraft, push a lookup request to the writer queue
-                if (!existingAircraft && _settings.AutoLookup)
-                {
-                    _factory.Logger.LogMessage(Severity.Verbose, $"Queueing API lookup request for aircraft {aircraft.Address} {aircraft.Behaviour}");
-                    _writer.Push(new ApiLookupRequest() { AircraftAddress = aircraft.Address });
-                }
 
                 // Push the aircraft position to the writer queue
                 if (position != null)

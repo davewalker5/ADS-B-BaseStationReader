@@ -212,15 +212,6 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideAutoLookupTest()
-        {
-            var args = new string[] { "--auto-lookup", "true" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.IsTrue(settings.AutoLookup);
-        }
-
-        [TestMethod]
         public void OverrideTrackPositionTest()
         {
             var args = new string[] { "--track-position", "false" };
@@ -243,15 +234,6 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(5000, settings.MaximumTrackedAltitude);
             Assert.HasCount(1, settings.TrackedBehaviours);
             Assert.AreEqual(AircraftBehaviour.Descending, settings.TrackedBehaviours[0]);
-        }
-
-        [TestMethod]
-        public void OverrideFlightApiTest()
-        {
-            var args = new string[] { "--flight-api", "Missing" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.AreEqual("Missing", settings.FlightApi);
         }
 
         [TestMethod]

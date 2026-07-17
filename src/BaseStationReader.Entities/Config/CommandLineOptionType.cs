@@ -9,7 +9,6 @@
         AircraftLookup,
         ApplicationTimeout,
         Arrival,
-        AutoLookup,
         ClearDown,
         CreateSightings,
         Departure,
