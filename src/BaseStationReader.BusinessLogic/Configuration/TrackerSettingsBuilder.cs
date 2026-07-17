@@ -73,9 +73,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             values = parser.GetValues(CommandLineOptionType.ClearDown);
             if (values != null) settings.ClearDown = bool.Parse(values[0]);
 
-            values = parser.GetValues(CommandLineOptionType.AutoLookup);
-            if (values != null) settings.AutoLookup = bool.Parse(values[0]);
-
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
             if (values != null) settings.MaximumRows = int.Parse(values[0]);
 
@@ -105,9 +102,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
                     .Select(s => Enum.Parse<AircraftBehaviour>(s))
                     .ToList();
             }
-
-            values = parser.GetValues(CommandLineOptionType.FlightApi);
-            if (values != null) settings.FlightApi = values[0];
 
             // If a profile's been specified, read it and override the tracking parameters specified
             // in the settings file and/or via the command line

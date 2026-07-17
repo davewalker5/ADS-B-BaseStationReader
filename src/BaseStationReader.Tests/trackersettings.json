@@ -14,7 +14,6 @@
     "VerboseLogging": false,
     "EnableSqlWriter": true,
     "ClearDown": false,
-    "AutoLookup": false,
     "RefreshInterval": 1000,
     "MaximumRows": 0,
     "ReceiverLatitude": 51.470020,
@@ -23,7 +22,6 @@
     "MinimumTrackedAltitude": null,
     "MaximumTrackedAltitude": null,
     "TrackPosition": true,
-    "FlightApi": "AirLabs",
     "TrackedBehaviours": [
       "Climbing",
       "Descending",
@@ -108,29 +106,6 @@
         "Label": "Messages",
         "Format": "",
         "ShowBehaviour": false
-      }
-    ],
-    "ApiEndpoints": [
-      {
-        "EndpointType": "Airlines",
-        "Service": "AirLabs",
-        "Url": "https://airlabs.co/api/v9/airlines"
-      },
-      {
-        "EndpointType": "Aircraft",
-        "Service": "AirLabs",
-        "Url": "https://airlabs.co/api/v9/fleets"
-      },
-      {
-        "EndpointType": "ActiveFlights",
-        "Service": "AirLabs",
-        "Url": "https://airlabs.co/api/v9/flights"
-      }
-    ],
-    "ApiServices": [
-      {
-        "Service": "AirLabs",
-        "Key": ""
       }
     ]
   },

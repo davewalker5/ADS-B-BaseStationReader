@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace BaseStationReader.Entities.Config
 {
     [ExcludeFromCodeCoverage]
-    public class TrackerApplicationSettings : ExternalApiSettings
+    public class TrackerApplicationSettings
     {
         public Severity MinimumLogLevel { get; set; }
         public string Host { get; set; } = "";
@@ -21,8 +21,6 @@ namespace BaseStationReader.Entities.Config
         public bool VerboseLogging { get; set; }
         public bool EnableSqlWriter { get; set; }
         public bool ClearDown { get; set; }
-        public bool AutoLookup { get; set; }
-        public string FlightApi { get; set; } = nameof(ApiServiceType.None);
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }

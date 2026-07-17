@@ -13,16 +13,12 @@ using System.Diagnostics;
 using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Api.Wrapper;
-using BaseStationReader.Api;
 using BaseStationReader.BusinessLogic.Messages;
 
 namespace BaseStationReader.Terminal
 {
     public static class Program
     {
-        private static char[] _separators = [' ', '.'];
-
         private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerTableManager _tableManager = null;
         private static ITrackerLogger _logger = null;
@@ -63,15 +59,9 @@ namespace BaseStationReader.Terminal
                 context.Database.Migrate();
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
-                // Extract API lookup filtering properties from the command line arguments
-                var departureAirports = GetAirportCodeList(CommandLineOptionType.Departure);
-                var arrivalAirports = GetAirportCodeList(CommandLineOptionType.Arrival);
-
                 // Initialise the tracker wrapper
-                var apiFactory = new ExternalApiFactory();
-                var httpClient = TrackerHttpClient.Instance;
                 var tcpClient = new TrackerTcpClient();
-                _controller = new TrackerController(_logger, context, apiFactory, httpClient, tcpClient, _settings, departureAirports, arrivalAirports);
+                _controller = new TrackerController(_logger, context, tcpClient, _settings);
 
                 var cancelled = false;
                 do
@@ -96,7 +86,7 @@ namespace BaseStationReader.Terminal
                 // Process all pending requests in the queued writer queue
                 if (_settings.EnableSqlWriter)
                 {
-                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates and API requests ...");
+                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates ...");
                     await _controller.FlushQueueAsync();
                 }
             }
@@ -216,30 +206,5 @@ namespace BaseStationReader.Terminal
             }
         }
 
-        /// <summary>
-        /// Extract a list of airport ICAO/IATA codes from a comma-separated string
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="airportCodeList"></param>
-        /// <returns></returns>
-        public static IEnumerable<string> GetAirportCodeList(CommandLineOptionType option)
-        {
-            IEnumerable<string> airportCodes = null;
-
-            // Check the option is specified
-            if (_parser.IsPresent(option))
-            {
-                // Extract the comma-separated string from the command line options
-                var airportCodeList = _parser.GetValues(option)[0];
-                if (!string.IsNullOrEmpty(airportCodeList))
-                {
-                    // Log the list and split it list into an array of airport codes
-                    _logger.LogMessage(Severity.Info, $"{option} airport code filters: {airportCodeList}");
-                    airportCodes = airportCodeList.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
-                }
-            }
-
-            return airportCodes;
-        }
     }
 }

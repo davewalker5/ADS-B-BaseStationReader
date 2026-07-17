@@ -23,7 +23,6 @@ namespace BaseStationReader.Tests.Tracking
 
         private readonly TrackerApplicationSettings _settings = new()
         {
-            MaximumLookups = 5,
             TimeToLock = 900000,
             Host = "",
             Port = 0,
@@ -31,7 +30,6 @@ namespace BaseStationReader.Tests.Tracking
             ReceiverLatitude = 51.14810180664062,
             ReceiverLongitude = -0.19027799367905,
             EnableSqlWriter = true,
-            AutoLookup = false,
             TrackedBehaviours = [.. Enum.GetValues<AircraftBehaviour>()],
             TrackPosition = true,
             TimeToRecent = TrackerRecentMs,
@@ -60,9 +58,8 @@ namespace BaseStationReader.Tests.Tracking
             var tcpClient = new MockTrackerTcpClient(buffer);
 
             // Construct the tracker controller itself
-            var httpClient = new MockTrackerHttpClient();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _controller = new TrackerController(_logger, context, null, httpClient, tcpClient, _settings, [], []);
+            _controller = new TrackerController(_logger, context, tcpClient, _settings);
         }
 
         [TestMethod]

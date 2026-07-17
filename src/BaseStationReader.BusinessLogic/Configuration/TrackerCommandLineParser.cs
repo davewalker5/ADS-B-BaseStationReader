@@ -10,10 +10,8 @@ namespace BaseStationReader.BusinessLogic.Configuration
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
             Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
-            Add(CommandLineOptionType.AutoLookup, false, "--auto-lookup", "-al", "Automatically lookup aircraft and flights via the external APIs", 1, 1);
             Add(CommandLineOptionType.ClearDown, false, "--cleardown", "-cd", "Delete tracking records from the database before starting", 1, 1);
             Add(CommandLineOptionType.EnableSqlWriter, false, "--enable-sql-writer", "-w", "Log file path and name", 1, 1);
-            Add(CommandLineOptionType.FlightApi, false, "--flight-api", "-fapi", "Specify the name of an API to use for lookups", 1, 1);
             Add(CommandLineOptionType.Host, false, "--host", "-ho", "Host to connect to for data stream", 1, 1);
             Add(CommandLineOptionType.LogFile, false, "--log-file", "-l", "Log file path and name", 1, 1);
             Add(CommandLineOptionType.MaximumRows, false, "--max-rows", "-m", "Maximum number of rows displayed", 1, 1);
