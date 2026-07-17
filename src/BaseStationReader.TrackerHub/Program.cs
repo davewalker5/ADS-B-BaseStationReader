@@ -16,6 +16,8 @@ using BaseStationReader.BusinessLogic.TrackerHub.Logic;
 using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
 using System.Runtime.Loader;
+using BaseStationReader.TrackerHub.Components;
+using BaseStationReader.TrackerHub.Services;
 
 namespace BaseStationReader.TrackerHub
 {
@@ -29,6 +31,10 @@ namespace BaseStationReader.TrackerHub
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
 
+        /// <summary>
+        /// Starts the tracker, SignalR hub, and unified browser interface.
+        /// </summary>
+        /// <param name="args">Command-line arguments used to configure the tracker.</param>
         public static async Task Main(string[] args)
         {
             // Process the command line arguments. If help's been requested, show help and exit
@@ -92,6 +98,8 @@ namespace BaseStationReader.TrackerHub
                 // Register SignalR
                 builder.Services.AddSignalR().AddMessagePackProtocol();
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
+                builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+                builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
 
                 // Register the aircraft state and event bridge
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();
@@ -109,9 +117,9 @@ namespace BaseStationReader.TrackerHub
                 var app = builder.Build();
                 app.UseResponseCompression();
                 app.UseCors("development");
-                app.UseDefaultFiles();
 
-                // Serve static files from wwwroot, ensuring the ".map" files are recognised and served as JSON
+                // Serve static assets without redirecting the root URL to the legacy index.html demonstration.
+                // The old page remains directly accessible at /index.html for compatibility testing.
                 var provider = new FileExtensionContentTypeProvider();
                 provider.Mappings[".map"] = "application/json";
                 app.UseStaticFiles(new StaticFileOptions
@@ -120,9 +128,11 @@ namespace BaseStationReader.TrackerHub
                 });
                 
                 app.UseHttpsRedirection();
+                app.UseAntiforgery();
 
-                // Map the endpoint
+                // Map the existing external hub and the new interactive server UI.
                 app.MapHub<AircraftHub>("/hubs/aircraft");
+                app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
                 // Configure cancellation
                 using var source = new CancellationTokenSource();
