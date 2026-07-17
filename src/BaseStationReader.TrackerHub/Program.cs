@@ -68,26 +68,33 @@ namespace BaseStationReader.TrackerHub
                 Console.WriteLine($"Output will be logged to {_settings.LogFile}");
                 Console.WriteLine("Press ESC to stop the hub");
 
-                // Make sure the latest migrations have been applied - this ensures the DB is created and in the
-                // correct state if it's absent or stale on startup
-                var context = new BaseStationReaderDbContextFactory().CreateDbContext([]);
-                context.Database.Migrate();
-                _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
-
-                // Initialise the tracker wrapper
-                var tcpClient = new TrackerTcpClient();
-                _controller = new TrackerController(_logger, context, tcpClient, _settings);
-
-                // Locate the static files root
+                // Build the environment-aware ASP.NET Core configuration before creating any database context.
                 var contentRootPath = Path.Exists("wwwroot") ? Directory.GetCurrentDirectory() : AppContext.BaseDirectory;
-
-                // Create a web application builder
                 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
                 {
                     Args = args,
                     ContentRootPath = contentRootPath,
                     WebRootPath = Path.Combine(contentRootPath, "wwwroot")
                 });
+
+                // Resolve one connection string for migrations, live writes, and historical UI reads.
+                var connectionString = builder.Configuration.GetConnectionString("BaseStationReaderDB")
+                    ?? throw new InvalidOperationException("Connection string 'BaseStationReaderDB' is not configured.");
+                var contextOptions = new DbContextOptionsBuilder<BaseStationReaderDbContext>()
+                    .UseSqlite(connectionString)
+                    .Options;
+
+                // Make sure the latest migrations have been applied - this ensures the DB is created and in the
+                // correct state if it's absent or stale on startup
+                var context = new BaseStationReaderDbContext(contextOptions);
+                context.Database.Migrate();
+                context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+                context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+                _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
+
+                // Initialise the tracker wrapper
+                var tcpClient = new TrackerTcpClient();
+                _controller = new TrackerController(_logger, context, tcpClient, _settings);
 
                 // Bind Kestrel options from the applicatiokn settings file
                 builder.WebHost.ConfigureKestrel(options =>
@@ -100,6 +107,9 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
+                builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
+                    options.UseSqlite(connectionString));
+                builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
 
                 // Register the aircraft state and event bridge
                 builder.Services.AddSingleton<IEventBridge, EventBridge>();

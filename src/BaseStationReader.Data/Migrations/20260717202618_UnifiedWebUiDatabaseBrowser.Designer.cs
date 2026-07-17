@@ -3,6 +3,7 @@ using System;
 using BaseStationReader.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,10 +11,13 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    partial class BaseStationReaderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717202618_UnifiedWebUiDatabaseBrowser")]
+    partial class UnifiedWebUiDatabaseBrowser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
+            // Describe the database model produced after applying this migration.
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 

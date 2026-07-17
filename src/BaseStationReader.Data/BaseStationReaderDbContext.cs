@@ -87,6 +87,13 @@ namespace BaseStationReader.Data
                     .IsRequired()
                     .HasColumnName("LastSeen")
                     .HasColumnType("DATETIME");
+
+                // Support the bounded historical-browser filters without changing writer ownership.
+                entity.HasIndex(e => e.Address);
+                entity.HasIndex(e => e.Callsign);
+                entity.HasIndex(e => e.FirstSeen);
+                entity.HasIndex(e => e.LastSeen);
+                entity.HasIndex(e => e.Status);
             });
 
             modelBuilder.Entity<AircraftPosition>(entity =>
@@ -105,6 +112,9 @@ namespace BaseStationReader.Data
                     .WithMany()
                     .HasForeignKey(e => e.AircraftId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Speed ordering and boundary lookups within one tracking session.
+                entity.HasIndex(e => new { e.AircraftId, e.Timestamp });
             });
 
             modelBuilder.Entity<Airline>(entity =>
