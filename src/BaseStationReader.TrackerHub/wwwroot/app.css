@@ -32,6 +32,7 @@ main { width: min(1500px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 72
 .page-heading { display: flex; justify-content: space-between; gap: 30px; align-items: flex-end; }
 .eyebrow { margin: 0 0 8px; color: var(--cyan); text-transform: uppercase; letter-spacing: .15em; font-size: 11px; font-weight: 700; }
 h1 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1; letter-spacing: -.035em; }
+h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .lede, .panel-heading p { color: var(--muted); }
 .lede { margin: 12px 0 0; }
 .connection { display: flex; gap: 11px; align-items: center; min-width: 180px; padding: 12px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
