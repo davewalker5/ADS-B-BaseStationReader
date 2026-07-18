@@ -32,6 +32,7 @@ main { width: min(1500px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 72
 .page-heading { display: flex; justify-content: space-between; gap: 30px; align-items: flex-end; }
 .eyebrow { margin: 0 0 8px; color: var(--cyan); text-transform: uppercase; letter-spacing: .15em; font-size: 11px; font-weight: 700; }
 h1 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1; letter-spacing: -.035em; }
+h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .lede, .panel-heading p { color: var(--muted); }
 .lede { margin: 12px 0 0; }
 .connection { display: flex; gap: 11px; align-items: center; min-width: 180px; padding: 12px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
@@ -103,9 +104,10 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .primary-button:disabled { opacity: .55; cursor: wait; }
 .text-button { padding: 0; color: var(--cyan); background: transparent; border: 0; cursor: pointer; font-size: 12px; }
 .history-panel { margin-top: 20px; }
+.history-panel .table-wrap { max-height: none; }
 .page-size { display: flex; align-items: center; gap: 8px; }
 .page-size span { margin: 0; }
-.page-size select { width: 68px; min-height: 32px; padding: 5px 7px; }
+.page-size select { width: 74px; min-height: 32px; padding: 5px 7px; }
 .table-subtitle { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 400; }
 .row-link { color: var(--cyan); text-decoration: none; font-weight: 700; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 15px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
