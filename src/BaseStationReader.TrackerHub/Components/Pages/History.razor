@@ -45,7 +45,7 @@
 <section class="tracker-panel history-panel" aria-busy="@_loading">
     <div class="panel-heading">
         <div><h2>Tracking records</h2><p>@ResultDescription</p></div>
-        <label class="page-size"><span>Rows</span><select value="@_filter.PageSize" @onchange="ChangePageSizeAsync"><option>10</option><option>25</option><option>50</option><option>100</option></select></label>
+        <label class="page-size"><span>Rows per page</span><select @bind="_filter.PageSize" @bind:after="ChangePageSizeAsync"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
     </div>
     <div class="table-wrap">
         <table>
@@ -90,7 +90,7 @@
 @code {
 #nullable enable
     private TrackingSessionFilter _filter = new();
-    private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 25 };
+    private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 10 };
     private bool _loading;
     private string? _error;
     private string ResultDescription => _result.TotalCount == 1 ? "1 matching record" : $"{_result.TotalCount:N0} matching records";
@@ -148,15 +148,9 @@
     /// <summary>
     /// Applies a new bounded result-page size.
     /// </summary>
-    /// <param name="args">The browser change event.</param>
-    private Task ChangePageSizeAsync(ChangeEventArgs args)
+    private Task ChangePageSizeAsync()
     {
-        // Values originate from fixed options, but TryParse keeps malformed input harmless.
-        if (int.TryParse(args.Value?.ToString(), out var pageSize))
-        {
-            _filter.PageSize = pageSize;
-        }
-
+        // Two-way binding has already applied the selected typed value before this callback runs.
         _filter.Page = 1;
         return LoadAsync();
     }
