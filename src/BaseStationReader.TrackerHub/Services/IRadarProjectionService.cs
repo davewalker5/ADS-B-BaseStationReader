@@ -17,4 +17,13 @@ public interface IRadarProjectionService
     /// <param name="maximumRange">Displayed range in nautical miles.</param>
     /// <returns>A radar point, or null when required position data is unavailable.</returns>
     RadarPointDto? Project(TrackedAircraftDto aircraft, double maximumRange);
+
+    /// <summary>
+    /// Projects receiver-relative polar coordinates onto a normalised radar plane.
+    /// </summary>
+    /// <param name="distance">Receiver distance in nautical miles.</param>
+    /// <param name="bearing">Bearing clockwise from north in degrees.</param>
+    /// <param name="maximumRange">Displayed range in nautical miles.</param>
+    /// <returns>Normalised SVG coordinates, or null when the range is invalid.</returns>
+    (double X, double Y)? ProjectCoordinates(double distance, double bearing, double maximumRange);
 }

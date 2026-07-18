@@ -3,10 +3,10 @@
 @inject ILiveAircraftService LiveAircraft
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
-<PageTitle>Live radar · ADS-B Tracker</PageTitle>
+<PageTitle>Live Radar · ADS-B Tracker</PageTitle>
 
 <section class="page-heading">
-    <div><p class="eyebrow">Receiver-relative surveillance</p><h1>Live radar</h1><p class="lede">Current aircraft range and bearing from the active receiver.</p></div>
+    <div><p class="eyebrow">Receiver-relative surveillance</p><h1>Live Radar</h1><p class="lede">Current aircraft range and bearing from the active receiver.</p></div>
     <label class="radar-range"><span>Displayed range</span><select @bind="_maximumRange"><option value="10">10 nm</option><option value="25">25 nm</option><option value="50">50 nm</option><option value="100">100 nm</option><option value="200">200 nm</option></select></label>
 </section>
 

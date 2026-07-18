@@ -20,7 +20,10 @@
 
             @foreach (var trail in VisibleTrails)
             {
-                <polyline class="radar-trail @StatusClass(trail.Point.Status)" points="@TrailCoordinates(trail.History)" />
+                @foreach (var segment in trail.Segments)
+                {
+                    <polyline class="radar-trail @StatusClass(trail.Point.Status)" points="@TrailCoordinates(segment)" />
+                }
             }
 
             <g class="radar-receiver" aria-label="Receiver"><circle r="12" /><path d="M -20 0 H 20 M 0 -20 V 20" /></g>
@@ -79,7 +82,8 @@
     private static double[] RangeRings => [0.25, 0.5, 0.75, 1];
     private IReadOnlyList<RadarPointDto> ProjectedPoints => Aircraft.Select(a => Projection.Project(a, MaximumRange)).OfType<RadarPointDto>().ToArray();
     private IEnumerable<RadarPointDto> VisiblePoints => ProjectedPoints.Where(p => p.Distance <= MaximumRange);
-    private IEnumerable<(RadarPointDto Point, IReadOnlyList<RadarPointDto> History)> VisibleTrails => VisiblePoints.Select(p => (p, (IReadOnlyList<RadarPointDto>)(_trails.GetValueOrDefault(p.Address) ?? [])));
+    private IEnumerable<(RadarPointDto Point, IReadOnlyList<IReadOnlyList<RadarPointDto>> Segments)> VisibleTrails => VisiblePoints.Select(point =>
+        (point, TrailSegments(_trails.GetValueOrDefault(point.Address) ?? [])));
     private RadarPointDto? SelectedPoint => ProjectedPoints.FirstOrDefault(p => p.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
     private string ConnectionLabel => ConnectionState == ConnectionState.Reconnecting ? "Radar reconnecting…" : ConnectionState == ConnectionState.Connecting ? "Radar connecting…" : "Radar disconnected";
 
@@ -107,7 +111,8 @@
             }
 
             // Avoid duplicating a position when unrelated component parameters cause a rerender.
-            if (trail.Count == 0 || trail[^1].Timestamp != point.Timestamp || trail[^1].X != point.X || trail[^1].Y != point.Y)
+            if (trail.Count == 0 || trail[^1].Timestamp != point.Timestamp ||
+                trail[^1].Distance != point.Distance || trail[^1].Bearing != point.Bearing)
             {
                 trail.Add(point);
             }
@@ -156,10 +161,48 @@
     /// </summary>
     /// <param name="history">Bounded target history.</param>
     /// <returns>SVG coordinate pairs.</returns>
-    private static string TrailCoordinates(IReadOnlyList<RadarPointDto> history)
+    private string TrailCoordinates(IReadOnlyList<RadarPointDto> history)
     {
-        // Normalised coordinates become pixels within the fixed 500-unit radar radius.
-        return string.Join(" ", history.Select(point => $"{Invariant(point.X * 500)},{Invariant(point.Y * 500)}"));
+        // Reproject every stored polar point using the current range so scale changes cannot mix coordinate systems.
+        return string.Join(" ", history.Select(point => Projection.ProjectCoordinates(point.Distance, point.Bearing, MaximumRange))
+            .OfType<(double X, double Y)>()
+            .Select(coordinates => $"{Invariant(coordinates.X * 500)},{Invariant(coordinates.Y * 500)}"));
+    }
+
+    /// <summary>
+    /// Splits a trail into contiguous portions contained by the current radar range.
+    /// </summary>
+    /// <param name="history">Bounded range-independent target history.</param>
+    /// <returns>Visible trail segments containing at least two points.</returns>
+    private IReadOnlyList<IReadOnlyList<RadarPointDto>> TrailSegments(IReadOnlyList<RadarPointDto> history)
+    {
+        var segments = new List<IReadOnlyList<RadarPointDto>>();
+        var current = new List<RadarPointDto>();
+
+        foreach (var point in history)
+        {
+            if (point.Distance <= MaximumRange)
+            {
+                // Consecutive in-range points belong to the same visible trail segment.
+                current.Add(point);
+                continue;
+            }
+
+            if (current.Count >= 2)
+            {
+                segments.Add(current);
+            }
+
+            // An out-of-range point breaks the line rather than drawing through an off-screen interval.
+            current = [];
+        }
+
+        if (current.Count >= 2)
+        {
+            segments.Add(current);
+        }
+
+        return segments;
     }
 
     /// <summary>

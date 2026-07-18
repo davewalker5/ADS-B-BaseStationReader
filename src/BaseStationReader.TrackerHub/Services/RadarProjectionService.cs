@@ -39,23 +39,42 @@ public sealed class RadarProjectionService : IRadarProjectionService
             _receiverLongitude.Value,
             (double)aircraft.Latitude.Value,
             (double)aircraft.Longitude.Value);
-        var angle = bearing * Math.PI / 180d;
-        var radius = aircraft.Distance.Value / maximumRange;
+        var coordinates = ProjectCoordinates(aircraft.Distance.Value, bearing, maximumRange);
+        if (coordinates is null)
+        {
+            // The earlier validation normally prevents this fallback, but keep projection independently safe.
+            return null;
+        }
 
-        // SVG Y increases downwards, so north is represented by a negative Y value.
         return new RadarPointDto
         {
             Address = aircraft.Address,
             Label = string.IsNullOrWhiteSpace(aircraft.Callsign) ? aircraft.Address : aircraft.Callsign.Trim(),
             Distance = aircraft.Distance.Value,
             Bearing = bearing,
-            X = radius * Math.Sin(angle),
-            Y = -radius * Math.Cos(angle),
+            X = coordinates.Value.X,
+            Y = coordinates.Value.Y,
             Altitude = aircraft.Altitude,
             Track = aircraft.Track,
             Status = aircraft.Status,
             Timestamp = aircraft.LastSeen
         };
+    }
+
+    /// <inheritdoc />
+    public (double X, double Y)? ProjectCoordinates(double distance, double bearing, double maximumRange)
+    {
+        if (maximumRange <= 0 || !double.IsFinite(distance) || !double.IsFinite(bearing))
+        {
+            // Invalid scale or telemetry cannot produce meaningful screen coordinates.
+            return null;
+        }
+
+        var angle = bearing * Math.PI / 180d;
+        var radius = distance / maximumRange;
+
+        // SVG Y increases downwards, so north is represented by a negative Y value.
+        return (radius * Math.Sin(angle), -radius * Math.Cos(angle));
     }
 
     /// <summary>
