@@ -105,6 +105,9 @@ namespace BaseStationReader.Tests.Tracking
             {
                 Assert.HasCount(1, _notifications.Where(x => x.NotificationType == notificationType));
             }
+
+            // A removed aircraft must not survive in the authoritative snapshot consumed by the Hub UI.
+            Assert.IsEmpty(_controller.State);
         }
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)

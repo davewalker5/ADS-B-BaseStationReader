@@ -1,0 +1,15 @@
+services:
+  adsbtracker:
+    container_name: adsbtracker
+    image: davewalker5/adsbtracker:latest
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8104:5000"
+    environment:
+      ApplicationSettings__Host: host.docker.internal
+      ApplicationSettings__Port: 30003
+      Mapbox__AccessToken: put-your-mapbox-api-key-here
+      WebUi__SignalRHubUrl: http://127.0.0.1:5000/hubs/aircraft
+    volumes:
+      - /path/to/adsb/tracking/database/folder:/var/opt/adsbtracker/

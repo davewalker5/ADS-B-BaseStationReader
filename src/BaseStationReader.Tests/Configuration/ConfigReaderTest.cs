@@ -11,5 +11,6 @@ namespace BaseStationReader.Tests.Configuration
             var settings = new TrackerConfigReader().Read("trackersettings.json");
             AssertCorrectSettings(settings);
         }
+
     }
 }
