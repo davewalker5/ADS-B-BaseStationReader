@@ -45,6 +45,26 @@ public class RadarProjectionServiceTest
     }
 
     /// <summary>
+    /// Verifies stored polar trail values are consistently reprojected when radar range changes.
+    /// </summary>
+    [TestMethod]
+    public void ProjectCoordinatesRescalesExistingTrailPoint()
+    {
+        var service = new RadarProjectionService(0, 0);
+
+        // The same eastbound point should halve its screen radius when maximum range doubles.
+        var shortRange = service.ProjectCoordinates(25, 90, 50);
+        var longRange = service.ProjectCoordinates(25, 90, 100);
+
+        Assert.IsNotNull(shortRange);
+        Assert.IsNotNull(longRange);
+        Assert.AreEqual(0.5d, shortRange.Value.X, 0.001);
+        Assert.AreEqual(0.25d, longRange.Value.X, 0.001);
+        Assert.AreEqual(0d, shortRange.Value.Y, 0.001);
+        Assert.AreEqual(0d, longRange.Value.Y, 0.001);
+    }
+
+    /// <summary>
     /// Creates concise live telemetry for projection tests.
     /// </summary>
     /// <param name="address">ICAO-like identity.</param>

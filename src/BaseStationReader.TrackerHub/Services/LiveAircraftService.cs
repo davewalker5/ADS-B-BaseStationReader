@@ -12,6 +12,7 @@ namespace BaseStationReader.TrackerHub.Services;
 public sealed class LiveAircraftService : ILiveAircraftService
 {
     private readonly NavigationManager _navigation;
+    private readonly string? _hubUrl;
     private readonly Dictionary<string, TrackedAircraftDto> _aircraft = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<string> _aircraftOrder = [];
     private readonly object _stateLock = new();
@@ -42,9 +43,11 @@ public sealed class LiveAircraftService : ILiveAircraftService
     /// Initialises the service with the URI of the current Tracker Hub host.
     /// </summary>
     /// <param name="navigation">The current Blazor navigation service.</param>
-    public LiveAircraftService(NavigationManager navigation)
+    /// <param name="configuration">Tracker Hub configuration.</param>
+    public LiveAircraftService(NavigationManager navigation, IConfiguration configuration)
     {
         _navigation = navigation;
+        _hubUrl = configuration["WebUi:SignalRHubUrl"];
     }
 
     /// <inheritdoc />
@@ -127,7 +130,9 @@ public sealed class LiveAircraftService : ILiveAircraftService
     /// <returns>An unstarted, configured hub connection.</returns>
     private HubConnection BuildConnection()
     {
-        var hubUri = _navigation.ToAbsoluteUri("/hubs/aircraft");
+        var hubUri = string.IsNullOrWhiteSpace(_hubUrl)
+            ? _navigation.ToAbsoluteUri("/hubs/aircraft")
+            : new Uri(_hubUrl, UriKind.Absolute);
         var connection = new HubConnectionBuilder()
             .WithUrl(hubUri)
             .WithAutomaticReconnect()

@@ -176,18 +176,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="e"></param>
         private void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
-            // If this is a removal event, remove the aircraft from the tracking collection
             var isRemoval = e.NotificationType == AircraftNotificationType.Removed;
-            if (isRemoval)
-            {
-                _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
-            }
 
             // Send the notification if the aircraft qualifies or this is a removal event
             if (isRemoval || ShouldNotify(e.Aircraft))
             {
                 e.Aircraft.LastNotified = DateTime.Now;
                 HandleAircraftEvent(e.Aircraft, e.Position);
+
+                // HandleAircraftEvent persists the final state, but removed aircraft must not remain
+                // in the authoritative live snapshot exposed by the Tracker Hub.
+                if (isRemoval)
+                {
+                    _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
+                }
+
                 _sender.SendAircraftNotification(e.Aircraft, e.Position, this, e.NotificationType, AircraftEvent);
             }
         }

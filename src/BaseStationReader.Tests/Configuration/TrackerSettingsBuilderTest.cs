@@ -48,6 +48,33 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
+        [DoNotParallelize]
+        public void EnvironmentVariablesOverrideAppSettingsTest()
+        {
+            const string hostVariable = "ApplicationSettings__Host";
+            const string portVariable = "ApplicationSettings__Port";
+            var originalHost = Environment.GetEnvironmentVariable(hostVariable);
+            var originalPort = Environment.GetEnvironmentVariable(portVariable);
+
+            try
+            {
+                Environment.SetEnvironmentVariable(hostVariable, "host.docker.internal");
+                Environment.SetEnvironmentVariable(portVariable, "30004");
+                _parser.Parse(Array.Empty<string>());
+
+                var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+
+                Assert.AreEqual("host.docker.internal", settings.Host);
+                Assert.AreEqual(30004, settings.Port);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(hostVariable, originalHost);
+                Environment.SetEnvironmentVariable(portVariable, originalPort);
+            }
+        }
+
+        [TestMethod]
         public void OverrideSocketReadTimeoutTest()
         {
             var args = new string[] { "--read-timeout", "33456" };

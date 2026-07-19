@@ -27,6 +27,14 @@ namespace BaseStationReader.BusinessLogic.Configuration
             var settings = new TrackerConfigReader().Read(configJsonPath);
             settings.TrackingProfile = Path.GetFileName(configJsonPath);
 
+            // Environment variables provide container-friendly overrides while command-line values
+            // below retain the highest precedence.
+            var environmentHost = Environment.GetEnvironmentVariable("ApplicationSettings__Host");
+            if (!string.IsNullOrWhiteSpace(environmentHost)) settings.Host = environmentHost;
+
+            var environmentPort = Environment.GetEnvironmentVariable("ApplicationSettings__Port");
+            if (int.TryParse(environmentPort, out var port)) settings.Port = port;
+
             // Apply the command line values over the defaults
             values = parser.GetValues(CommandLineOptionType.Host);
             if (values != null) settings.Host = values[0];
