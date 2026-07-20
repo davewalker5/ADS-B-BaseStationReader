@@ -18,6 +18,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.FlightApi, false, "--flight-api", "-fapi", "Specify the name of an API to use for flight lookups", 1, 1);
             Add(CommandLineOptionType.ImportAircraft, false, "--import-aircraft", "-imac", "Import a set of aircraft definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportAirlines, false, "--import-airlines", "-ia", "Import a set of airline definitions from a CSV file", 1, 1);
+            Add(CommandLineOptionType.ImportAirports, false, "--import-airports", "-iap", "Import a set of airport definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportFlightIATACodeMappings, false, "--import-mappings", "-im", "Import a set of callsign/flight IATA code mappings from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportManufacturers, false, "--import-manufacturers", "-ima", "Import a set of manufacturer definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportModels, false, "--import-models", "-imo", "Import a set of model definitions from a CSV file", 1, 1);

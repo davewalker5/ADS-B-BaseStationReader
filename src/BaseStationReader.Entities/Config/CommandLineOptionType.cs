@@ -19,6 +19,7 @@
         Host,
         ImportAircraft,
         ImportAirlines,
+        ImportAirports,
         ImportFlightIATACodeMappings,
         ImportManufacturers,
         ImportModels,
