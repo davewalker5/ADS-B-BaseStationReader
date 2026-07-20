@@ -1,0 +1,2 @@
+callsign,flight_iata,airline_iata,airline_icao,airline_name,airport_iata,airport_icao,airport_name,embarkation,destination,direction,filename
+SAS47J,SK2943,SK,SAS,SAS,ARN,ESSA,Stockholm Arlanda Airport,ARN,FAO,1,Manual
