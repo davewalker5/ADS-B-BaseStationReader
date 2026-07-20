@@ -141,6 +141,7 @@ public sealed class LiveAircraftService : ILiveAircraftService
         // Register handlers before StartAsync so no incremental message can be missed.
         connection.On<TrackedAircraftDto>("aircraftUpdate", ApplyUpdate);
         connection.On<TrackedAircraftDto>("aircraftRemoved", ApplyRemoval);
+        connection.On<TrackingOptions>("trackingReset", ApplyTrackingReset);
         connection.Reconnecting += OnReconnectingAsync;
         connection.Reconnected += OnReconnectedAsync;
         connection.Closed += OnClosedAsync;
@@ -217,6 +218,19 @@ public sealed class LiveAircraftService : ILiveAircraftService
                 _aircraftOrder.RemoveAll(address => address.Equals(aircraft.Address, StringComparison.OrdinalIgnoreCase));
             }
         }
+        LastUpdated = DateTimeOffset.Now;
+        NotifyStateChanged();
+    }
+
+    /// <summary>Clears live state that belonged to the previous receiver profile.</summary>
+    private void ApplyTrackingReset(TrackingOptions options)
+    {
+        lock (_stateLock)
+        {
+            _aircraft.Clear();
+            _aircraftOrder.Clear();
+        }
+        TrackingOptions = options;
         LastUpdated = DateTimeOffset.Now;
         NotifyStateChanged();
     }

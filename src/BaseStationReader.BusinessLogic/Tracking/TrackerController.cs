@@ -24,6 +24,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly IControllerNotificationSender _sender;
         private readonly IDatabaseManagementFactory _factory;
         private readonly TrackerApplicationSettings _settings;
+        private readonly BaseStationReaderDbContext _context;
+        private readonly bool _ownsContext;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
 
@@ -46,9 +48,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
             ITrackerTcpClient tcpClient,
-            TrackerApplicationSettings settings)
+            TrackerApplicationSettings settings,
+            bool ownsContext = false)
         {
             _settings = settings;
+            _context = context;
+            _ownsContext = ownsContext;
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock, 0);
@@ -149,25 +154,38 @@ namespace BaseStationReader.BusinessLogic.Tracking
             finally
             {
                 // Stop the continuous writer
-                await _writer.StopAsync();
-                await _writer.DisposeAsync();
+                if (_writer != null)
+                {
+                    await _writer.StopAsync();
+                    await _writer.DisposeAsync();
+                }
 
                 // Detach the aircraft tracking event handlers
                 _tracker.AircraftEvent -= OnAircraftEvent;
+
+                if (_ownsContext)
+                {
+                    await _context.DisposeAsync();
+                }
             }
         }
 
         /// <summary>
         /// Return the number of pending requests in the writer queue
         /// </summary>
-        public int QueueSize => _writer.QueueSize;
+        public int QueueSize => _writer?.QueueSize ?? 0;
 
         /// <summary>
         /// Process all pending entries in the queued writer queue
         /// </summary>
         /// <returns></returns>
         public async Task FlushQueueAsync()
-            => await _writer.FlushQueueAsync();
+        {
+            if (_writer != null)
+            {
+                await _writer.FlushQueueAsync();
+            }
+        }
 
         /// <summary>
         /// Handle aircraft events

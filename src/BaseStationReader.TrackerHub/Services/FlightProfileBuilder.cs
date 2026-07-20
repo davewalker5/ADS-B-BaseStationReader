@@ -7,8 +7,7 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public sealed class FlightProfileBuilder : IFlightProfileBuilder
 {
-    private readonly double? _receiverLatitude;
-    private readonly double? _receiverLongitude;
+    private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
 
     /// <summary>
     /// Initialises profile preparation with the configured receiver position.
@@ -18,9 +17,11 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
     public FlightProfileBuilder(double? receiverLatitude, double? receiverLongitude)
     {
         // Bearing enrichment is optional because older configurations may omit receiver coordinates.
-        _receiverLatitude = receiverLatitude;
-        _receiverLongitude = receiverLongitude;
+        _receiverPosition = () => (receiverLatitude, receiverLongitude);
     }
+
+    public FlightProfileBuilder(IReceiverPositionProvider receiverPositionProvider)
+        => _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
 
     /// <inheritdoc />
     public FlightProfileDto Build(
@@ -78,14 +79,15 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
     private double? CalculateBearing(decimal? latitude, decimal? longitude)
     {
         // All four coordinates are required for a meaningful great-circle bearing.
-        if (!_receiverLatitude.HasValue || !_receiverLongitude.HasValue || !latitude.HasValue || !longitude.HasValue)
+        var receiverPosition = _receiverPosition();
+        if (!receiverPosition.Latitude.HasValue || !receiverPosition.Longitude.HasValue || !latitude.HasValue || !longitude.HasValue)
         {
             return null;
         }
 
-        var receiverLatitude = DegreesToRadians(_receiverLatitude.Value);
+        var receiverLatitude = DegreesToRadians(receiverPosition.Latitude.Value);
         var positionLatitude = DegreesToRadians((double)latitude.Value);
-        var longitudeDifference = DegreesToRadians((double)longitude.Value - _receiverLongitude.Value);
+        var longitudeDifference = DegreesToRadians((double)longitude.Value - receiverPosition.Longitude.Value);
         var y = Math.Sin(longitudeDifference) * Math.Cos(positionLatitude);
         var x = Math.Cos(receiverLatitude) * Math.Sin(positionLatitude) -
                 Math.Sin(receiverLatitude) * Math.Cos(positionLatitude) * Math.Cos(longitudeDifference);
