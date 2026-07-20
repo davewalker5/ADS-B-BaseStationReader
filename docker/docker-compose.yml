@@ -11,6 +11,8 @@ services:
       ApplicationSettings__Port: 30003
       ApplicationSettings__ReceiverLatitude: 51.470020
       ApplicationSettings__ReceiverLongitude: -0.454295
+      ApplicationSettings__ApiServices__2__Key: put-your-checkwx-api-key-here
+      ApplicationSettings__ApiServices__3__Key: put-your-skylink-api-key-here
       Mapbox__AccessToken: put-your-mapbox-api-key-here
       WebUi__SignalRHubUrl: http://127.0.0.1:5000/hubs/aircraft
       WebUI__TrackingProfilesPath: /var/opt/adsbtrackingprofiles/

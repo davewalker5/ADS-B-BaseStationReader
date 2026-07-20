@@ -136,6 +136,8 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
                 builder.Services.AddSingleton(defaultSettings);
+                builder.Services.AddSingleton(
+                    builder.Configuration.GetSection("ApplicationSettings").Get<ExternalApiSettings>() ?? new());
                 builder.Services.AddSingleton(runtime);
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
@@ -146,6 +148,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(runtime));
                 builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
+                builder.Services.AddScoped<IAirportWeatherLookupService, AirportWeatherLookupService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(30));
 
