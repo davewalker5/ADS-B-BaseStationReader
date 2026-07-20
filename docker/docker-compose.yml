@@ -9,6 +9,8 @@ services:
     environment:
       ApplicationSettings__Host: host.docker.internal
       ApplicationSettings__Port: 30003
+      ApplicationSettings__ReceiverLatitude: 51.470020
+      ApplicationSettings__ReceiverLongitude: -0.454295
       Mapbox__AccessToken: put-your-mapbox-api-key-here
       WebUi__SignalRHubUrl: http://127.0.0.1:5000/hubs/aircraft
     volumes:

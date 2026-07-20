@@ -20,22 +20,31 @@
     </div>
 </section>
 
-<section class="profile-selector" aria-label="Tracking profile selection">
-    <label for="tracking-profile">Tracking profile</label>
-    <select id="tracking-profile" @bind="_selectedProfile" disabled="@(_applyingProfile || _profiles.Count == 0)">
-        @foreach (var profile in _profiles)
+<section class="tracking-controls" aria-label="Tracking configuration">
+    <div class="profile-selector">
+        <label for="tracking-profile">Tracking profile</label>
+        <select id="tracking-profile" @bind="_selectedProfile" disabled="@(_applyingProfile || _profiles.Count == 0)">
+            @foreach (var profile in _profiles)
+            {
+                <option value="@profile.FileName">@profile.DisplayName</option>
+            }
+        </select>
+        <button class="primary-button" @onclick="ApplyProfileAsync"
+                disabled="@(_applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
+            @(_applyingProfile ? "Applying…" : "Apply profile")
+        </button>
+        @if (_profileMessage is not null)
         {
-            <option value="@profile.FileName">@profile.DisplayName</option>
+            <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
         }
-    </select>
-    <button class="primary-button" @onclick="ApplyProfileAsync"
-            disabled="@(_applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
-        @(_applyingProfile ? "Applying…" : "Apply profile")
-    </button>
-    @if (_profileMessage is not null)
-    {
-        <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
-    }
+    </div>
+    <div class="receiver-position" aria-label="Current receiver position">
+        <span>Receiver position</span>
+        <dl>
+            <div><dt>Latitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLatitude)</dd></div>
+            <div><dt>Longitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLongitude)</dd></div>
+        </dl>
+    </div>
 </section>
 
 @if (_startError is not null)
@@ -198,6 +207,9 @@
     private string EmptyMessage => string.IsNullOrWhiteSpace(_filter)
         ? "Waiting for aircraft messages…"
         : "No aircraft match this filter.";
+
+    private static string FormatCoordinate(double? coordinate)
+        => coordinate?.ToString("F6") ?? "Not configured";
 
     /// <summary>
     /// Subscribes to service changes and starts the live transport.
