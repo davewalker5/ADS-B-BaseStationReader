@@ -11,6 +11,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IDataCleaner> _cleaner;
         private readonly Lazy<IAircraftManager> _aircraftManager = null;
         private readonly Lazy<IAirlineManager> _airlineManager = null;
+        private readonly Lazy<IAirportManager> _airportManager = null;
         private readonly Lazy<IFlightManager> _flightManager = null;
         private readonly Lazy<IManufacturerManager> _manufacturerManager = null;
         private readonly Lazy<IModelManager> _modelManager = null;
@@ -27,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
         public IAircraftManager AircraftManager { get { return _aircraftManager.Value; } }
         public IAirlineManager AirlineManager { get { return _airlineManager.Value; } }
+        public IAirportManager AirportManager { get { return _airportManager.Value; } }
         public IFlightManager FlightManager { get { return _flightManager.Value; } }
         public IManufacturerManager ManufacturerManager { get { return _manufacturerManager.Value; } }
         public IModelManager ModelManager { get { return _modelManager.Value; } }
@@ -51,6 +53,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _cleaner = new Lazy<IDataCleaner>(() => new DataCleaner(context));
             _aircraftManager = new Lazy<IAircraftManager>(() => new AircraftManager(context));
             _airlineManager = new Lazy<IAirlineManager>(() => new AirlineManager(context));
+            _airportManager = new Lazy<IAirportManager>(() => new AirportManager(context));
             _flightManager = new Lazy<IFlightManager>(() => new FlightManager(context));
             _manufacturerManager = new Lazy<IManufacturerManager>(() => new ManufacturerManager(context));
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
