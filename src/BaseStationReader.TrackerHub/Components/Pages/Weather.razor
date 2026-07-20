@@ -1,0 +1,193 @@
+@page "/weather"
+@inject IAirportWeatherLookupService WeatherService
+
+<PageTitle>Airport Weather · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Aviation reports</p>
+        <h1>Airport Weather</h1>
+        <p class="lede">Retrieve and decode current observations or terminal forecasts by airport ICAO code.</p>
+    </div>
+</section>
+
+<form class="weather-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+    <div class="weather-fields">
+        <label>
+            <span>Report type</span>
+            <select value="@_endpointType" @onchange="ChangeReportType">
+                <option value="@ApiEndpointType.METAR">Current weather (METAR)</option>
+                <option value="@ApiEndpointType.TAF">Weather forecast (TAF)</option>
+            </select>
+        </label>
+        <label>
+            <span>API service</span>
+            <select @bind="_serviceType" disabled="@(_services.Count == 0)">
+                @if (_services.Count == 0)
+                {
+                    <option value="@ApiServiceType.None">No configured services</option>
+                }
+                else
+                {
+                    @foreach (var service in _services)
+                    {
+                        <option value="@service">@service</option>
+                    }
+                }
+            </select>
+        </label>
+        <label>
+            <span>Airport ICAO code</span>
+            <input @bind="_icao" @bind:event="oninput" maxlength="4" autocomplete="off"
+                   autocapitalize="characters" spellcheck="false" placeholder="e.g. EGLL" class="mono" />
+        </label>
+        <button class="primary-button" type="submit" disabled="@(!CanLookup)">
+            @(_loading ? "Looking up…" : "Look up weather")
+        </button>
+    </div>
+    <p class="weather-service-note">Only services with a configured @_endpointType endpoint are available.</p>
+</form>
+
+@if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Weather lookup failed</strong><span>@_error</span></div>
+}
+
+@if (_searched && !_loading && _error is null && _reports.Count == 0)
+{
+    <section class="weather-empty">
+        <strong>No weather reports returned</strong>
+        <p>@_serviceType did not return @ReportDescription for @_icao.</p>
+    </section>
+}
+
+@if (_reports.Count > 0)
+{
+    <section class="weather-results" aria-live="polite">
+        <div class="weather-results-heading">
+            <div>
+                <p class="eyebrow">@_icao · @_serviceType</p>
+                <h2>@ReportHeading</h2>
+            </div>
+            <span>@(_reports.Count == 1 ? "1 report" : $"{_reports.Count} reports")</span>
+        </div>
+
+        @foreach (var report in _reports)
+        {
+            <article class="weather-report">
+                <div class="weather-raw">
+                    <span>Raw @_endpointType</span>
+                    <code>@report.Raw</code>
+                </div>
+                <div class="weather-decoded">
+                    <span>Decoded report</span>
+                    <dl>
+                        @foreach (var line in report.Decoded)
+                        {
+                            var separator = line.IndexOf(':');
+                            if (separator > 0)
+                            {
+                                <div><dt>@line[..separator]</dt><dd>@line[(separator + 1)..].Trim()</dd></div>
+                            }
+                            else
+                            {
+                                <div class="weather-decoded-wide"><dd>@line</dd></div>
+                            }
+                        }
+                    </dl>
+                </div>
+            </article>
+        }
+    </section>
+}
+
+@code {
+#nullable enable
+    private ApiEndpointType _endpointType = ApiEndpointType.METAR;
+    private ApiServiceType _serviceType = ApiServiceType.None;
+    private IReadOnlyList<ApiServiceType> _services = [];
+    private IReadOnlyList<AirportWeatherReport> _reports = [];
+    private string _icao = string.Empty;
+    private string? _error;
+    private bool _loading;
+    private bool _searched;
+    private bool CanLookup => !_loading && _services.Count > 0 && IsValidIcao(_icao);
+    private string ReportHeading => _endpointType == ApiEndpointType.METAR ? "Current weather" : "Weather forecast";
+    private string ReportDescription => _endpointType == ApiEndpointType.METAR ? "a current observation" : "a forecast";
+
+    /// <summary>
+    /// Loads the configured METAR services when the page is initialised.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // Start with the current-weather service choices shown in the initial report-type selector.
+        RefreshServices();
+    }
+
+    /// <summary>
+    /// Applies a changed report type and refreshes its compatible service choices.
+    /// </summary>
+    /// <param name="args">The report-type selection event.</param>
+    private void ChangeReportType(ChangeEventArgs args)
+    {
+        // The select contains only supported enum values, but retain the current value if parsing fails.
+        if (Enum.TryParse<ApiEndpointType>(args.Value?.ToString(), out var endpointType))
+        {
+            _endpointType = endpointType;
+            _reports = [];
+            _error = null;
+            _searched = false;
+            RefreshServices();
+        }
+    }
+
+    /// <summary>
+    /// Filters configured API services for the selected weather report type.
+    /// </summary>
+    private void RefreshServices()
+    {
+        // Select the first compatible service so the form always has a usable default when one exists.
+        _services = WeatherService.GetServices(_endpointType);
+        _serviceType = _services.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Performs the selected airport weather lookup and updates the displayed results.
+    /// </summary>
+    private async Task LookupAsync()
+    {
+        if (!CanLookup) return;
+
+        _loading = true;
+        _searched = true;
+        _error = null;
+        _reports = [];
+        _icao = _icao.Trim().ToUpperInvariant();
+
+        try
+        {
+            // The service validates the selection and returns raw reports already paired with decoded lines.
+            _reports = await WeatherService.LookupAsync(_endpointType, _serviceType, _icao);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether a value is a four-letter airport ICAO code.
+    /// </summary>
+    /// <param name="icao">The user-entered airport code.</param>
+    /// <returns>True when the code contains exactly four ASCII letters.</returns>
+    private static bool IsValidIcao(string icao)
+    {
+        // ICAO airport identifiers contain four letters and are case-insensitive at entry time.
+        var value = icao?.Trim() ?? string.Empty;
+        return value.Length == 4 && value.All(character => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z');
+    }
+}
