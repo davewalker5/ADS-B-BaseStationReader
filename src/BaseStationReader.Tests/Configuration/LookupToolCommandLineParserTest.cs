@@ -12,7 +12,7 @@ namespace BaseStationReader.Tests.Configuration
         /// <param name="option">The command-line option to parse.</param>
         [TestMethod]
         [DataRow("--import-airports")]
-        [DataRow("-ip")]
+        [DataRow("-iap")]
         public void ImportAirportsOptionTest(string option)
         {
             var parser = new LookupToolCommandLineParser(null);
