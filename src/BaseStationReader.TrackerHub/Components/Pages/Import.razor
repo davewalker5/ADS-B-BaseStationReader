@@ -7,7 +7,7 @@
     <div>
         <p class="eyebrow">Lookup data</p>
         <h1>Import Reference Data</h1>
-        <p class="lede">Load aircraft reference data and flight mappings supplied in CSV format into the tracker database.</p>
+        <p class="lede">Load aircraft, airline and airport reference data and flight mappings supplied in CSV format into the tracker database.</p>
     </div>
 </section>
 
@@ -69,6 +69,7 @@
     [
         new(DataImportType.Aircraft, "Aircraft", "Aircraft definitions, registrations and model codes"),
         new(DataImportType.Airlines, "Airlines", "Airline names with IATA and ICAO codes"),
+        new(DataImportType.Airports, "Airports", "Airport names, locations, distances and IATA/ICAO codes"),
         new(DataImportType.FlightMappings, "Flight mappings", "Callsign and flight IATA code mappings"),
         new(DataImportType.Manufacturers, "Manufacturers", "Aircraft manufacturer definitions"),
         new(DataImportType.Models, "Models", "Aircraft model definitions and manufacturer links")

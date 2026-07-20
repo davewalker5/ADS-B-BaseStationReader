@@ -40,6 +40,17 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
+        /// Handle the airport import command.
+        /// </summary>
+        /// <returns></returns>
+        public async Task HandleAirportImportAsync()
+        {
+            var filePath = Parser.GetValues(CommandLineOptionType.ImportAirports)[0];
+            var airportImporter = new AirportImporter(Factory);
+            await airportImporter.ImportAsync(filePath);
+        }
+
+        /// <summary>
         /// Handle the callsign/flight IATA code mapping import command
         /// </summary>
         /// <returns></returns>

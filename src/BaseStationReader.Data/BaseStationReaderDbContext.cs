@@ -12,6 +12,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<AircraftPosition> Positions { get; set; }
         public virtual DbSet<Flight> Flights { get; set; }
         public virtual DbSet<Airline> Airlines { get; set; }
+        public virtual DbSet<Airport> Airports { get; set; }
         public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
@@ -125,6 +126,19 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).HasColumnName("IATA");
+            });
+
+            modelBuilder.Entity<Airport>(entity =>
+            {
+                entity.ToTable("AIRPORT");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+                entity.Property(e => e.ICAO).IsRequired().HasColumnName("ICAO");
+                entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+                entity.Property(e => e.Latitude).HasColumnType("REAL").HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).HasColumnType("REAL").HasColumnName("Longitude");
+                entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
             });
 
             modelBuilder.Entity<Flight>(entity =>
