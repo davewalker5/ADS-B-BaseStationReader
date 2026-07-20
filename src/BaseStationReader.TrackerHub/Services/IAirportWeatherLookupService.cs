@@ -9,6 +9,14 @@ namespace BaseStationReader.TrackerHub.Services;
 public interface IAirportWeatherLookupService
 {
     /// <summary>
+    /// Returns airports available for selection on the weather page.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>Airports ordered by name and code.</returns>
+    Task<IReadOnlyList<AirportWeatherOption>> GetAirportsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns configured API services that provide the requested weather endpoint.
     /// </summary>
     /// <param name="endpointType">The METAR or TAF endpoint type.</param>

@@ -1,4 +1,5 @@
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.TrackerHub.Services;
@@ -10,6 +11,34 @@ namespace BaseStationReader.Tests.TrackerHub;
 [TestClass]
 public class AirportWeatherLookupServiceTest
 {
+    /// <summary>
+    /// Verifies that airports are projected and ordered for the weather selector.
+    /// </summary>
+    [TestMethod]
+    public async Task ListAirportsTestAsync()
+    {
+        var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+        await context.Airports.AddRangeAsync(new Airport[]
+        {
+            new() { Name = "Zurich Airport", IATA = "ZRH", ICAO = "LSZH", Latitude = 47.4581, Longitude = 8.5555, Distance = 480.1 },
+            new() { Name = "Amsterdam Airport Schiphol", IATA = "AMS", ICAO = "EHAM", Latitude = 52.3086, Longitude = 4.76389, Distance = 226.7 }
+        });
+        await context.SaveChangesAsync();
+
+        var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
+        contextFactory
+            .Setup(factory => factory.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(context);
+        var service = new AirportWeatherLookupService(
+            new ExternalApiSettings(), contextFactory.Object, new Mock<ITrackerLogger>().Object);
+
+        var airports = await service.GetAirportsAsync();
+
+        Assert.HasCount(2, airports);
+        Assert.AreEqual("Amsterdam Airport Schiphol (AMS/EHAM)", airports[0].DisplayName);
+        Assert.AreEqual("Zurich Airport (ZRH/LSZH)", airports[1].DisplayName);
+    }
+
     /// <summary>
     /// Verifies that configured services are filtered by the selected weather endpoint.
     /// </summary>

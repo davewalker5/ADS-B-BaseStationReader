@@ -38,6 +38,22 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<AirportWeatherOption>> GetAirportsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+        // Project only the values required by the selector and avoid tracking read-only reference data.
+        return await context.Airports
+            .AsNoTracking()
+            .OrderBy(airport => airport.Name)
+            .ThenBy(airport => airport.IATA)
+            .ThenBy(airport => airport.ICAO)
+            .Select(airport => new AirportWeatherOption(airport.Name, airport.IATA, airport.ICAO))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public IReadOnlyList<ApiServiceType> GetServices(ApiEndpointType endpointType)
     {
         // Only METAR and TAF are meaningful choices for this feature.
