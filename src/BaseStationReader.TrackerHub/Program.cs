@@ -149,6 +149,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<IAirportWeatherLookupService, AirportWeatherLookupService>();
+                builder.Services.AddScoped<IExclusionManagementService, ExclusionManagementService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(30));

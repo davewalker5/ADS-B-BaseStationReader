@@ -1,0 +1,218 @@
+@page "/exclusions"
+@inject IExclusionManagementService ExclusionService
+
+<PageTitle>Mapping Exclusions · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Mapping controls</p>
+        <h1>Mapping Exclusions</h1>
+        <p class="lede">Manage aircraft addresses and callsigns that should be ignored by the mapping process.</p>
+    </div>
+</section>
+
+<section class="exclusion-panel">
+    <div class="exclusion-toolbar">
+        <div class="exclusion-tabs" role="tablist" aria-label="Exclusion list">
+            <button type="button" role="tab" aria-selected="@(_type == ExclusionType.AircraftAddress)"
+                    class="@(_type == ExclusionType.AircraftAddress ? "active" : null)"
+                    @onclick="() => ChangeTypeAsync(ExclusionType.AircraftAddress)">Aircraft addresses</button>
+            <button type="button" role="tab" aria-selected="@(_type == ExclusionType.Callsign)"
+                    class="@(_type == ExclusionType.Callsign ? "active" : null)"
+                    @onclick="() => ChangeTypeAsync(ExclusionType.Callsign)">Callsigns</button>
+        </div>
+        <span>@(_entries.Count == 1 ? "1 exclusion" : $"{_entries.Count} exclusions")</span>
+    </div>
+
+    <form class="exclusion-add" @onsubmit="AddAsync" @onsubmit:preventDefault>
+        <label>
+            <span>New @SingularLabel.ToLowerInvariant()</span>
+            <input @bind="_newValue" @bind:event="oninput" maxlength="@MaximumInputLength"
+                   autocomplete="off" autocapitalize="characters" spellcheck="false" class="mono"
+                   placeholder="@Placeholder" disabled="@_busy" />
+        </label>
+        <button type="submit" class="primary-button" disabled="@(_busy || string.IsNullOrWhiteSpace(_newValue))">Add exclusion</button>
+    </form>
+
+    @if (_error is not null)
+    {
+        <div class="alert" role="alert"><strong>Action failed</strong><span>@_error</span></div>
+    }
+
+    <div class="exclusion-table-wrap">
+        <table>
+            <thead><tr><th>@SingularLabel</th><th class="exclusion-actions-heading">Actions</th></tr></thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="2" class="table-empty">Loading exclusions…</td></tr>
+                }
+                else if (_entries.Count == 0)
+                {
+                    <tr><td colspan="2" class="table-empty">No @PluralLabel.ToLowerInvariant() are currently excluded.</td></tr>
+                }
+                else
+                {
+                    @foreach (var entry in _entries)
+                    {
+                        <tr @key="entry.Id">
+                            <td class="mono">
+                                @if (_editingId == entry.Id)
+                                {
+                                    <input class="exclusion-edit-input mono" @bind="_editValue" @bind:event="oninput"
+                                           maxlength="@MaximumInputLength" disabled="@_busy" aria-label="Edit @SingularLabel.ToLowerInvariant()" />
+                                }
+                                else
+                                {
+                                    @entry.Value
+                                }
+                            </td>
+                            <td class="exclusion-actions">
+                                @if (_editingId == entry.Id)
+                                {
+                                    <button class="text-button" type="button" @onclick="() => SaveAsync(entry.Id)" disabled="@_busy">Save</button>
+                                    <button class="text-button muted" type="button" @onclick="CancelEdit" disabled="@_busy">Cancel</button>
+                                }
+                                else if (_deletingId == entry.Id)
+                                {
+                                    <span>Delete?</span>
+                                    <button class="text-button danger" type="button" @onclick="() => DeleteAsync(entry.Id)" disabled="@_busy">Confirm</button>
+                                    <button class="text-button muted" type="button" @onclick="CancelDelete" disabled="@_busy">Cancel</button>
+                                }
+                                else
+                                {
+                                    <button class="text-button" type="button" @onclick="() => BeginEdit(entry)" disabled="@_busy">Edit</button>
+                                    <button class="text-button danger" type="button" @onclick="() => BeginDelete(entry.Id)" disabled="@_busy">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <p class="exclusion-note">Changes are saved immediately. Restart active tracking before relying on the updated exclusions during mapping.</p>
+</section>
+
+@code {
+#nullable enable
+    private ExclusionType _type = ExclusionType.AircraftAddress;
+    private IReadOnlyList<ExclusionEntry> _entries = [];
+    private string _newValue = string.Empty;
+    private string _editValue = string.Empty;
+    private int? _editingId;
+    private int? _deletingId;
+    private string? _error;
+    private bool _loading = true;
+    private bool _busy;
+    private string SingularLabel => _type == ExclusionType.AircraftAddress ? "Aircraft address" : "Callsign";
+    private string PluralLabel => _type == ExclusionType.AircraftAddress ? "Aircraft addresses" : "Callsigns";
+    private string Placeholder => _type == ExclusionType.AircraftAddress ? "e.g. 406B90" : "e.g. BAW123";
+    private int MaximumInputLength => _type == ExclusionType.AircraftAddress ? 6 : 32;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task ChangeTypeAsync(ExclusionType type)
+    {
+        if (_type == type) return;
+        _type = type;
+        _newValue = string.Empty;
+        ResetRowActions();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _entries = await ExclusionService.ListAsync(_type);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+            _entries = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AddAsync()
+    {
+        await RunMutationAsync(async () =>
+        {
+            await ExclusionService.AddAsync(_type, _newValue);
+            _newValue = string.Empty;
+        });
+    }
+
+    private void BeginEdit(ExclusionEntry entry)
+    {
+        _editingId = entry.Id;
+        _editValue = entry.Value;
+        _deletingId = null;
+        _error = null;
+    }
+
+    private async Task SaveAsync(int id)
+    {
+        await RunMutationAsync(async () =>
+        {
+            await ExclusionService.UpdateAsync(_type, id, _editValue);
+            CancelEdit();
+        });
+    }
+
+    private void BeginDelete(int id)
+    {
+        _deletingId = id;
+        _editingId = null;
+        _error = null;
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await RunMutationAsync(async () =>
+        {
+            await ExclusionService.DeleteAsync(_type, id);
+            CancelDelete();
+        });
+    }
+
+    private async Task RunMutationAsync(Func<Task> action)
+    {
+        if (_busy) return;
+        _busy = true;
+        _error = null;
+        try
+        {
+            await action();
+            _entries = await ExclusionService.ListAsync(_type);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editingId = null;
+        _editValue = string.Empty;
+    }
+
+    private void CancelDelete() => _deletingId = null;
+
+    private void ResetRowActions()
+    {
+        CancelEdit();
+        CancelDelete();
+    }
+}
