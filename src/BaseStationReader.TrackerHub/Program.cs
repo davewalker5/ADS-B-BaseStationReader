@@ -73,6 +73,32 @@ namespace BaseStationReader.TrackerHub
                     ContentRootPath = contentRootPath,
                     WebRootPath = Path.Combine(contentRootPath, "wwwroot")
                 });
+                var defaultSettings = TrackingProfileService.Clone(_settings);
+
+                // Restore the last UI-selected profile unless an explicit command-line profile was supplied.
+                if (_parser.GetValues(CommandLineOptionType.Profile) is null)
+                {
+                    var profilesPath = TrackingProfileService.ResolveProfilesPath(
+                        builder.Configuration["WebUi:TrackingProfilesPath"], contentRootPath);
+                    var activeProfilePath = Path.Combine(profilesPath, TrackingProfileService.ActiveProfileFileName);
+                    try
+                    {
+                        if (File.Exists(activeProfilePath))
+                        {
+                            var fileName = (await File.ReadAllTextAsync(activeProfilePath)).Trim();
+                            if (fileName != TrackingProfileService.DefaultProfileValue && Path.GetFileName(fileName) == fileName)
+                            {
+                                var profilePath = Path.Combine(profilesPath, fileName);
+                                if (File.Exists(profilePath))
+                                {
+                                    TrackingProfileService.ApplyProfile(_settings, fileName, reader.Read(profilePath));
+                                }
+                            }
+                        }
+                    }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
 
                 // Resolve one connection string for migrations, live writes, and historical UI reads.
                 var connectionString = builder.Configuration.GetConnectionString("BaseStationReaderDB")
@@ -83,15 +109,20 @@ namespace BaseStationReader.TrackerHub
 
                 // Make sure the latest migrations have been applied - this ensures the DB is created and in the
                 // correct state if it's absent or stale on startup
-                var context = new BaseStationReaderDbContext(contextOptions);
+                using var context = new BaseStationReaderDbContext(contextOptions);
                 context.Database.Migrate();
                 context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
                 context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Initialise the tracker wrapper
-                var tcpClient = new TrackerTcpClient();
-                _controller = new TrackerController(_logger, context, tcpClient, _settings);
+                var runtime = new TrackingRuntime(_settings, settings => new TrackerController(
+                    _logger,
+                    new BaseStationReaderDbContext(contextOptions),
+                    new TrackerTcpClient(),
+                    settings,
+                    ownsContext: true));
+                _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file
                 builder.WebHost.ConfigureKestrel(options =>
@@ -104,18 +135,16 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
+                builder.Services.AddSingleton(defaultSettings);
+                builder.Services.AddSingleton(runtime);
+                builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
-                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(
-                    _settings.ReceiverLatitude,
-                    _settings.ReceiverLongitude));
-                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(
-                    _settings.ReceiverLatitude,
-                    _settings.ReceiverLongitude));
-                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(
-                    _settings.ReceiverLatitude,
-                    _settings.ReceiverLongitude));
+                builder.Services.AddSingleton<IReceiverPositionProvider>(runtime);
+                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(runtime));
+                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(runtime));
+                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(30));

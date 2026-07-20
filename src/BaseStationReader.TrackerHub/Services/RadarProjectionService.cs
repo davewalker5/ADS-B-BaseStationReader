@@ -10,8 +10,7 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public sealed class RadarProjectionService : IRadarProjectionService
 {
-    private readonly double? _receiverLatitude;
-    private readonly double? _receiverLongitude;
+    private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
 
     /// <summary>
     /// Initialises radar projection around the configured receiver.
@@ -20,23 +19,26 @@ public sealed class RadarProjectionService : IRadarProjectionService
     /// <param name="receiverLongitude">Receiver longitude in degrees.</param>
     public RadarProjectionService(double? receiverLatitude, double? receiverLongitude)
     {
-        _receiverLatitude = receiverLatitude;
-        _receiverLongitude = receiverLongitude;
+        _receiverPosition = () => (receiverLatitude, receiverLongitude);
     }
+
+    public RadarProjectionService(IReceiverPositionProvider receiverPositionProvider)
+        => _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
 
     /// <inheritdoc />
     public RadarPointDto? Project(TrackedAircraftDto aircraft, double maximumRange)
     {
+        var receiverPosition = _receiverPosition();
         if (maximumRange <= 0 || aircraft.Distance is null || aircraft.Latitude is null || aircraft.Longitude is null ||
-            _receiverLatitude is null || _receiverLongitude is null)
+            receiverPosition.Latitude is null || receiverPosition.Longitude is null)
         {
             // Distance and both endpoints are required to place a target reliably.
             return null;
         }
 
         var bearing = CalculateBearing(
-            _receiverLatitude.Value,
-            _receiverLongitude.Value,
+            receiverPosition.Latitude.Value,
+            receiverPosition.Longitude.Value,
             (double)aircraft.Latitude.Value,
             (double)aircraft.Longitude.Value);
         var coordinates = ProjectCoordinates(aircraft.Distance.Value, bearing, maximumRange);

@@ -51,6 +51,12 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .summary-card strong { display: block; margin: 10px 0 5px; color: var(--cyan); font-size: 35px; line-height: 1; }
 .summary-card strong.text-value { color: var(--text); font-size: 21px; margin-top: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .summary-card small { font-size: 12px; }
+.profile-selector { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.profile-selector label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.profile-selector select { min-width: 230px; padding: 9px 11px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; }
+.profile-message { font-size: 12px; }
+.profile-message.success { color: var(--cyan); }
+.profile-message.error { color: #ff8d8d; }
 .tracker-panel { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 22px 60px rgba(0,0,0,.18); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px; border-bottom: 1px solid var(--line); }
 .panel-heading h2 { margin: 0; font-size: 17px; }

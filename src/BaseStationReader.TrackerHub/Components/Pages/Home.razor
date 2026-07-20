@@ -1,6 +1,7 @@
 @page "/"
 @implements IAsyncDisposable
 @inject ILiveAircraftService LiveAircraft
+@inject ITrackingProfileService TrackingProfiles
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
 
@@ -17,6 +18,24 @@
             <strong>@ConnectionLabel</strong>
         </span>
     </div>
+</section>
+
+<section class="profile-selector" aria-label="Tracking profile selection">
+    <label for="tracking-profile">Tracking profile</label>
+    <select id="tracking-profile" @bind="_selectedProfile" disabled="@(_applyingProfile || _profiles.Count == 0)">
+        @foreach (var profile in _profiles)
+        {
+            <option value="@profile.FileName">@profile.DisplayName</option>
+        }
+    </select>
+    <button class="primary-button" @onclick="ApplyProfileAsync"
+            disabled="@(_applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
+        @(_applyingProfile ? "Applying…" : "Apply profile")
+    </button>
+    @if (_profileMessage is not null)
+    {
+        <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
+    }
 </section>
 
 @if (_startError is not null)
@@ -135,6 +154,11 @@
     private string? _startError;
     private SortColumn _sortColumn = SortColumn.Arrival;
     private bool _ascending;
+    private IReadOnlyList<TrackingProfileOption> _profiles = [];
+    private string _selectedProfile = TrackingProfileService.DefaultProfileValue;
+    private string? _profileMessage;
+    private bool _profileError;
+    private bool _applyingProfile;
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {
@@ -182,7 +206,19 @@
     {
         // Subscribe before starting so the connecting state is rendered immediately.
         LiveAircraft.StateChanged += OnLiveStateChanged;
+        _profiles = TrackingProfiles.List();
         await StartAsync();
+        var activeProfile = LiveAircraft.TrackingOptions?.TrackingProfile;
+        var matchingProfile = _profiles.FirstOrDefault(profile =>
+            profile.FileName.Equals(activeProfile, StringComparison.OrdinalIgnoreCase));
+        if (matchingProfile is not null)
+        {
+            _selectedProfile = matchingProfile.FileName;
+        }
+        else if (activeProfile?.Equals("appsettings.json", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            _selectedProfile = TrackingProfileService.DefaultProfileValue;
+        }
     }
 
     /// <summary>
@@ -219,6 +255,28 @@
     {
         // Re-run the same guarded startup path used during initialisation.
         return StartAsync();
+    }
+
+    private async Task ApplyProfileAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedProfile)) return;
+        _applyingProfile = true;
+        _profileMessage = null;
+        try
+        {
+            await TrackingProfiles.ApplyAsync(_selectedProfile);
+            _profileError = false;
+            _profileMessage = "Tracking restarted with the selected profile.";
+        }
+        catch (Exception exception)
+        {
+            _profileError = true;
+            _profileMessage = exception.Message;
+        }
+        finally
+        {
+            _applyingProfile = false;
+        }
     }
 
     /// <summary>

@@ -11,8 +11,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     private const double FeetToMetres = 0.3048;
     private const double BoundingBoxPaddingRatio = 0.06;
     private static readonly TimeSpan MaximumSegmentGap = TimeSpan.FromSeconds(90);
-    private readonly double? _receiverLatitude;
-    private readonly double? _receiverLongitude;
+    private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
 
     /// <summary>
     /// Initialises flight-path preparation with optional receiver coordinates.
@@ -22,9 +21,11 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     public FlightPathBuilder(double? receiverLatitude, double? receiverLongitude)
     {
         // Receiver coordinates enrich hover data but are not required for path projection.
-        _receiverLatitude = receiverLatitude;
-        _receiverLongitude = receiverLongitude;
+        _receiverPosition = () => (receiverLatitude, receiverLongitude);
     }
+
+    public FlightPathBuilder(IReceiverPositionProvider receiverPositionProvider)
+        => _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
 
     /// <inheritdoc />
     public FlightPathDto Build(
@@ -120,8 +121,8 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             South = latitudes.Min() - latitudePadding,
             East = longitudes.Max() + longitudePadding,
             West = longitudes.Min() - longitudePadding,
-            ReceiverLatitude = _receiverLatitude,
-            ReceiverLongitude = _receiverLongitude,
+            ReceiverLatitude = _receiverPosition().Latitude,
+            ReceiverLongitude = _receiverPosition().Longitude,
             MinimumAltitudeMetres = minimumAltitude,
             MaximumAltitudeMetres = maximumAltitude,
             SegmentCount = segment
@@ -176,14 +177,15 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     private double CalculateBearing(double latitude, double longitude)
     {
         // Use zero only when receiver coordinates are absent, matching a non-enriched DTO value.
-        if (!_receiverLatitude.HasValue || !_receiverLongitude.HasValue)
+        var receiverPosition = _receiverPosition();
+        if (!receiverPosition.Latitude.HasValue || !receiverPosition.Longitude.HasValue)
         {
             return 0;
         }
 
-        var receiverLatitude = DegreesToRadians(_receiverLatitude.Value);
+        var receiverLatitude = DegreesToRadians(receiverPosition.Latitude.Value);
         var positionLatitude = DegreesToRadians(latitude);
-        var longitudeDifference = DegreesToRadians(longitude - _receiverLongitude.Value);
+        var longitudeDifference = DegreesToRadians(longitude - receiverPosition.Longitude.Value);
         var y = Math.Sin(longitudeDifference) * Math.Cos(positionLatitude);
         var x = Math.Cos(receiverLatitude) * Math.Sin(positionLatitude) -
                 Math.Sin(receiverLatitude) * Math.Cos(positionLatitude) * Math.Cos(longitudeDifference);

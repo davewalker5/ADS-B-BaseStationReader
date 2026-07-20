@@ -10,7 +10,7 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
 {
     public class EventBridge : BackgroundService, IEventBridge
     {
-        private readonly Channel<AircraftNotificationEventArgs> _channel = Channel.CreateBounded<AircraftNotificationEventArgs>(
+        private readonly Channel<object> _channel = Channel.CreateBounded<object>(
             new BoundedChannelOptions(4096)
             {
                 SingleReader = true,
@@ -36,6 +36,9 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
         public ValueTask PublishAsync(AircraftNotificationEventArgs e, CancellationToken token = default)
             => _channel.Writer.WriteAsync(e, token);
 
+        public ValueTask PublishResetAsync(TrackingOptions options, CancellationToken token = default)
+            => _channel.Writer.WriteAsync(options, token);
+
         /// <summary>
         /// Process pending events from the channel to the clients
         /// </summary>
@@ -46,8 +49,15 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
             var reader = _channel.Reader;
             while (await reader.WaitToReadAsync(token))
             {
-                while (reader.TryRead(out var e))
+                while (reader.TryRead(out var message))
                 {
+                    if (message is TrackingOptions options)
+                    {
+                        await _hub.Clients.All.SendAsync("trackingReset", options, token);
+                        continue;
+                    }
+
+                    var e = (AircraftNotificationEventArgs)message;
                     if (e.Aircraft != null)
                     {
                         var aircraft = TrackedAircraftDto.FromTrackedAircraft(e.Aircraft);
