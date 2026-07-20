@@ -262,6 +262,26 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .weather-decoded dt { color: var(--muted); font-size: 11px; }
 .weather-decoded dd { margin: 0; color: var(--text); font-size: 12px; line-height: 1.45; }
 .weather-decoded dl > .weather-decoded-wide { grid-column: 1 / -1; grid-template-columns: 1fr; color: var(--muted); }
+.import-panel { margin-top: 34px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.import-type-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.import-type-card { display: flex; gap: 11px; min-height: 112px; padding: 16px; background: #081524; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+.import-type-card:hover, .import-type-card.selected { background: rgba(53,212,208,.06); border-color: rgba(53,212,208,.6); }
+.import-type-card input { margin: 3px 0 0; accent-color: var(--cyan); }
+.import-type-card span, .import-type-card strong, .import-type-card small { display: block; }
+.import-type-card strong { font-size: 13px; }
+.import-type-card small { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.import-upload { display: grid; grid-template-columns: minmax(260px, 1fr) 1fr auto; gap: 18px; align-items: end; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.import-upload label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.import-upload input[type=file] { width: 100%; min-height: 40px; padding: 7px; color: var(--muted); background: #081524; border: 1px solid var(--line); border-radius: 7px; }
+.import-upload input[type=file]::file-selector-button { margin-right: 10px; padding: 5px 9px; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; }
+.import-file-summary { min-height: 40px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.import-file-summary strong, .import-file-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-file-summary strong { font-size: 12px; }
+.import-file-summary span { color: var(--muted); font-size: 11px; }
+.import-upload .primary-button { min-height: 40px; white-space: nowrap; }
+.import-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; }
+.import-success { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 13px 16px; color: #bff4dc; background: rgba(79,218,161,.08); border: 1px solid rgba(79,218,161,.3); border-radius: 9px; }
+.import-success span { color: #9acbb8; font-size: 12px; }
 
 @media (max-width: 850px) {
     main { width: min(100% - 24px, 1500px); padding-top: 25px; }
@@ -284,6 +304,9 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .radar-detail-grid { grid-template-columns: repeat(2, 1fr); }
     .weather-fields { grid-template-columns: 1fr 1fr; }
     .weather-decoded dl { grid-template-columns: 1fr; }
+    .import-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .import-upload { grid-template-columns: 1fr 1fr; }
+    .import-upload .primary-button { grid-column: 1 / -1; }
 }
 
 @media (max-width: 520px) {
@@ -298,6 +321,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .chart-legend { align-items: flex-start; flex-wrap: wrap; }
     .chart-legend small { width: 100%; margin: 0; }
     .plotly-path { min-height: 430px; }
+    .import-type-grid, .import-upload { grid-template-columns: 1fr; }
+    .import-upload .primary-button { grid-column: auto; }
     .plotly-path.scene { min-height: 540px; }
     .radar-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
     .radar-summary .connection { margin-left: 0; }
