@@ -13,5 +13,7 @@ services:
       ApplicationSettings__ReceiverLongitude: -0.454295
       Mapbox__AccessToken: put-your-mapbox-api-key-here
       WebUi__SignalRHubUrl: http://127.0.0.1:5000/hubs/aircraft
+      WebUI__TrackingProfilesPath: /var/opt/adsbtrackingprofiles/
     volumes:
       - /path/to/adsb/tracking/database/folder:/var/opt/adsbtracker/
+      - /path/to/tracking/profiles/folder:/var/opt/adsbtrackingprofiles/
