@@ -85,7 +85,11 @@ public sealed class TrackingProfileService : ITrackingProfileService
         if (string.IsNullOrWhiteSpace(fileName) || Path.GetFileName(fileName) != fileName)
             throw new ArgumentException("Select a tracking profile from the configured folder.", nameof(fileName));
         var path = Path.GetFullPath(Path.Combine(_profilesPath, fileName));
-        if (!path.StartsWith(_profilesPath + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(path))
+        var relativePath = Path.GetRelativePath(_profilesPath, path);
+        if (relativePath == ".." ||
+            relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
+            Path.IsPathRooted(relativePath) ||
+            !File.Exists(path))
             throw new FileNotFoundException("The selected tracking profile is no longer available.", fileName);
         var profile = _reader.Read(path) ?? throw new InvalidDataException("The selected tracking profile is empty.");
         var settings = Clone(_baseSettings);
