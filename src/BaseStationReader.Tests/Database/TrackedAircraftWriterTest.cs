@@ -165,6 +165,27 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task FailedLookupWithNoAttemptLimitRemainsEligibleTestAsync()
+        {
+            var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = Callsign,
+                FirstSeen = FirstSeen,
+                LastSeen = LastSeen,
+                Status = TrackingStatus.Active
+            });
+
+            _ = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(Address, false);
+            var candidates = await _factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
+
+            Assert.AreEqual(1, initial.LookupAttempts);
+            Assert.IsNull(initial.LookupTimestamp);
+            Assert.HasCount(1, candidates);
+            Assert.AreEqual(initial.Id, candidates[0].Id);
+        }
+
+        [TestMethod]
         public async Task AddSecondTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft

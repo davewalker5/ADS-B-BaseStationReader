@@ -55,7 +55,8 @@ namespace BaseStationReader.Lookup
                 logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Create the database management factory and API factory
-                var factory = new DatabaseManagementFactory(logger, context, 0, settings.MaximumLookups);
+                // Local resolution is not attempt-limited: missing reference data may be imported later.
+                var factory = new DatabaseManagementFactory(logger, context, 0, 0);
                 var apiFactory = new ExternalApiFactory();
 
                 // If a CSV file containing airline details has been supplied, import it
@@ -95,7 +96,7 @@ namespace BaseStationReader.Lookup
                 }
 
                 // Resolve aircraft and flight details using local database records only
-                if (parser.IsPresent(CommandLineOptionType.AircraftLookup))
+                if (parser.IsPresent(CommandLineOptionType.ResolveAircraft))
                 {
                     await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }

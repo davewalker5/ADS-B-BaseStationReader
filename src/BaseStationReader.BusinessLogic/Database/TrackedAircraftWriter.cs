@@ -147,7 +147,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // If the lookup was successful or the lookup attempt limit's been hit, set the lookup timestamp
                 // to suppress further lookups
-                if (successful || (aircraft.LookupAttempts >= _maximumLookups))
+                if (successful || (_maximumLookups > 0 && aircraft.LookupAttempts >= _maximumLookups))
                 {
                     aircraft.LookupTimestamp = DateTime.Now;
                 }
