@@ -38,7 +38,7 @@ public class TrackingRuntimeTest
     }
 
     [TestMethod]
-    public async Task RuntimeDoesNotTrackUntilExplicitlyStartedTest()
+    public async Task RuntimeStartsTrackingAutomaticallyAndAllowsManualControlTest()
     {
         var controllers = new List<FakeController>();
         var runtime = new TrackingRuntime(Settings("Initial.json"), settings =>
@@ -50,11 +50,6 @@ public class TrackingRuntimeTest
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
 
-        await Task.Delay(50);
-        Assert.IsFalse(runtime.IsTracking);
-        Assert.IsEmpty(controllers);
-
-        await runtime.StartTrackingAsync();
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
         Assert.IsTrue(runtime.IsTracking);
 
@@ -62,8 +57,13 @@ public class TrackingRuntimeTest
         Assert.IsFalse(runtime.IsTracking);
         Assert.IsTrue(controllers[0].Stopped);
 
+        await runtime.StartTrackingAsync();
+        await WaitUntilAsync(() => controllers.Count == 2 && controllers[1].Started);
+        Assert.IsTrue(runtime.IsTracking);
+
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.IsTrue(controllers[1].Stopped);
     }
 
     private static TrackerApplicationSettings Settings(string profile) => new()

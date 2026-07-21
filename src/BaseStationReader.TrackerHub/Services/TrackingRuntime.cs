@@ -43,6 +43,8 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         try
         {
             _started = true;
+            // Start tracking with the active profile as soon as the application runtime is ready.
+            if (!IsTracking) StartController();
         }
         finally { _gate.Release(); }
 
