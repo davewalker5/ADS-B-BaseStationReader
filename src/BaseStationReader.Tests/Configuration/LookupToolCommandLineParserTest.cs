@@ -50,5 +50,20 @@ namespace BaseStationReader.Tests.Configuration
                 new[] { "LHR", "2026-Jul-21 09:00", "2026-Jul-21 21:00" },
                 parser.GetValues(CommandLineOptionType.AirportSchedule).ToArray());
         }
+
+        /// <summary>
+        /// Verifies that flight lookup accepts a callsign in its long and short forms.
+        /// </summary>
+        [TestMethod]
+        [DataRow("--flight")]
+        [DataRow("-f")]
+        public void FlightLookupOptionTest(string option)
+        {
+            var parser = new LookupToolCommandLineParser(null);
+            parser.Parse([option, "BAW486"]);
+
+            Assert.IsTrue(parser.IsPresent(CommandLineOptionType.Flight));
+            Assert.AreEqual("BAW486", parser.GetValues(CommandLineOptionType.Flight).Single());
+        }
     }
 }

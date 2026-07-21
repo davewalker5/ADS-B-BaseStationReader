@@ -100,6 +100,12 @@ namespace BaseStationReader.Lookup
                     await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
+                // Look up and tabulate a flight using its callsign
+                if (parser.IsPresent(CommandLineOptionType.Flight))
+                {
+                    await new FlightLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
+                }
+
                 // Look up the current weather at a given airport
                 if (parser.IsPresent(CommandLineOptionType.METAR))
                 {

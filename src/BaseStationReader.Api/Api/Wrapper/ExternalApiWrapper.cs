@@ -53,6 +53,9 @@ namespace BaseStationReader.Api.Wrapper
         /// <returns>The resolved flight, or null when it cannot be identified.</returns>
         public async Task<Flight> LookupFlightAsync(string address, string callsign)
         {
+            address = address?.Trim().ToUpperInvariant() ?? string.Empty;
+            callsign = callsign?.Trim().ToUpperInvariant() ?? string.Empty;
+
             // Interactive lookups are independent of tracked rows and use the current time for flight matching.
             var trackedAircraft = new TrackedAircraft
             {
@@ -61,10 +64,29 @@ namespace BaseStationReader.Api.Wrapper
                 LastSeen = DateTime.Now,
                 Status = TrackingStatus.Active
             };
-            // Flight APIs search by aircraft address, but local callsign mappings remain usable without one.
-            var allowExternalApiLookup = !string.IsNullOrWhiteSpace(address);
-            return await _flightLookupManager.IdentifyFlightAsync(
-                trackedAircraft, null, null, allowExternalApiLookup);
+
+            // Try local callsign mappings first, even when an aircraft address is available.
+            var flight = await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, null, null, false);
+            if (flight != null)
+            {
+                return flight;
+            }
+
+            // Configured flight APIs search by aircraft address. For callsign-only requests, use the most
+            // recently tracked local aircraft with that callsign before falling back to the API.
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                var observedAircraft = await _factory.TrackedAircraftWriter.GetAsync(x => x.Callsign == callsign);
+                if (observedAircraft != null)
+                {
+                    trackedAircraft.Address = observedAircraft.Address;
+                    trackedAircraft.LastSeen = observedAircraft.LastSeen;
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(trackedAircraft.Address)
+                ? null
+                : await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, null, null, true);
         }
 
         /// <summary>

@@ -14,6 +14,7 @@
         Departure,
         EnableSqlWriter,
         AirportSchedule,
+        Flight,
         FlightApi,
         Help,
         Host,
