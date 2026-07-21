@@ -264,6 +264,28 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .weather-decoded dt { color: var(--muted); font-size: 11px; }
 .weather-decoded dd { margin: 0; color: var(--text); font-size: 12px; line-height: 1.45; }
 .weather-decoded dl > .weather-decoded-wide { grid-column: 1 / -1; grid-template-columns: 1fr; color: var(--muted); }
+.schedule-search { margin: 34px 0 20px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.schedule-fields { display: grid; grid-template-columns: 1.6fr .8fr .8fr .8fr auto; gap: 14px; align-items: end; }
+.schedule-fields label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.schedule-fields input, .schedule-fields select { width: 100%; min-height: 40px; padding: 8px 10px; color: var(--text); color-scheme: dark; background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
+.schedule-fields select { height: 40px; font: inherit; line-height: normal; }
+.schedule-fields input:focus, .schedule-fields select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
+.schedule-fields .primary-button { min-height: 40px; white-space: nowrap; }
+.schedule-note { margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+.schedule-results { margin-top: 22px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.schedule-results-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.schedule-results-heading h2 { margin: 0; font-size: 23px; }
+.schedule-result-actions { display: flex; align-items: center; gap: 16px; }
+.schedule-result-actions > span { color: var(--muted); font-size: 12px; }
+.schedule-incomplete-toggle { white-space: nowrap; }
+.schedule-table-wrap { max-height: 560px; overflow: auto; }
+.schedule-table-wrap tbody tr { cursor: default; }
+.schedule-table-wrap tbody tr.schedule-incomplete { color: var(--muted); }
+.schedule-eligibility { display: inline-block; padding: 4px 7px; border: 1px solid; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.schedule-eligibility.eligible { color: var(--green); background: rgba(79,218,161,.08); border-color: rgba(79,218,161,.3); }
+.schedule-eligibility.incomplete { color: var(--amber); background: rgba(248,189,89,.07); border-color: rgba(248,189,89,.28); }
+.schedule-pagination { justify-content: flex-end; }
+.schedule-pagination .page-size { margin-left: 12px; }
 .import-panel { margin-top: 34px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
 .import-type-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .import-type-card { display: flex; gap: 11px; min-height: 112px; padding: 16px; background: #081524; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
@@ -332,6 +354,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .radar-layout { grid-template-columns: 1fr; }
     .radar-detail-grid { grid-template-columns: repeat(2, 1fr); }
     .weather-fields { grid-template-columns: 1fr 1fr; }
+    .schedule-fields { grid-template-columns: 1fr 1fr; }
+    .schedule-fields .primary-button { grid-column: 1 / -1; }
     .weather-decoded dl { grid-template-columns: 1fr; }
     .import-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .import-upload { grid-template-columns: 1fr 1fr; }
@@ -364,5 +388,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .radar-summary .connection { margin-left: 0; }
     .radar-scope-wrap, .radar-scope { min-height: 480px; }
     .weather-fields { grid-template-columns: 1fr; }
+    .schedule-fields { grid-template-columns: 1fr; }
+    .schedule-fields .primary-button { grid-column: auto; }
+    .schedule-results-heading, .schedule-result-actions { align-items: flex-start; flex-direction: column; }
     .weather-results-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
 }

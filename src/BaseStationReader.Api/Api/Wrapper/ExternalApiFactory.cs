@@ -120,6 +120,25 @@ namespace BaseStationReader.Api.Wrapper
                 wrapper.RegisterExternalApi(ApiEndpointType.TAF, tafApi);
             }
 
+            // Schedule support is optional, so only construct it when the selected service defines the endpoint.
+            var schedulesConfigured = settings.ApiServices.Any(definition =>
+                definition.Service == service &&
+                definition.ApiEndpoints.Any(endpoint => endpoint.EndpointType == ApiEndpointType.Schedules));
+            if (schedulesConfigured)
+            {
+                var schedulesApi = GetApiInstance(
+                    service,
+                    ApiEndpointType.Schedules,
+                    client,
+                    factory,
+                    settings);
+
+                if (schedulesApi != null)
+                {
+                    wrapper.RegisterExternalApi(ApiEndpointType.Schedules, schedulesApi);
+                }
+            }
+
             return wrapper;
         }
 

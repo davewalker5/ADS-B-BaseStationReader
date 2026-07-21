@@ -79,7 +79,7 @@ namespace BaseStationReader.Api.AeroDatabox
 
             // Construct the URL with query parameters and log the request
             var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Flights, url, ApiProperty.AirportIATA, iata);
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Schedules, url, ApiProperty.AirportIATA, iata);
 
             // Make a request for the data from the API
             JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
@@ -90,6 +90,77 @@ namespace BaseStationReader.Api.AeroDatabox
 
             return node;
         }
+
+        /// <summary>
+        /// Extracts flight IATA code mappings from an airport schedule response.
+        /// </summary>
+        /// <param name="schedules">The JSON returned by <see cref="LookupSchedulesRawAsync"/>.</param>
+        /// <param name="airportIata">The IATA code of the airport whose schedule was requested.</param>
+        /// <returns>All schedule rows projected as flight mapping entities.</returns>
+        public List<FlightIATACodeMapping> ExtractFlightMapping(JsonNode schedules, string airportIata)
+        {
+            var mappings = new List<FlightIATACodeMapping>();
+            if (schedules is null || string.IsNullOrWhiteSpace(airportIata)) return mappings;
+
+            var scheduleObject = schedules as JsonObject;
+            if (scheduleObject is null) return mappings;
+
+            ExtractFlightMappings(scheduleObject["departures"] as JsonArray, AirportType.Departure,
+                airportIata.Trim().ToUpperInvariant(), mappings);
+            ExtractFlightMappings(scheduleObject["arrivals"] as JsonArray, AirportType.Arrival,
+                airportIata.Trim().ToUpperInvariant(), mappings);
+
+            // Preserve every provider row and its direction for display and complete CSV export.
+            return mappings;
+        }
+
+        /// <summary>
+        /// Extracts mappings for one direction from an AeroDataBox schedule collection.
+        /// </summary>
+        private static void ExtractFlightMappings(JsonArray flights, AirportType airportType,
+            string scheduleAirportIata, ICollection<FlightIATACodeMapping> mappings)
+        {
+            if (flights is null) return;
+
+            foreach (var flight in flights.OfType<JsonObject>())
+            {
+                var airport = flight["movement"]?["airport"];
+                var airline = flight["airline"];
+                var flightIata = Compact(flight["number"]);
+                var callsign = Compact(flight["callSign"]);
+                var airlineIata = Compact(airline?["iata"]);
+                var airlineIcao = Compact(airline?["icao"]);
+
+                var remoteAirportIata = Compact(airport?["iata"]);
+                mappings.Add(new FlightIATACodeMapping
+                {
+                    AirlineICAO = airlineIcao,
+                    AirlineIATA = airlineIata,
+                    AirlineName = Text(airline?["name"]),
+                    AirportICAO = Compact(airport?["icao"]),
+                    AirportIATA = remoteAirportIata,
+                    AirportName = Text(airport?["name"]),
+                    AirportType = airportType,
+                    Embarkation = airportType == AirportType.Departure ? scheduleAirportIata : remoteAirportIata,
+                    Destination = airportType == AirportType.Arrival ? scheduleAirportIata : remoteAirportIata,
+                    FlightIATA = flightIata,
+                    Callsign = callsign,
+                    FileName = "AeroDataBox"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Returns trimmed JSON text with embedded spaces removed.
+        /// </summary>
+        private static string Compact(JsonNode node)
+            => Text(node).Replace(" ", string.Empty);
+
+        /// <summary>
+        /// Returns trimmed JSON text or an empty string when the value is absent.
+        /// </summary>
+        private static string Text(JsonNode node)
+            => node?.GetValue<string>()?.Trim() ?? string.Empty;
 
         /// <summary>
         /// Build the query string from the fixed parameters
