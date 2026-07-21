@@ -95,5 +95,17 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(string.Empty, aircraft.Model.Manufacturer.Name);
         }
+
+        [TestMethod]
+        public async Task LocalOnlyLookupDoesNotUseApiTestAsync()
+        {
+            _client.AddResponse(Response);
+
+            var aircraft = await _manager.IdentifyAircraftAsync(Address, false);
+            var apiLogEntries = await _factory.ApiLogManager.ListAsync(x => true);
+
+            Assert.IsNull(aircraft);
+            Assert.IsEmpty(apiLogEntries);
+        }
     }
 }

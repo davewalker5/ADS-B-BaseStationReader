@@ -105,6 +105,25 @@ namespace BaseStationReader.Tests.API.Wrapper
         }
 
         [TestMethod]
+        public async Task LocalOnlyLookupDoesNotUseApiTestAsync()
+        {
+            _client.AddResponse("[]");
+            var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
+            {
+                Address = Address,
+                Callsign = Callsign,
+                Status = TrackingStatus.Active,
+                LastSeen = DateTime.UtcNow
+            });
+
+            var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], [], false);
+            var apiLogEntries = await _factory.ApiLogManager.ListAsync(x => true);
+
+            Assert.IsNull(flight);
+            Assert.IsEmpty(apiLogEntries);
+        }
+
+        [TestMethod]
         public async Task LookupFromDatabaseWithExistingFlightTestAsync()
         {
             _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");

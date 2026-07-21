@@ -9,5 +9,6 @@ namespace BaseStationReader.Entities.Tracking
         public IEnumerable<string> DepartureAirportCodes { get; set; }
         public IEnumerable<string> ArrivalAirportCodes { get; set; }
         public bool CreateSighting { get; set; }
+        public bool AllowExternalApiLookup { get; set; } = true;
     }
 }

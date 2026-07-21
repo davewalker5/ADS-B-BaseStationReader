@@ -25,11 +25,13 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="trackedAircraft"></param>
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
+        /// <param name="allowExternalApiLookup"></param>
         /// <returns></returns>
         public async Task<Flight> IdentifyFlightAsync(
             TrackedAircraft trackedAircraft,
             IEnumerable<string> departureAirportCodes,
-            IEnumerable<string> arrivalAirportCodes)
+            IEnumerable<string> arrivalAirportCodes,
+            bool allowExternalApiLookup = true)
         {
             // Attempt to load the flight from the database or, if there's a callsign mapping for it, to create
             // a new one using that mapping
@@ -44,7 +46,7 @@ namespace BaseStationReader.Api.Wrapper
             // With no mapping record, there's no way to identify a flight number so APIs supporting lookup by flight
             // number are of no use at this point. We now need an API that is able to lookup flights by aircraft
             // address - attempt that lookup
-            if (flight == null)
+            if (flight == null && allowExternalApiLookup)
             {
                 flight = await LookupFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
             }

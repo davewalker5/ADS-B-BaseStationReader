@@ -72,7 +72,9 @@ namespace BaseStationReader.Api.Wrapper
             }
 
             // Lookup the aircraft
-            var aircraft = await _aircraftLookupManager.IdentifyAircraftAsync(request.AircraftAddress);
+            var aircraft = await _aircraftLookupManager.IdentifyAircraftAsync(
+                request.AircraftAddress,
+                request.AllowExternalApiLookup);
             if (aircraft == null)
             {
                 // If an aircraft isn't identifiable, there's no point allowing requeues
@@ -81,7 +83,11 @@ namespace BaseStationReader.Api.Wrapper
             }
 
             // Lookup the flight
-            var flight = await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, request.DepartureAirportCodes, request.ArrivalAirportCodes);
+            var flight = await _flightLookupManager.IdentifyFlightAsync(
+                trackedAircraft,
+                request.DepartureAirportCodes,
+                request.ArrivalAirportCodes,
+                request.AllowExternalApiLookup);
             if (flight == null)
             {
                 // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
