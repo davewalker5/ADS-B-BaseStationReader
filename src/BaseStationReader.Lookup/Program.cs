@@ -94,7 +94,7 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAircraftImportAsync();
                 }
 
-                // Lookup flight details and store the results
+                // Resolve aircraft and flight details using local database records only
                 if (parser.IsPresent(CommandLineOptionType.AircraftLookup))
                 {
                     await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();

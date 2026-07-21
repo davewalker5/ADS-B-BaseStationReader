@@ -20,7 +20,7 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the airline import command
+        /// Resolve candidate aircraft and flight details using local database records
         /// </summary>
         /// <returns></returns>
         public async Task HandleAsync()
@@ -44,7 +44,8 @@ namespace BaseStationReader.Lookup.Logic
                     AircraftAddress = a.Address,
                     DepartureAirportCodes = departureAirportCodes,
                     ArrivalAirportCodes = arrivalAirportCodes,
-                    CreateSighting = Settings.CreateSightings
+                    CreateSighting = Settings.CreateSightings,
+                    AllowExternalApiLookup = false
                 };
 
                 // Perform the lookup

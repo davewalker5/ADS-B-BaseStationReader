@@ -22,12 +22,16 @@ namespace BaseStationReader.Api.Wrapper
         /// Identify an aircraft given its 24-bit ICAO address
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="allowExternalApiLookup"></param>
         /// <returns></returns>
-        public async Task<Aircraft> IdentifyAircraftAsync(string address)
+        public async Task<Aircraft> IdentifyAircraftAsync(string address, bool allowExternalApiLookup = true)
         {
-            // Attempt to load an aircraft from the database. If it's not stored locally, use the API to look it up
+            // Attempt to load an aircraft from the database, with an optional API fallback for normal tracker use.
             var aircraft = await LoadAircraftAsync(address);
-            aircraft ??= await LookupAircraftAsync(address);
+            if (aircraft == null && allowExternalApiLookup)
+            {
+                aircraft = await LookupAircraftAsync(address);
+            }
 
             // Log the aircraft details
             if (aircraft != null)

@@ -4,6 +4,6 @@ namespace BaseStationReader.Interfaces.Api
 {
     public interface IAircraftLookupManager
     {
-        Task<Aircraft> IdentifyAircraftAsync(string address);
+        Task<Aircraft> IdentifyAircraftAsync(string address, bool allowExternalApiLookup = true);
     }
 }
