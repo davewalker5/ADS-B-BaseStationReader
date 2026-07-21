@@ -105,12 +105,13 @@
                     <th class="numeric"><button @onclick="() => SortBy(SortColumn.Distance)">Distance @SortIndicator(SortColumn.Distance)</button></th>
                     <th class="numeric">Messages</th>
                     <th><button @onclick="() => SortBy(SortColumn.LastSeen)">Last seen @SortIndicator(SortColumn.LastSeen)</button></th>
+                    <th>Lookup</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!FilteredAircraft.Any())
                 {
-                    <tr><td colspan="10" class="table-empty">@EmptyMessage</td></tr>
+                    <tr><td colspan="11" class="table-empty">@EmptyMessage</td></tr>
                 }
                 else
                 {
@@ -127,6 +128,7 @@
                             <td class="numeric">@FormatNumber(aircraft.Distance, "N1", " nm")</td>
                             <td class="numeric">@aircraft.Messages.ToString("N0")</td>
                             <td><time datetime="@aircraft.LastSeen.ToString("O")">@aircraft.LastSeen.ToLocalTime().ToString("HH:mm:ss")</time></td>
+                            <td><a class="row-link" href="@LookupUrl(aircraft)" @onclick:stopPropagation>Lookup →</a></td>
                         </tr>
                     }
                 }
@@ -174,6 +176,15 @@
     private bool _profileError;
     private bool _applyingProfile;
     private bool _controlsBusy;
+
+    /// <summary>
+    /// Builds a Lookup-tab URL populated from a live aircraft row.
+    /// </summary>
+    /// <param name="aircraft">The live aircraft to look up.</param>
+    /// <returns>The encoded Lookup-tab URL.</returns>
+    private static string LookupUrl(TrackedAircraftDto aircraft)
+        => $"lookup?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}" +
+           $"&callsign={Uri.EscapeDataString(aircraft.Callsign ?? string.Empty)}";
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {

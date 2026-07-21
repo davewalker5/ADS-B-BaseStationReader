@@ -12,6 +12,7 @@ services:
       ApplicationSettings__ReceiverLatitude: 51.470020
       ApplicationSettings__ReceiverLongitude: -0.454295
       ApplicationSettings__ApiServices__0__Key: put-your-aerodatabox-api-key-here
+      ApplicationSettings__ApiServices__1__Key: put-your-airlabs-api-key-here
       ApplicationSettings__ApiServices__2__Key: put-your-checkwx-api-key-here
       ApplicationSettings__ApiServices__3__Key: put-your-skylink-api-key-here
       Mapbox__AccessToken: put-your-mapbox-api-key-here

@@ -84,6 +84,14 @@
 
 @code {
 #nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "address")]
+    public string? Address { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "callsign")]
+    public string? Callsign { get; set; }
+
     private IReadOnlyList<ApiServiceType> _aircraftServices = [];
     private IReadOnlyList<ApiServiceType> _flightServices = [];
     private ApiServiceType _aircraftService = ApiServiceType.None;
@@ -97,6 +105,7 @@
     private bool _searched;
     private bool _lookupAircraft;
     private bool _lookupFlight;
+    private bool _autoLookupHandled;
     private bool HasValidAddress => string.IsNullOrWhiteSpace(_address) ||
         (_address.Trim().Length == 6 && _address.Trim().All(Uri.IsHexDigit));
     private bool CanLookup => !_loading && HasValidAddress &&
@@ -113,6 +122,22 @@
         _flightServices = LookupService.GetServices(ApiEndpointType.Flights);
         _aircraftService = _aircraftServices.FirstOrDefault();
         _flightService = _flightServices.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Applies query-string values supplied by a live tracking row and automatically performs its lookup.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_autoLookupHandled) return;
+        _autoLookupHandled = true;
+
+        _address = Address?.Trim() ?? string.Empty;
+        _callsign = Callsign?.Trim() ?? string.Empty;
+        if (CanLookup)
+        {
+            await LookupAsync();
+        }
     }
 
     /// <summary>
