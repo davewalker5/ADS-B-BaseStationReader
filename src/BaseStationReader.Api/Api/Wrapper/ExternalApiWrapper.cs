@@ -17,6 +17,7 @@ namespace BaseStationReader.Api.Wrapper
         private readonly IAircraftLookupManager _aircraftLookupManager;
         private readonly IFlightLookupManager _flightLookupManager;
         private readonly IWeatherLookupManager _weatherLookupManager;
+        private readonly IScheduleLookupManager _scheduleLookupManager;
 
         public ExternalApiWrapper(IDatabaseManagementFactory factory)
         {
@@ -26,6 +27,7 @@ namespace BaseStationReader.Api.Wrapper
             _aircraftLookupManager = new AircraftLookupManager(_register, factory);
             _flightLookupManager = new FlightLookupManager(_register, factory, airlineLookupManager);
             _weatherLookupManager = new WeatherLookupManager(factory.Logger, _register);
+            _scheduleLookupManager = new ScheduleLookupManager(factory.Logger, _register);
         }
 
         /// <summary>
@@ -115,5 +117,15 @@ namespace BaseStationReader.Api.Wrapper
         /// <returns></returns>
         public async Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao)
             => await _weatherLookupManager.LookupAirportWeatherForecastAsync(icao);
+
+        /// <summary>
+        /// Retrieves an airport schedule and extracts its flight IATA code mappings.
+        /// </summary>
+        /// <param name="iata">The schedule airport IATA code.</param>
+        /// <param name="from">The beginning of the schedule window.</param>
+        /// <param name="to">The end of the schedule window.</param>
+        /// <returns>The extracted flight mappings.</returns>
+        public async Task<List<FlightIATACodeMapping>> LookupSchedulesAsync(string iata, DateTime from, DateTime to)
+            => await _scheduleLookupManager.LookupSchedulesAsync(iata, from, to);
     }
 }

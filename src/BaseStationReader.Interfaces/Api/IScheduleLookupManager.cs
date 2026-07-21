@@ -1,13 +1,12 @@
 using BaseStationReader.Entities.Api;
-using BaseStationReader.Entities.Tracking;
 
 namespace BaseStationReader.Interfaces.Api
 {
-    public interface IExternalApiWrapper
+    /// <summary>
+    /// Coordinates schedule retrieval and conversion into flight IATA code mappings.
+    /// </summary>
+    public interface IScheduleLookupManager
     {
-        Task<LookupResult> LookupAsync(ApiLookupRequest request);
-        Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao);
-        Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao);
         /// <summary>
         /// Retrieves an airport schedule and extracts its flight IATA code mappings.
         /// </summary>

@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Config;
 using System.Text.Json.Nodes;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.Tests.API.AeroDataBox
 {
@@ -67,6 +68,38 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         }
 
         [TestMethod]
+        public void ExtractFlightMappingTest()
+        {
+            var mappings = _api.ExtractFlightMapping(JsonNode.Parse(Response), "AMS");
+
+            Assert.HasCount(2, mappings);
+            AssertMapping(mappings[0], AirportType.Arrival, "KL1530", "KLM86H",
+                "LEVC", "LEVC", "Valencia", "LEVC", "AMS");
+            AssertMapping(mappings[1], AirportType.Departure, "KL1231", "KLM87R",
+                "ESGG", "GOT", "Goteborg", "AMS", "GOT");
+        }
+
+        [TestMethod]
+        public void ExtractFlightMappingSkipsIncompleteFlightsTest()
+        {
+            const string response = "{ \"departures\": [ { \"number\": \"KL 1231\", " +
+                "\"airline\": { \"iata\": \"KL\", \"icao\": \"KLM\" }, " +
+                "\"movement\": { \"airport\": { \"iata\": \"GOT\" } } } ] }";
+
+            var mappings = _api.ExtractFlightMapping(JsonNode.Parse(response), "AMS");
+
+            Assert.IsEmpty(mappings);
+        }
+
+        [TestMethod]
+        public void ExtractFlightMappingWithNullResponseTest()
+        {
+            var mappings = _api.ExtractFlightMapping(null, "AMS");
+
+            Assert.IsEmpty(mappings);
+        }
+
+        [TestMethod]
         public async Task LookupSchedulesWithTimespanThatIsNegativeTestAsync()
         {
             _client.AddResponse(Response);
@@ -110,6 +143,27 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             var airport = movement["airport"] as JsonObject;
             var airline = flight["airline"] as JsonObject;
             return (flight, airport, airline);
+        }
+
+        /// <summary>
+        /// Asserts the properties extracted for one schedule flight.
+        /// </summary>
+        private static void AssertMapping(FlightIATACodeMapping mapping, AirportType airportType,
+            string flightIata, string callsign, string airportIcao, string airportIata,
+            string airportName, string embarkation, string destination)
+        {
+            Assert.AreEqual("KLM", mapping.AirlineICAO);
+            Assert.AreEqual("KL", mapping.AirlineIATA);
+            Assert.AreEqual("KLM", mapping.AirlineName);
+            Assert.AreEqual(airportIcao, mapping.AirportICAO);
+            Assert.AreEqual(airportIata, mapping.AirportIATA);
+            Assert.AreEqual(airportName, mapping.AirportName);
+            Assert.AreEqual(airportType, mapping.AirportType);
+            Assert.AreEqual(embarkation, mapping.Embarkation);
+            Assert.AreEqual(destination, mapping.Destination);
+            Assert.AreEqual(flightIata, mapping.FlightIATA);
+            Assert.AreEqual(callsign, mapping.Callsign);
+            Assert.AreEqual("AeroDataBox", mapping.FileName);
         }
     }
 }
