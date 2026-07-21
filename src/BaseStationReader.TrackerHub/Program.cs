@@ -140,6 +140,7 @@ namespace BaseStationReader.TrackerHub
                     builder.Configuration.GetSection("ApplicationSettings").Get<ExternalApiSettings>() ?? new());
                 builder.Services.AddSingleton(runtime);
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
+                builder.Services.AddSingleton<ITrackingControlService, TrackingControlService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
@@ -322,7 +323,8 @@ namespace BaseStationReader.TrackerHub
                 {
                     // If we've exceeded the application timeout since the last update, break out to the caller
                     var elapsed = (DateTime.Now - _lastUpdate).TotalMilliseconds;
-                    if ((_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
+                    if (((TrackingRuntime)_controller).IsTracking &&
+                        (_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
                     {
                         throw new OperationCanceledException(token);
                     }

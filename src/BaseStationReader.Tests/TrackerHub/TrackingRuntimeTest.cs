@@ -22,6 +22,7 @@ public class TrackingRuntimeTest
         });
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
+        await runtime.StartTrackingAsync();
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
 
         await runtime.ApplyAsync(Settings("Replacement.json"));
@@ -34,6 +35,35 @@ public class TrackingRuntimeTest
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.IsTrue(controllers[1].Stopped);
+    }
+
+    [TestMethod]
+    public async Task RuntimeDoesNotTrackUntilExplicitlyStartedTest()
+    {
+        var controllers = new List<FakeController>();
+        var runtime = new TrackingRuntime(Settings("Initial.json"), settings =>
+        {
+            var controller = new FakeController(settings);
+            controllers.Add(controller);
+            return controller;
+        });
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+
+        await Task.Delay(50);
+        Assert.IsFalse(runtime.IsTracking);
+        Assert.IsEmpty(controllers);
+
+        await runtime.StartTrackingAsync();
+        await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
+        Assert.IsTrue(runtime.IsTracking);
+
+        await runtime.StopTrackingAsync();
+        Assert.IsFalse(runtime.IsTracking);
+        Assert.IsTrue(controllers[0].Stopped);
+
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
     }
 
     private static TrackerApplicationSettings Settings(string profile) => new()
