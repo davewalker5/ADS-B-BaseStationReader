@@ -13,7 +13,7 @@
         CreateSightings,
         Departure,
         EnableSqlWriter,
-        ExportSchedule,
+        AirportSchedule,
         FlightApi,
         Help,
         Host,

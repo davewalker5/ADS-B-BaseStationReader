@@ -5,7 +5,6 @@ using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Api;
-using System.Text.Json;
 
 namespace BaseStationReader.Lookup.Logic
 {
@@ -13,11 +12,9 @@ namespace BaseStationReader.Lookup.Logic
     {
         private ISchedulesApi _api;
 
-        private readonly JsonSerializerOptions _options = new()
-        {
-            WriteIndented = true
-        };
-
+        /// <summary>
+        /// Initialises the schedule lookup command handler.
+        /// </summary>
         public ScheduleLookupHandler(
             LookupToolApplicationSettings settings,
             LookupToolCommandLineParser parser,
@@ -30,15 +27,15 @@ namespace BaseStationReader.Lookup.Logic
         public async Task HandleAsync()
         {
             // Extract the lookup parameters from the command line
-            var values = Parser.GetValues(CommandLineOptionType.ExportSchedule);
+            var values = Parser.GetValues(CommandLineOptionType.AirportSchedule);
             switch (values.Count)
             {
-                case 2:
-                    // IATA code and output folder
+                case 1:
+                    // IATA code or a file containing IATA codes
                     await HandleForTodayAsync(values);
                     break;
-                case 4:
-                    // IATA code, from date, to date and output folder
+                case 3:
+                    // IATA code or file path, followed by from and to dates
                     await HandleForDateRangeAsync(values);
                     break;
                 default:
@@ -59,8 +56,8 @@ namespace BaseStationReader.Lookup.Logic
             var from = GetScheduleTime(Settings.ScheduleStartTime);
             var to = GetScheduleTime(Settings.ScheduleEndTime);
 
-            // Perform the lookup and export the result to a JSON file
-            await RequestAndExportSchedulesAsync(values[0], from, to, values[1]);
+            // Perform the lookup and tabulate the result on the console.
+            await RequestAndTabulateSchedulesAsync(values[0], from, to);
         }
 
         /// <summary>
@@ -74,8 +71,8 @@ namespace BaseStationReader.Lookup.Logic
             var from = ExtractTimestamp(values[1]);
             var to = ExtractTimestamp(values[2]);
 
-            // Perform the lookup and export the result to a JSON file
-            await RequestAndExportSchedulesAsync(values[0], from, to, values[3]);
+            // Perform the lookup and tabulate the result on the console.
+            await RequestAndTabulateSchedulesAsync(values[0], from, to);
         }
 
         /// <summary>
@@ -85,21 +82,13 @@ namespace BaseStationReader.Lookup.Logic
         /// <param name="iata"></param>
         /// <param name="from"></param>
         /// <param name="to"></param>
-        /// <param name="outputFolder"></param>
         /// <returns></returns>
-        private async Task RequestAndExportSchedulesAsync(string iataCodeOrFilePath, DateTime? from, DateTime? to, string outputFolder)
+        private async Task RequestAndTabulateSchedulesAsync(string iataCodeOrFilePath, DateTime? from, DateTime? to)
         {
             // Check the dates are valid
             if (!from.HasValue || !to.HasValue || (to <= from))
             {
                 Logger.LogMessage(Severity.Error, $"Invalid time range for schedule download");
-                return;
-            }
-
-            // Check the output folder exists
-            if (!Path.Exists(outputFolder))
-            {
-                Logger.LogMessage(Severity.Error, $"Output folder {outputFolder} does not exist");
                 return;
             }
 
@@ -118,38 +107,30 @@ namespace BaseStationReader.Lookup.Logic
                 var codes = File.ReadAllLines(iataCodeOrFilePath);
                 foreach (var code in codes)
                 {
-                    // Clean this one up and download the schedules for it
+                    // Clean this one up and display the schedules for it.
                     var iataCode = code.Trim();
-                    await RequestAndExportSchedulesForAirportAsync(iataCode, from, to, outputFolder);
+                    await RequestAndTabulateSchedulesForAirportAsync(iataCode, from, to);
                 }
             }
             else
             {
-                await RequestAndExportSchedulesForAirportAsync(iataCodeOrFilePath, from, to, outputFolder);
+                await RequestAndTabulateSchedulesForAirportAsync(iataCodeOrFilePath, from, to);
             }
         }
 
         /// <summary>
-        /// Request scheduling information per the specified criteria and export to a JSON file
+        /// Request scheduling information per the specified criteria and tabulate it on the console
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="from"></param>
         /// <param name="to"></param>
-        /// <param name="outputFolder"></param>
         /// <returns></returns>
-        private async Task RequestAndExportSchedulesForAirportAsync(string iata, DateTime? from, DateTime? to, string outputFolder)
+        private async Task RequestAndTabulateSchedulesForAirportAsync(string iata, DateTime? from, DateTime? to)
         {
-            // Construct the output file name from the IATA code and "from" date
-            var prefix = from.Value.ToString("yyyy-MM-dd");
-            var filePath = Path.Join(outputFolder, $"{prefix}-{iata}.json");
-
-            // Perform the lookup
+            // Retrieve the provider response and convert every schedule row into displayable fields.
             var json = await _api.LookupSchedulesRawAsync(iata, from.Value, to.Value);
-            if (json != null)
-            {
-                // Write the JSON to the specified output file
-                File.WriteAllText(filePath, json.ToJsonString(_options));
-            }
+            var mappings = _api.ExtractFlightMapping(json, iata);
+            new ScheduleTabulator().Write(iata, from.Value, to.Value, mappings);
         }
         
         /// <summary>
