@@ -6,7 +6,7 @@
         AddExcludedCallsign,
         AddressFile,
         AircraftNotificationInterval,
-        AircraftLookup,
+        ResolveAircraft,
         ApplicationTimeout,
         Arrival,
         ClearDown,

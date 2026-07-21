@@ -10,7 +10,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
             Add(CommandLineOptionType.AddExcludedAddress, false, "--exclude-address", "-exa", "Add an aircraft address to the excluded addresses list", 1, 1);
             Add(CommandLineOptionType.AddExcludedCallsign, false, "--exclude-callsign", "-exc", "Add a callsign to the excluded callsigns list", 1, 1);
-            Add(CommandLineOptionType.AircraftLookup, false, "--aircraft-lookup", "-al", "Lookup all tracked aircraft that have not already been looked up", 0, 0);
+            Add(CommandLineOptionType.ResolveAircraft, false, "--resolve-tracked", "-rt", "Resolve tracked aircraft and flight details using local reference data", 0, 0);
             Add(CommandLineOptionType.Arrival, false, "--arrival", "-ar", "Specify a comma-separated list of arrival airport ICAO/IATA codes", 1, 1);
             Add(CommandLineOptionType.CreateSightings, false, "--create-sightings", "-cs", "If true, create sightings relating flights and aircraft when a lookup is completed", 1, 1);
             Add(CommandLineOptionType.Departure, false, "--departure", "-d", "Specify a comma-separated list of departure airport ICAO/IATA codes", 1, 1);
