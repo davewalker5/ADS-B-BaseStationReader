@@ -35,7 +35,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0);
             _client = new MockTrackerHttpClient();
             _api = new AeroDataBoxSchedulesApi(_client, factory, _settings);
         }

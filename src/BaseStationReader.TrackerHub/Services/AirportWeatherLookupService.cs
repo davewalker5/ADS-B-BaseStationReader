@@ -89,7 +89,7 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
 
         // Keep the context alive for API usage logging until the remote request has completed.
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var databaseFactory = new DatabaseManagementFactory(_logger, context, 0, _settings.MaximumLookups);
+        var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
         var wrapper = _apiFactory.GetWrapperInstance(
             TrackerHttpClient.Instance,
             databaseFactory,

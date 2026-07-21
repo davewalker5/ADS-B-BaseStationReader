@@ -93,7 +93,7 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
             throw new ArgumentException("The schedule range must be greater than zero and no more than 12 hours.", nameof(to));
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var databaseFactory = new DatabaseManagementFactory(_logger, context, 0, _settings.MaximumLookups);
+        var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
         var wrapper = _apiFactory.GetWrapperInstance(
             TrackerHttpClient.Instance, databaseFactory, serviceType, _settings);
 

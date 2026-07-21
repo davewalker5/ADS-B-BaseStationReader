@@ -36,7 +36,7 @@ namespace BaseStationReader.Tests.API.CheckWXApi
             // Construct a database management factory
             var logger = new MockFileLogger();
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Construct the lookup management instance
             _client = new MockTrackerHttpClient();

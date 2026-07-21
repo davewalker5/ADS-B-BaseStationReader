@@ -45,7 +45,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             // Construct a database management factory
             var logger = new MockFileLogger();
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Construct the lookup management instance
             _client = new MockTrackerHttpClient();

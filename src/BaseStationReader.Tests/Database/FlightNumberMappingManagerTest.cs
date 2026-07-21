@@ -28,7 +28,7 @@ namespace BaseStationReader.Tests.Database
             // Create a database management factory
             var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Add a callsign/flight IATA code mapping
             await _factory.FlightIATACodeMappingManager.AddAsync(

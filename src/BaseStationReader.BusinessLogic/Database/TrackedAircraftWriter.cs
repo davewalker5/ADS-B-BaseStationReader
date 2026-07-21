@@ -11,7 +11,6 @@ namespace BaseStationReader.BusinessLogic.Database
 {
     internal class TrackedAircraftWriter : ITrackedAircraftWriter
     {
-        private readonly int _maximumLookups;
         private readonly ITrackerLogger _logger;
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)
@@ -19,11 +18,10 @@ namespace BaseStationReader.BusinessLogic.Database
             .Where(x => x.Name != "Id")
             .ToArray();
 
-        public TrackedAircraftWriter(ITrackerLogger logger, BaseStationReaderDbContext context, int maximumLookups)
+        public TrackedAircraftWriter(ITrackerLogger logger, BaseStationReaderDbContext context)
         {
             _logger = logger;
             _context = context;
-            _maximumLookups = maximumLookups;
         }
 
         /// <summary>
@@ -67,7 +65,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<List<TrackedAircraft>> ListLookupCandidatesAsync()
         {
             // Get an initial list of candidates for lookup
-            var eligibilityPredicate = EligibleForLookup(_maximumLookups);
+            var eligibilityPredicate = EligibleForLookup();
             var aircraft = await ListAsync(eligibilityPredicate);
 
             // Get a list of excluded aircraft addresses and remove them from the list
@@ -128,7 +126,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task<TrackedAircraft> UpdateLookupPropertiesAsync(string address, bool successful)
         {
             // Get the list of eligible records and find the one for the specified aircraft
-            var eligibilityPredicate = EligibleForLookup(_maximumLookups);
+            var eligibilityPredicate = EligibleForLookup();
             var aircraft = await _context.TrackedAircraft
                                          .Where(eligibilityPredicate)
                                          .FirstOrDefaultAsync(x => x.Address == address);
@@ -145,9 +143,8 @@ namespace BaseStationReader.BusinessLogic.Database
                 // Increment the lookup attempt count
                 aircraft.LookupAttempts += 1;
 
-                // If the lookup was successful or the lookup attempt limit's been hit, set the lookup timestamp
-                // to suppress further lookups
-                if (successful || (_maximumLookups > 0 && aircraft.LookupAttempts >= _maximumLookups))
+                // Successful lookups need no further resolution attempts.
+                if (successful)
                 {
                     aircraft.LookupTimestamp = DateTime.Now;
                 }
@@ -184,23 +181,20 @@ namespace BaseStationReader.BusinessLogic.Database
         /// 2. The callsign is populated
         /// 3. A lookup hasn't already been completed successfully
         /// 4. The record isn't locked
-        /// 5. The maximum lookup attempts haven't been reached
         /// 
         /// The locking state criterion is necessary as it ensures a given aircraft address is unique in
         /// the returned results (an aircraft can only appear once in a non-locked state but may occur
         /// multiple times in a locked state, from multiple sessions).
         /// </summary>
-        /// <param name="maximumLookups"></param>
         /// <returns></returns>
-        private static Expression<Func<TrackedAircraft, bool>> EligibleForLookup(int maximumLookups)
+        private static Expression<Func<TrackedAircraft, bool>> EligibleForLookup()
         {
             return x =>
                 !string.IsNullOrEmpty(x.Address) &&
                 (x.Address != "000000") &&
                 !string.IsNullOrEmpty(x.Callsign) &&
                 (x.LookupTimestamp == null) &&
-                (x.Status != TrackingStatus.Locked) &&
-                (maximumLookups == 0 || x.LookupAttempts < maximumLookups);
+                (x.Status != TrackingStatus.Locked);
         }
     }
 }

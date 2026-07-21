@@ -18,7 +18,7 @@ namespace BaseStationReader.Tests.Database
             // Create the factory for database acces
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Add the objects to be cleaned
             await context.Airlines.AddAsync(new() { IATA = "ba", ICAO = "baw", Name = "brITish \nairWAYS  " });

@@ -56,7 +56,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _ownsContext = ownsContext;
 
             // Configure the database management classes
-            _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock, 0);
+            _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
 
             // Load the current exclusions
             var excludedAddresses = Task.Run(() => _factory.ExcludedAddressManager.ListAsync(x => true))
