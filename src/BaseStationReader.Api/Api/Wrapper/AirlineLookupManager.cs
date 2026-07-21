@@ -56,7 +56,7 @@ namespace BaseStationReader.Api.Wrapper
             => LogMessage(Severity.Info, airline.IATA, airline.ICAO, $"Identified airline '{airline.Name}'");
 
         /// <summary>
-        /// Construct an in-memory airline when all required details have been supplied
+        /// Attempt to load an airline from the database
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
@@ -75,7 +75,7 @@ namespace BaseStationReader.Api.Wrapper
         }
 
         /// <summary>
-        /// Attempt to load an airline from the database
+        /// Construct an in-memory airline when all required details have been supplied
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
