@@ -114,6 +114,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .checkbox input { accent-color: var(--cyan); }
 .primary-button { padding: 10px 16px; color: #041316; background: var(--cyan); border: 0; border-radius: 7px; font-weight: 700; cursor: pointer; }
 .primary-button:disabled { opacity: .55; cursor: wait; }
+.secondary-button { padding: 9px 15px; color: var(--cyan); background: rgba(53,212,208,.08); border: 1px solid rgba(53,212,208,.35); border-radius: 7px; font-weight: 700; cursor: pointer; }
+.secondary-button:disabled { opacity: .45; cursor: default; }
 .text-button { padding: 0; color: var(--cyan); background: transparent; border: 0; cursor: pointer; font-size: 12px; }
 .history-panel { margin-top: 20px; }
 .history-panel .table-wrap { max-height: none; }

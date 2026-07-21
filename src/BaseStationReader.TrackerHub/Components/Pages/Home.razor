@@ -2,6 +2,7 @@
 @implements IAsyncDisposable
 @inject ILiveAircraftService LiveAircraft
 @inject ITrackingProfileService TrackingProfiles
+@inject ITrackingControlService TrackingControl
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
 
@@ -30,9 +31,13 @@
             }
         </select>
         <button class="primary-button" @onclick="ApplyProfileAsync"
-                disabled="@(_applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
-            @(_applyingProfile ? "Applying…" : "Apply profile")
+                disabled="@(_controlsBusy || _applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
+            @(_applyingProfile ? "Applying…" : "Apply")
         </button>
+        <button class="primary-button" @onclick="StartTrackingAsync"
+                disabled="@(_controlsBusy || TrackingControl.IsTracking)">Start</button>
+        <button class="secondary-button" @onclick="StopTrackingAsync"
+                disabled="@(_controlsBusy || !TrackingControl.IsTracking)">Stop</button>
         @if (_profileMessage is not null)
         {
             <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
@@ -168,6 +173,7 @@
     private string? _profileMessage;
     private bool _profileError;
     private bool _applyingProfile;
+    private bool _controlsBusy;
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {
@@ -278,7 +284,9 @@
         {
             await TrackingProfiles.ApplyAsync(_selectedProfile);
             _profileError = false;
-            _profileMessage = "Tracking restarted with the selected profile.";
+            _profileMessage = TrackingControl.IsTracking
+                ? "Tracking restarted with the selected profile."
+                : "The selected profile will be used when tracking starts.";
         }
         catch (Exception exception)
         {
@@ -288,6 +296,32 @@
         finally
         {
             _applyingProfile = false;
+        }
+    }
+
+    private Task StartTrackingAsync() => SetTrackingAsync(start: true);
+
+    private Task StopTrackingAsync() => SetTrackingAsync(start: false);
+
+    private async Task SetTrackingAsync(bool start)
+    {
+        _controlsBusy = true;
+        _profileMessage = null;
+        try
+        {
+            if (start) await TrackingControl.StartAsync();
+            else await TrackingControl.StopAsync();
+            _profileError = false;
+            _profileMessage = start ? "Tracking started." : "Tracking stopped.";
+        }
+        catch (Exception exception)
+        {
+            _profileError = true;
+            _profileMessage = exception.Message;
+        }
+        finally
+        {
+            _controlsBusy = false;
         }
     }
 

@@ -30,6 +30,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public IEnumerable<TrackedAircraftDto> State { get { lock (_stateLock) return _controller?.State.ToArray() ?? []; } }
     public TrackingOptions TrackingOptions { get { lock (_stateLock) return TrackingOptions.FromTrackerSettings(_settings); } }
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
+    public bool IsTracking { get { lock (_stateLock) return _controller is not null; } }
     public (double? Latitude, double? Longitude) ReceiverPosition
     {
         get { lock (_stateLock) return (_settings.ReceiverLatitude, _settings.ReceiverLongitude); }
@@ -42,7 +43,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         try
         {
             _started = true;
-            StartController();
         }
         finally { _gate.Release(); }
 
@@ -52,14 +52,34 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         _started = false;
     }
 
+    public async Task StartTrackingAsync(CancellationToken token = default)
+    {
+        await _gate.WaitAsync(token);
+        try
+        {
+            if (!_started)
+                throw new InvalidOperationException("The tracking runtime is not ready.");
+            if (!IsTracking) StartController();
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task StopTrackingAsync(CancellationToken token = default)
+    {
+        await _gate.WaitAsync(token);
+        try { await StopControllerCoreAsync(); }
+        finally { _gate.Release(); }
+    }
+
     public async Task ApplyAsync(TrackerApplicationSettings settings, CancellationToken token = default)
     {
         await _gate.WaitAsync(token);
         try
         {
+            var restartTracking = IsTracking;
             await StopControllerCoreAsync();
             lock (_stateLock) _settings = settings;
-            if (_started) StartController();
+            if (restartTracking) StartController();
         }
         finally { _gate.Release(); }
     }

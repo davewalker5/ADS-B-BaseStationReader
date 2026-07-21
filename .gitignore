@@ -411,3 +411,4 @@ appsettings.Development.json
 data/json/
 data/reports/
 data/export/
+.active-profile
