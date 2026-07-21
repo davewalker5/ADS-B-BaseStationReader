@@ -17,7 +17,7 @@ namespace BaseStationReader.Tests.Database
         public void Initialise()
         {
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(null, _context, 0, 0);
+            _factory = new DatabaseManagementFactory(null, _context, 0);
         }
     
         [TestMethod]

@@ -44,7 +44,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             // Construct a database management factory
             var logger = new MockFileLogger();
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Add the model and manufacturer
             var manufacturer = await _factory.ManufacturerManager.AddAsync(Manufacturer);

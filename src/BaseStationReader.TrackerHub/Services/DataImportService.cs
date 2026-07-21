@@ -49,7 +49,7 @@ public sealed class DataImportService : IDataImportService
             try
             {
                 await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-                var databaseFactory = new DatabaseManagementFactory(_logger, context, 0, 0);
+                var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
 
                 switch (importType)
                 {

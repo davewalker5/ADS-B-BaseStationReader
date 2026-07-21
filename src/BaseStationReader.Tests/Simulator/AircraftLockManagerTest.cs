@@ -18,7 +18,7 @@ namespace BaseStationReader.Tests.Simulator
         {
             var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs, 0);
+            _factory = new DatabaseManagementFactory(logger, context, TimeToLockMs);
         }
 
         [TestMethod]

@@ -286,7 +286,10 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .schedule-eligibility.incomplete { color: var(--amber); background: rgba(248,189,89,.07); border-color: rgba(248,189,89,.28); }
 .schedule-pagination { justify-content: flex-end; }
 .schedule-pagination .page-size { margin-left: 12px; }
-.import-panel { margin-top: 34px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.import-warning { margin-top: 34px; padding: 18px 20px; color: #ffe4a3; background: rgba(245, 184, 65, .08); border: 1px solid rgba(245, 184, 65, .34); border-radius: 13px; }
+.import-warning strong { display: block; font-size: 14px; }
+.import-warning p { margin: 7px 0 0; color: #d6c499; font-size: 12px; line-height: 1.55; }
+.import-panel { margin-top: 16px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
 .import-type-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .import-type-card { display: flex; gap: 11px; min-height: 112px; padding: 16px; background: #081524; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
 .import-type-card:hover, .import-type-card.selected { background: rgba(53,212,208,.06); border-color: rgba(53,212,208,.6); }

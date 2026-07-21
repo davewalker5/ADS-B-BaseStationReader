@@ -57,7 +57,7 @@ namespace BaseStationReader.Tests.API
             // Create a factory that can be used to query the objects that are created during lookup
             var logger = new MockFileLogger();
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
 
             _client = new();
             _wrapper = new ExternalApiFactory().GetWrapperInstance(_client, _factory, ApiServiceType.AirLabs, _settings);

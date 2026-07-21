@@ -19,7 +19,7 @@ namespace BaseStationReader.Tests.DataExchange
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            _factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            _factory = new DatabaseManagementFactory(logger, context, 0);
             _importer = new ManufacturerImporter(_factory);
         }
 

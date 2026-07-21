@@ -21,8 +21,8 @@
 - The AircraftTracker enqueues each new tracking object for asynchronous writing to the SQLite database
 - It also exposes events to notify subscribers when aircraft are added, updated and removed
 - The ContinuousWriter processes pending requests from the queue, in strictly serial order
-- External API integrations are supported for automatic/manual lookup of:
-  - Live and historical flight details
+- The separate Lookup Tool supports transient external API lookup of:
+  - Historical flight details
   - Airline details
   - Aircraft details
   - METAR reporting

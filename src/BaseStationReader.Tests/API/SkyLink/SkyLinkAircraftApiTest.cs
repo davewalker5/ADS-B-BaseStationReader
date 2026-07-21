@@ -38,7 +38,7 @@ namespace BaseStationReader.Tests.API.SkyLink
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
-            var factory = new DatabaseManagementFactory(logger, context, 0, 0);
+            var factory = new DatabaseManagementFactory(logger, context, 0);
             _client = new MockTrackerHttpClient();
             _api = new SkyLinkAircraftApi(_client, factory, _settings);
         }

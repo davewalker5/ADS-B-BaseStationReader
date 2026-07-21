@@ -44,8 +44,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public DatabaseManagementFactory(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
-            int timeToLockMs,
-            int maximumLookupAttempts)
+            int timeToLockMs)
         {
             Logger = logger;
             _context = context;
@@ -59,7 +58,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
             _flightIATACodeMappingManager = new Lazy<IFlightIATACodeMappingManager>(() => new FlightIATACodeMappingManager(context));
-            _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(logger, context, maximumLookupAttempts));
+            _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(logger, context));
             _positionWriter = new Lazy<IPositionWriter>(() => new PositionWriter(context));
             _aircraftLockManager = new Lazy<IAircraftLockManager>(() => new AircraftLockManager(_trackedAircraftWriter.Value, timeToLockMs));
             _excludedAddressManager = new Lazy<IExcludedAddressManager>(() => new ExcludedAddressManager(context));
