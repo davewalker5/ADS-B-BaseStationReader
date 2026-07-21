@@ -73,14 +73,14 @@ namespace BaseStationReader.Tests.API.AeroDataBox
             var mappings = _api.ExtractFlightMapping(JsonNode.Parse(Response), "AMS");
 
             Assert.HasCount(2, mappings);
-            AssertMapping(mappings[0], AirportType.Arrival, "KL1530", "KLM86H",
-                "LEVC", "LEVC", "Valencia", "LEVC", "AMS");
-            AssertMapping(mappings[1], AirportType.Departure, "KL1231", "KLM87R",
+            AssertMapping(mappings[0], AirportType.Departure, "KL1231", "KLM87R",
                 "ESGG", "GOT", "Goteborg", "AMS", "GOT");
+            AssertMapping(mappings[1], AirportType.Arrival, "KL1530", "KLM86H",
+                "LEVC", "LEVC", "Valencia", "LEVC", "AMS");
         }
 
         [TestMethod]
-        public void ExtractFlightMappingSkipsIncompleteFlightsTest()
+        public void ExtractFlightMappingRetainsIncompleteFlightsTest()
         {
             const string response = "{ \"departures\": [ { \"number\": \"KL 1231\", " +
                 "\"airline\": { \"iata\": \"KL\", \"icao\": \"KLM\" }, " +
@@ -88,7 +88,9 @@ namespace BaseStationReader.Tests.API.AeroDataBox
 
             var mappings = _api.ExtractFlightMapping(JsonNode.Parse(response), "AMS");
 
-            Assert.IsEmpty(mappings);
+            Assert.HasCount(1, mappings);
+            Assert.AreEqual("KL1231", mappings[0].FlightIATA);
+            Assert.AreEqual(string.Empty, mappings[0].Callsign);
         }
 
         [TestMethod]

@@ -142,6 +142,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.AddSingleton<ITrackingControlService, TrackingControlService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
+                builder.Services.Configure<ScheduleOptions>(builder.Configuration.GetSection("ApplicationSettings"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
                 builder.Services.AddSingleton<IReceiverPositionProvider>(runtime);
@@ -150,6 +151,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<IAirportWeatherLookupService, AirportWeatherLookupService>();
+                builder.Services.AddScoped<IAirportScheduleLookupService, AirportScheduleLookupService>();
                 builder.Services.AddScoped<IExclusionManagementService, ExclusionManagementService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>

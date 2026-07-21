@@ -79,7 +79,7 @@ namespace BaseStationReader.Api.AeroDatabox
 
             // Construct the URL with query parameters and log the request
             var url = $"{_baseAddress}/{iata}/{fromStr}/{toStr}?{BuildQueryString()}";
-            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Flights, url, ApiProperty.AirportIATA, iata);
+            await Factory.ApiLogManager.AddAsync(ServiceType, ApiEndpointType.Schedules, url, ApiProperty.AirportIATA, iata);
 
             // Make a request for the data from the API
             JsonNode node = await GetAsync(ServiceType, url, new Dictionary<string, string>()
@@ -96,7 +96,7 @@ namespace BaseStationReader.Api.AeroDatabox
         /// </summary>
         /// <param name="schedules">The JSON returned by <see cref="LookupSchedulesRawAsync"/>.</param>
         /// <param name="airportIata">The IATA code of the airport whose schedule was requested.</param>
-        /// <returns>A list of valid flight-to-callsign mappings.</returns>
+        /// <returns>All schedule rows projected as flight mapping entities.</returns>
         public List<FlightIATACodeMapping> ExtractFlightMapping(JsonNode schedules, string airportIata)
         {
             var mappings = new List<FlightIATACodeMapping>();
@@ -110,12 +110,8 @@ namespace BaseStationReader.Api.AeroDatabox
             ExtractFlightMappings(scheduleObject["arrivals"] as JsonArray, AirportType.Arrival,
                 airportIata.Trim().ToUpperInvariant(), mappings);
 
-            // A callsign identifies the mapping used during live tracking, so retain one row per callsign.
-            return mappings
-                .GroupBy(mapping => mapping.Callsign, StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.Last())
-                .OrderBy(mapping => mapping.Callsign, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            // Preserve every provider row and its direction for display and complete CSV export.
+            return mappings;
         }
 
         /// <summary>
@@ -134,10 +130,6 @@ namespace BaseStationReader.Api.AeroDatabox
                 var callsign = Compact(flight["callSign"]);
                 var airlineIata = Compact(airline?["iata"]);
                 var airlineIcao = Compact(airline?["icao"]);
-
-                // These fields are required for a mapping to be useful to the flight lookup process.
-                if (string.IsNullOrEmpty(flightIata) || string.IsNullOrEmpty(callsign) ||
-                    string.IsNullOrEmpty(airlineIata) || string.IsNullOrEmpty(airlineIcao)) continue;
 
                 var remoteAirportIata = Compact(airport?["iata"]);
                 mappings.Add(new FlightIATACodeMapping

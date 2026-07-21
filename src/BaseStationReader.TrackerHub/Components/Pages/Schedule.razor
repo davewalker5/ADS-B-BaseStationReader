@@ -1,0 +1,382 @@
+@page "/schedule"
+@inject IAirportScheduleLookupService ScheduleService
+@inject IJSRuntime JavaScript
+
+<PageTitle>Airport Schedule · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Flight mappings</p>
+        <h1>Airport Schedule</h1>
+        <p class="lede">Retrieve an airport schedule and optionally add its callsign mappings to the tracking database.</p>
+    </div>
+</section>
+
+<form class="schedule-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+    <div class="schedule-fields">
+        <label>
+            <span>Airport</span>
+            <select @bind="_iata" disabled="@(_airports.Count == 0)">
+                @if (_airports.Count == 0)
+                {
+                    <option value="">No airports available</option>
+                }
+                else
+                {
+                    @foreach (var airport in _airports)
+                    {
+                        <option value="@airport.IATA">@airport.DisplayName</option>
+                    }
+                }
+            </select>
+        </label>
+        <label>
+            <span>API service</span>
+            <select @bind="_serviceType" disabled="@(_services.Count == 0)">
+                @if (_services.Count == 0)
+                {
+                    <option value="@ApiServiceType.None">No configured services</option>
+                }
+                else
+                {
+                    @foreach (var service in _services)
+                    {
+                        <option value="@service">@service</option>
+                    }
+                }
+            </select>
+        </label>
+        <label>
+            <span>From</span>
+            <input type="datetime-local" value="@FormatDateTime(_from)" @onchange="ChangeFrom" />
+        </label>
+        <label>
+            <span>To</span>
+            <input type="datetime-local" value="@FormatDateTime(_to)" @onchange="ChangeTo" />
+        </label>
+        <button class="primary-button" type="submit" disabled="@(!CanLookup)">
+            @(_loading ? "Retrieving…" : "Retrieve")
+        </button>
+    </div>
+    <p class="schedule-note">The selected range must be greater than zero and no more than 12 hours.</p>
+</form>
+
+@if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Schedule operation failed</strong><span>@_error</span></div>
+}
+
+@if (_success is not null)
+{
+    <div class="import-success" role="status"><strong>Mappings stored</strong><span>@_success</span></div>
+}
+
+@if (_searched && !_loading && _error is null && _mappings.Count == 0)
+{
+    <section class="weather-empty">
+        <strong>No flight mappings returned</strong>
+        <p>@_serviceType did not return usable schedule mappings for @_iata.</p>
+    </section>
+}
+
+@if (_mappings.Count > 0)
+{
+    <section class="schedule-results" aria-live="polite">
+        <div class="schedule-results-heading">
+            <div>
+                <p class="eyebrow">@_iata · @_serviceType</p>
+                <h2>Schedule mappings</h2>
+            </div>
+            <div class="schedule-result-actions">
+                <span>@_mappings.Count flights · @EligibleCount storable</span>
+                <label class="checkbox schedule-incomplete-toggle">
+                    <input type="checkbox" checked="@_showIncomplete" @onchange="ChangeIncompleteVisibility" />
+                    Show incomplete
+                </label>
+                <button class="primary-button" type="button" @onclick="SaveAsync" disabled="@(_saving || EligibleCount == 0)">
+                    @(_saving ? "Storing…" : $"Store {EligibleCount}")
+                </button>
+                <button class="secondary-button" type="button" @onclick="ExportAsync" disabled="@_saving">
+                    Export CSV
+                </button>
+            </div>
+        </div>
+        <div class="schedule-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Callsign</th>
+                        <th>Flight IATA</th>
+                        <th>Airline IATA</th>
+                        <th>Airline ICAO</th>
+                        <th>Airline name</th>
+                        <th>Airport IATA</th>
+                        <th>Airport ICAO</th>
+                        <th>Airport name</th>
+                        <th>Embarkation</th>
+                        <th>Destination</th>
+                        <th>Direction</th>
+                        <th>Store</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mapping in PageMappings)
+                    {
+                        var eligible = FlightMappingEligibility.IsEligible(mapping);
+                        <tr class="@(eligible ? "schedule-eligible" : "schedule-incomplete")">
+                            <td class="mono"><strong>@Display(mapping.Callsign)</strong></td>
+                            <td>@Display(mapping.FlightIATA)</td>
+                            <td>@Display(mapping.AirlineIATA)</td>
+                            <td>@Display(mapping.AirlineICAO)</td>
+                            <td>@Display(mapping.AirlineName)</td>
+                            <td>@Display(mapping.AirportIATA)</td>
+                            <td>@Display(mapping.AirportICAO)</td>
+                            <td>@Display(mapping.AirportName)</td>
+                            <td>@Display(mapping.Embarkation)</td>
+                            <td>@Display(mapping.Destination)</td>
+                            <td><span class="status-pill">@mapping.AirportType</span></td>
+                            <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
+                                @(eligible ? "Ready" : "Incomplete")
+                            </span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination schedule-pagination">
+            <button type="button" @onclick="PreviousPage" disabled="@(_page <= 1)">← Previous</button>
+            <span>Page @_page of @PageCount · @PageStart–@PageEnd of @VisibleCount</span>
+            <button type="button" @onclick="NextPage" disabled="@(_page >= PageCount)">Next →</button>
+            <label class="page-size"><span>Rows</span>
+                <select value="@_pageSize" @onchange="ChangePageSize">
+                    @foreach (var size in PageSizes)
+                    {
+                        <option value="@size">@size</option>
+                    }
+                </select>
+            </label>
+        </div>
+    </section>
+}
+
+@code {
+#nullable enable
+    private static readonly TimeSpan MaximumRange = TimeSpan.FromHours(12);
+    private static readonly int[] PageSizes = [25, 50, 100, 250];
+    private ApiServiceType _serviceType = ApiServiceType.None;
+    private IReadOnlyList<ApiServiceType> _services = [];
+    private IReadOnlyList<AirportWeatherOption> _airports = [];
+    private IReadOnlyList<FlightIATACodeMapping> _mappings = [];
+    private string _iata = string.Empty;
+    private DateTime? _from;
+    private DateTime? _to;
+    private string? _error;
+    private string? _success;
+    private bool _loading;
+    private bool _saving;
+    private bool _searched;
+    private bool _showIncomplete;
+    private int _page = 1;
+    private int _pageSize = 50;
+    private int EligibleCount => _mappings.Count(FlightMappingEligibility.IsEligible);
+    private IEnumerable<FlightIATACodeMapping> VisibleMappings => _showIncomplete
+        ? _mappings
+        : _mappings.Where(FlightMappingEligibility.IsEligible);
+    private int VisibleCount => _showIncomplete ? _mappings.Count : EligibleCount;
+    private int PageCount => Math.Max(1, (int)Math.Ceiling(VisibleCount / (double)_pageSize));
+    private int PageStart => VisibleCount == 0 ? 0 : ((_page - 1) * _pageSize) + 1;
+    private int PageEnd => Math.Min(_page * _pageSize, VisibleCount);
+    private IEnumerable<FlightIATACodeMapping> PageMappings
+        => VisibleMappings.Skip((_page - 1) * _pageSize).Take(_pageSize);
+    private bool CanLookup => !_loading && !_saving && _services.Count > 0 &&
+        IsValidIata(_iata) && _from.HasValue && _to.HasValue &&
+        _to > _from && _to - _from <= MaximumRange;
+
+    /// <summary>
+    /// Loads configured schedule services, airports, and the default time range.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        _services = ScheduleService.GetServices();
+        _serviceType = _services.FirstOrDefault();
+        _airports = await ScheduleService.GetAirportsAsync();
+        _iata = _airports.FirstOrDefault(airport => IsValidIata(airport.IATA))?.IATA ?? string.Empty;
+        (_from, _to) = ScheduleService.GetDefaultRange(DateTime.Today);
+    }
+
+    /// <summary>
+    /// Applies a changed start time and constrains the end to the following 12 hours.
+    /// </summary>
+    private void ChangeFrom(ChangeEventArgs args)
+    {
+        _from = ParseDateTime(args.Value);
+        if (_from.HasValue && (!_to.HasValue || _to <= _from || _to - _from > MaximumRange))
+            _to = _from.Value.Add(MaximumRange);
+        ClearMessages();
+    }
+
+    /// <summary>
+    /// Applies a changed end time and constrains the start to the preceding 12 hours.
+    /// </summary>
+    private void ChangeTo(ChangeEventArgs args)
+    {
+        _to = ParseDateTime(args.Value);
+        if (_to.HasValue && (!_from.HasValue || _to <= _from || _to - _from > MaximumRange))
+            _from = _to.Value.Subtract(MaximumRange);
+        ClearMessages();
+    }
+
+    /// <summary>
+    /// Retrieves schedule mappings for the selected criteria.
+    /// </summary>
+    private async Task LookupAsync()
+    {
+        if (!CanLookup) return;
+        _loading = true;
+        _searched = true;
+        _error = null;
+        _success = null;
+        _mappings = [];
+        _page = 1;
+        try
+        {
+            _mappings = await ScheduleService.LookupAsync(
+                _serviceType, _iata, _from!.Value, _to!.Value);
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Stores the retrieved mappings using the database's add-or-update rules.
+    /// </summary>
+    private async Task SaveAsync()
+    {
+        if (_saving || _mappings.Count == 0) return;
+        _saving = true;
+        _error = null;
+        _success = null;
+        try
+        {
+            var eligibleCount = EligibleCount;
+            await ScheduleService.SaveAsync(_mappings);
+            _success = $"{eligibleCount} {(eligibleCount == 1 ? "mapping was" : "mappings were")} added or updated.";
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    /// <summary>
+    /// Downloads the retrieved mappings as an Import-tab-compatible CSV file.
+    /// </summary>
+    private async Task ExportAsync()
+    {
+        if (_mappings.Count == 0 || !_from.HasValue) return;
+
+        var fileName = $"{_from.Value:yyyy-MM-dd}-{_iata.ToUpperInvariant()}.csv";
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("callsign,flight_iata,airline_iata,airline_icao,airline_name,airport_iata,airport_icao,airport_name,embarkation,destination,direction,filename");
+        foreach (var mapping in _mappings)
+        {
+            // Quote every value so commas, quotes, and line breaks in provider names remain valid CSV.
+            csv.AppendLine(string.Join(',', new[]
+            {
+                Csv(mapping.Callsign), Csv(mapping.FlightIATA), Csv(mapping.AirlineIATA),
+                Csv(mapping.AirlineICAO), Csv(mapping.AirlineName), Csv(mapping.AirportIATA),
+                Csv(mapping.AirportICAO), Csv(mapping.AirportName), Csv(mapping.Embarkation),
+                Csv(mapping.Destination), Csv(mapping.AirportType.ToString()), Csv(fileName)
+            }));
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+        await using var stream = new MemoryStream(bytes);
+        using var streamReference = new DotNetStreamReference(stream);
+        await JavaScript.InvokeVoidAsync("scheduleDownloads.downloadCsv", fileName, streamReference);
+    }
+
+    /// <summary>
+    /// Escapes one value for standards-compliant CSV output.
+    /// </summary>
+    private static string Csv(string? value)
+    {
+        var escaped = (value ?? string.Empty).Replace("\"", "\"\"");
+        return string.Concat('"', escaped, '"');
+    }
+
+    /// <summary>
+    /// Moves to the preceding results page.
+    /// </summary>
+    private void PreviousPage() => _page = Math.Max(1, _page - 1);
+
+    /// <summary>
+    /// Moves to the following results page.
+    /// </summary>
+    private void NextPage() => _page = Math.Min(PageCount, _page + 1);
+
+    /// <summary>
+    /// Applies a changed page size and returns to the first page.
+    /// </summary>
+    private void ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var size) && PageSizes.Contains(size))
+            _pageSize = size;
+        _page = 1;
+    }
+
+    /// <summary>
+    /// Shows or hides incomplete schedule rows and returns to the first page.
+    /// </summary>
+    private void ChangeIncompleteVisibility(ChangeEventArgs args)
+    {
+        _showIncomplete = args.Value is true;
+        _page = 1;
+    }
+
+    /// <summary>
+    /// Returns a visible placeholder for a missing schedule value.
+    /// </summary>
+    private static string Display(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    /// <summary>
+    /// Clears feedback made stale by a changed search range.
+    /// </summary>
+    private void ClearMessages()
+    {
+        _error = null;
+        _success = null;
+    }
+
+    /// <summary>
+    /// Parses a browser datetime-local value.
+    /// </summary>
+    private static DateTime? ParseDateTime(object? value)
+        => DateTime.TryParse(value?.ToString(), out var parsed) ? parsed : null;
+
+    /// <summary>
+    /// Formats a nullable value for a browser datetime-local control.
+    /// </summary>
+    private static string FormatDateTime(DateTime? value)
+        => value?.ToString("yyyy-MM-ddTHH:mm") ?? string.Empty;
+
+    /// <summary>
+    /// Determines whether a value is a three-letter airport IATA code.
+    /// </summary>
+    private static bool IsValidIata(string? iata)
+    {
+        var value = iata?.Trim() ?? string.Empty;
+        return value.Length == 3 && value.All(character => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z');
+    }
+}
