@@ -112,8 +112,8 @@ namespace BaseStationReader.Lookup
                     await new AirportWeatherLookupHandler(settings, parser, logger, factory, apiFactory).HandleTafAsync();
                 }
 
-                // Export schedule information for a specified airport and, optionally, date range
-                if (parser.IsPresent(CommandLineOptionType.ExportSchedule))
+                // Look up and tabulate schedule information for a specified airport and optional date range
+                if (parser.IsPresent(CommandLineOptionType.AirportSchedule))
                 {
                     await new ScheduleLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }

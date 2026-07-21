@@ -23,9 +23,8 @@ namespace BaseStationReader.Api.Wrapper
         {
             _factory = factory;
             _register = new ExternalApiRegister(factory.Logger);
-            var airlineLookupManager = new AirlineLookupManager(_register, factory);
             _aircraftLookupManager = new AircraftLookupManager(_register, factory);
-            _flightLookupManager = new FlightLookupManager(_register, factory, airlineLookupManager);
+            _flightLookupManager = new FlightLookupManager(_register, factory);
             _weatherLookupManager = new WeatherLookupManager(factory.Logger, _register);
             _scheduleLookupManager = new ScheduleLookupManager(factory.Logger, _register);
         }
@@ -93,7 +92,7 @@ namespace BaseStationReader.Api.Wrapper
             }
 
             // We have both an aircraft and a flight - if required, create a sighting
-            if (request.CreateSighting)
+            if (request.CreateSighting && aircraft.Id > 0 && flight.Id > 0)
             {
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
             }

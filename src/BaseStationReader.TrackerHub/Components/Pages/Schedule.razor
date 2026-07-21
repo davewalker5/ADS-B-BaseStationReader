@@ -1,6 +1,5 @@
 @page "/schedule"
 @inject IAirportScheduleLookupService ScheduleService
-@inject IJSRuntime JavaScript
 
 <PageTitle>Airport Schedule · ADS-B Tracker</PageTitle>
 
@@ -66,11 +65,6 @@
     <div class="alert" role="alert"><strong>Schedule operation failed</strong><span>@_error</span></div>
 }
 
-@if (_success is not null)
-{
-    <div class="import-success" role="status"><strong>Mappings stored</strong><span>@_success</span></div>
-}
-
 @if (_searched && !_loading && _error is null && _mappings.Count == 0)
 {
     <section class="weather-empty">
@@ -85,20 +79,14 @@
         <div class="schedule-results-heading">
             <div>
                 <p class="eyebrow">@_iata · @_serviceType</p>
-                <h2>Schedule mappings</h2>
+                <h2>Airport Schedule</h2>
             </div>
             <div class="schedule-result-actions">
-                <span>@_mappings.Count flights · @EligibleCount storable</span>
+                <span>@_mappings.Count flights · @EligibleCount complete</span>
                 <label class="checkbox schedule-incomplete-toggle">
                     <input type="checkbox" checked="@_showIncomplete" @onchange="ChangeIncompleteVisibility" />
                     Show incomplete
                 </label>
-                <button class="primary-button" type="button" @onclick="SaveAsync" disabled="@(_saving || EligibleCount == 0)">
-                    @(_saving ? "Storing…" : $"Store {EligibleCount}")
-                </button>
-                <button class="secondary-button" type="button" @onclick="ExportAsync" disabled="@_saving">
-                    Export CSV
-                </button>
             </div>
         </div>
         <div class="schedule-table-wrap">
@@ -116,7 +104,7 @@
                         <th>Embarkation</th>
                         <th>Destination</th>
                         <th>Direction</th>
-                        <th>Store</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -136,7 +124,7 @@
                             <td>@Display(mapping.Destination)</td>
                             <td><span class="status-pill">@mapping.AirportType</span></td>
                             <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
-                                @(eligible ? "Ready" : "Incomplete")
+                                @(eligible ? "Complete" : "Incomplete")
                             </span></td>
                         </tr>
                     }
@@ -171,9 +159,7 @@
     private DateTime? _from;
     private DateTime? _to;
     private string? _error;
-    private string? _success;
     private bool _loading;
-    private bool _saving;
     private bool _searched;
     private bool _showIncomplete;
     private int _page = 1;
@@ -188,7 +174,7 @@
     private int PageEnd => Math.Min(_page * _pageSize, VisibleCount);
     private IEnumerable<FlightIATACodeMapping> PageMappings
         => VisibleMappings.Skip((_page - 1) * _pageSize).Take(_pageSize);
-    private bool CanLookup => !_loading && !_saving && _services.Count > 0 &&
+    private bool CanLookup => !_loading && _services.Count > 0 &&
         IsValidIata(_iata) && _from.HasValue && _to.HasValue &&
         _to > _from && _to - _from <= MaximumRange;
 
@@ -227,7 +213,7 @@
     }
 
     /// <summary>
-    /// Retrieves schedule mappings for the selected criteria.
+    /// Retrieves airport schedules for the selected criteria.
     /// </summary>
     private async Task LookupAsync()
     {
@@ -235,7 +221,6 @@
         _loading = true;
         _searched = true;
         _error = null;
-        _success = null;
         _mappings = [];
         _page = 1;
         try
@@ -251,68 +236,6 @@
         {
             _loading = false;
         }
-    }
-
-    /// <summary>
-    /// Stores the retrieved mappings using the database's add-or-update rules.
-    /// </summary>
-    private async Task SaveAsync()
-    {
-        if (_saving || _mappings.Count == 0) return;
-        _saving = true;
-        _error = null;
-        _success = null;
-        try
-        {
-            var eligibleCount = EligibleCount;
-            await ScheduleService.SaveAsync(_mappings);
-            _success = $"{eligibleCount} {(eligibleCount == 1 ? "mapping was" : "mappings were")} added or updated.";
-        }
-        catch (Exception exception)
-        {
-            _error = exception.Message;
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
-    /// <summary>
-    /// Downloads the retrieved mappings as an Import-tab-compatible CSV file.
-    /// </summary>
-    private async Task ExportAsync()
-    {
-        if (_mappings.Count == 0 || !_from.HasValue) return;
-
-        var fileName = $"{_from.Value:yyyy-MM-dd}-{_iata.ToUpperInvariant()}.csv";
-        var csv = new System.Text.StringBuilder();
-        csv.AppendLine("callsign,flight_iata,airline_iata,airline_icao,airline_name,airport_iata,airport_icao,airport_name,embarkation,destination,direction,filename");
-        foreach (var mapping in _mappings)
-        {
-            // Quote every value so commas, quotes, and line breaks in provider names remain valid CSV.
-            csv.AppendLine(string.Join(',', new[]
-            {
-                Csv(mapping.Callsign), Csv(mapping.FlightIATA), Csv(mapping.AirlineIATA),
-                Csv(mapping.AirlineICAO), Csv(mapping.AirlineName), Csv(mapping.AirportIATA),
-                Csv(mapping.AirportICAO), Csv(mapping.AirportName), Csv(mapping.Embarkation),
-                Csv(mapping.Destination), Csv(mapping.AirportType.ToString()), Csv(fileName)
-            }));
-        }
-
-        var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
-        await using var stream = new MemoryStream(bytes);
-        using var streamReference = new DotNetStreamReference(stream);
-        await JavaScript.InvokeVoidAsync("scheduleDownloads.downloadCsv", fileName, streamReference);
-    }
-
-    /// <summary>
-    /// Escapes one value for standards-compliant CSV output.
-    /// </summary>
-    private static string Csv(string? value)
-    {
-        var escaped = (value ?? string.Empty).Replace("\"", "\"\"");
-        return string.Concat('"', escaped, '"');
     }
 
     /// <summary>
@@ -356,7 +279,6 @@
     private void ClearMessages()
     {
         _error = null;
-        _success = null;
     }
 
     /// <summary>

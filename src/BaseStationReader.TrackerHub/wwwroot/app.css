@@ -306,33 +306,6 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .import-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; }
 .import-success { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 13px 16px; color: #bff4dc; background: rgba(79,218,161,.08); border: 1px solid rgba(79,218,161,.3); border-radius: 9px; }
 .import-success span { color: #9acbb8; font-size: 12px; }
-.exclusion-panel { margin-top: 46px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
-.exclusion-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 0 22px; border-bottom: 1px solid var(--line); }
-.exclusion-toolbar > span { color: var(--muted); font-size: 12px; }
-.exclusion-toolbar > span { padding-bottom: 18px; }
-.exclusion-tabs { display: flex; align-items: flex-end; gap: 28px; }
-.exclusion-tabs button { position: relative; padding: 19px 2px 17px; color: var(--muted); background: transparent; border: 0; cursor: pointer; font-size: 13px; font-weight: 700; }
-.exclusion-tabs button::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; background: transparent; border-radius: 3px 3px 0 0; }
-.exclusion-tabs button:hover { color: var(--text); }
-.exclusion-tabs button.active { color: var(--text); }
-.exclusion-tabs button.active::after { background: var(--cyan); }
-.exclusion-tabs button:focus-visible { outline: 2px solid var(--cyan); outline-offset: -4px; border-radius: 5px; }
-.exclusion-add { display: grid; grid-template-columns: minmax(250px, 1fr) auto; gap: 18px; align-items: end; padding: 26px 22px; background: rgba(8,21,36,.45); border-bottom: 1px solid var(--line); }
-.exclusion-add label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-.exclusion-add input, .exclusion-edit-input { width: 100%; min-height: 40px; padding: 8px 10px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
-.exclusion-add input:focus, .exclusion-edit-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
-.exclusion-add .primary-button { min-height: 40px; }
-.exclusion-panel > .alert { margin: 18px 22px 0; }
-.exclusion-table-wrap { max-height: 520px; overflow: auto; }
-.exclusion-table-wrap tbody tr { cursor: default; }
-.exclusion-actions-heading { width: 240px; text-align: right; }
-.exclusion-actions { text-align: right; }
-.exclusion-actions button { margin-left: 14px; }
-.exclusion-actions span { color: var(--muted); font-size: 11px; }
-.text-button.muted { color: var(--muted); }
-.text-button.danger { color: var(--red); }
-.exclusion-edit-input { max-width: 420px; min-height: 34px; }
-.exclusion-note { margin: 0; padding: 14px 22px; color: var(--muted); background: #081524; border-top: 1px solid var(--line); font-size: 11px; }
 
 @media (max-width: 850px) {
     main { width: min(100% - 24px, 1500px); padding-top: 25px; }
@@ -360,7 +333,6 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .import-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .import-upload { grid-template-columns: 1fr 1fr; }
     .import-upload .primary-button { grid-column: 1 / -1; }
-    .exclusion-actions-heading { width: 190px; }
 }
 
 @media (max-width: 520px) {
@@ -377,12 +349,6 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .plotly-path { min-height: 430px; }
     .import-type-grid, .import-upload { grid-template-columns: 1fr; }
     .import-upload .primary-button { grid-column: auto; }
-    .exclusion-toolbar { align-items: flex-start; flex-direction: column; }
-    .exclusion-tabs { width: 100%; gap: 20px; }
-    .exclusion-tabs button { flex: 1; }
-    .exclusion-add { grid-template-columns: 1fr; }
-    .exclusion-actions-heading { width: 145px; }
-    .exclusion-actions button { display: inline-block; margin: 4px 0 4px 10px; }
     .plotly-path.scene { min-height: 540px; }
     .radar-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
     .radar-summary .connection { margin-left: 0; }

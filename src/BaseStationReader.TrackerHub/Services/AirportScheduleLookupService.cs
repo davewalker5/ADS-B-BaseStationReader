@@ -23,7 +23,6 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
     private readonly IExternalApiFactory _apiFactory = new ExternalApiFactory();
-    private readonly SemaphoreSlim _saveLock = new(1, 1);
 
     /// <summary>
     /// Initialises an airport schedule lookup service.
@@ -100,36 +99,6 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
 
         var mappings = await wrapper.LookupSchedulesAsync(normalisedIata, from, to);
         return mappings?.ToList() ?? [];
-    }
-
-    /// <inheritdoc />
-    public async Task SaveAsync(
-        IEnumerable<FlightIATACodeMapping> mappings,
-        CancellationToken cancellationToken = default)
-    {
-        // Only complete callsign mappings are suitable for the database-backed flight lookup process.
-        var materialised = mappings?.Where(FlightMappingEligibility.IsEligible).ToList() ?? [];
-        if (materialised.Count == 0) return;
-
-        await _saveLock.WaitAsync(cancellationToken);
-        try
-        {
-            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-            var databaseFactory = new DatabaseManagementFactory(_logger, context, 0, _settings.MaximumLookups);
-            foreach (var mapping in materialised)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await databaseFactory.FlightIATACodeMappingManager.AddAsync(
-                    mapping.AirlineICAO, mapping.AirlineIATA, mapping.AirlineName,
-                    mapping.AirportICAO, mapping.AirportIATA, mapping.AirportName,
-                    mapping.AirportType, mapping.Embarkation, mapping.Destination,
-                    mapping.FlightIATA, mapping.Callsign, mapping.FileName);
-            }
-        }
-        finally
-        {
-            _saveLock.Release();
-        }
     }
 
     /// <summary>

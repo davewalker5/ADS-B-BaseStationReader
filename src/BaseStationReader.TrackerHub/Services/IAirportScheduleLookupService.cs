@@ -35,10 +35,4 @@ public interface IAirportScheduleLookupService
         DateTime to,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Adds or updates retrieved flight mappings in the tracking database.
-    /// </summary>
-    Task SaveAsync(
-        IEnumerable<FlightIATACodeMapping> mappings,
-        CancellationToken cancellationToken = default);
 }

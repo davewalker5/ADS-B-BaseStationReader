@@ -82,16 +82,18 @@ namespace BaseStationReader.Tests.API.Wrapper
             _client.AddResponse(Response);
 
             var aircraft = await _manager.IdentifyAircraftAsync(Address);
+            var storedAircraft = await _factory.AircraftManager.ListAsync(x => true);
 
             Assert.IsNotNull(aircraft);
-            Assert.IsGreaterThan(0, aircraft.Id);
+            Assert.AreEqual(0, aircraft.Id);
+            Assert.IsEmpty(storedAircraft);
             Assert.AreEqual(Address, aircraft.Address);
             Assert.AreEqual(Registration, aircraft.Registration);
             Assert.IsNull(aircraft.Manufactured);
             Assert.IsNull(aircraft.Age);
-            Assert.AreEqual(ModelIATA, aircraft.Model.IATA);
+            Assert.AreEqual(string.Empty, aircraft.Model.IATA);
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
-            Assert.AreEqual(Manufacturer, aircraft.Model.Manufacturer.Name);
+            Assert.AreEqual(string.Empty, aircraft.Model.Manufacturer.Name);
         }
     }
 }

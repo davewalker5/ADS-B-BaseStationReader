@@ -33,10 +33,10 @@ namespace BaseStationReader.Api.Wrapper
                 return null;
             }
 
-            // Attempt to load the airline from the database. If it's not there, see if the details are sufficient
-            // to store it. If not, use the API to look it up
+            // Prefer an existing local airline. Otherwise, construct one from complete supplied details or
+            // use the API to obtain the missing details, without persisting either result.
             var airline = await LoadAirlineAsync(iata, icao, name);
-            airline ??= await SaveAirlineAsync(iata, icao, name);
+            airline ??= CreateAirline(iata, icao, name);
             airline ??= await LookupAirlineAsync(iata, icao);
 
             // Log the airline details
@@ -75,27 +75,26 @@ namespace BaseStationReader.Api.Wrapper
         }
 
         /// <summary>
-        /// Attempt to load an airline from the database
+        /// Construct an in-memory airline when all required details have been supplied
         /// </summary>
         /// <param name="iata"></param>
         /// <param name="icao"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        private async Task<Airline> SaveAirlineAsync(string iata, string icao, string name)
+        private Airline CreateAirline(string iata, string icao, string name)
         {
-            Airline airline = null;
-
-            LogMessage(Severity.Info, iata, icao, name, $"Attempting to save airline to the database");
             if (!string.IsNullOrEmpty(iata) && !string.IsNullOrEmpty(icao) && !string.IsNullOrEmpty(name))
             {
-                airline = await _factory.AirlineManager.AddAsync(iata, icao, name);
-            }
-            else
-            {
-                LogMessage(Severity.Info, iata, icao, name, $"Insufficient details to save airline");
+                return new Airline
+                {
+                    IATA = iata,
+                    ICAO = icao,
+                    Name = name
+                };
             }
 
-            return airline;
+            LogMessage(Severity.Info, iata, icao, name, "Insufficient details to construct airline");
+            return null;
         }
 
         /// <summary>
@@ -129,9 +128,13 @@ namespace BaseStationReader.Api.Wrapper
                 properties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
                 properties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
 
-                // Create a new airline object containing the details returned by the API
-                LogMessage(Severity.Info, airlineIATA, airlineICAO, airlineName, "Saving new airline to the database");
-                airline = await _factory.AirlineManager.AddAsync(airlineIATA, airlineICAO, airlineName);
+                // Return the API result to the caller without writing it to the database.
+                airline = new Airline
+                {
+                    IATA = airlineIATA ?? string.Empty,
+                    ICAO = airlineICAO ?? string.Empty,
+                    Name = airlineName ?? string.Empty
+                };
             }
             else
             {

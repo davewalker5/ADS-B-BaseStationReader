@@ -17,7 +17,7 @@ public class AirportScheduleLookupServiceTest
     /// Verifies that storage eligibility requires the callsign and core flight/airline codes.
     /// </summary>
     [TestMethod]
-    public void IdentifyStorableMappingsTest()
+    public void IdentifyCompleteMappingsTest()
     {
         var complete = new FlightIATACodeMapping
         {
