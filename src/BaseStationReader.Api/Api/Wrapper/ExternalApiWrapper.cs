@@ -38,6 +38,36 @@ namespace BaseStationReader.Api.Wrapper
             => _register.RegisterExternalApi(type, api);
 
         /// <summary>
+        /// Resolves an aircraft from local data or the registered aircraft API.
+        /// </summary>
+        /// <param name="address">The aircraft's six-character ICAO address.</param>
+        /// <returns>The resolved aircraft, or null when it cannot be identified.</returns>
+        public async Task<Aircraft> LookupAircraftAsync(string address)
+            => await _aircraftLookupManager.IdentifyAircraftAsync(address);
+
+        /// <summary>
+        /// Resolves a flight from local data or the registered flights API.
+        /// </summary>
+        /// <param name="address">The aircraft's six-character ICAO address.</param>
+        /// <param name="callsign">The observed flight callsign.</param>
+        /// <returns>The resolved flight, or null when it cannot be identified.</returns>
+        public async Task<Flight> LookupFlightAsync(string address, string callsign)
+        {
+            // Interactive lookups are independent of tracked rows and use the current time for flight matching.
+            var trackedAircraft = new TrackedAircraft
+            {
+                Address = address,
+                Callsign = callsign,
+                LastSeen = DateTime.Now,
+                Status = TrackingStatus.Active
+            };
+            // Flight APIs search by aircraft address, but local callsign mappings remain usable without one.
+            var allowExternalApiLookup = !string.IsNullOrWhiteSpace(address);
+            return await _flightLookupManager.IdentifyFlightAsync(
+                trackedAircraft, null, null, allowExternalApiLookup);
+        }
+
+        /// <summary>
         /// Lookup a flight and aircraft given a 24-bit aircraft ICAO address and filtering parameters
         /// </summary>
         /// <param name="request"></param>

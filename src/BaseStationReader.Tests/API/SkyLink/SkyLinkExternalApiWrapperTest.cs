@@ -41,6 +41,7 @@ namespace BaseStationReader.Tests.API
         private IExternalApiWrapper _wrapper;
         private IDatabaseManagementFactory _factory;
         private TrackedAircraft _trackedAircraft;
+        private Model _model;
 
         private readonly ExternalApiSettings _settings = new()
         {
@@ -95,7 +96,27 @@ namespace BaseStationReader.Tests.API
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup
             var manufacturer = await _factory.ManufacturerManager.AddAsync(ManufacturerName);
-            await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            _model = await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+        }
+
+        /// <summary>
+        /// Verifies that the interactive wrapper methods return locally resolvable aircraft and flight details.
+        /// </summary>
+        [TestMethod]
+        public async Task InteractiveLookupFromLocalDataTestAsync()
+        {
+            var localAircraft = await _factory.AircraftManager.AddAsync(
+                AircraftAddress, AircraftRegistration, null, null, _model.Id);
+
+            var aircraft = await _wrapper.LookupAircraftAsync(AircraftAddress);
+            var flight = await _wrapper.LookupFlightAsync(string.Empty, Callsign);
+
+            Assert.IsNotNull(aircraft);
+            Assert.AreEqual(localAircraft.Id, aircraft.Id);
+            Assert.IsNotNull(flight);
+            Assert.IsGreaterThan(0, flight.Id);
+            Assert.AreEqual(FlightIATA, flight.IATA);
+            Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
         }
 
         [TestMethod]

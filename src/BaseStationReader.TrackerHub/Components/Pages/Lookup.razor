@@ -1,0 +1,174 @@
+@page "/lookup"
+@inject IReferenceLookupService LookupService
+
+<PageTitle>Aircraft and Flight Lookup · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">External reference data</p>
+        <h1>Aircraft and Flight Lookup</h1>
+        <p class="lede">Resolve locally stored details first, with transient API lookup when local data is unavailable.</p>
+    </div>
+</section>
+
+<form class="lookup-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+    <div class="lookup-fields">
+        <label><span>Aircraft service</span><select @bind="_aircraftService" disabled="@(_aircraftServices.Count == 0)">
+            @if (_aircraftServices.Count == 0) { <option value="@ApiServiceType.None">No configured services</option> }
+            else { @foreach (var service in _aircraftServices) { <option value="@service">@service</option> } }
+        </select></label>
+        <label><span>Flights service</span><select @bind="_flightService" disabled="@(_flightServices.Count == 0)">
+            @if (_flightServices.Count == 0) { <option value="@ApiServiceType.None">No configured services</option> }
+            else { @foreach (var service in _flightServices) { <option value="@service">@service</option> } }
+        </select></label>
+        <label><span>Aircraft address</span><input @bind="_address" @bind:event="oninput" maxlength="6" placeholder="e.g. 406A3D" autocomplete="off" /></label>
+        <label><span>Flight callsign</span><input @bind="_callsign" @bind:event="oninput" maxlength="12" placeholder="e.g. BAW486" autocomplete="off" /></label>
+        <button class="primary-button" type="submit" disabled="@(!CanLookup)">@(_loading ? "Looking up…" : "Look up details")</button>
+    </div>
+    <p class="lookup-note">Only services with the matching configured endpoint are shown. API-returned business data is not stored.</p>
+</form>
+
+@if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Lookup failed</strong><span>@_error</span></div>
+}
+
+@if (_searched && !_loading && _error is null)
+{
+    <section class="lookup-results" aria-live="polite">
+        @if (_lookupAircraft)
+        {
+        <div class="lookup-result-card">
+            <div class="lookup-result-heading"><div><p class="eyebrow">@_aircraftService</p><h2>Aircraft</h2></div><span>@(_aircraft is null ? "No result" : _aircraft.Address)</span></div>
+            @if (_aircraft is null)
+            {
+                <div class="lookup-empty">No aircraft details were found locally or returned by the selected service.</div>
+            }
+            else
+            {
+                <div class="table-wrap lookup-table-wrap"><table>
+                    <thead><tr><th>Address</th><th>Registration</th><th>Manufactured</th><th>Age</th><th>Model IATA</th><th>Model ICAO</th><th>Model</th><th>Manufacturer</th></tr></thead>
+                    <tbody><tr>
+                        <td class="mono">@Value(_aircraft.Address)</td><td>@Value(_aircraft.Registration)</td><td>@Value(_aircraft.Manufactured)</td><td>@Value(_aircraft.Age)</td>
+                        <td class="mono">@Value(_aircraft.Model?.IATA ?? _aircraft.ModelIATA)</td><td class="mono">@Value(_aircraft.Model?.ICAO ?? _aircraft.ModelICAO)</td>
+                        <td>@Value(_aircraft.Model?.Name)</td><td>@Value(_aircraft.Model?.Manufacturer?.Name ?? _aircraft.Model?.ManufacturerName)</td>
+                    </tr></tbody>
+                </table></div>
+            }
+        </div>
+        }
+
+        @if (_lookupFlight)
+        {
+        <div class="lookup-result-card">
+            <div class="lookup-result-heading"><div><p class="eyebrow">@_flightService</p><h2>Flight</h2></div><span>@(_flight is null ? "No result" : _flight.IATA)</span></div>
+            @if (_flight is null)
+            {
+                <div class="lookup-empty">No flight details were found locally or returned by the selected service.</div>
+            }
+            else
+            {
+                <div class="table-wrap lookup-table-wrap"><table>
+                    <thead><tr><th>Callsign</th><th>Flight IATA</th><th>Flight ICAO</th><th>Airline IATA</th><th>Airline ICAO</th><th>Airline</th><th>Embarkation</th><th>Destination</th><th>Aircraft</th><th>Model ICAO</th></tr></thead>
+                    <tbody><tr>
+                        <td class="mono">@Value(_callsign)</td><td class="mono">@Value(_flight.IATA)</td><td class="mono">@Value(_flight.ICAO)</td>
+                        <td class="mono">@Value(_flight.Airline?.IATA)</td><td class="mono">@Value(_flight.Airline?.ICAO)</td><td>@Value(_flight.Airline?.Name)</td>
+                        <td class="mono">@Value(_flight.Embarkation)</td><td class="mono">@Value(_flight.Destination)</td><td class="mono">@Value(_flight.AircraftAddress)</td><td class="mono">@Value(_flight.ModelICAO)</td>
+                    </tr></tbody>
+                </table></div>
+            }
+        </div>
+        }
+    </section>
+}
+
+@code {
+#nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "address")]
+    public string? Address { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "callsign")]
+    public string? Callsign { get; set; }
+
+    private IReadOnlyList<ApiServiceType> _aircraftServices = [];
+    private IReadOnlyList<ApiServiceType> _flightServices = [];
+    private ApiServiceType _aircraftService = ApiServiceType.None;
+    private ApiServiceType _flightService = ApiServiceType.None;
+    private string _address = string.Empty;
+    private string _callsign = string.Empty;
+    private Aircraft? _aircraft;
+    private Flight? _flight;
+    private string? _error;
+    private bool _loading;
+    private bool _searched;
+    private bool _lookupAircraft;
+    private bool _lookupFlight;
+    private bool _autoLookupHandled;
+    private bool HasValidAddress => string.IsNullOrWhiteSpace(_address) ||
+        (_address.Trim().Length == 6 && _address.Trim().All(Uri.IsHexDigit));
+    private bool CanLookup => !_loading && HasValidAddress &&
+        (!string.IsNullOrWhiteSpace(_address) || !string.IsNullOrWhiteSpace(_callsign)) &&
+        (string.IsNullOrWhiteSpace(_address) || _aircraftServices.Count > 0) &&
+        (string.IsNullOrWhiteSpace(_callsign) || _flightServices.Count > 0);
+
+    /// <summary>
+    /// Loads the configured aircraft and flight service choices.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        _aircraftServices = LookupService.GetServices(ApiEndpointType.Aircraft);
+        _flightServices = LookupService.GetServices(ApiEndpointType.Flights);
+        _aircraftService = _aircraftServices.FirstOrDefault();
+        _flightService = _flightServices.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Applies query-string values supplied by a live tracking row and automatically performs its lookup.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_autoLookupHandled) return;
+        _autoLookupHandled = true;
+
+        _address = Address?.Trim() ?? string.Empty;
+        _callsign = Callsign?.Trim() ?? string.Empty;
+        if (CanLookup)
+        {
+            await LookupAsync();
+        }
+    }
+
+    /// <summary>
+    /// Performs both local-first lookups and updates the result tables.
+    /// </summary>
+    private async Task LookupAsync()
+    {
+        if (!CanLookup) return;
+        _loading = true;
+        _searched = true;
+        _error = null;
+        _aircraft = null;
+        _flight = null;
+        _address = _address.Trim().ToUpperInvariant();
+        _callsign = _callsign.Trim().ToUpperInvariant();
+        _lookupAircraft = _address.Length > 0;
+        _lookupFlight = _callsign.Length > 0;
+        try
+        {
+            var result = await LookupService.LookupAsync(_aircraftService, _flightService, _address, _callsign);
+            _aircraft = result.Aircraft;
+            _flight = result.Flight;
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loading = false; }
+    }
+
+    /// <summary>
+    /// Formats an optional table value with a visible fallback.
+    /// </summary>
+    /// <param name="value">The value to display.</param>
+    /// <returns>The formatted value or an em dash.</returns>
+    private static string Value(object? value) => string.IsNullOrWhiteSpace(value?.ToString()) ? "—" : value.ToString()!;
+}
