@@ -20,7 +20,9 @@ namespace BaseStationReader.Lookup.Logic
             table.AddColumn("Max Values");
             table.AddColumn("Description");
 
-            foreach (var option in options)
+            foreach (var option in options.OrderBy(
+                option => option.Name.TrimStart('-'),
+                StringComparer.OrdinalIgnoreCase))
             {
                 var rowData = new string[] {
                     GetCellData(option.Name),

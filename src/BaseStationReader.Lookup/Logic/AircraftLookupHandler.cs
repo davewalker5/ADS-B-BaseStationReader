@@ -28,10 +28,6 @@ namespace BaseStationReader.Lookup.Logic
             // Get an instance of the API wrapper
             var wrapper = GetWrapperInstance(Settings.FlightApi);
 
-            // Extract the lookup parameters from the command line
-            var departureAirportCodes = GetAirportCodeList(CommandLineOptionType.Departure);
-            var arrivalAirportCodes = GetAirportCodeList(CommandLineOptionType.Arrival);
-
             // Retrieve a list of aircraft that haven't been looked up yet
             var aircraft = await Factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
             Logger.LogMessage(Severity.Info, $"Found {aircraft.Count} candidate(s) for lookup");
@@ -42,8 +38,8 @@ namespace BaseStationReader.Lookup.Logic
                 var request = new ApiLookupRequest()
                 {
                     AircraftAddress = a.Address,
-                    DepartureAirportCodes = departureAirportCodes,
-                    ArrivalAirportCodes = arrivalAirportCodes,
+                    DepartureAirportCodes = null,
+                    ArrivalAirportCodes = null,
                     CreateSighting = Settings.CreateSightings,
                     AllowExternalApiLookup = false
                 };

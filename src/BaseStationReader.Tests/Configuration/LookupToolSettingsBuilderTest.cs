@@ -27,6 +27,7 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.CreateSightings);
+            Assert.AreEqual("AirLabs", settings.AircraftApi);
             Assert.AreEqual("AirLabs", settings.FlightApi);
             Assert.AreEqual("CheckWXApi", settings.WeatherApi);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
@@ -79,6 +80,14 @@ namespace BaseStationReader.Tests.Configuration
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
             Assert.AreEqual("Missing", settings.FlightApi);
+        }
+
+        [TestMethod]
+        public void OverrideAircraftApiTest()
+        {
+            _parser.Parse(["--aircraft-api", "Missing"]);
+            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
+            Assert.AreEqual("Missing", settings.AircraftApi);
         }
 
         [TestMethod]

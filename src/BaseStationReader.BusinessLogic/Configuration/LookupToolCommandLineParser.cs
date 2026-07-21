@@ -10,11 +10,12 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
             Add(CommandLineOptionType.AddExcludedAddress, false, "--exclude-address", "-exa", "Add an aircraft address to the excluded addresses list", 1, 1);
             Add(CommandLineOptionType.AddExcludedCallsign, false, "--exclude-callsign", "-exc", "Add a callsign to the excluded callsigns list", 1, 1);
+            Add(CommandLineOptionType.Aircraft, false, "--aircraft", "-a", "Look up an aircraft by ICAO address", 1, 1);
+            Add(CommandLineOptionType.AircraftApi, false, "--aircraft-api", "-aapi", "Specify the name of an API to use for aircraft lookups", 1, 1);
             Add(CommandLineOptionType.ResolveAircraft, false, "--resolve-tracked", "-rt", "Resolve tracked aircraft and flight details using local reference data", 0, 0);
-            Add(CommandLineOptionType.Arrival, false, "--arrival", "-ar", "Specify a comma-separated list of arrival airport ICAO/IATA codes", 1, 1);
             Add(CommandLineOptionType.CreateSightings, false, "--create-sightings", "-cs", "If true, create sightings relating flights and aircraft when a lookup is completed", 1, 1);
-            Add(CommandLineOptionType.Departure, false, "--departure", "-d", "Specify a comma-separated list of departure airport ICAO/IATA codes", 1, 1);
             Add(CommandLineOptionType.AirportSchedule, false, "--airport-schedule", "-as", "Look up and tabulate schedule information for an airport", 1, 3);
+            Add(CommandLineOptionType.Flight, false, "--flight", "-f", "Look up a flight by callsign", 1, 1);
             Add(CommandLineOptionType.FlightApi, false, "--flight-api", "-fapi", "Specify the name of an API to use for flight lookups", 1, 1);
             Add(CommandLineOptionType.ImportAircraft, false, "--import-aircraft", "-imac", "Import a set of aircraft definitions from a CSV file", 1, 1);
             Add(CommandLineOptionType.ImportAirlines, false, "--import-airlines", "-ia", "Import a set of airline definitions from a CSV file", 1, 1);
