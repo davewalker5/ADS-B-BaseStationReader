@@ -116,7 +116,7 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreatedAsync();
+            await AssertExpectedAircraftNotCreatedAsync();
             await AssertExpectedAirlineCreatedAsync();
             await AssertExpectedFlightCreatedAsync();
         }
@@ -261,18 +261,10 @@ namespace BaseStationReader.Tests.API
             Assert.AreEqual(TAF, results.First());
         }
 
-        private async Task AssertExpectedAircraftCreatedAsync()
+        private async Task AssertExpectedAircraftNotCreatedAsync()
         {
             var aircraft = await _factory.AircraftManager.ListAsync(x => true);
-
-            Assert.IsNotNull(aircraft);
-            Assert.HasCount(1, aircraft);
-            Assert.AreEqual(AircraftAddress, aircraft[0].Address);
-            Assert.AreEqual(AircraftRegistration, aircraft[0].Registration);
-            Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
-            Assert.AreEqual(ModelICAO, aircraft[0].Model.ICAO);
-            Assert.AreEqual(ModelName, aircraft[0].Model.Name);
-            Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
+            Assert.IsEmpty(aircraft);
         }
 
         private async Task AssertExpectedAirlineCreatedAsync()

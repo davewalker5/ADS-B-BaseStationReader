@@ -104,7 +104,7 @@
                         <th>Embarkation</th>
                         <th>Destination</th>
                         <th>Direction</th>
-                        <th>Store</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,7 +124,7 @@
                             <td>@Display(mapping.Destination)</td>
                             <td><span class="status-pill">@mapping.AirportType</span></td>
                             <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
-                                @(eligible ? "Ready" : "Incomplete")
+                                @(eligible ? "Complete" : "Incomplete")
                             </span></td>
                         </tr>
                     }

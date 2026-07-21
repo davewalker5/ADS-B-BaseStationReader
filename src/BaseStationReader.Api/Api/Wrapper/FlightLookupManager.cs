@@ -12,13 +12,11 @@ namespace BaseStationReader.Api.Wrapper
     {
         private readonly IExternalApiRegister _register;
         private readonly IDatabaseManagementFactory _factory;
-        private readonly IAirlineLookupManager _airlineLookupManager;
 
-        public FlightLookupManager(IExternalApiRegister register, IDatabaseManagementFactory factory, IAirlineLookupManager airlineLookupManager)
+        public FlightLookupManager(IExternalApiRegister register, IDatabaseManagementFactory factory)
         {
             _register = register;
             _factory = factory;
-            _airlineLookupManager = airlineLookupManager;
         }
 
         /// <summary>
@@ -142,22 +140,17 @@ namespace BaseStationReader.Api.Wrapper
                     var matches = FilterFlight(aircraft, flightProperties, departureAirportCodes, arrivalAirportCodes);
                     if (matches)
                     {
-                        // Make sure the airline exists, as this is a pre-requisite for subsequently saving the flight
+                        // Construct the flight and airline for the caller without persisting API-returned data.
                         flightProperties.TryGetValue(ApiProperty.AirlineIATA, out string airlineIATA);
                         flightProperties.TryGetValue(ApiProperty.AirlineICAO, out string airlineICAO);
                         flightProperties.TryGetValue(ApiProperty.AirlineName, out string airlineName);
-                        var airline = await _airlineLookupManager.IdentifyAirlineAsync(airlineIATA, airlineICAO, airlineName);
-                        if (airline != null)
+                        var airline = new Airline
                         {
-                            // Save and return this flight as the matching flight
-                            flight = await SaveFlightAsync(flightProperties, airline.Id);
-                            return flight;
-                        }
-                        else
-                        {
-                            LogMessage(Severity.Debug, aircraft.Address, $"Unable to identify the airline - flight cannot be saved");
-                            return null;
-                        }
+                            IATA = airlineIATA ?? string.Empty,
+                            ICAO = airlineICAO ?? string.Empty,
+                            Name = airlineName ?? string.Empty
+                        };
+                        return CreateFlight(flightProperties, airline);
                     }
                 }
             }
@@ -289,30 +282,26 @@ namespace BaseStationReader.Api.Wrapper
         }
 
         /// <summary>
-        /// Given a set of API property values representing a flight, create and save a new flight
-        /// locally
+        /// Given API property values representing a flight, construct an in-memory flight instance
         /// </summary>
         /// <param name="properties"></param>
-        /// <param name="airlineId"></param>
+        /// <param name="airline"></param>
         /// <returns></returns>
-        protected async Task<Flight> SaveFlightAsync(Dictionary<ApiProperty, string> properties, int airlineId)
+        private static Flight CreateFlight(Dictionary<ApiProperty, string> properties, Airline airline)
         {
-            // Save the flight
-            Flight flight = await _factory.FlightManager.AddAsync(
-                properties[ApiProperty.FlightIATA],
-                properties[ApiProperty.FlightICAO],
-                properties[ApiProperty.EmbarkationIATA],
-                properties[ApiProperty.DestinationIATA],
-                airlineId);
-
-            // There may be additional aircraft details in the flight properties
+            // Provider-specific responses may include additional aircraft details used by the caller.
             properties.TryGetValue(ApiProperty.AircraftAddress, out string address);
             properties.TryGetValue(ApiProperty.ModelICAO, out string modelICAO);
-            flight.AircraftAddress = address;
-            flight.ModelICAO = modelICAO;
-
-            // And as we now have a matching flight, return it
-            return flight;
+            return new Flight
+            {
+                IATA = properties[ApiProperty.FlightIATA],
+                ICAO = properties[ApiProperty.FlightICAO],
+                Embarkation = properties[ApiProperty.EmbarkationIATA],
+                Destination = properties[ApiProperty.DestinationIATA],
+                AircraftAddress = address ?? string.Empty,
+                ModelICAO = modelICAO ?? string.Empty,
+                Airline = airline
+            };
         }
 
         /// <summary>

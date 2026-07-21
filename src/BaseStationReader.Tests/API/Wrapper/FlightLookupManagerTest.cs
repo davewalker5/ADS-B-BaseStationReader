@@ -54,7 +54,7 @@ namespace BaseStationReader.Tests.API.Wrapper
             var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.AeroDataBox, ApiEndpointType.Flights, _client, _factory, _settings);
             var register = new ExternalApiRegister(logger);
             register.RegisterExternalApi(ApiEndpointType.Flights, api);
-            _manager = new FlightLookupManager(register, _factory, null);
+            _manager = new FlightLookupManager(register, _factory);
         }
 
         [TestMethod]

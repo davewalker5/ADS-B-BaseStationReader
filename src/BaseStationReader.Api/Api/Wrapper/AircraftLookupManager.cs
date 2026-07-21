@@ -81,12 +81,29 @@ namespace BaseStationReader.Api.Wrapper
                 var manufactured = GetYearOfManufacture(properties[ApiProperty.AircraftManufactured]);
                 int? age = manufactured != null ? DateTime.Today.Year - manufactured : null;
 
-                // Save the manufacturer, model and aircraft
-                var manufacturer = await _factory.ManufacturerManager.AddAsync(properties[ApiProperty.ManufacturerName]);
-                var model = await _factory.ModelManager.AddAsync(
-                    properties[ApiProperty.ModelIATA], properties[ApiProperty.ModelICAO], properties[ApiProperty.ModelName], manufacturer.Id);
-                aircraft = await _factory.AircraftManager.AddAsync(
-                    address, properties[ApiProperty.AircraftRegistration], manufactured, age, model.Id);
+                // Construct the related objects for the caller without adding API-returned data to the database.
+                var manufacturer = new Manufacturer
+                {
+                    Name = properties[ApiProperty.ManufacturerName]
+                };
+                var model = new Model
+                {
+                    IATA = properties[ApiProperty.ModelIATA],
+                    ICAO = properties[ApiProperty.ModelICAO],
+                    Name = properties[ApiProperty.ModelName],
+                    ManufacturerName = manufacturer.Name,
+                    Manufacturer = manufacturer
+                };
+                aircraft = new Aircraft
+                {
+                    Address = address,
+                    Registration = properties[ApiProperty.AircraftRegistration],
+                    Manufactured = manufactured,
+                    Age = age,
+                    ModelIATA = model.IATA,
+                    ModelICAO = model.ICAO,
+                    Model = model
+                };
             }
             else
             {

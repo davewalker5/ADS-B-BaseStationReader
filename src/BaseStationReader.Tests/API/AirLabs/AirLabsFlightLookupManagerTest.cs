@@ -41,23 +41,19 @@ namespace BaseStationReader.Tests.API.AirLabs
         };
 
         [TestInitialize]
-        public async Task Initialise()
+        public void Initialise()
         {
             // Construct a database management factory
             var logger = new MockFileLogger();
             BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(logger, context, 0, 0);
 
-            // Add the airline to the database
-            _ = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-
             // Construct the lookup management instance
             _client = new MockTrackerHttpClient();
             var api = new ExternalApiFactory().GetApiInstance(ApiServiceType.AirLabs, ApiEndpointType.Flights, _client, _factory, _settings);
             var register = new ExternalApiRegister(logger);
             register.RegisterExternalApi(ApiEndpointType.Flights, api);
-            var airlineLookupManager = new AirlineLookupManager(register, _factory);
-            _manager = new FlightLookupManager(register, _factory, airlineLookupManager);
+            _manager = new FlightLookupManager(register, _factory);
         }
 
         [TestMethod]
@@ -74,14 +70,15 @@ namespace BaseStationReader.Tests.API.AirLabs
             var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [], []);
 
             Assert.IsNotNull(flight);
-            Assert.IsGreaterThan(0, flight.Id);
+            Assert.AreEqual(0, flight.Id);
             Assert.AreEqual(FlightIATA, flight.IATA);
             Assert.AreEqual(FlightICAO, flight.ICAO);
             Assert.AreEqual(Embarkation, flight.Embarkation);
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
             Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
-            Assert.AreEqual(AirlineName, flight.Airline.Name);
+            Assert.IsEmpty(flight.Airline.Name);
+            await AssertFlightDataNotPersistedAsync();
         }
 
         [TestMethod]
@@ -98,14 +95,15 @@ namespace BaseStationReader.Tests.API.AirLabs
             var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Destination]);
 
             Assert.IsNotNull(flight);
-            Assert.IsGreaterThan(0, flight.Id);
+            Assert.AreEqual(0, flight.Id);
             Assert.AreEqual(FlightIATA, flight.IATA);
             Assert.AreEqual(FlightICAO, flight.ICAO);
             Assert.AreEqual(Embarkation, flight.Embarkation);
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
             Assert.AreEqual(AirlineICAO, flight.Airline.ICAO);
-            Assert.AreEqual(AirlineName, flight.Airline.Name);
+            Assert.IsEmpty(flight.Airline.Name);
+            await AssertFlightDataNotPersistedAsync();
         }
 
         [TestMethod]
@@ -122,6 +120,15 @@ namespace BaseStationReader.Tests.API.AirLabs
             var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Destination], [Destination]);
 
             Assert.IsNull(flight);
+        }
+
+        private async Task AssertFlightDataNotPersistedAsync()
+        {
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
+            var flights = await _factory.FlightManager.ListAsync(x => true);
+
+            Assert.IsEmpty(airlines);
+            Assert.IsEmpty(flights);
         }
 
         [TestMethod]

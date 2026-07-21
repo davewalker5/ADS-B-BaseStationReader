@@ -97,9 +97,8 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreatedAsync();
-            await AssertExpectedAirlineCreatedAsync();
-            await AssertExpectedFlightCreatedAsync();
+            await AssertExpectedAircraftNotCreatedAsync();
+            await AssertExpectedAirlineAndFlightNotCreatedAsync();
         }
 
         [TestMethod]
@@ -179,9 +178,8 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsTrue(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreatedAsync();
-            await AssertExpectedAirlineCreatedAsync();
-            await AssertExpectedFlightCreatedAsync();
+            await AssertExpectedAircraftNotCreatedAsync();
+            await AssertExpectedAirlineAndFlightNotCreatedAsync();
         }
 
         [TestMethod]
@@ -205,49 +203,24 @@ namespace BaseStationReader.Tests.API
 
             Assert.IsFalse(result.Successful);
             Assert.IsFalse(result.Requeue);
-            await AssertExpectedAircraftCreatedAsync();
+            await AssertExpectedAircraftNotCreatedAsync();
             Assert.IsEmpty(airlines);
             Assert.IsEmpty(flights);
         }
 
-        private async Task AssertExpectedAircraftCreatedAsync()
+        private async Task AssertExpectedAircraftNotCreatedAsync()
         {
             var aircraft = await _factory.AircraftManager.ListAsync(x => true);
-            var expectedAge = DateTime.Now.Year - 2018;
-
-            Assert.IsNotNull(aircraft);
-            Assert.HasCount(1, aircraft);
-            Assert.AreEqual(AircraftAddress, aircraft[0].Address);
-            Assert.AreEqual(AircraftRegistration, aircraft[0].Registration);
-            Assert.AreEqual(AircraftManufactured, aircraft[0].Manufactured);
-            Assert.AreEqual(expectedAge, aircraft[0].Age);
-            Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
-            Assert.AreEqual(ModelICAO, aircraft[0].Model.ICAO);
-            Assert.AreEqual(ModelName, aircraft[0].Model.Name);
-            Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
+            Assert.IsEmpty(aircraft);
         }
 
-        private async Task AssertExpectedAirlineCreatedAsync()
+        private async Task AssertExpectedAirlineAndFlightNotCreatedAsync()
         {
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
-
-            Assert.IsNotNull(airlines);
-            Assert.HasCount(1, airlines);
-            Assert.AreEqual(AirlineIATA, airlines[0].IATA);
-            Assert.AreEqual(AirlineICAO, airlines[0].ICAO);
-            Assert.AreEqual(AirlineName, airlines[0].Name);
-        }
-
-        private async Task AssertExpectedFlightCreatedAsync()
-        {
             var flights = await _factory.FlightManager.ListAsync(x => true);
 
-            Assert.IsNotNull(flights);
-            Assert.HasCount(1, flights);
-            Assert.AreEqual(FlightIATA, flights[0].IATA);
-            Assert.AreEqual(AirlineICAO, flights[0].Airline.ICAO);
-            Assert.AreEqual(AirlineIATA, flights[0].Airline.IATA);
-            Assert.AreEqual(AirlineName, flights[0].Airline.Name);
+            Assert.IsEmpty(airlines);
+            Assert.IsEmpty(flights);
         }
     }
 }

@@ -120,10 +120,11 @@ namespace BaseStationReader.Tests.API.Wrapper
             var airline = await _manager.IdentifyAirlineAsync(IATA, null, null);
 
             Assert.IsNotNull(airline);
-            Assert.IsGreaterThan(0, airline.Id);
+            Assert.AreEqual(0, airline.Id);
             Assert.AreEqual(IATA, airline.IATA);
             Assert.AreEqual(ICAO, airline.ICAO);
             Assert.AreEqual(Name, airline.Name);
+            await AssertNoAirlinesPersistedAsync();
         }
 
         [TestMethod]
@@ -135,10 +136,30 @@ namespace BaseStationReader.Tests.API.Wrapper
             var airline = await _manager.IdentifyAirlineAsync(null, ICAO, null);
 
             Assert.IsNotNull(airline);
-            Assert.IsGreaterThan(0, airline.Id);
+            Assert.AreEqual(0, airline.Id);
             Assert.AreEqual(IATA, airline.IATA);
             Assert.AreEqual(ICAO, airline.ICAO);
             Assert.AreEqual(Name, airline.Name);
+            await AssertNoAirlinesPersistedAsync();
+        }
+
+        [TestMethod]
+        public async Task ConstructFromCompletePropertiesTestAsync()
+        {
+            var airline = await _manager.IdentifyAirlineAsync(IATA, ICAO, Name);
+
+            Assert.IsNotNull(airline);
+            Assert.AreEqual(0, airline.Id);
+            Assert.AreEqual(IATA, airline.IATA);
+            Assert.AreEqual(ICAO, airline.ICAO);
+            Assert.AreEqual(Name, airline.Name);
+            await AssertNoAirlinesPersistedAsync();
+        }
+
+        private async Task AssertNoAirlinesPersistedAsync()
+        {
+            var airlines = await _factory.AirlineManager.ListAsync(x => true);
+            Assert.IsEmpty(airlines);
         }
     }
 }
