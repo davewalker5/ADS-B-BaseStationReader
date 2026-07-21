@@ -23,6 +23,36 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         /// <summary>
+        /// Verifies that aircraft lookup accepts an ICAO address in its long and short forms.
+        /// </summary>
+        [TestMethod]
+        [DataRow("--aircraft")]
+        [DataRow("-a")]
+        public void AircraftLookupOptionTest(string option)
+        {
+            var parser = new LookupToolCommandLineParser(null);
+            parser.Parse([option, "406B5A"]);
+
+            Assert.IsTrue(parser.IsPresent(CommandLineOptionType.Aircraft));
+            Assert.AreEqual("406B5A", parser.GetValues(CommandLineOptionType.Aircraft).Single());
+        }
+
+        /// <summary>
+        /// Verifies that the aircraft API selector accepts its long and short forms.
+        /// </summary>
+        [TestMethod]
+        [DataRow("--aircraft-api")]
+        [DataRow("-aapi")]
+        public void AircraftApiOptionTest(string option)
+        {
+            var parser = new LookupToolCommandLineParser(null);
+            parser.Parse([option, "AirLabs"]);
+
+            Assert.IsTrue(parser.IsPresent(CommandLineOptionType.AircraftApi));
+            Assert.AreEqual("AirLabs", parser.GetValues(CommandLineOptionType.AircraftApi).Single());
+        }
+
+        /// <summary>
         /// Verifies that schedule lookup accepts an airport without an output path.
         /// </summary>
         [TestMethod]

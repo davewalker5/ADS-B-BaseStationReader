@@ -3,6 +3,7 @@
     "LogFile": "AircraftLookup.log",
     "MinimumLogLevel": "Info",
     "CreateSightings": false,
+    "AircraftApi": "AirLabs",
     "FlightApi": "AirLabs",
     "WeatherApi": "CheckWXApi",
     "ReceiverLatitude": 51.470020,

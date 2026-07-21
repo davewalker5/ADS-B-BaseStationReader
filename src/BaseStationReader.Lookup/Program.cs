@@ -40,7 +40,7 @@ namespace BaseStationReader.Lookup
                 var title = $"Aircraft Lookup Tool v{info.FileVersion}";
 
                 // Show the startup messages
-                Console.WriteLine(new string('=', 80));
+                Console.WriteLine("\n" + new string('=', 80));
                 Console.WriteLine(title);
                 Console.WriteLine($"Output will be logged to {settings.LogFile}");
 
@@ -98,6 +98,12 @@ namespace BaseStationReader.Lookup
                 if (parser.IsPresent(CommandLineOptionType.ResolveAircraft))
                 {
                     await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
+                }
+
+                // Look up and tabulate an aircraft using its ICAO address
+                if (parser.IsPresent(CommandLineOptionType.Aircraft))
+                {
+                    await new InteractiveAircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Look up and tabulate a flight using its callsign

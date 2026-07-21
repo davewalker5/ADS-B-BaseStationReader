@@ -6,6 +6,8 @@
         AddExcludedCallsign,
         AddressFile,
         AircraftNotificationInterval,
+        Aircraft,
+        AircraftApi,
         ResolveAircraft,
         ApplicationTimeout,
         Arrival,
