@@ -1,0 +1,18 @@
+SELECT DISTINCT ?wikidataId ?name ?iata ?icao
+WHERE
+{
+  ?airline wdt:P229 ?iata ;
+           wdt:P230 ?icao ;
+           rdfs:label ?name .
+
+  FILTER(LANG(?name) = "en")
+
+  BIND(
+    REPLACE(
+      STR(?airline),
+      "http://www.wikidata.org/entity/",
+      ""
+    ) AS ?wikidataId
+  )
+}
+ORDER BY ?name
