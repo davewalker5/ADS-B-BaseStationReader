@@ -321,6 +321,51 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("MODEL", (string)null);
                 });
 
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Provenance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Licence")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Licence");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Source");
+
+                    b.Property<string>("SourceDataset")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceDataset");
+
+                    b.Property<string>("SourceRef")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceRef");
+
+                    b.Property<string>("SourceUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceUrl");
+
+                    b.Property<string>("SourceVersion")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceVersion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceRef")
+                        .IsUnique();
+
+                    b.ToTable("PROVENANCE", (string)null);
+                });
+
             modelBuilder.Entity("BaseStationReader.Entities.Api.Sighting", b =>
                 {
                     b.Property<int>("Id")

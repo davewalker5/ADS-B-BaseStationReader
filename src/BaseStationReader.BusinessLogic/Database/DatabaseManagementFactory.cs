@@ -23,6 +23,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IExcludedAddressManager> _excludedAddressManager = null;
         private readonly Lazy<IExcludedCallsignManager> _excludedCallsignManager = null;
         private readonly Lazy<IApiLogManager> _apiLogManager = null;
+        private readonly Lazy<IProvenanceManager> _provenanceManager = null;
 
         public ITrackerLogger Logger { get; private set; }
         public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
@@ -40,6 +41,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public IExcludedAddressManager ExcludedAddressManager { get { return _excludedAddressManager.Value; } }
         public IExcludedCallsignManager ExcludedCallsignManager { get { return _excludedCallsignManager.Value; } }
         public IApiLogManager ApiLogManager { get { return _apiLogManager.Value; } }
+        public IProvenanceManager ProvenanceManager { get { return _provenanceManager.Value; } }
 
         public DatabaseManagementFactory(
             ITrackerLogger logger,
@@ -64,6 +66,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _excludedAddressManager = new Lazy<IExcludedAddressManager>(() => new ExcludedAddressManager(context));
             _excludedCallsignManager = new Lazy<IExcludedCallsignManager>(() => new ExcludedCallsignManager(context));
             _apiLogManager = new Lazy<IApiLogManager>(() => new ApiLogManager(context));
+            _provenanceManager = new Lazy<IProvenanceManager>(() => new ProvenanceManager(context));
         }
 
         /// <summary>

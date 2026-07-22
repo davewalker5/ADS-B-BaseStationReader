@@ -21,6 +21,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
         public virtual DbSet<ExcludedCallsign> ExcludedCallsigns { get; set; }
         public virtual DbSet<ApiLogEntry> ApiLogEntries { get; set; }
+        public virtual DbSet<Provenance> Provenance { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -194,6 +195,21 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+            });
+
+            modelBuilder.Entity<Provenance>(entity =>
+            {
+                entity.ToTable("PROVENANCE");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.SourceRef).IsRequired().HasColumnName("SourceRef");
+                entity.Property(e => e.Source).IsRequired().HasColumnName("Source");
+                entity.Property(e => e.SourceUrl).IsRequired().HasColumnName("SourceUrl");
+                entity.Property(e => e.SourceDataset).IsRequired().HasColumnName("SourceDataset");
+                entity.Property(e => e.SourceVersion).IsRequired().HasColumnName("SourceVersion");
+                entity.Property(e => e.Licence).IsRequired().HasColumnName("Licence");
+
+                entity.HasIndex(e => e.SourceRef).IsUnique();
             });
 
             modelBuilder.Entity<Sighting>(entity =>
