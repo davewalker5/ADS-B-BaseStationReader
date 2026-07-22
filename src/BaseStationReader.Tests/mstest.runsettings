@@ -5,9 +5,6 @@
   </RunConfiguration>
   <MSTest>
     <!-- Disable or tune parallelization here -->
-    <Parallelize>
-      <DisableParallelization>true</DisableParallelization>
-      <Scope>ClassLevel</Scope>
-    </Parallelize>
+    <DisableParallelization>true</DisableParallelization>
   </MSTest>
 </RunSettings>
