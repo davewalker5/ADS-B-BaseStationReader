@@ -24,8 +24,12 @@
 @if (_activeTab == ReferenceTab.Import)
 {
     <section class="import-warning" aria-labelledby="import-licence-warning">
-        <strong id="import-licence-warning">Use appropriately licensed data only</strong>
+        <h3 id="import-licence-warning">Use appropriately licensed data only</h3>
         <p>Only import data that you are permitted to store and reuse. Check the licence, terms of service, copyright, and any other conditions that apply to the source before importing data into ADS-B Tracker.</p>
+        <h3>Record the provenance of imported data</h3>
+        <p>Before importing data, create a provenance record for its source using the <strong>Provenance</strong> tab.</p>
+        <p>Each row in the import file must reference the appropriate provenance record using it's "Source Reference". This records where the imported data came from, the dataset or version used, and the licence under which it is being used.</p>
+        <p>Where an import contains data from more than one source, assign the appropriate provenance indicator to each row before importing.</p>
     </section>
 
     <section class="import-panel">

@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
+#nullable enable
+
 namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
@@ -22,9 +24,9 @@ namespace BaseStationReader.Entities.Api
         public int ManufacturerId { get; set; }
 
         [NotMapped]
-        public string ManufacturerName { get; set; }
+        public string ManufacturerName { get; set; } = "";
 
-        public Manufacturer Manufacturer { get; set; }
+        public Manufacturer Manufacturer { get; set; } = null!;
 
         public int ProvenanceId { get; set; }
 

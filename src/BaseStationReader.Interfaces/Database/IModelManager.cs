@@ -1,6 +1,8 @@
 ﻿using BaseStationReader.Entities.Api;
 using System.Linq.Expressions;
 
+#nullable enable
+
 namespace BaseStationReader.Interfaces.Database
 {
     public interface IModelManager
