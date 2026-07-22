@@ -60,6 +60,7 @@ namespace BaseStationReader.Tests.Tracking
         }
 
         [TestMethod]
+        [TestCategory("TimingSensitive")]
         public async Task TestAircraftTracker()
         {
             // Wire up the event handlers
