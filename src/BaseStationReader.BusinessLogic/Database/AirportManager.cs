@@ -52,7 +52,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Return all airports matching the specified criteria.
         /// </summary>
         public async Task<List<Airport>> ListAsync(Expression<Func<Airport, bool>> predicate)
-            => await _context.Airports.Where(predicate).ToListAsync();
+            => await _context.Airports.Include(x => x.Provenance).Where(predicate).ToListAsync();
 
         /// <summary>
         /// Add an airport if it does not already exist.
@@ -65,6 +65,9 @@ namespace BaseStationReader.BusinessLogic.Database
             airport.IATA = StringCleaner.CleanIATA(airport.IATA);
             airport.ICAO = StringCleaner.CleanICAO(airport.ICAO);
             airport.Name = StringCleaner.CleanName(airport.Name);
+            if (!await _context.Provenance.AnyAsync(x => x.Id == airport.ProvenanceId))
+                throw new InvalidOperationException($"Provenance record {airport.ProvenanceId} does not exist.");
+
             var existing = await GetAsync(airport.IATA, airport.ICAO, airport.Name);
             if (existing == null)
             {

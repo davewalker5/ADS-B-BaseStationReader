@@ -1,2 +1,2 @@
-IATA,ICAO,Latitude,Longitude,Distance,Name
-ALC,LEAL,38.2822,-0.55816,804.5,Alicante International Airport
+IATA,ICAO,Latitude,Longitude,Provenance,Name
+ALC,LEAL,38.2822,-0.55816,LOCAL,Alicante International Airport

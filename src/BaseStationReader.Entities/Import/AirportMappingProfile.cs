@@ -16,7 +16,7 @@ namespace BaseStationReader.Entities.Import
             Map(m => m.ICAO).Name("ICAO");
             Map(m => m.Latitude).Name("Latitude");
             Map(m => m.Longitude).Name("Longitude");
-            Map(m => m.Distance).Name("Distance");
+            Map(m => m.ProvenanceRef).Name("Provenance");
             Map(m => m.Name).Name("Name");
         }
     }

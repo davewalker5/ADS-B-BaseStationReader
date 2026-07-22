@@ -139,7 +139,12 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
                 entity.Property(e => e.Latitude).HasColumnType("REAL").HasColumnName("Latitude");
                 entity.Property(e => e.Longitude).HasColumnType("REAL").HasColumnName("Longitude");
-                entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Flight>(entity =>

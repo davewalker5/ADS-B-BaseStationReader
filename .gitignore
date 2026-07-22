@@ -408,7 +408,6 @@ ASALocalRun/
 published/
 Published/
 appsettings.Development.json
-data/json/
+data/reference/
 data/reports/
-data/export/
 .active-profile
