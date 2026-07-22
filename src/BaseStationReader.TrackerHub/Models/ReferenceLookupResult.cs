@@ -9,4 +9,10 @@ namespace BaseStationReader.TrackerHub.Models;
 /// </summary>
 /// <param name="Aircraft">The resolved aircraft, when available.</param>
 /// <param name="Flight">The resolved flight, when available.</param>
-public sealed record ReferenceLookupResult(Aircraft? Aircraft, Flight? Flight);
+/// <param name="AircraftSource">The source of the aircraft result, when available.</param>
+/// <param name="FlightSource">The source of the flight result, when available.</param>
+public sealed record ReferenceLookupResult(
+    Aircraft? Aircraft,
+    Flight? Flight,
+    ReferenceLookupSource? AircraftSource,
+    ReferenceLookupSource? FlightSource);
