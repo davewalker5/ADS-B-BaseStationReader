@@ -25,7 +25,7 @@ namespace BaseStationReader.Tests.Database
             await context.Airlines.AddAsync(new() { IATA = "ba", ICAO = "baw", Name = "brITish \nairWAYS  ", ProvenanceId = provenance.Id });
             await context.Manufacturers.AddAsync(new() { Id = 1, Name = "  haWKer SiDDeley \r\naviation ltd.   ", ProvenanceId = provenance.Id });
             await context.SaveChangesAsync();
-            await context.Models.AddAsync(new() { IATA = "abb", ICAO = "a3st", Name = ModelName, ManufacturerId = 1 });
+            await context.Models.AddAsync(new() { IATA = "abb", ICAO = "a3st", Name = ModelName, ManufacturerId = 1, ProvenanceId = provenance.Id });
             await context.SaveChangesAsync();
         }
 

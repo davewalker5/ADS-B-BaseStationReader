@@ -63,6 +63,7 @@ namespace BaseStationReader.BusinessLogic.Database
                 .Models
                 .Where(predicate)
                 .Include(x => x.Manufacturer)
+                .Include(x => x.Provenance)
                 .ToListAsync();
 
         /// <summary>
@@ -70,11 +71,31 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="template"></param>
         /// <returns></returns>
-        public async Task<Model> AddAsync(string iata, string icao, string name, int manufacturerId)
+        public async Task<Model> AddAsync(string iata, string icao, string name, int manufacturerId, int provenanceId = 0)
         {
             // Clean the inputs so they're in a standardised format
-            var cleanIATA = StringCleaner.CleanIATA(iata);
-            var cleanICAO = StringCleaner.CleanICAO(icao);
+            var cleanIATA = string.IsNullOrWhiteSpace(iata) ? null : StringCleaner.CleanIATA(iata);
+            var cleanICAO = string.IsNullOrWhiteSpace(icao) ? null : StringCleaner.CleanICAO(icao);
+
+            if (provenanceId == 0)
+            {
+                var local = await _context.Provenance.FirstOrDefaultAsync(x => x.SourceRef == "LOCAL");
+                if (local == null)
+                {
+                    local = new Provenance
+                    {
+                        SourceRef = "LOCAL", Source = "N/A", SourceUrl = "N/A",
+                        SourceDataset = "N/A", SourceVersion = "N/A", Licence = "N/A"
+                    };
+                    await _context.Provenance.AddAsync(local);
+                    await _context.SaveChangesAsync();
+                }
+                provenanceId = local.Id;
+            }
+            else if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
+                throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             // Look for a matching record
             var model = await GetAsync(cleanIATA, cleanICAO, name);
@@ -87,7 +108,8 @@ namespace BaseStationReader.BusinessLogic.Database
                     IATA = cleanIATA,
                     ICAO = cleanICAO,
                     Name = name,
-                    ManufacturerId = manufacturerId
+                    ManufacturerId = manufacturerId,
+                    ProvenanceId = provenanceId
                 };
 
                 await _context.Models.AddAsync(model);

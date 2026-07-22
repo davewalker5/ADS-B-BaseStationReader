@@ -60,8 +60,8 @@ namespace BaseStationReader.BusinessLogic.Database
             foreach (var model in _context.Models)
             {
                 // Convert the properties to a standardised form
-                model.IATA = StringCleaner.CleanIATA(model.IATA);
-                model.ICAO = StringCleaner.CleanIATA(model.ICAO);
+                model.IATA = string.IsNullOrWhiteSpace(model.IATA) ? null : StringCleaner.CleanIATA(model.IATA);
+                model.ICAO = string.IsNullOrWhiteSpace(model.ICAO) ? null : StringCleaner.CleanICAO(model.ICAO);
             }
 
             // Save changes

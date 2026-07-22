@@ -27,6 +27,7 @@
     <None Remove="manufacturers.csv" />
     <None Remove="empty_manufacturers.csv" />
     <None Remove="models.csv" />
+    <None Remove="models-null-code.csv" />
     <None Remove="empty_models.csv" />
     <None Remove="flight_number_mappings.csv" />
     <None Remove="empty_mappings.csv" />
@@ -69,6 +70,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="models.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="models-null-code.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_models.csv">

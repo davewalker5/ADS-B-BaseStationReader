@@ -27,12 +27,18 @@ namespace BaseStationReader.BusinessLogic.Logging
                 // Clean up the model codes
                 foreach (var model in models.Where(x => Replacements.Contains(x.IATA)))
                 {
-                    model.IATA = "";
+                    model.IATA = null;
                 }
 
                 foreach (var model in models.Where(x => Replacements.Contains(x.ICAO)))
                 {
-                    model.ICAO = "";
+                    model.ICAO = null;
+                }
+
+                foreach (var model in models)
+                {
+                    if (string.IsNullOrWhiteSpace(model.IATA)) model.IATA = null;
+                    if (string.IsNullOrWhiteSpace(model.ICAO)) model.ICAO = null;
                 }
 
                 // Identify instances where there's no IATA or ICAO code and remove them
@@ -66,10 +72,22 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Info, $"Saving {models.Count()} models to the database");
 
+                var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
+                var provenanceByRef = provenanceRecords.ToDictionary(x => x.SourceRef, StringComparer.Ordinal);
+                var missing = models
+                    .Select(x => x.ProvenanceRef?.Trim() ?? "")
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(sourceRef => !provenanceByRef.ContainsKey(sourceRef))
+                    .ToList();
+
+                if (missing.Count > 0)
+                    throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+
                 foreach (var model in models)
                 {
+                    var provenance = provenanceByRef[model.ProvenanceRef.Trim()];
                     Logger.LogMessage(Severity.Debug, $"Saving model '{model.Name}' : IATA = '{model.IATA}', ICAO = '{model.ICAO}'");
-                    await _factory.ModelManager.AddAsync(model.IATA, model.ICAO, model.Name, model.ManufacturerId);
+                    await _factory.ModelManager.AddAsync(model.IATA, model.ICAO, model.Name, model.ManufacturerId, provenance.Id);
                 }
             }
             else
