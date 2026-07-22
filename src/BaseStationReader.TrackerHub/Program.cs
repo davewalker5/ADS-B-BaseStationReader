@@ -154,6 +154,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<IAirportScheduleLookupService, AirportScheduleLookupService>();
                 builder.Services.AddScoped<IReferenceLookupService, ReferenceLookupService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
+                builder.Services.AddScoped<IProvenanceService, ProvenanceService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(30));
 

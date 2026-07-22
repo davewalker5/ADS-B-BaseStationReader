@@ -35,5 +35,36 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual("1.0", record.SourceVersion);
             Assert.AreEqual("MIT", record.Licence);
         }
+
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var record = await _manager.GetAsync(x => x.SourceRef == "ref-1");
+            await _manager.UpdateAsync(record.Id, "ref-2", "Updated source", "https://updated.example",
+                "Updated dataset", "2.0", "ODbL");
+
+            var updated = await _manager.GetAsync(x => x.Id == record.Id);
+            Assert.AreEqual("ref-2", updated.SourceRef);
+            Assert.AreEqual("Updated source", updated.Source);
+            Assert.AreEqual("https://updated.example", updated.SourceUrl);
+            Assert.AreEqual("Updated dataset", updated.SourceDataset);
+            Assert.AreEqual("2.0", updated.SourceVersion);
+            Assert.AreEqual("ODbL", updated.Licence);
+        }
+
+        [TestMethod]
+        public async Task UpdateMissingTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.UpdateAsync(999, "missing", "Source", "URL", "Dataset", "1", "MIT"));
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var record = await _manager.GetAsync(x => x.SourceRef == "ref-1");
+            await _manager.DeleteAsync(record.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
     }
 }
