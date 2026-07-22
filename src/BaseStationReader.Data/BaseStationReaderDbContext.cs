@@ -76,10 +76,6 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
 
                 entity.Property(e => e.FirstSeen)
-                    .HasColumnName("LookupTimestamp")
-                    .HasColumnType("DATETIME");
-
-                entity.Property(e => e.FirstSeen)
                     .IsRequired()
                     .HasColumnName("FirstSeen")
                     .HasColumnType("DATETIME");

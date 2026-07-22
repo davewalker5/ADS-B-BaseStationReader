@@ -29,7 +29,7 @@ namespace BaseStationReader.Lookup.Logic
             var wrapper = GetWrapperInstance(Settings.FlightApi);
 
             // Retrieve a list of aircraft that haven't been looked up yet
-            var aircraft = await Factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
+            var aircraft = await Factory.TrackedAircraftWriter.ListSightingCreationCandidatesAsync();
             Logger.LogMessage(Severity.Info, $"Found {aircraft.Count} candidate(s) for lookup");
 
             foreach (var a in aircraft)

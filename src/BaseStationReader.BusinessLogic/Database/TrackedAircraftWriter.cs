@@ -4,23 +4,19 @@ using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
-using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.Entities.Logging;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
     internal class TrackedAircraftWriter : ITrackedAircraftWriter
     {
-        private readonly ITrackerLogger _logger;
         private readonly BaseStationReaderDbContext _context;
         private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(x => x.Name != "Id")
             .ToArray();
 
-        public TrackedAircraftWriter(ITrackerLogger logger, BaseStationReaderDbContext context)
+        public TrackedAircraftWriter(BaseStationReaderDbContext context)
         {
-            _logger = logger;
             _context = context;
         }
 
@@ -40,9 +36,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> GetLookupCandidateAsync(string address)
+        public async Task<TrackedAircraft> GetSightingCreationCandidateAsync(string address)
         {
-            var candidates = await ListLookupCandidatesAsync();
+            var candidates = await ListSightingCreationCandidatesAsync();
             var aircraft = candidates.FirstOrDefault(x => x.Address == address);
             return aircraft;
         }
@@ -59,13 +55,13 @@ namespace BaseStationReader.BusinessLogic.Database
                              .ToListAsync();
 
         /// <summary>
-        /// Return a list of tracked aircraft that are candidates for API lookup
+        /// Return tracked aircraft for which a sighting has not already been created
         /// </summary>
         /// <returns></returns>
-        public async Task<List<TrackedAircraft>> ListLookupCandidatesAsync()
+        public async Task<List<TrackedAircraft>> ListSightingCreationCandidatesAsync()
         {
-            // Get an initial list of candidates for lookup
-            var eligibilityPredicate = EligibleForLookup();
+            // Get an initial list of candidates for sighting creation
+            var eligibilityPredicate = EligibleForSightingCreation();
             var aircraft = await ListAsync(eligibilityPredicate);
 
             // Get a list of excluded aircraft addresses and remove them from the list
@@ -96,11 +92,6 @@ namespace BaseStationReader.BusinessLogic.Database
 
             if (aircraft != null)
             {
-                // The lookup properties may be set on the database but not in the incoming template
-                // so make sure the value from the database is retained
-                template.LookupTimestamp ??= aircraft.LookupTimestamp;
-                template.LookupAttempts = aircraft.LookupAttempts;
-
                 // Record found, so update its properties
                 UpdateProperties(template, aircraft);
             }
@@ -114,48 +105,6 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Save changes
             await _context.SaveChangesAsync();
-            return aircraft;
-        }
-
-        /// <summary>
-        /// Set the lookup timestamp on a tracked aircraft
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="successful"></param>
-        /// <returns></returns>
-        public async Task<TrackedAircraft> UpdateLookupPropertiesAsync(string address, bool successful)
-        {
-            // Get the list of eligible records and find the one for the specified aircraft
-            var eligibilityPredicate = EligibleForLookup();
-            var aircraft = await _context.TrackedAircraft
-                                         .Where(eligibilityPredicate)
-                                         .FirstOrDefaultAsync(x => x.Address == address);
-
-            if (aircraft != null)
-            {
-                _logger.LogMessage(Severity.Debug,
-                    $"Record found for lookup property update: " +
-                    $"Address = {aircraft.Address}, " +
-                    $"Callsign = {aircraft.Callsign}, " +
-                    $"Lookup Attempts = {aircraft.LookupAttempts}, " +
-                    $"Lookup Timestamp = {aircraft.LookupTimestamp}");
-
-                // Increment the lookup attempt count
-                aircraft.LookupAttempts += 1;
-
-                // Successful lookups need no further resolution attempts.
-                if (successful)
-                {
-                    aircraft.LookupTimestamp = DateTime.Now;
-                }
-
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                _logger.LogMessage(Severity.Warning, $"Record for aircraft {address} not found for lookup property update");
-            }
-
             return aircraft;
         }
 
@@ -179,7 +128,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// 
         /// 1. The address is populated
         /// 2. The callsign is populated
-        /// 3. A lookup hasn't already been completed successfully
+        /// 3. A sighting has not already been created for the aircraft, flight and tracking time
         /// 4. The record isn't locked
         /// 
         /// The locking state criterion is necessary as it ensures a given aircraft address is unique in
@@ -187,13 +136,16 @@ namespace BaseStationReader.BusinessLogic.Database
         /// multiple times in a locked state, from multiple sessions).
         /// </summary>
         /// <returns></returns>
-        private static Expression<Func<TrackedAircraft, bool>> EligibleForLookup()
+        private Expression<Func<TrackedAircraft, bool>> EligibleForSightingCreation()
         {
             return x =>
                 !string.IsNullOrEmpty(x.Address) &&
                 (x.Address != "000000") &&
                 !string.IsNullOrEmpty(x.Callsign) &&
-                (x.LookupTimestamp == null) &&
+                !_context.Sightings.Any(sighting =>
+                    sighting.Timestamp == x.FirstSeen &&
+                    sighting.Aircraft.Address == x.Address &&
+                    sighting.Flight.Callsign == x.Callsign) &&
                 (x.Status != TrackingStatus.Locked);
         }
     }
