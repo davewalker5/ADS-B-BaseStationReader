@@ -77,6 +77,10 @@ public sealed class ReferenceLookupService : IReferenceLookupService
 
         BaseStationReader.Entities.Api.Aircraft aircraft = null;
         BaseStationReader.Entities.Api.Flight flight = null;
+        var aircraftIsLocal = lookupAircraft && await context.Aircraft
+            .AnyAsync(item => item.Address == normalisedAddress, cancellationToken);
+        var flightIsLocal = lookupFlight && await context.Flights
+            .AnyAsync(item => item.Callsign == normalisedCallsign, cancellationToken);
 
         // Separate wrappers allow each requested lookup type to use its independently selected provider.
         if (lookupAircraft)
@@ -94,6 +98,10 @@ public sealed class ReferenceLookupService : IReferenceLookupService
             flight = await flightWrapper.LookupFlightAsync(normalisedAddress, normalisedCallsign);
         }
 
-        return new ReferenceLookupResult(aircraft, flight);
+        return new ReferenceLookupResult(
+            aircraft,
+            flight,
+            aircraft is null ? null : aircraftIsLocal ? ReferenceLookupSource.LocalDatabase : ReferenceLookupSource.Api,
+            flight is null ? null : flightIsLocal ? ReferenceLookupSource.LocalDatabase : ReferenceLookupSource.Api);
     }
 }
