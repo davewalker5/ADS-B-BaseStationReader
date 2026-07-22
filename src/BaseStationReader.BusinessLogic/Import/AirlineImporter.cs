@@ -24,10 +24,6 @@ namespace BaseStationReader.BusinessLogic.Logging
             var airlines = base.Read(filePath);
             if (airlines?.Count > 0)
             {
-                // Remove any that aren't active
-                airlines.RemoveAll(x => !x.Active);
-                Logger.LogMessage(Severity.Info, $"Inactive airlines removed : {airlines.Count} airlines remaining");
-
                 // Clean up the airline codes
                 foreach (var airline in airlines.Where(x => Replacements.Contains(x.IATA)))
                 {
@@ -58,10 +54,22 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Info, $"Saving {airlines.Count()} airlines to the database");
 
+                var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
+                var provenanceByRef = provenanceRecords.ToDictionary(x => x.SourceRef, StringComparer.Ordinal);
+                var missing = airlines
+                    .Select(x => x.ProvenanceRef?.Trim() ?? "")
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(sourceRef => !provenanceByRef.ContainsKey(sourceRef))
+                    .ToList();
+
+                if (missing.Count > 0)
+                    throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+
                 foreach (var airline in airlines)
                 {
+                    var provenance = provenanceByRef[airline.ProvenanceRef.Trim()];
                     Logger.LogMessage(Severity.Debug, $"Saving airline '{airline.Name}' : IATA = '{airline.IATA}', ICAO = '{airline.ICAO}'");
-                    await _factory.AirlineManager.AddAsync(airline.IATA, airline.ICAO, airline.Name);
+                    await _factory.AirlineManager.AddAsync(airline.IATA, airline.ICAO, airline.Name, provenance.Id);
                 }
             }
             else

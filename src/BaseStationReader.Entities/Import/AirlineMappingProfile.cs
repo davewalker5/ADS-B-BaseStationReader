@@ -12,7 +12,7 @@ namespace BaseStationReader.Entities.Import
             Map(m => m.ICAO).Name("ICAO");
             Map(m => m.IATA).Name("IATA");
             Map(m => m.Name).Name("Name");
-            Map(m => m.Active).TypeConverter<YesNoBooleanConverter>();
+            Map(m => m.ProvenanceRef).Name("Provenance");
         }
     }
 }

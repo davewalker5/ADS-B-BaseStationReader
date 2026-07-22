@@ -59,7 +59,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="predicate"></param>
         /// <returns></returns>
         public async Task<List<Airline>> ListAsync(Expression<Func<Airline, bool>> predicate)
-            => await _context.Airlines.Where(predicate).ToListAsync();
+            => await _context.Airlines.Include(x => x.Provenance).Where(predicate).ToListAsync();
 
         /// <summary>
         /// Add an airline, if it doesn't already exist
@@ -68,12 +68,32 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="icao"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<Airline> AddAsync(string iata, string icao, string name)
+        public async Task<Airline> AddAsync(string iata, string icao, string name, int provenanceId = 0)
         {
             // Clean the inputs so they're in a standardised format
             var cleanIATA = StringCleaner.CleanIATA(iata);
             var cleanICAO = StringCleaner.CleanICAO(icao);
             var cleanName = StringCleaner.CleanName(name);
+
+            if (provenanceId == 0)
+            {
+                var local = await _context.Provenance.FirstOrDefaultAsync(x => x.SourceRef == "LOCAL");
+                if (local == null)
+                {
+                    local = new Provenance
+                    {
+                        SourceRef = "LOCAL", Source = "N/A", SourceUrl = "N/A",
+                        SourceDataset = "N/A", SourceVersion = "N/A", Licence = "N/A"
+                    };
+                    await _context.Provenance.AddAsync(local);
+                    await _context.SaveChangesAsync();
+                }
+                provenanceId = local.Id;
+            }
+            else if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
+                throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             // Look for a matching record
             var airline = await GetAsync(cleanIATA, cleanICAO, cleanName);
@@ -85,7 +105,8 @@ namespace BaseStationReader.BusinessLogic.Database
                 {
                     IATA = cleanIATA,
                     ICAO = cleanICAO,
-                    Name = cleanName
+                    Name = cleanName,
+                    ProvenanceId = provenanceId
                 };
 
                 await _context.Airlines.AddAsync(airline);

@@ -127,6 +127,12 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).HasColumnName("IATA");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Airport>(entity =>
