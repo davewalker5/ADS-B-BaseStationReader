@@ -178,10 +178,16 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Registration).IsRequired().HasColumnName("Registration");
                 entity.Property(e => e.Manufactured).HasColumnName("Manufactured");
                 entity.Property(e => e.Age).HasColumnName("Age");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
                 entity.HasOne(e => e.Model)
                     .WithMany()
                     .HasForeignKey(e => e.ModelId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

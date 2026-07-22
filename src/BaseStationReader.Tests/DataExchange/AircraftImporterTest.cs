@@ -19,12 +19,13 @@ namespace BaseStationReader.Tests.DataExchange
         private IAircraftImporter _importer;
 
         [TestInitialize]
-        public void Initialise()
+        public async Task InitialiseAsync()
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
             _factory = new DatabaseManagementFactory(logger, context, 0);
             _importer = new AircraftImporter(_factory);
+            await _factory.ProvenanceManager.AddAsync("TEST", "Test source", "N/A", "Aircraft", "1", "N/A");
         }
 
         [TestMethod]
@@ -48,6 +49,19 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.AreEqual(ModelIATA, aircraft[0].Model.IATA);
             Assert.AreEqual(ModelName, aircraft[0].Model.Name);
             Assert.AreEqual(ManufacturerName, aircraft[0].Model.Manufacturer.Name);
+            Assert.AreEqual("TEST", aircraft[0].Provenance.SourceRef);
+        }
+
+        [TestMethod]
+        public async Task ImportFailsWhenProvenanceIsMissingTestAsync()
+        {
+            var manufacturer = await _factory.ManufacturerManager.AddAsync(ManufacturerName);
+            _ = await _factory.ModelManager.AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            var provenance = await _factory.ProvenanceManager.GetAsync(x => x.SourceRef == "TEST");
+            await _factory.ProvenanceManager.DeleteAsync(provenance.Id);
+
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => _importer.ImportAsync("aircraft.csv"));
+            Assert.IsEmpty(await _factory.AircraftManager.ListAsync(x => true));
         }
 
         [TestMethod]

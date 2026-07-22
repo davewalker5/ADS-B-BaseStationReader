@@ -55,6 +55,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
             Assert.AreEqual(Manufacturer, aircraft.Model.Manufacturer.Name);
+            Assert.AreEqual("LOCAL", aircraft.Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -87,6 +88,12 @@ namespace BaseStationReader.Tests.Database
             var aircraft = await _manager.ListAsync(x => x.Address == "Missing");
             Assert.IsEmpty(aircraft);
         }
+
+        [TestMethod]
+        public async Task AddWithMissingProvenanceTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.AddAsync("ABC123", Registration, Manufactured, _age, _model.Id, 999));
+        }
     }
 }
-

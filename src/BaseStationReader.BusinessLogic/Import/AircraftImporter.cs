@@ -62,8 +62,20 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Info, $"Saving {aircraft.Count()} aircraft to the database");
 
+                var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
+                var provenanceByRef = provenanceRecords.ToDictionary(x => x.SourceRef, StringComparer.Ordinal);
+                var missing = aircraft
+                    .Select(x => x.ProvenanceRef?.Trim() ?? "")
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(sourceRef => !provenanceByRef.ContainsKey(sourceRef))
+                    .ToList();
+
+                if (missing.Count > 0)
+                    throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+
                 foreach (var a in aircraft)
                 {
+                    var provenance = provenanceByRef[a.ProvenanceRef.Trim()];
                     Logger.LogMessage(Severity.Debug, $"Saving Aircraft '{a.Address}' : " +
                         $"Registration = '{a.Registration}', " +
                         $"Model ICAO = '{a.ModelICAO}', " +
@@ -71,7 +83,7 @@ namespace BaseStationReader.BusinessLogic.Logging
                         $"Manufactured = {a.Manufactured}");
 
                     var age = a.Manufactured > 0 ? DateTime.Today.Year - a.Manufactured : null;
-                    await _factory.AircraftManager.AddAsync(a.Address, a.Registration, a.Manufactured, age, a.ModelId);
+                    await _factory.AircraftManager.AddAsync(a.Address, a.Registration, a.Manufactured, age, a.ModelId, provenance.Id);
                 }
             }
             else
