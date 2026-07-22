@@ -126,6 +126,7 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
                 sighting.Aircraft.Address == record.Address &&
                 sighting.Timestamp >= record.FirstSeen &&
                 sighting.Timestamp <= record.LastSeen &&
+                sighting.Flight.Airline != null &&
                 (sighting.Flight.Airline.Name.Contains(airline) ||
                  sighting.Flight.Airline.IATA.Contains(airline) ||
                  sighting.Flight.Airline.ICAO.Contains(airline))));
@@ -301,7 +302,7 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
                 FlightIcao = sighting.Flight.ICAO,
                 sighting.Flight.Embarkation,
                 sighting.Flight.Destination,
-                AirlineName = sighting.Flight.Airline.Name
+                AirlineName = sighting.Flight.Airline == null ? string.Empty : sighting.Flight.Airline.Name
             })
             .FirstOrDefaultAsync(cancellationToken);
 

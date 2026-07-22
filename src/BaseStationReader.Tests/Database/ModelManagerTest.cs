@@ -46,6 +46,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(ModelICAO, model.ICAO);
             Assert.AreEqual(ModelName, model.Name);
             Assert.AreEqual(Manufacturer, model.Manufacturer.Name);
+            Assert.AreEqual("LOCAL", model.Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -111,6 +112,20 @@ namespace BaseStationReader.Tests.Database
             var models = await _manager.ListAsync(x => x.IATA == "Missing");
             Assert.IsEmpty(models);
         }
+
+        [TestMethod]
+        public async Task AddWithNullIATATestAsync()
+        {
+            var model = await _manager.AddAsync(null, "A333", "A330-300", _manufacturer.Id);
+            Assert.IsNull(model.IATA);
+            Assert.AreEqual("A333", model.ICAO);
+        }
+
+        [TestMethod]
+        public async Task AddWithMissingProvenanceTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.AddAsync("333", "A333", "Missing provenance", _manufacturer.Id, 999));
+        }
     }
 }
-

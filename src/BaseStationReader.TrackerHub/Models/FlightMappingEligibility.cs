@@ -10,7 +10,7 @@ public static class FlightMappingEligibility
     /// <summary>
     /// Returns whether a schedule row can be used by callsign-based flight lookup.
     /// </summary>
-    public static bool IsEligible(FlightIATACodeMapping mapping)
+    public static bool IsEligible(FlightScheduleEntry mapping)
         => mapping is not null &&
            !string.IsNullOrWhiteSpace(mapping.FlightIATA) &&
            !string.IsNullOrWhiteSpace(mapping.Callsign) &&

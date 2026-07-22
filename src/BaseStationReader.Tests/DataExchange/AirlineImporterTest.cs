@@ -15,12 +15,13 @@ namespace BaseStationReader.Tests.DataExchange
         private IAirlineImporter _importer;
 
         [TestInitialize]
-        public void Initialise()
+        public async Task InitialiseAsync()
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             var logger = new MockFileLogger();
             _factory = new DatabaseManagementFactory(logger, context, 0);
             _importer = new AirlineImporter(_factory);
+            await _factory.ProvenanceManager.AddAsync("TEST", "Test source", "N/A", "Airlines", "1", "N/A");
         }
 
         [TestMethod]
@@ -35,6 +36,17 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.AreEqual("BAW", airlines[0].ICAO);
             Assert.AreEqual("BA", airlines[0].IATA);
             Assert.AreEqual("British Airways", airlines[0].Name);
+            Assert.AreEqual("TEST", airlines[0].Provenance.SourceRef);
+        }
+
+        [TestMethod]
+        public async Task ImportFailsWhenProvenanceIsMissingTestAsync()
+        {
+            var provenance = await _factory.ProvenanceManager.GetAsync(x => x.SourceRef == "TEST");
+            await _factory.ProvenanceManager.DeleteAsync(provenance.Id);
+
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => _importer.ImportAsync("airlines.csv"));
+            Assert.IsEmpty(await _factory.AirlineManager.ListAsync(x => true));
         }
 
         [TestMethod]

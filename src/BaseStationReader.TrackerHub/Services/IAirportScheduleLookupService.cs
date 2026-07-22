@@ -28,7 +28,7 @@ public interface IAirportScheduleLookupService
     /// <summary>
     /// Retrieves flight mappings for an airport and time range.
     /// </summary>
-    Task<IReadOnlyList<FlightIATACodeMapping>> LookupAsync(
+    Task<IReadOnlyList<FlightScheduleEntry>> LookupAsync(
         ApiServiceType serviceType,
         string iata,
         DateTime from,

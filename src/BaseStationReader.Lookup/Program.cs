@@ -70,16 +70,16 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAirportImportAsync();
                 }
 
+                // If a CSV file containing flight details has been supplied, import it
+                if (parser.IsPresent(CommandLineOptionType.ImportFlights))
+                {
+                    await new ImportHandler(settings, parser, logger, factory).HandleFlightImportAsync();
+                }
+
                 // If a CSV file containing manufacturer details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportManufacturers))
                 {
                     await new ImportHandler(settings, parser, logger, factory).HandleManufacturerImportAsync();
-                }
-
-                // If a CSV file containing confirmed flight IATA code mappings has been supplied, import it
-                if (parser.IsPresent(CommandLineOptionType.ImportFlightIATACodeMappings))
-                {
-                    await new ImportHandler(settings, parser, logger, factory).HandleMappingImportAsync();
                 }
 
                 // If a CSV file containing model details has been supplied, import it
@@ -94,10 +94,10 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAircraftImportAsync();
                 }
 
-                // Resolve aircraft and flight details using local database records only
-                if (parser.IsPresent(CommandLineOptionType.ResolveAircraft))
+                // Resolve locally known tracked aircraft and flights and create sightings for them
+                if (parser.IsPresent(CommandLineOptionType.CreateSightings))
                 {
-                    await new AircraftLookupHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
+                    await new SightingCreationHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
                 }
 
                 // Look up and tabulate an aircraft using its ICAO address

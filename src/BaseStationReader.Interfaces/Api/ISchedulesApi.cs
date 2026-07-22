@@ -13,6 +13,6 @@ namespace BaseStationReader.Interfaces.Api
         /// <summary>
         /// Extracts flight IATA code mappings from an airport schedule response.
         /// </summary>
-        List<FlightIATACodeMapping> ExtractFlightMapping(JsonNode schedules, string airportIata);
+        List<FlightScheduleEntry> ExtractFlightMapping(JsonNode schedules, string airportIata);
     }
 }

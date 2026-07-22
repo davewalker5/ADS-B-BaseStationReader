@@ -30,6 +30,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(IATA, airlines[0].IATA);
             Assert.AreEqual(ICAO, airlines[0].ICAO);
             Assert.AreEqual(Name, airlines[0].Name);
+            Assert.AreEqual("LOCAL", airlines[0].Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -41,6 +42,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(IATA, airline.IATA);
             Assert.AreEqual(ICAO, airline.ICAO);
             Assert.AreEqual(Name, airline.Name);
+            Assert.AreEqual("LOCAL", airline.Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -96,6 +98,13 @@ namespace BaseStationReader.Tests.Database
         {
             var airlines = await _manager.ListAsync(e => e.Name == "Missing");
             Assert.IsEmpty(airlines);
+        }
+
+        [TestMethod]
+        public async Task AddWithMissingProvenanceTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.AddAsync("XX", "XXX", "Missing provenance", 999));
         }
     }
 }

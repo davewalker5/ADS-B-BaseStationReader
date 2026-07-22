@@ -126,9 +126,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseWithExistingFlightTestAsync()
         {
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
-            var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            var local = await _factory.FlightManager.AddAsync(FlightIATA, Callsign, Embarkation, Destination, airline.Id);
+            var local = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -142,7 +140,8 @@ namespace BaseStationReader.Tests.API.Wrapper
             Assert.IsNotNull(flight);
             Assert.AreEqual(local.Id, flight.Id);
             Assert.AreEqual(FlightIATA, flight.IATA);
-            Assert.AreEqual(Callsign, flight.ICAO);
+            Assert.IsNull(flight.ICAO);
+            Assert.AreEqual(Callsign, flight.Callsign);
             Assert.AreEqual(Embarkation, flight.Embarkation);
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineIATA, flight.Airline.IATA);
@@ -153,7 +152,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseWithExistingAirlineTestAsync()
         {
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
+            _ = await AddFlightAsync();
             _ = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
@@ -179,7 +178,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseTestAsync()
         {
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
+            _ = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -204,7 +203,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseWithAcceptingAirportFiltersTestAsync()
         {
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
+            _ = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -230,7 +229,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupFromDatabaseWithRejectingEmbarkationFiltersTestAsync()
         {
             _client.AddResponse("[]");
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
+            _ = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -248,7 +247,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupFromDatabaseWithRejectingDestinationFiltersTestAsync()
         {
             _client.AddResponse("[]");
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(AirlineICAO, AirlineIATA, AirlineName, EmbarkationICAO, Embarkation, EmbarkationName, AirportType.Departure, Embarkation, Destination, FlightIATA, Callsign, "Manual");
+            _ = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -260,6 +259,23 @@ namespace BaseStationReader.Tests.API.Wrapper
             var flight = await _manager.IdentifyFlightAsync(trackedAircraft, [Embarkation], [Embarkation]);
 
             Assert.IsNull(flight);
+        }
+
+        private async Task<Flight> AddFlightAsync()
+        {
+            var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            var origin = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Embarkation, ICAO = EmbarkationICAO, Name = EmbarkationName,
+                ProvenanceId = airline.ProvenanceId
+            });
+            var destination = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Destination, ICAO = "LGRP", Name = "Rhodes International Airport",
+                ProvenanceId = airline.ProvenanceId
+            });
+            return await _factory.FlightManager.AddAsync(
+                FlightIATA, null, Callsign, airline.Id, origin.Id, destination.Id);
         }
     }
 }

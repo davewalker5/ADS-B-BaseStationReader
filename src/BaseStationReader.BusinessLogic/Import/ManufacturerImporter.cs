@@ -43,10 +43,22 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Info, $"Saving {manufacturers.Count()} manufacturers to the database");
 
+                var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
+                var provenanceByRef = provenanceRecords.ToDictionary(x => x.SourceRef, StringComparer.Ordinal);
+                var missing = manufacturers
+                    .Select(x => x.ProvenanceRef?.Trim() ?? "")
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(sourceRef => !provenanceByRef.ContainsKey(sourceRef))
+                    .ToList();
+
+                if (missing.Count > 0)
+                    throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+
                 foreach (var manufacturer in manufacturers)
                 {
+                    var provenance = provenanceByRef[manufacturer.ProvenanceRef.Trim()];
                     Logger.LogMessage(Severity.Debug, $"Saving manufacturer '{manufacturer.Name}'");
-                    await _factory.ManufacturerManager.AddAsync(manufacturer.Name);
+                    await _factory.ManufacturerManager.AddAsync(manufacturer.Name, provenance.Id);
                 }
             }
             else

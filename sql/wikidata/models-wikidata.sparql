@@ -1,0 +1,17 @@
+SELECT DISTINCT
+  ?manufacturerLabel
+  ?modelLabel
+WHERE {
+  ?model wdt:P31/wdt:P279* wd:Q45296117 ;
+         wdt:P176 ?manufacturer .
+
+  # Require a real English manufacturer label.
+  # This prevents Wikidata falling back to Q123456-style identifiers.
+  ?manufacturer rdfs:label ?manufacturerLabel .
+  FILTER(LANG(?manufacturerLabel) = "en")
+
+  # Require a real English model label too.
+  ?model rdfs:label ?modelLabel .
+  FILTER(LANG(?modelLabel) = "en")
+}
+ORDER BY ?manufacturerLabel ?modelLabel

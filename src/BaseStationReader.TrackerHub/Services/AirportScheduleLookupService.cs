@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace BaseStationReader.TrackerHub.Services;
 
 /// <summary>
-/// Executes configured schedule lookups and persists their extracted flight mappings.
+/// Executes configured airport schedule lookups.
 /// </summary>
 public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
 {
@@ -76,7 +76,7 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<FlightIATACodeMapping>> LookupAsync(
+    public async Task<IReadOnlyList<FlightScheduleEntry>> LookupAsync(
         ApiServiceType serviceType,
         string iata,
         DateTime from,
@@ -97,8 +97,8 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
         var wrapper = _apiFactory.GetWrapperInstance(
             TrackerHttpClient.Instance, databaseFactory, serviceType, _settings);
 
-        var mappings = await wrapper.LookupSchedulesAsync(normalisedIata, from, to);
-        return mappings?.ToList() ?? [];
+        var entries = await wrapper.LookupSchedulesAsync(normalisedIata, from, to);
+        return entries?.ToList() ?? [];
     }
 
     /// <summary>

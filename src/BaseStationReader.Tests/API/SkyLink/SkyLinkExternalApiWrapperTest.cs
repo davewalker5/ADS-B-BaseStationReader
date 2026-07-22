@@ -79,19 +79,20 @@ namespace BaseStationReader.Tests.API
                 LastSeen = DateTime.UtcNow
             };
 
-            // Add the flight IATA code mapping
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(
-                AirlineICAO,
-                AirlineIATA,
-                AirlineName,
-                AirportICAO,
-                AirportIATA,
-                AirportName,
-                AirportType.Unknown,
-                Embarkation,
-                Destination,
-                FlightIATA,
-                Callsign, "");
+            // Add the locally resolvable flight.
+            var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            var origin = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Embarkation, ICAO = "LFPG", Name = "Paris Charles de Gaulle",
+                ProvenanceId = airline.ProvenanceId
+            });
+            var destination = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Destination, ICAO = "EIDW", Name = "Dublin",
+                ProvenanceId = airline.ProvenanceId
+            });
+            _ = await _factory.FlightManager.AddAsync(
+                FlightIATA, null, Callsign, airline.Id, origin.Id, destination.Id);
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup

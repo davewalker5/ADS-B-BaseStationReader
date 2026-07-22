@@ -15,12 +15,12 @@ namespace BaseStationReader.Interfaces.Database
         IManufacturerManager ManufacturerManager { get; }
         IModelManager ModelManager { get; }
         ISightingManager SightingManager { get; }
-        IFlightIATACodeMappingManager FlightIATACodeMappingManager { get; }
         ITrackedAircraftWriter TrackedAircraftWriter { get; }
         IPositionWriter PositionWriter { get; }
         IAircraftLockManager AircraftLockManager { get; }
         IExcludedAddressManager ExcludedAddressManager { get; }
         IExcludedCallsignManager ExcludedCallsignManager { get; }
         IApiLogManager ApiLogManager { get; }
+        IProvenanceManager ProvenanceManager { get; }
     }
 }

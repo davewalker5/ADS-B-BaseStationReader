@@ -8,7 +8,7 @@ public enum DataImportType
     Aircraft,
     Airlines,
     Airports,
-    FlightMappings,
+    Flights,
     Manufacturers,
     Models
 }

@@ -1,71 +1,123 @@
 @page "/import"
 @inject IDataImportService ImportService
+@inject IProvenanceService ProvenanceService
+@inject IJSRuntime JS
+@using BaseStationReader.Entities.Api
 
-<PageTitle>Import Data · ADS-B Tracker</PageTitle>
+<PageTitle>Reference Data · ADS-B Tracker</PageTitle>
 
 <section class="page-heading">
     <div>
         <p class="eyebrow">Lookup data</p>
-        <h1>Import Reference Data</h1>
-        <p class="lede">Load aircraft, airline and airport reference data and flight mappings supplied in CSV format into the tracker database.</p>
+        <h1>Reference Data</h1>
+        <p class="lede">Import reference datasets and record where that data came from.</p>
     </div>
 </section>
 
-<section class="import-warning" aria-labelledby="import-licence-warning">
-    <strong id="import-licence-warning">Use appropriately licensed data only</strong>
-    <p>Only import data that you are permitted to store and reuse. Check the licence, terms of service, copyright, and any other conditions that apply to the source before importing data into ADS-B Tracker.</p>
-</section>
+<div class="reference-tabs" role="tablist" aria-label="Reference data">
+    <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Import)"
+            class="@(_activeTab == ReferenceTab.Import ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Import)">Import</button>
+    <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Provenance)"
+            class="@(_activeTab == ReferenceTab.Provenance ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Provenance)">Provenance</button>
+</div>
 
-<section class="import-panel">
-    <div class="import-type-grid" role="radiogroup" aria-label="Import type">
-        @foreach (var option in ImportOptions)
-        {
-            <label class="import-type-card @(option.Type == _importType ? "selected" : null)">
-                <input type="radio" name="import-type" value="@option.Type"
-                       checked="@(option.Type == _importType)" @onchange="() => SelectType(option.Type)" />
-                <span>
-                    <strong>@option.Name</strong>
-                    <small>@option.Description</small>
-                </span>
-            </label>
-        }
-    </div>
+@if (_activeTab == ReferenceTab.Import)
+{
+    <section class="import-warning" aria-labelledby="import-licence-warning">
+        <h3 id="import-licence-warning">Use appropriately licensed data only</h3>
+        <p>Only import data that you are permitted to store and reuse. Check the licence, terms of service, copyright, and any other conditions that apply to the source before importing data into ADS-B Tracker.</p>
+        <h3>Record the provenance of imported data</h3>
+        <p>Before importing data, create a provenance record for its source using the <strong>Provenance</strong> tab.</p>
+        <p>Each row in the import file must reference the appropriate provenance record using it's "Source Reference". This records where the imported data came from, the dataset or version used, and the licence under which it is being used.</p>
+        <p>Where an import contains data from more than one source, assign the appropriate provenance indicator to each row before importing.</p>
+    </section>
 
-    <div class="import-upload">
-        <label for="csv-file">
-            <span>CSV file</span>
-            <InputFile id="csv-file" OnChange="SelectFile" accept=".csv,text/csv" disabled="@_importing" />
-        </label>
-        <div class="import-file-summary">
-            @if (_file is null)
+    <section class="import-panel">
+        <div class="import-type-grid" role="radiogroup" aria-label="Import type">
+            @foreach (var option in ImportOptions)
             {
-                <span>No file selected</span>
-            }
-            else
-            {
-                <strong>@_file.Name</strong>
-                <span>@FormatSize(_file.Size)</span>
+                <label class="import-type-card @(option.Type == _importType ? "selected" : null)">
+                    <input type="radio" name="import-type" value="@option.Type"
+                           checked="@(option.Type == _importType)" @onchange="() => SelectType(option.Type)" />
+                    <span><strong>@option.Name</strong><small>@option.Description</small></span>
+                </label>
             }
         </div>
-        <button class="primary-button" type="button" @onclick="ImportAsync" disabled="@(!CanImport)">
-            @(_importing ? "Importing…" : $"Import {SelectedOption.Name.ToLowerInvariant()}")
-        </button>
-    </div>
-    <p class="import-note">Imports add or update records using the lookup tool's existing rules. The maximum upload size is 50 MB.</p>
-</section>
 
-@if (_error is not null)
+        <div class="import-upload">
+            <label for="csv-file">
+                <span>CSV file</span>
+                <InputFile id="csv-file" OnChange="SelectFile" accept=".csv,text/csv" disabled="@_importing" />
+            </label>
+            <div class="import-file-summary">
+                @if (_file is null) { <span>No file selected</span> }
+                else { <strong>@_file.Name</strong><span>@FormatSize(_file.Size)</span> }
+            </div>
+            <button class="primary-button" type="button" @onclick="ImportAsync" disabled="@(!CanImport)">
+                @(_importing ? "Importing…" : $"Import {SelectedOption.Name.ToLowerInvariant()}")
+            </button>
+        </div>
+        <p class="import-note">Imports add or update records using the lookup tool's existing rules. The maximum upload size is 50 MB.</p>
+    </section>
+}
+else
 {
-    <div class="alert" role="alert"><strong>Import failed</strong><span>@_error</span></div>
+    <section class="provenance-panel">
+        <div class="table-wrap provenance-table-wrap">
+            <table>
+                <thead><tr><th>Reference</th><th>Source</th><th>Dataset</th><th>Version</th><th>Licence</th><th aria-label="Actions"></th></tr></thead>
+                <tbody>
+                    @if (_loadingProvenance)
+                    {
+                        <tr><td colspan="6" class="table-empty">Loading provenance records…</td></tr>
+                    }
+                    else if (_provenance.Count == 0)
+                    {
+                        <tr><td colspan="6" class="table-empty">No provenance records have been added.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var record in _provenance)
+                        {
+                            <tr class="@(record.Id == _editModel.Id ? "selected" : null)" tabindex="0"
+                                @onclick="() => Edit(record)" @onkeydown="args => SelectRowFromKeyboard(args, record)">
+                                <td>@record.SourceRef</td>
+                                <td><strong>@record.Source</strong><span class="table-subtitle">@record.SourceUrl</span></td>
+                                <td>@record.SourceDataset</td><td>@record.SourceVersion</td><td>@record.Licence</td>
+                                <td class="provenance-actions" @onclick:stopPropagation="true">
+                                    <button type="button" class="delete-button" @onclick="() => DeleteAsync(record)" disabled="@_saving">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="provenance-editor">
+            <div><h2>@(_editModel.Id == 0 ? "Add provenance" : "Edit provenance")</h2><p>@(_editModel.Id == 0 ? "Create a provenance record." : $"Editing {_editModel.SourceRef}.")</p></div>
+            <EditForm Model="_editModel" OnValidSubmit="SaveAsync" FormName="provenance-editor">
+                <DataAnnotationsValidator />
+                <div class="provenance-fields">
+                    <label><span>Source reference</span><InputText @bind-Value="_editModel.SourceRef" /></label>
+                    <label><span>Source</span><InputText @bind-Value="_editModel.Source" /></label>
+                    <label class="wide"><span>Source URL</span><InputText @bind-Value="_editModel.SourceUrl" /></label>
+                    <label><span>Dataset</span><InputText @bind-Value="_editModel.SourceDataset" /></label>
+                    <label><span>Version</span><InputText @bind-Value="_editModel.SourceVersion" /></label>
+                    <label><span>Licence</span><InputText @bind-Value="_editModel.Licence" /></label>
+                </div>
+                <ValidationSummary />
+                <div class="provenance-editor-actions">
+                    <button class="primary-button" type="submit" disabled="@_saving">@(_saving ? "Saving…" : "Save")</button>
+                    <button class="secondary-button" type="button" @onclick="Clear" disabled="@_saving">Clear</button>
+                </div>
+            </EditForm>
+        </div>
+    </section>
 }
 
-@if (_success is not null)
-{
-    <div class="import-success" role="status">
-        <strong>Import complete</strong>
-        <span>@_success</span>
-    </div>
-}
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+@if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
 
 @code {
 #nullable enable
@@ -75,65 +127,112 @@
         new(DataImportType.Aircraft, "Aircraft", "Aircraft definitions, registrations and model codes"),
         new(DataImportType.Airlines, "Airlines", "Airline names with IATA and ICAO codes"),
         new(DataImportType.Airports, "Airports", "Airport names, locations, distances and IATA/ICAO codes"),
-        new(DataImportType.FlightMappings, "Flight mappings", "Callsign and flight IATA code mappings"),
+        new(DataImportType.Flights, "Flights", "Callsigns with optional routes and airlines"),
         new(DataImportType.Manufacturers, "Manufacturers", "Aircraft manufacturer definitions"),
         new(DataImportType.Models, "Models", "Aircraft model definitions and manufacturer links")
     ];
 
+    private ReferenceTab _activeTab;
     private DataImportType _importType = DataImportType.Aircraft;
     private IBrowserFile? _file;
     private bool _importing;
+    private bool _loadingProvenance;
+    private bool _saving;
     private string? _error;
     private string? _success;
-    private bool CanImport => !_importing && _file is not null &&
-        _file.Size <= MaximumFileSize &&
+    private List<Provenance> _provenance = [];
+    private Provenance _editModel = new();
+    private bool CanImport => !_importing && _file is not null && _file.Size <= MaximumFileSize &&
         string.Equals(Path.GetExtension(_file.Name), ".csv", StringComparison.OrdinalIgnoreCase);
     private ImportOption SelectedOption => ImportOptions.First(option => option.Type == _importType);
 
-    private void SelectType(DataImportType importType)
+    private async Task SelectTab(ReferenceTab tab)
     {
-        _importType = importType;
+        _activeTab = tab;
+        _error = null;
+        _success = null;
+        if (tab == ReferenceTab.Provenance && _provenance.Count == 0) await LoadProvenanceAsync();
+    }
+
+    private async Task LoadProvenanceAsync()
+    {
+        _loadingProvenance = true;
+        try { _provenance = (await ProvenanceService.ListAsync()).OrderBy(x => x.SourceRef).ToList(); }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loadingProvenance = false; }
+    }
+
+    private void Edit(Provenance record) => _editModel = Copy(record);
+    private void SelectRowFromKeyboard(KeyboardEventArgs args, Provenance record)
+    {
+        if (args.Key is "Enter" or " ") Edit(record);
+    }
+
+    private void Clear()
+    {
+        _editModel = new();
         _error = null;
         _success = null;
     }
 
+    private async Task SaveAsync()
+    {
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _editModel.Id == 0;
+            await ProvenanceService.SaveAsync(_editModel);
+            await LoadProvenanceAsync();
+            Clear();
+            _success = isNew ? "Provenance record added." : "Provenance record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private async Task DeleteAsync(Provenance record)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Delete provenance record '{record.SourceRef}'?")) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await ProvenanceService.DeleteAsync(record.Id);
+            if (_editModel.Id == record.Id) Clear();
+            await LoadProvenanceAsync();
+            _success = "Provenance record deleted.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void SelectType(DataImportType importType) { _importType = importType; _error = null; _success = null; }
     private void SelectFile(InputFileChangeEventArgs args)
     {
-        _file = args.File;
-        _success = null;
+        _file = args.File; _success = null;
         _error = !string.Equals(Path.GetExtension(_file.Name), ".csv", StringComparison.OrdinalIgnoreCase)
-            ? "Select a file with a .csv extension."
-            : _file.Size > MaximumFileSize
-                ? "The selected file is larger than 50 MB."
-                : null;
+            ? "Select a file with a .csv extension." : _file.Size > MaximumFileSize ? "The selected file is larger than 50 MB." : null;
     }
 
     private async Task ImportAsync()
     {
         if (!CanImport || _file is null) return;
-
-        _importing = true;
-        _error = null;
-        _success = null;
+        _importing = true; _error = null; _success = null;
         try
         {
             await using var stream = _file.OpenReadStream(MaximumFileSize);
             await ImportService.ImportAsync(_importType, stream, _file.Name);
             _success = $"{SelectedOption.Name} were imported from {_file.Name}.";
         }
-        catch (Exception exception)
-        {
-            _error = exception.Message;
-        }
-        finally
-        {
-            _importing = false;
-        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _importing = false; }
     }
 
-    private static string FormatSize(long bytes) => bytes < 1024 * 1024
-        ? $"{Math.Max(1, bytes / 1024d):0.#} KB"
-        : $"{bytes / 1024d / 1024d:0.#} MB";
-
+    private static Provenance Copy(Provenance source) => new()
+    {
+        Id = source.Id, SourceRef = source.SourceRef, Source = source.Source, SourceUrl = source.SourceUrl,
+        SourceDataset = source.SourceDataset, SourceVersion = source.SourceVersion, Licence = source.Licence
+    };
+    private static string FormatSize(long bytes) => bytes < 1024 * 1024 ? $"{Math.Max(1, bytes / 1024d):0.#} KB" : $"{bytes / 1024d / 1024d:0.#} MB";
     private sealed record ImportOption(DataImportType Type, string Name, string Description);
+    private enum ReferenceTab { Import, Provenance }
 }

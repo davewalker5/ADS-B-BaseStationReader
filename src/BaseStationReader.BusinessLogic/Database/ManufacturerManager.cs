@@ -32,17 +32,37 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="predicate"></param>
         /// <returns></returns>
         public async Task<List<Manufacturer>> ListAsync(Expression<Func<Manufacturer, bool>> predicate)
-            => await _context.Manufacturers.Where(predicate).ToListAsync();
+            => await _context.Manufacturers.Include(x => x.Provenance).Where(predicate).ToListAsync();
 
         /// <summary>
         /// Add a manufacturer, if it doesn't already exist
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<Manufacturer> AddAsync(string name)
+        public async Task<Manufacturer> AddAsync(string name, int provenanceId = 0)
         {
             // Clean the inputs so they're in a standardised format
             var clean = StringCleaner.CleanName(name);
+
+            if (provenanceId == 0)
+            {
+                var local = await _context.Provenance.FirstOrDefaultAsync(x => x.SourceRef == "LOCAL");
+                if (local == null)
+                {
+                    local = new Provenance
+                    {
+                        SourceRef = "LOCAL", Source = "N/A", SourceUrl = "N/A",
+                        SourceDataset = "N/A", SourceVersion = "N/A", Licence = "N/A"
+                    };
+                    await _context.Provenance.AddAsync(local);
+                    await _context.SaveChangesAsync();
+                }
+                provenanceId = local.Id;
+            }
+            else if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
+                throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             // Look for a matching record
             var manufacturer = await GetAsync(a => a.Name == clean);
@@ -50,7 +70,7 @@ namespace BaseStationReader.BusinessLogic.Database
             if (manufacturer == null)
             {
                 // No match, so create a new record
-                manufacturer = new Manufacturer { Name = clean };
+                manufacturer = new Manufacturer { Name = clean, ProvenanceId = provenanceId };
 
                 await _context.Manufacturers.AddAsync(manufacturer);
                 await _context.SaveChangesAsync();

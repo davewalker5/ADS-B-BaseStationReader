@@ -21,10 +21,11 @@ namespace BaseStationReader.Tests.Database
             _factory = new DatabaseManagementFactory(logger, context, 0);
 
             // Add the objects to be cleaned
-            await context.Airlines.AddAsync(new() { IATA = "ba", ICAO = "baw", Name = "brITish \nairWAYS  " });
-            await context.Manufacturers.AddAsync(new() { Id = 1, Name = "  haWKer SiDDeley \r\naviation ltd.   " });
+            var provenance = await _factory.ProvenanceManager.AddAsync("LOCAL", "N/A", "N/A", "N/A", "N/A", "N/A");
+            await context.Airlines.AddAsync(new() { IATA = "ba", ICAO = "baw", Name = "brITish \nairWAYS  ", ProvenanceId = provenance.Id });
+            await context.Manufacturers.AddAsync(new() { Id = 1, Name = "  haWKer SiDDeley \r\naviation ltd.   ", ProvenanceId = provenance.Id });
             await context.SaveChangesAsync();
-            await context.Models.AddAsync(new() { IATA = "abb", ICAO = "a3st", Name = ModelName, ManufacturerId = 1 });
+            await context.Models.AddAsync(new() { IATA = "abb", ICAO = "a3st", Name = ModelName, ManufacturerId = 1, ProvenanceId = provenance.Id });
             await context.SaveChangesAsync();
         }
 

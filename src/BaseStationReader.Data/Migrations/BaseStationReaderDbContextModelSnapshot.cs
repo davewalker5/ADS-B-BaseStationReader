@@ -40,6 +40,10 @@ namespace BaseStationReader.Data.Migrations
                     b.Property<int>("ModelId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.Property<string>("Registration")
                         .IsRequired()
                         .HasColumnType("TEXT")
@@ -48,6 +52,8 @@ namespace BaseStationReader.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ModelId");
+
+                    b.HasIndex("ProvenanceId");
 
                     b.ToTable("AIRCRAFT", (string)null);
                 });
@@ -72,7 +78,13 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Name");
 
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ProvenanceId");
 
                     b.ToTable("AIRLINE", (string)null);
                 });
@@ -83,10 +95,6 @@ namespace BaseStationReader.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasColumnName("Id");
-
-                    b.Property<double>("Distance")
-                        .HasColumnType("REAL")
-                        .HasColumnName("Distance");
 
                     b.Property<string>("IATA")
                         .IsRequired()
@@ -111,7 +119,13 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Name");
 
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ProvenanceId");
 
                     b.ToTable("AIRPORT", (string)null);
                 });
@@ -181,17 +195,17 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnName("Id");
 
                     b.Property<int>("AirlineId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("AirlineId");
 
-                    b.Property<string>("Destination")
+                    b.Property<string>("Callsign")
                         .IsRequired()
                         .HasColumnType("TEXT")
-                        .HasColumnName("Destination");
+                        .HasColumnName("Callsign");
 
-                    b.Property<string>("Embarkation")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Embarkation");
+                    b.Property<int>("DestinationAirportId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("DestinationAirportId");
 
                     b.Property<string>("IATA")
                         .IsRequired()
@@ -202,74 +216,25 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("ICAO");
 
+                    b.Property<int>("OriginAirportId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("OriginAirportId");
+
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AirlineId");
 
+                    b.HasIndex("DestinationAirportId");
+
+                    b.HasIndex("OriginAirportId");
+
+                    b.HasIndex("ProvenanceId");
+
                     b.ToTable("FLIGHT", (string)null);
-                });
-
-            modelBuilder.Entity("BaseStationReader.Entities.Api.FlightIATACodeMapping", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("AirlineIATA")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirlineIATA");
-
-                    b.Property<string>("AirlineICAO")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirlineICAO");
-
-                    b.Property<string>("AirlineName")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirlineName");
-
-                    b.Property<string>("AirportIATA")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirportIATA");
-
-                    b.Property<string>("AirportICAO")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirportICAO");
-
-                    b.Property<string>("AirportName")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("AirportName");
-
-                    b.Property<int>("AirportType")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("AirportType");
-
-                    b.Property<string>("Callsign")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Callsign");
-
-                    b.Property<string>("Destination")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Destination");
-
-                    b.Property<string>("Embarkation")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Embarkation");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Filename");
-
-                    b.Property<string>("FlightIATA")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FLIGHT_NUMBER_MAPPING", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Manufacturer", b =>
@@ -284,7 +249,13 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Name");
 
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ProvenanceId");
 
                     b.ToTable("MANUFACTURER", (string)null);
                 });
@@ -297,12 +268,10 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnName("Id");
 
                     b.Property<string>("IATA")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("IATA");
 
                     b.Property<string>("ICAO")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("ICAO");
 
@@ -314,11 +283,62 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Name");
 
+                    b.Property<int>("ProvenanceId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ProvenanceId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ManufacturerId");
 
+                    b.HasIndex("ProvenanceId");
+
                     b.ToTable("MODEL", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Provenance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Licence")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Licence");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Source");
+
+                    b.Property<string>("SourceDataset")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceDataset");
+
+                    b.Property<string>("SourceRef")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceRef");
+
+                    b.Property<string>("SourceUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceUrl");
+
+                    b.Property<string>("SourceVersion")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SourceVersion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceRef")
+                        .IsUnique();
+
+                    b.ToTable("PROVENANCE", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Sighting", b =>
@@ -501,7 +521,37 @@ namespace BaseStationReader.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Model");
+
+                    b.Navigation("Provenance");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Airline", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Provenance");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Airport", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Provenance");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Flight", b =>
@@ -512,7 +562,42 @@ namespace BaseStationReader.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BaseStationReader.Entities.Api.Airport", "DestinationAirport")
+                        .WithMany()
+                        .HasForeignKey("DestinationAirportId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BaseStationReader.Entities.Api.Airport", "OriginAirport")
+                        .WithMany()
+                        .HasForeignKey("OriginAirportId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Airline");
+
+                    b.Navigation("DestinationAirport");
+
+                    b.Navigation("OriginAirport");
+
+                    b.Navigation("Provenance");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Api.Manufacturer", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Provenance");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Model", b =>
@@ -523,7 +608,15 @@ namespace BaseStationReader.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
+                        .WithMany()
+                        .HasForeignKey("ProvenanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Manufacturer");
+
+                    b.Navigation("Provenance");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Sighting", b =>

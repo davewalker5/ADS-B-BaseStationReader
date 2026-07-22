@@ -8,6 +8,7 @@
     <NoWarn>$(NoWarn);MSTEST0006</NoWarn>
     <WarningsAsErrors>CS4014</WarningsAsErrors>
     <NoWarn>$(NoWarn);NU1900;MSTEST0001</NoWarn>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)/mstest.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,11 +28,12 @@
     <None Remove="manufacturers.csv" />
     <None Remove="empty_manufacturers.csv" />
     <None Remove="models.csv" />
+    <None Remove="models-null-code.csv" />
     <None Remove="empty_models.csv" />
-    <None Remove="flight_number_mappings.csv" />
-    <None Remove="empty_mappings.csv" />
     <None Remove="aircraft.csv" />
     <None Remove="empty_aircraft.csv" />
+    <None Remove="flights.csv" />
+    <None Remove="empty_flights.csv" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,19 +73,22 @@
     <Content Include="models.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="models-null-code.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="empty_models.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="flight_number_mappings.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="empty_mappings.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="aircraft.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_aircraft.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="flights.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_flights.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

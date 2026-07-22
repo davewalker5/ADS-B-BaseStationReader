@@ -10,6 +10,6 @@ namespace BaseStationReader.Interfaces.Api
         /// <summary>
         /// Retrieves an airport schedule and extracts its flight IATA code mappings.
         /// </summary>
-        Task<List<FlightIATACodeMapping>> LookupSchedulesAsync(string iata, DateTime from, DateTime to);
+        Task<List<FlightScheduleEntry>> LookupSchedulesAsync(string iata, DateTime from, DateTime to);
     }
 }

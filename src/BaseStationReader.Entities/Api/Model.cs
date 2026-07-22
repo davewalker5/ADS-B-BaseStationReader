@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
+#nullable enable
+
 namespace BaseStationReader.Entities.Api
 {
     [ExcludeFromCodeCoverage]
@@ -13,19 +15,24 @@ namespace BaseStationReader.Entities.Api
         [Required]
         public string Name { get; set; } = "";
 
-        [Required]
-        public string ICAO { get; set; } = "";
+        public string? ICAO { get; set; }
 
-        [Required]
-        public string IATA { get; set; } = "";
+        public string? IATA { get; set; }
 
         [Required]
         [ForeignKey(nameof(Manufacturer))]
         public int ManufacturerId { get; set; }
 
         [NotMapped]
-        public string ManufacturerName { get; set; }
+        public string ManufacturerName { get; set; } = "";
 
-        public Manufacturer Manufacturer { get; set; }
+        public Manufacturer Manufacturer { get; set; } = null!;
+
+        public int ProvenanceId { get; set; }
+
+        public Provenance Provenance { get; set; } = null!;
+
+        [NotMapped]
+        public string ProvenanceRef { get; set; } = "";
     }
 }

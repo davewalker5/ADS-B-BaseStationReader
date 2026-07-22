@@ -10,6 +10,7 @@ namespace BaseStationReader.Tests.Database
     {
         private const string FlightIATA = "BA185";
         private const string FlightICAO = "BAW185";
+        private const string Callsign = "BAW185A";
         private const string Embarkation = "LHR";
         private const string Destination = "EWR";
         private const string AirlineIATA = "BA";
@@ -18,6 +19,8 @@ namespace BaseStationReader.Tests.Database
 
         private IFlightManager _manager = null;
         private Airline _airline;
+        private Airport _origin;
+        private Airport _destination;
 
         [TestInitialize]
         public async Task InitialiseAsync()
@@ -28,13 +31,24 @@ namespace BaseStationReader.Tests.Database
 
             // Set up n airline and a flight
             _airline = await new AirlineManager(context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            _ = await _manager.AddAsync(FlightIATA, FlightICAO, Embarkation, Destination, _airline.Id);
+            var airportManager = new AirportManager(context);
+            _origin = await airportManager.AddAsync(new Airport
+            {
+                IATA = Embarkation, ICAO = "EGLL", Name = "London Heathrow", ProvenanceId = _airline.ProvenanceId
+            });
+            _destination = await airportManager.AddAsync(new Airport
+            {
+                IATA = Destination, ICAO = "KEWR", Name = "Newark", ProvenanceId = _airline.ProvenanceId
+            });
+            _ = await _manager.AddAsync(
+                FlightIATA, FlightICAO, Callsign, _airline.Id, _origin.Id, _destination.Id);
         }
 
         [TestMethod]
         public async Task AddDuplicateTestAsync()
         {
-            await  _manager.AddAsync(FlightIATA, FlightICAO, Embarkation, Destination, _airline.Id);
+            await _manager.AddAsync(
+                FlightIATA, FlightICAO, Callsign, _airline.Id, _origin.Id, _destination.Id);
             var models = await _manager.ListAsync(x => true);
             Assert.HasCount(1, models);
         }
@@ -47,9 +61,11 @@ namespace BaseStationReader.Tests.Database
             Assert.IsGreaterThan(0, flight.Id);
             Assert.AreEqual(FlightIATA, flight.IATA);
             Assert.AreEqual(FlightICAO, flight.ICAO);
+            Assert.AreEqual(Callsign, flight.Callsign);
             Assert.AreEqual(Embarkation, flight.Embarkation);
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineName, flight.Airline.Name);
+            Assert.AreEqual("LOCAL", flight.Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -68,6 +84,7 @@ namespace BaseStationReader.Tests.Database
             Assert.IsGreaterThan(0, flights[0].Id);
             Assert.AreEqual(FlightIATA, flights[0].IATA);
             Assert.AreEqual(FlightICAO, flights[0].ICAO);
+            Assert.AreEqual(Callsign, flights[0].Callsign);
             Assert.AreEqual(Embarkation, flights[0].Embarkation);
             Assert.AreEqual(Destination, flights[0].Destination);
             Assert.AreEqual(AirlineName, flights[0].Airline.Name);
@@ -79,6 +96,19 @@ namespace BaseStationReader.Tests.Database
             var flights = await _manager.ListAsync(x => x.IATA == "Missing");
             Assert.IsEmpty(flights);
         }
+
+        [TestMethod]
+        public async Task AddWithoutCallsignTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() =>
+                _manager.AddAsync("BA186", "BAW186", "", _airline.Id, _origin.Id, _destination.Id));
+        }
+
+        [TestMethod]
+        public async Task AddWithMissingProvenanceTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.AddAsync("BA186", "BAW186", "BAW186A", _airline.Id, _origin.Id, _destination.Id, 999));
+        }
     }
 }
-

@@ -1,2 +1,3 @@
-ICAO,IATA,Name,Manufacturer
-A20N,32N,Airbus A320neo,Airbus
+ICAO,IATA,Name,Manufacturer,Provenance
+A337,,Airbus,A330-700 "Beluga XL",LOCAL
+

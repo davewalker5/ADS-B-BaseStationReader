@@ -13,6 +13,7 @@ namespace BaseStationReader.Entities.Import
             Map(m => m.IATA).Name("IATA");
             Map(m => m.Name).Name("Name");
             Map(m => m.ManufacturerName).Name("Manufacturer");
+            Map(m => m.ProvenanceRef).Name("Provenance");
         }
     }
 }

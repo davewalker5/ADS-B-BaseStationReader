@@ -17,7 +17,12 @@ namespace BaseStationReader.Entities.Api
         [Required]
         public string Name { get; set; } = "";
 
+        public int ProvenanceId { get; set; }
+
+        public Provenance Provenance { get; set; } = null!;
+
         [NotMapped]
-        public bool Active { get; set; } = true;
+        public string ProvenanceRef { get; set; } = "";
+
     }
 }

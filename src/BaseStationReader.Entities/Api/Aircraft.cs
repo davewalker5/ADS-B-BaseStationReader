@@ -26,6 +26,13 @@ namespace BaseStationReader.Entities.Api
 
         public Model Model { get; set; }
 
+        public int ProvenanceId { get; set; }
+
+        public Provenance Provenance { get; set; } = null!;
+
+        [NotMapped]
+        public string ProvenanceRef { get; set; } = "";
+
         [NotMapped]
         public string Callsign { get; set; }
 

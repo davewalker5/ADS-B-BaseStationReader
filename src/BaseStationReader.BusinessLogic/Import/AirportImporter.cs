@@ -51,8 +51,22 @@ namespace BaseStationReader.BusinessLogic.Logging
             {
                 Logger.LogMessage(Severity.Info, $"Saving {airports.Count()} airports to the database");
 
+                var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
+                var provenanceByRef = provenanceRecords.ToDictionary(x => x.SourceRef, StringComparer.Ordinal);
+                var missing = airports
+                    .Select(x => x.ProvenanceRef?.Trim() ?? "")
+                    .Distinct(StringComparer.Ordinal)
+                    .Where(sourceRef => !provenanceByRef.ContainsKey(sourceRef))
+                    .ToList();
+
+                if (missing.Count > 0)
+                    throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+
                 foreach (var airport in airports)
                 {
+                    var provenance = provenanceByRef[airport.ProvenanceRef.Trim()];
+                    airport.ProvenanceId = provenance.Id;
+                    airport.Provenance = provenance;
                     Logger.LogMessage(Severity.Debug, $"Saving airport '{airport.Name}' : IATA = '{airport.IATA}', ICAO = '{airport.ICAO}'");
                     await _factory.AirportManager.AddAsync(airport);
                 }

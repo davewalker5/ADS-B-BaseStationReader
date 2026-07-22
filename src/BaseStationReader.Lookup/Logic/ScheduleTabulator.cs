@@ -15,7 +15,7 @@ internal sealed class ScheduleTabulator
     /// <param name="from">The beginning of the lookup range.</param>
     /// <param name="to">The end of the lookup range.</param>
     /// <param name="mappings">The returned schedule rows.</param>
-    public void Write(string iata, DateTime from, DateTime to, IEnumerable<FlightIATACodeMapping> mappings)
+    public void Write(string iata, DateTime from, DateTime to, IEnumerable<FlightScheduleEntry> mappings)
     {
         var rows = mappings?.ToList() ?? [];
         AnsiConsole.MarkupLine($"[bold]Schedule for {Markup.Escape(iata)}[/] " +

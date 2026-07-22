@@ -14,6 +14,7 @@ namespace BaseStationReader.Entities.Import
             Map(m => m.ModelIATA).Name("IATA");
             Map(m => m.ModelICAO).Name("ICAO");
             Map(m => m.Manufactured).TypeConverter<NullableIntegerTypeConverter>();
+            Map(m => m.ProvenanceRef).Name("Provenance");
         }
     }
 }

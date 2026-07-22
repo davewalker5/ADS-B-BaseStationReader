@@ -11,6 +11,7 @@ namespace BaseStationReader.Tests.Database
         private const string ICAO = "EGLL";
         private const string IATA = "LHR";
         private const string Name = "London Heathrow Airport";
+        private int _provenanceId;
 
         private IAirportManager _manager = null;
 
@@ -21,6 +22,8 @@ namespace BaseStationReader.Tests.Database
         public async Task InitialiseAsync()
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _provenanceId = (await new ProvenanceManager(context)
+                .AddAsync("LOCAL", "N/A", "N/A", "N/A", "N/A", "N/A")).Id;
             _manager = new AirportManager(context);
             _ = await _manager.AddAsync(CreateAirport());
         }
@@ -94,27 +97,28 @@ namespace BaseStationReader.Tests.Database
         /// <summary>
         /// Create an airport matching the import format.
         /// </summary>
-        private static Airport CreateAirport() => new()
+        private Airport CreateAirport() => new()
         {
             ICAO = ICAO,
             IATA = IATA,
             Name = Name,
             Latitude = 51.4706,
             Longitude = -0.461941,
-            Distance = 14.2
+            ProvenanceId = _provenanceId
         };
 
         /// <summary>
         /// Assert that all airport details were persisted.
         /// </summary>
-        private static void AssertAirport(Airport airport)
+        private void AssertAirport(Airport airport)
         {
             Assert.AreEqual(IATA, airport.IATA);
             Assert.AreEqual(ICAO, airport.ICAO);
             Assert.AreEqual(Name, airport.Name);
             Assert.AreEqual(51.4706, airport.Latitude);
             Assert.AreEqual(-0.461941, airport.Longitude);
-            Assert.AreEqual(14.2, airport.Distance);
+            Assert.AreEqual(_provenanceId, airport.ProvenanceId);
+            Assert.AreEqual("LOCAL", airport.Provenance.SourceRef);
         }
     }
 }
