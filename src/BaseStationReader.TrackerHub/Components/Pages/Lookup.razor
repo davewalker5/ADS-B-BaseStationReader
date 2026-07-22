@@ -39,7 +39,7 @@
         @if (_lookupAircraft)
         {
         <div class="lookup-result-card">
-            <div class="lookup-result-heading"><div><p class="eyebrow">@_aircraftService</p><h2>Aircraft</h2></div><span>@(_aircraft is null ? "No result" : _aircraft.Address)</span></div>
+            <div class="lookup-result-heading"><div><p class="eyebrow">@SourceCaption(_aircraftSource, _aircraftService)</p><h2>Aircraft</h2></div><span>@(_aircraft is null ? "No result" : _aircraft.Address)</span></div>
             @if (_aircraft is null)
             {
                 <div class="lookup-empty">No aircraft details were found locally or returned by the selected service.</div>
@@ -61,7 +61,7 @@
         @if (_lookupFlight)
         {
         <div class="lookup-result-card">
-            <div class="lookup-result-heading"><div><p class="eyebrow">@_flightService</p><h2>Flight</h2></div><span>@(_flight is null ? "No result" : _flight.IATA)</span></div>
+            <div class="lookup-result-heading"><div><p class="eyebrow">@SourceCaption(_flightSource, _flightService)</p><h2>Flight</h2></div><span>@(_flight is null ? "No result" : _flight.IATA)</span></div>
             @if (_flight is null)
             {
                 <div class="lookup-empty">No flight details were found locally or returned by the selected service.</div>
@@ -100,6 +100,8 @@
     private string _callsign = string.Empty;
     private Aircraft? _aircraft;
     private Flight? _flight;
+    private ReferenceLookupSource? _aircraftSource;
+    private ReferenceLookupSource? _flightSource;
     private string? _error;
     private bool _loading;
     private bool _searched;
@@ -151,6 +153,8 @@
         _error = null;
         _aircraft = null;
         _flight = null;
+        _aircraftSource = null;
+        _flightSource = null;
         _address = _address.Trim().ToUpperInvariant();
         _callsign = _callsign.Trim().ToUpperInvariant();
         _lookupAircraft = _address.Length > 0;
@@ -160,6 +164,8 @@
             var result = await LookupService.LookupAsync(_aircraftService, _flightService, _address, _callsign);
             _aircraft = result.Aircraft;
             _flight = result.Flight;
+            _aircraftSource = result.AircraftSource;
+            _flightSource = result.FlightSource;
         }
         catch (Exception exception) { _error = exception.Message; }
         finally { _loading = false; }
@@ -171,4 +177,10 @@
     /// <param name="value">The value to display.</param>
     /// <returns>The formatted value or an em dash.</returns>
     private static string Value(object? value) => string.IsNullOrWhiteSpace(value?.ToString()) ? "—" : value.ToString()!;
+
+    /// <summary>
+    /// Describes the source of a result, retaining the selected API caption when it was not a local hit.
+    /// </summary>
+    private static string SourceCaption(ReferenceLookupSource? source, ApiServiceType apiService)
+        => source == ReferenceLookupSource.LocalDatabase ? "Local Database" : apiService.ToString();
 }
