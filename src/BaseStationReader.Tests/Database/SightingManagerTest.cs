@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.Database
 
             // Set up an airline and a flight
             var airline = await new AirlineManager(context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            _flight = await new FlightManager(context).AddAsync(FlightIATA, FlightICAO, Embarkation, Destination, airline.Id);
+            _flight = await new FlightManager(context).AddAsync(FlightIATA, FlightICAO, FlightICAO, Embarkation, Destination, airline.Id);
         }
 
         [TestMethod]
@@ -79,4 +79,3 @@ namespace BaseStationReader.Tests.Database
         }
     }
 }
-

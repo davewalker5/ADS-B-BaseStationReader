@@ -29,7 +29,7 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="from">The beginning of the schedule window.</param>
         /// <param name="to">The end of the schedule window.</param>
         /// <returns>The extracted mappings, or null when no schedules API is registered.</returns>
-        public async Task<List<FlightIATACodeMapping>> LookupSchedulesAsync(string iata, DateTime from, DateTime to)
+        public async Task<List<FlightScheduleEntry>> LookupSchedulesAsync(string iata, DateTime from, DateTime to)
         {
             // Both retrieval and extraction must use the same schedules API implementation.
             if (_register.GetInstance(ApiEndpointType.Schedules) is not ISchedulesApi api) return null;

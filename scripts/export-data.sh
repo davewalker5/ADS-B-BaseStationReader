@@ -1,4 +1,4 @@
-#!/bin/sh -f
+#!/usr/bin/env bash
 
 PROJECT_FOLDER=$( cd "$( dirname "$0" )/.." && pwd )
 DATA_FOLDER="$PROJECT_FOLDER/data/export"
@@ -13,7 +13,6 @@ sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" ".read '$SQL_FOLDER/list-aircraft-mo
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" ".read '$SQL_FOLDER/list-aircraft.sql'" > "$DATA_FOLDER/aircraft.csv"
 
 # Raw output : Curated data
-sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM FLIGHT_NUMBER_MAPPING" > "$DATA_FOLDER/flight-number-mappings.csv"
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM EXCLUDED_ADDRESS" > "$DATA_FOLDER/excluded-addresses.csv"
 sqlite3 -header -csv "$AIRCRAFT_TRACKER_DB" "SELECT * FROM EXCLUDED_CALLSIGN" > "$DATA_FOLDER/excluded-callsigns.csv"
 

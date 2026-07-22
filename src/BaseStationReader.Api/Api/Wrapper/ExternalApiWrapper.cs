@@ -182,7 +182,7 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="from">The beginning of the schedule window.</param>
         /// <param name="to">The end of the schedule window.</param>
         /// <returns>The extracted flight mappings.</returns>
-        public async Task<List<FlightIATACodeMapping>> LookupSchedulesAsync(string iata, DateTime from, DateTime to)
+        public async Task<List<FlightScheduleEntry>> LookupSchedulesAsync(string iata, DateTime from, DateTime to)
             => await _scheduleLookupManager.LookupSchedulesAsync(iata, from, to);
     }
 }

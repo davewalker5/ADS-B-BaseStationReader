@@ -3,6 +3,7 @@ using System;
 using BaseStationReader.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    partial class BaseStationReaderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722113540_AddFlightCallsignAndProvenance")]
+    partial class AddFlightCallsignAndProvenance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -232,6 +235,69 @@ namespace BaseStationReader.Data.Migrations
                     b.HasIndex("ProvenanceId");
 
                     b.ToTable("FLIGHT", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Api.FlightIATACodeMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("AirlineIATA")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirlineIATA");
+
+                    b.Property<string>("AirlineICAO")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirlineICAO");
+
+                    b.Property<string>("AirlineName")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirlineName");
+
+                    b.Property<string>("AirportIATA")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirportIATA");
+
+                    b.Property<string>("AirportICAO")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirportICAO");
+
+                    b.Property<string>("AirportName")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("AirportName");
+
+                    b.Property<int>("AirportType")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("AirportType");
+
+                    b.Property<string>("Callsign")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Callsign");
+
+                    b.Property<string>("Destination")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Destination");
+
+                    b.Property<string>("Embarkation")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Embarkation");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Filename");
+
+                    b.Property<string>("FlightIATA")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FLIGHT_NUMBER_MAPPING", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Manufacturer", b =>

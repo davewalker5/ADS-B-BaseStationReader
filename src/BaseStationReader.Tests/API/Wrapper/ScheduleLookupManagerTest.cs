@@ -29,7 +29,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         public async Task LookupSchedulesTestAsync()
         {
             var schedules = JsonNode.Parse("{ \"departures\": [] }");
-            var expected = new List<FlightIATACodeMapping> { new() { Callsign = "BAW123" } };
+            var expected = new List<FlightScheduleEntry> { new() { Callsign = "BAW123" } };
             var api = new Mock<ISchedulesApi>();
             api.Setup(instance => instance.LookupSchedulesRawAsync(AirportIata, _from, _to))
                 .ReturnsAsync(schedules);

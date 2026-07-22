@@ -33,19 +33,15 @@ namespace BaseStationReader.Api.Wrapper
             IEnumerable<string> arrivalAirportCodes,
             bool allowExternalApiLookup = true)
         {
-            // Attempt to load the flight from the database or, if there's a callsign mapping for it, to create
-            // a new one using that mapping
-            var flight = await LoadOrCreateFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
+            // Attempt to load a manually maintained flight using its callsign.
+            var flight = await LoadFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
 
             // At this point, one of the following is true:
             //
-            // 1. The flight is a pre-existing flight or;
-            // 2. There's a callsign mapping record for it, in which case it's been created based on that record or;
-            // 3. The flight is still unidentified
+            // 1. The flight is a pre-existing flight; or
+            // 2. The flight is still unidentified.
             //
-            // With no mapping record, there's no way to identify a flight number so APIs supporting lookup by flight
-            // number are of no use at this point. We now need an API that is able to lookup flights by aircraft
-            // address - attempt that lookup
+            // If the callsign is not known locally, attempt an external lookup by aircraft address.
             if (flight == null && allowExternalApiLookup)
             {
                 flight = await LookupFlightAsync(trackedAircraft, departureAirportCodes, arrivalAirportCodes);
@@ -67,43 +63,32 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="departureAirportCodes"></param>
         /// <param name="arrivalAirportCodes"></param>
         /// <returns></returns>
-        private async Task<Flight> LoadOrCreateFlightAsync(
+        private async Task<Flight> LoadFlightAsync(
             TrackedAircraft trackedAircraft,
             IEnumerable<string> departureAirportCodes,
             IEnumerable<string> arrivalAirportCodes)
         {
-            // Attempt to load the callsign mapping record
-            LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, $"Attempting to retrieve callsign mapping record");
-            var mapping = await _factory.FlightIATACodeMappingManager.GetAsync(x => x.Callsign == trackedAircraft.Callsign);
-            if (mapping == null)
+            // Directly loaded flights are the source of truth for callsign resolution.
+            LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, "Attempting to retrieve the flight from the database");
+            var flight = await _factory.FlightManager.GetAsync(x => x.Callsign == trackedAircraft.Callsign);
+            if (flight == null)
             {
-                LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, $"No callsign mapping record found");
+                LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, "No flight record found");
                 return null;
             }
 
             // Check the point of embarkation isn't filtered out
-            if (!IsAirportAllowed(trackedAircraft.Address, departureAirportCodes, AirportType.Departure, mapping.Embarkation))
+            if (!IsAirportAllowed(trackedAircraft.Address, departureAirportCodes, AirportType.Departure, flight.Embarkation))
             {
                 return null;
             }
 
             // Check the destination isn't filtered out
-            if (!IsAirportAllowed(trackedAircraft.Address, arrivalAirportCodes, AirportType.Arrival, mapping.Destination))
+            if (!IsAirportAllowed(trackedAircraft.Address, arrivalAirportCodes, AirportType.Arrival, flight.Destination))
             {
                 return null;
             }
 
-            // See if the flight already exists
-            LogMessage(Severity.Info, trackedAircraft.Address, trackedAircraft.Callsign, mapping.FlightIATA, $"Attempting to retrieve the flight from the database");
-            var flight = await _factory.FlightManager.GetAsync(x => x.IATA == mapping.FlightIATA);
-            if (flight != null)
-            {
-                return flight;
-            }
-
-            // At this point, we have all the information necessary to create the airline and flight from the mapping record
-            var airline = await _factory.AirlineManager.AddAsync(mapping.AirlineIATA, mapping.AirlineICAO, mapping.AirlineName);
-            flight = await _factory.FlightManager.AddAsync(mapping.FlightIATA, null, mapping.Embarkation, mapping.Destination, airline.Id);
             return flight;
         }
 
@@ -152,7 +137,7 @@ namespace BaseStationReader.Api.Wrapper
                             ICAO = airlineICAO ?? string.Empty,
                             Name = airlineName ?? string.Empty
                         };
-                        return CreateFlight(flightProperties, airline);
+                        return CreateFlight(flightProperties, airline, aircraft.Callsign);
                     }
                 }
             }
@@ -289,7 +274,7 @@ namespace BaseStationReader.Api.Wrapper
         /// <param name="properties"></param>
         /// <param name="airline"></param>
         /// <returns></returns>
-        private static Flight CreateFlight(Dictionary<ApiProperty, string> properties, Airline airline)
+        private static Flight CreateFlight(Dictionary<ApiProperty, string> properties, Airline airline, string callsign)
         {
             // Provider-specific responses may include additional aircraft details used by the caller.
             properties.TryGetValue(ApiProperty.AircraftAddress, out string address);
@@ -298,6 +283,7 @@ namespace BaseStationReader.Api.Wrapper
             {
                 IATA = properties[ApiProperty.FlightIATA],
                 ICAO = properties[ApiProperty.FlightICAO],
+                Callsign = callsign,
                 Embarkation = properties[ApiProperty.EmbarkationIATA],
                 Destination = properties[ApiProperty.DestinationIATA],
                 AircraftAddress = address ?? string.Empty,

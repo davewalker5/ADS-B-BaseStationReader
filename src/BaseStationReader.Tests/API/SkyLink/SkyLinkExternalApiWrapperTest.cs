@@ -79,19 +79,10 @@ namespace BaseStationReader.Tests.API
                 LastSeen = DateTime.UtcNow
             };
 
-            // Add the flight IATA code mapping
-            _ = await _factory.FlightIATACodeMappingManager.AddAsync(
-                AirlineICAO,
-                AirlineIATA,
-                AirlineName,
-                AirportICAO,
-                AirportIATA,
-                AirportName,
-                AirportType.Unknown,
-                Embarkation,
-                Destination,
-                FlightIATA,
-                Callsign, "");
+            // Add the locally resolvable flight.
+            var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            _ = await _factory.FlightManager.AddAsync(
+                FlightIATA, null, Callsign, Embarkation, Destination, airline.Id);
 
             // Create the model and manufacturer in the database so they'll be picked up during the aircraft
             // lookup

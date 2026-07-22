@@ -5,9 +5,9 @@
 
 <section class="page-heading">
     <div>
-        <p class="eyebrow">Flight mappings</p>
+        <p class="eyebrow">Flight schedules</p>
         <h1>Airport Schedule</h1>
-        <p class="lede">Retrieve an airport schedule and optionally add its callsign mappings to the tracking database.</p>
+        <p class="lede">Retrieve and inspect an airport schedule.</p>
     </div>
 </section>
 
@@ -154,7 +154,7 @@
     private ApiServiceType _serviceType = ApiServiceType.None;
     private IReadOnlyList<ApiServiceType> _services = [];
     private IReadOnlyList<AirportWeatherOption> _airports = [];
-    private IReadOnlyList<FlightIATACodeMapping> _mappings = [];
+    private IReadOnlyList<FlightScheduleEntry> _mappings = [];
     private string _iata = string.Empty;
     private DateTime? _from;
     private DateTime? _to;
@@ -165,14 +165,14 @@
     private int _page = 1;
     private int _pageSize = 50;
     private int EligibleCount => _mappings.Count(FlightMappingEligibility.IsEligible);
-    private IEnumerable<FlightIATACodeMapping> VisibleMappings => _showIncomplete
+    private IEnumerable<FlightScheduleEntry> VisibleMappings => _showIncomplete
         ? _mappings
         : _mappings.Where(FlightMappingEligibility.IsEligible);
     private int VisibleCount => _showIncomplete ? _mappings.Count : EligibleCount;
     private int PageCount => Math.Max(1, (int)Math.Ceiling(VisibleCount / (double)_pageSize));
     private int PageStart => VisibleCount == 0 ? 0 : ((_page - 1) * _pageSize) + 1;
     private int PageEnd => Math.Min(_page * _pageSize, VisibleCount);
-    private IEnumerable<FlightIATACodeMapping> PageMappings
+    private IEnumerable<FlightScheduleEntry> PageMappings
         => VisibleMappings.Skip((_page - 1) * _pageSize).Take(_pageSize);
     private bool CanLookup => !_loading && _services.Count > 0 &&
         IsValidIata(_iata) && _from.HasValue && _to.HasValue &&

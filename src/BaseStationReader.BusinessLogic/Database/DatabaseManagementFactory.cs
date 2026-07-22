@@ -16,7 +16,6 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IManufacturerManager> _manufacturerManager = null;
         private readonly Lazy<IModelManager> _modelManager = null;
         private readonly Lazy<ISightingManager> _sightingManager = null;
-        private readonly Lazy<IFlightIATACodeMappingManager> _flightIATACodeMappingManager = null;
         private readonly Lazy<ITrackedAircraftWriter> _trackedAircraftWriter = null;
         private readonly Lazy<IPositionWriter> _positionWriter = null;
         private readonly Lazy<IAircraftLockManager> _aircraftLockManager = null;
@@ -34,7 +33,6 @@ namespace BaseStationReader.BusinessLogic.Database
         public IManufacturerManager ManufacturerManager { get { return _manufacturerManager.Value; } }
         public IModelManager ModelManager { get { return _modelManager.Value; } }
         public ISightingManager SightingManager { get { return _sightingManager.Value; } }
-        public IFlightIATACodeMappingManager FlightIATACodeMappingManager { get { return _flightIATACodeMappingManager.Value; } }
         public ITrackedAircraftWriter TrackedAircraftWriter { get { return _trackedAircraftWriter.Value; } }
         public IPositionWriter PositionWriter { get { return _positionWriter.Value; } }
         public IAircraftLockManager AircraftLockManager { get { return _aircraftLockManager.Value; } }
@@ -59,7 +57,6 @@ namespace BaseStationReader.BusinessLogic.Database
             _manufacturerManager = new Lazy<IManufacturerManager>(() => new ManufacturerManager(context));
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
-            _flightIATACodeMappingManager = new Lazy<IFlightIATACodeMappingManager>(() => new FlightIATACodeMappingManager(context));
             _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(logger, context));
             _positionWriter = new Lazy<IPositionWriter>(() => new PositionWriter(context));
             _aircraftLockManager = new Lazy<IAircraftLockManager>(() => new AircraftLockManager(_trackedAircraftWriter.Value, timeToLockMs));

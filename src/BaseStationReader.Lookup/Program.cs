@@ -76,12 +76,6 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleManufacturerImportAsync();
                 }
 
-                // If a CSV file containing confirmed flight IATA code mappings has been supplied, import it
-                if (parser.IsPresent(CommandLineOptionType.ImportFlightIATACodeMappings))
-                {
-                    await new ImportHandler(settings, parser, logger, factory).HandleMappingImportAsync();
-                }
-
                 // If a CSV file containing model details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportModels))
                 {

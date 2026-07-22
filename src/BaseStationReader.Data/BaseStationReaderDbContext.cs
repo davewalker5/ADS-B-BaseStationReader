@@ -17,7 +17,6 @@ namespace BaseStationReader.Data
         public virtual DbSet<Model> Models { get; set; }
         public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<Sighting> Sightings { get; set; }
-        public virtual DbSet<FlightIATACodeMapping> FlightIATACodeMappings { get; set; }
         public virtual DbSet<ExcludedAddress> ExcludedAddresses { get; set; }
         public virtual DbSet<ExcludedCallsign> ExcludedCallsigns { get; set; }
         public virtual DbSet<ApiLogEntry> ApiLogEntries { get; set; }
@@ -160,12 +159,19 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
+                entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
                 entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
                 entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
                 entity.HasOne(e => e.Airline)
                     .WithMany()
                     .HasForeignKey(e => e.AirlineId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -259,24 +265,6 @@ namespace BaseStationReader.Data
                     .WithMany()
                     .HasForeignKey(e => e.FlightId)
                     .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<FlightIATACodeMapping>(entity =>
-            {
-                entity.ToTable("FLIGHT_NUMBER_MAPPING");
-
-                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(e => e.AirlineICAO).HasColumnName("AirlineICAO");
-                entity.Property(e => e.AirlineIATA).HasColumnName("AirlineIATA");
-                entity.Property(e => e.AirlineName).HasColumnName("AirlineName");
-                entity.Property(e => e.AirportICAO).HasColumnName("AirportICAO");
-                entity.Property(e => e.AirportIATA).HasColumnName("AirportIATA");
-                entity.Property(e => e.AirportName).HasColumnName("AirportName");
-                entity.Property(e => e.AirportType).IsRequired().HasColumnName("AirportType");
-                entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
-                entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
-                entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
-                entity.Property(e => e.FileName).IsRequired().HasColumnName("Filename");
             });
 
             modelBuilder.Entity<ExcludedAddress>(entity =>

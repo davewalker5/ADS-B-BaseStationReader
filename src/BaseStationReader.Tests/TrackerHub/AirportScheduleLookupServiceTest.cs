@@ -19,11 +19,11 @@ public class AirportScheduleLookupServiceTest
     [TestMethod]
     public void IdentifyCompleteMappingsTest()
     {
-        var complete = new FlightIATACodeMapping
+        var complete = new FlightScheduleEntry
         {
             FlightIATA = "BA123", Callsign = "BAW123", AirlineIATA = "BA", AirlineICAO = "BAW"
         };
-        var incomplete = new FlightIATACodeMapping
+        var incomplete = new FlightScheduleEntry
         {
             FlightIATA = "BA123", Callsign = string.Empty, AirlineIATA = "BA", AirlineICAO = "BAW"
         };

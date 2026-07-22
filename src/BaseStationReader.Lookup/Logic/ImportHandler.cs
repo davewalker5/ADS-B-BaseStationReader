@@ -51,17 +51,6 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
-        /// Handle the callsign/flight IATA code mapping import command
-        /// </summary>
-        /// <returns></returns>
-        public async Task HandleMappingImportAsync()
-        {
-            var filePath = Parser.GetValues(CommandLineOptionType.ImportFlightIATACodeMappings)[0];
-            var importer = new FlightIATACodeMappingImporter(Factory);
-            await importer.ImportAsync(filePath);
-        }
-
-        /// <summary>
         /// Handle the manufacturer import command
         /// </summary>
         /// <returns></returns>

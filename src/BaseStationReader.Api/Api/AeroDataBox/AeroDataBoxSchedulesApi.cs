@@ -97,9 +97,9 @@ namespace BaseStationReader.Api.AeroDatabox
         /// <param name="schedules">The JSON returned by <see cref="LookupSchedulesRawAsync"/>.</param>
         /// <param name="airportIata">The IATA code of the airport whose schedule was requested.</param>
         /// <returns>All schedule rows projected as flight mapping entities.</returns>
-        public List<FlightIATACodeMapping> ExtractFlightMapping(JsonNode schedules, string airportIata)
+        public List<FlightScheduleEntry> ExtractFlightMapping(JsonNode schedules, string airportIata)
         {
-            var mappings = new List<FlightIATACodeMapping>();
+            var mappings = new List<FlightScheduleEntry>();
             if (schedules is null || string.IsNullOrWhiteSpace(airportIata)) return mappings;
 
             var scheduleObject = schedules as JsonObject;
@@ -118,7 +118,7 @@ namespace BaseStationReader.Api.AeroDatabox
         /// Extracts mappings for one direction from an AeroDataBox schedule collection.
         /// </summary>
         private static void ExtractFlightMappings(JsonArray flights, AirportType airportType,
-            string scheduleAirportIata, ICollection<FlightIATACodeMapping> mappings)
+            string scheduleAirportIata, ICollection<FlightScheduleEntry> mappings)
         {
             if (flights is null) return;
 
@@ -132,7 +132,7 @@ namespace BaseStationReader.Api.AeroDatabox
                 var airlineIcao = Compact(airline?["icao"]);
 
                 var remoteAirportIata = Compact(airport?["iata"]);
-                mappings.Add(new FlightIATACodeMapping
+                mappings.Add(new FlightScheduleEntry
                 {
                     AirlineICAO = airlineIcao,
                     AirlineIATA = airlineIata,

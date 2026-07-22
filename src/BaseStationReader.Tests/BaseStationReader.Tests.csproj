@@ -29,8 +29,6 @@
     <None Remove="models.csv" />
     <None Remove="models-null-code.csv" />
     <None Remove="empty_models.csv" />
-    <None Remove="flight_number_mappings.csv" />
-    <None Remove="empty_mappings.csv" />
     <None Remove="aircraft.csv" />
     <None Remove="empty_aircraft.csv" />
   </ItemGroup>
@@ -76,12 +74,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_models.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="flight_number_mappings.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="empty_mappings.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="aircraft.csv">

@@ -16,6 +16,9 @@ namespace BaseStationReader.Entities.Api
         public string IATA { get; set; } = "";
 
         [Required]
+        public string Callsign { get; set; } = "";
+
+        [Required]
         public string Embarkation { get; set; } = "";
 
         [Required]
@@ -25,6 +28,8 @@ namespace BaseStationReader.Entities.Api
         [ForeignKey(nameof(Airline))]
         public int AirlineId { get; set; }
 
+        public int ProvenanceId { get; set; }
+
         [NotMapped]
         public string AircraftAddress { get; set; } = "";
 
@@ -32,5 +37,7 @@ namespace BaseStationReader.Entities.Api
         public string ModelICAO { get; set; } = "";
         
         public Airline Airline { get; set; }
+
+        public Provenance Provenance { get; set; } = null!;
     }
 }

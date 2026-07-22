@@ -150,7 +150,7 @@ namespace BaseStationReader.Tests.API.AeroDataBox
         /// <summary>
         /// Asserts the properties extracted for one schedule flight.
         /// </summary>
-        private static void AssertMapping(FlightIATACodeMapping mapping, AirportType airportType,
+        private static void AssertMapping(FlightScheduleEntry mapping, AirportType airportType,
             string flightIata, string callsign, string airportIcao, string airportIata,
             string airportName, string embarkation, string destination)
         {
