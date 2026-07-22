@@ -2,7 +2,6 @@
   "ApplicationSettings": {
     "LogFile": "AircraftLookup.log",
     "MinimumLogLevel": "Info",
-    "CreateSightings": false,
     "AircraftApi": "AirLabs",
     "FlightApi": "AirLabs",
     "WeatherApi": "CheckWXApi",

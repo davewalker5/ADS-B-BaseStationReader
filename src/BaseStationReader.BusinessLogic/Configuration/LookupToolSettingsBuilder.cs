@@ -26,9 +26,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.MinimumLogLevel = minimumLogLevel;
             }
 
-            values = parser.GetValues(CommandLineOptionType.CreateSightings);
-            if (values != null) settings.CreateSightings = bool.Parse(values[0]);
-
             values = parser.GetValues(CommandLineOptionType.AircraftApi);
             if (values != null) settings.AircraftApi = values[0];
 

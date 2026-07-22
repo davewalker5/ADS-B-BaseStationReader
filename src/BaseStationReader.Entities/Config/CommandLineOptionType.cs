@@ -8,7 +8,6 @@
         AircraftNotificationInterval,
         Aircraft,
         AircraftApi,
-        ResolveAircraft,
         ApplicationTimeout,
         ClearDown,
         CreateSightings,

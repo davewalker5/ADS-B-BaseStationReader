@@ -26,7 +26,6 @@ namespace BaseStationReader.Tests.Configuration
 
             Assert.AreEqual("AircraftLookup.log", settings.LogFile);
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
-            Assert.IsFalse(settings.CreateSightings);
             Assert.AreEqual("AirLabs", settings.AircraftApi);
             Assert.AreEqual("AirLabs", settings.FlightApi);
             Assert.AreEqual("CheckWXApi", settings.WeatherApi);
@@ -62,15 +61,6 @@ namespace BaseStationReader.Tests.Configuration
             _parser.Parse(args);
             var settings = _builder.BuildSettings(_parser, "trackersettings.json");
             Assert.AreEqual(Severity.Debug, settings.MinimumLogLevel);
-        }
-
-        [TestMethod]
-        public void OverrideCreateSettingsTest()
-        {
-            var args = new string[] { "--create-sightings", "true" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, "lookupsettings.json");
-            Assert.IsTrue(settings.CreateSightings);
         }
 
         [TestMethod]
