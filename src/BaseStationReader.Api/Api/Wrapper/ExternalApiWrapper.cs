@@ -114,7 +114,7 @@ namespace BaseStationReader.Api.Wrapper
             }
 
             // See if the aircraft is a valid candidate for lookup - the retrieval accounts for exclusions
-            var trackedAircraft = await _factory.TrackedAircraftWriter.GetLookupCandidateAsync(request.AircraftAddress);
+            var trackedAircraft = await _factory.TrackedAircraftWriter.GetSightingCreationCandidateAsync(request.AircraftAddress);
             if (trackedAircraft == null)
             {
                 // As we didn't find a tracked aircraft record, there's no point attempting to update the lookup properties
@@ -129,8 +129,6 @@ namespace BaseStationReader.Api.Wrapper
                 request.AllowExternalApiLookup);
             if (aircraft == null)
             {
-                // If an aircraft isn't identifiable, there's no point allowing requeues
-                await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, false);
                 return new(false, false);
             }
 
@@ -144,7 +142,6 @@ namespace BaseStationReader.Api.Wrapper
             {
                 // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
                 // filled in, so allow requeues. Otherwise, the exclusion is more permanent so don't allow requeues
-                await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, false);
                 var allowRequeue = string.IsNullOrEmpty(trackedAircraft?.Callsign);
                 return new(false, allowRequeue);
             }
@@ -155,7 +152,6 @@ namespace BaseStationReader.Api.Wrapper
                 _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
             }
 
-            await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(trackedAircraft.Address, true);
             return new(true, false);
         }
 

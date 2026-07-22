@@ -57,7 +57,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _manufacturerManager = new Lazy<IManufacturerManager>(() => new ManufacturerManager(context));
             _modelManager = new Lazy<IModelManager>(() => new ModelManager(context));
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
-            _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(logger, context));
+            _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(context));
             _positionWriter = new Lazy<IPositionWriter>(() => new PositionWriter(context));
             _aircraftLockManager = new Lazy<IAircraftLockManager>(() => new AircraftLockManager(_trackedAircraftWriter.Value, timeToLockMs));
             _excludedAddressManager = new Lazy<IExcludedAddressManager>(() => new ExcludedAddressManager(context));

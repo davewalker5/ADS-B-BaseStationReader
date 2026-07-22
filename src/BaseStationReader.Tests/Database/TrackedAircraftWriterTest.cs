@@ -4,6 +4,7 @@ using BaseStationReader.BusinessLogic.Database;
 using System.Globalization;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Tests.Mocks;
+using BaseStationReader.Entities.Api;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -24,13 +25,14 @@ namespace BaseStationReader.Tests.Database
         private readonly DateTime LastSeen = DateTime.ParseExact("2023-08-22 17:56:24.909", "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
         private IDatabaseManagementFactory _factory = null;
+        private BaseStationReaderDbContext _context = null;
 
         [TestInitialize]
         public void TestInitialise()
         {
             var logger = new MockFileLogger();
-            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _factory = new DatabaseManagementFactory(logger, context, 0);
+            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _factory = new DatabaseManagementFactory(logger, _context, 0);
         }
 
         [TestMethod]
@@ -143,9 +145,9 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task SetTrackedAircraftTimestampTestAsync()
+        public async Task ExistingSightingIsNotReturnedAsCandidateTestAsync()
         {
-            var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
+            var tracked = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
             {
                 Address = Address,
                 Callsign = Callsign,
@@ -154,35 +156,32 @@ namespace BaseStationReader.Tests.Database
                 Status = TrackingStatus.Active
             });
 
-            Assert.IsNull(initial.LookupTimestamp);
-
-            _ = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(Address, true);
-
-            var aircraft = await _factory.TrackedAircraftWriter.ListAsync(x => true);
-            Assert.IsNotNull(aircraft);
-            Assert.HasCount(1, aircraft);
-            Assert.IsNotNull(initial.LookupTimestamp);
-        }
-
-        [TestMethod]
-        public async Task FailedLookupWithNoAttemptLimitRemainsEligibleTestAsync()
-        {
-            var initial = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
-            {
-                Address = Address,
-                Callsign = Callsign,
-                FirstSeen = FirstSeen,
-                LastSeen = LastSeen,
-                Status = TrackingStatus.Active
-            });
-
-            _ = await _factory.TrackedAircraftWriter.UpdateLookupPropertiesAsync(Address, false);
-            var candidates = await _factory.TrackedAircraftWriter.ListLookupCandidatesAsync();
-
-            Assert.AreEqual(1, initial.LookupAttempts);
-            Assert.IsNull(initial.LookupTimestamp);
+            var candidates = await _factory.TrackedAircraftWriter.ListSightingCreationCandidatesAsync();
             Assert.HasCount(1, candidates);
-            Assert.AreEqual(initial.Id, candidates[0].Id);
+
+            var aircraft = new Aircraft
+            {
+                Address = Address,
+                Registration = "G-TEST"
+            };
+            var flight = new Flight
+            {
+                Callsign = Callsign,
+                IATA = "BA486"
+            };
+            await _context.Aircraft.AddAsync(aircraft);
+            await _context.Flights.AddAsync(flight);
+            await _context.SaveChangesAsync();
+            await _context.Sightings.AddAsync(new Sighting
+            {
+                AircraftId = aircraft.Id,
+                FlightId = flight.Id,
+                Timestamp = tracked.FirstSeen
+            });
+            await _context.SaveChangesAsync();
+
+            candidates = await _factory.TrackedAircraftWriter.ListSightingCreationCandidatesAsync();
+            Assert.IsEmpty(candidates);
         }
 
         [TestMethod]
