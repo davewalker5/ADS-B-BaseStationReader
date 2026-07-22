@@ -46,7 +46,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(ModelICAO, model.ICAO);
             Assert.AreEqual(ModelName, model.Name);
             Assert.AreEqual(Manufacturer, model.Manufacturer.Name);
-            Assert.AreEqual("LOCAL", model.Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", model.Provenance.SourceRef);
         }
 
         [TestMethod]

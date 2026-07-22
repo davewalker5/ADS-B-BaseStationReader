@@ -79,12 +79,12 @@ namespace BaseStationReader.BusinessLogic.Database
 
             if (provenanceId == 0)
             {
-                var local = await _context.Provenance.FirstOrDefaultAsync(x => x.SourceRef == "LOCAL");
+                var local = await _context.Provenance.FirstOrDefaultAsync(x => x.SourceRef == "MANUAL");
                 if (local == null)
                 {
                     local = new Provenance
                     {
-                        SourceRef = "LOCAL", Source = "N/A", SourceUrl = "N/A",
+                        SourceRef = "MANUAL", Source = "N/A", SourceUrl = "N/A",
                         SourceDataset = "N/A", SourceVersion = "N/A", Licence = "N/A"
                     };
                     await _context.Provenance.AddAsync(local);

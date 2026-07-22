@@ -65,7 +65,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(Embarkation, flight.Embarkation);
             Assert.AreEqual(Destination, flight.Destination);
             Assert.AreEqual(AirlineName, flight.Airline.Name);
-            Assert.AreEqual("LOCAL", flight.Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", flight.Provenance.SourceRef);
         }
 
         [TestMethod]

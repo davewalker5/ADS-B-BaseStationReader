@@ -12,8 +12,8 @@ namespace BaseStationReader.Data.Migrations
         {
             migrationBuilder.Sql("""
                 INSERT INTO PROVENANCE (SourceRef, Source, SourceUrl, SourceDataset, SourceVersion, Licence)
-                SELECT 'LOCAL', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'
-                WHERE NOT EXISTS (SELECT 1 FROM PROVENANCE WHERE SourceRef = 'LOCAL');
+                SELECT 'MANUAL', 'Manual observation / research', 'N/A', 'N/A', 'N/A', 'N/A - factual observation'
+                WHERE NOT EXISTS (SELECT 1 FROM PROVENANCE WHERE SourceRef = 'MANUAL');
                 """);
 
             migrationBuilder.AddColumn<int>(
@@ -25,7 +25,7 @@ namespace BaseStationReader.Data.Migrations
 
             migrationBuilder.Sql("""
                 UPDATE AIRPORT
-                SET ProvenanceId = (SELECT Id FROM PROVENANCE WHERE SourceRef = 'LOCAL');
+                SET ProvenanceId = (SELECT Id FROM PROVENANCE WHERE SourceRef = 'MANUAL');
                 """);
 
             migrationBuilder.DropColumn(

@@ -23,7 +23,7 @@ namespace BaseStationReader.Tests.Database
         {
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _provenanceId = (await new ProvenanceManager(context)
-                .AddAsync("LOCAL", "N/A", "N/A", "N/A", "N/A", "N/A")).Id;
+                .AddAsync("MANUAL", "N/A", "N/A", "N/A", "N/A", "N/A")).Id;
             _manager = new AirportManager(context);
             _ = await _manager.AddAsync(CreateAirport());
         }
@@ -118,7 +118,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(51.4706, airport.Latitude);
             Assert.AreEqual(-0.461941, airport.Longitude);
             Assert.AreEqual(_provenanceId, airport.ProvenanceId);
-            Assert.AreEqual("LOCAL", airport.Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", airport.Provenance.SourceRef);
         }
     }
 }

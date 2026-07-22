@@ -55,7 +55,7 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(ModelICAO, aircraft.Model.ICAO);
             Assert.AreEqual(ModelName, aircraft.Model.Name);
             Assert.AreEqual(Manufacturer, aircraft.Model.Manufacturer.Name);
-            Assert.AreEqual("LOCAL", aircraft.Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", aircraft.Provenance.SourceRef);
         }
 
         [TestMethod]

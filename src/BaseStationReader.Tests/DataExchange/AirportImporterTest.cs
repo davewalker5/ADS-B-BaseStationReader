@@ -22,7 +22,7 @@ namespace BaseStationReader.Tests.DataExchange
             var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _factory = new DatabaseManagementFactory(new MockFileLogger(), context, 0);
             _importer = new AirportImporter(_factory);
-            await _factory.ProvenanceManager.AddAsync("LOCAL", "N/A", "N/A", "N/A", "N/A", "N/A");
+            await _factory.ProvenanceManager.AddAsync("MANUAL", "N/A", "N/A", "N/A", "N/A", "N/A");
         }
 
         /// <summary>
@@ -39,14 +39,14 @@ namespace BaseStationReader.Tests.DataExchange
             Assert.AreEqual("LEAL", airports[0].ICAO);
             Assert.AreEqual(38.2822, airports[0].Latitude);
             Assert.AreEqual(-0.55816, airports[0].Longitude);
-            Assert.AreEqual("LOCAL", airports[0].Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", airports[0].Provenance.SourceRef);
             Assert.AreEqual("Alicante International Airport", airports[0].Name);
         }
 
         [TestMethod]
         public async Task ImportFailsWhenProvenanceIsMissingTestAsync()
         {
-            var provenance = await _factory.ProvenanceManager.GetAsync(x => x.SourceRef == "LOCAL");
+            var provenance = await _factory.ProvenanceManager.GetAsync(x => x.SourceRef == "MANUAL");
             await _factory.ProvenanceManager.DeleteAsync(provenance.Id);
 
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => _importer.ImportAsync("airports.csv"));

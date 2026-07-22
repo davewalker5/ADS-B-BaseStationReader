@@ -34,7 +34,7 @@ namespace BaseStationReader.Tests.Database
             Assert.IsNotNull(manufacturer);
             Assert.IsGreaterThan(0, manufacturer.Id);
             Assert.AreEqual(Name, manufacturer.Name);
-            Assert.AreEqual("LOCAL", manufacturer.Provenance.SourceRef);
+            Assert.AreEqual("MANUAL", manufacturer.Provenance.SourceRef);
         }
 
         [TestMethod]
