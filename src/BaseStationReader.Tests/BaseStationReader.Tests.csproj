@@ -32,6 +32,8 @@
     <None Remove="empty_models.csv" />
     <None Remove="aircraft.csv" />
     <None Remove="empty_aircraft.csv" />
+    <None Remove="flights.csv" />
+    <None Remove="empty_flights.csv" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,6 +83,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_aircraft.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="flights.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_flights.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

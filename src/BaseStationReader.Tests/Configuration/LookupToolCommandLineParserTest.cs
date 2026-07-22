@@ -23,6 +23,21 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         /// <summary>
+        /// Verify the flight import option accepts its long and short forms.
+        /// </summary>
+        [TestMethod]
+        [DataRow("--import-flights")]
+        [DataRow("-if")]
+        public void ImportFlightsOptionTest(string option)
+        {
+            var parser = new LookupToolCommandLineParser(null);
+            parser.Parse([option, "flights.csv"]);
+
+            Assert.IsTrue(parser.IsPresent(CommandLineOptionType.ImportFlights));
+            Assert.AreEqual("flights.csv", parser.GetValues(CommandLineOptionType.ImportFlights).Single());
+        }
+
+        /// <summary>
         /// Verifies that aircraft lookup accepts an ICAO address in its long and short forms.
         /// </summary>
         [TestMethod]

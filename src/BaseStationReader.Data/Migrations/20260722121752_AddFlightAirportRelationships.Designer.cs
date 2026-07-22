@@ -3,6 +3,7 @@ using System;
 using BaseStationReader.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    partial class BaseStationReaderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722121752_AddFlightAirportRelationships")]
+    partial class AddFlightAirportRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -194,18 +197,27 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("Id");
 
-                    b.Property<int>("AirlineId")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("AirlineId");
+                    b.Property<int?>("AirlineId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Callsign")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("Callsign");
 
-                    b.Property<int>("DestinationAirportId")
+                    b.Property<string>("Destination")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Destination");
+
+                    b.Property<int?>("DestinationAirportId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("DestinationAirportId");
+
+                    b.Property<string>("Embarkation")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Embarkation");
 
                     b.Property<string>("IATA")
                         .IsRequired()
@@ -216,7 +228,7 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("ICAO");
 
-                    b.Property<int>("OriginAirportId")
+                    b.Property<int?>("OriginAirportId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("OriginAirportId");
 
@@ -559,20 +571,17 @@ namespace BaseStationReader.Data.Migrations
                     b.HasOne("BaseStationReader.Entities.Api.Airline", "Airline")
                         .WithMany()
                         .HasForeignKey("AirlineId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BaseStationReader.Entities.Api.Airport", "DestinationAirport")
                         .WithMany()
                         .HasForeignKey("DestinationAirportId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BaseStationReader.Entities.Api.Airport", "OriginAirport")
                         .WithMany()
                         .HasForeignKey("OriginAirportId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BaseStationReader.Entities.Api.Provenance", "Provenance")
                         .WithMany()

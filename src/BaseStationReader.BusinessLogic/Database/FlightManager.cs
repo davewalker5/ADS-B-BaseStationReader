@@ -36,6 +36,8 @@ namespace BaseStationReader.BusinessLogic.Database
                 .Flights
                 .Where(predicate)
                 .Include(x => x.Airline)
+                .Include(x => x.OriginAirport)
+                .Include(x => x.DestinationAirport)
                 .Include(x => x.Provenance)
                 .ToListAsync();
 
@@ -48,10 +50,12 @@ namespace BaseStationReader.BusinessLogic.Database
             string iata,
             string icao,
             string callsign,
-            string embarkation,
-            string destination,
             int airlineId,
-            int provenanceId = 0)
+            int originAirportId,
+            int destinationAirportId,
+            int provenanceId = 0,
+            string embarkation = "",
+            string destination = "")
         {
             if (string.IsNullOrWhiteSpace(callsign))
                 throw new ArgumentException("A callsign is required.", nameof(callsign));
@@ -78,12 +82,15 @@ namespace BaseStationReader.BusinessLogic.Database
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
             }
 
-            // Check the flight doesn't exist based on the airline, number and route
-            var flight = await GetAsync(x =>
-                (x.AirlineId == airlineId) &&
-                (x.IATA == iata) &&
-                (x.Embarkation == embarkation) &&
-                (x.Destination == destination));
+            if (!await _context.Airlines.AnyAsync(x => x.Id == airlineId))
+                throw new InvalidOperationException($"Airline record {airlineId} does not exist.");
+            if (!await _context.Airports.AnyAsync(x => x.Id == originAirportId))
+                throw new InvalidOperationException($"Origin airport record {originAirportId} does not exist.");
+            if (!await _context.Airports.AnyAsync(x => x.Id == destinationAirportId))
+                throw new InvalidOperationException($"Destination airport record {destinationAirportId} does not exist.");
+
+            // Callsign is the stable local identifier used to resolve tracked flights.
+            var flight = await GetAsync(x => x.Callsign == callsign);
 
             if (flight == null)
             {
@@ -95,6 +102,8 @@ namespace BaseStationReader.BusinessLogic.Database
                     Embarkation = embarkation,
                     Destination = destination,
                     AirlineId = airlineId,
+                    OriginAirportId = originAirportId,
+                    DestinationAirportId = destinationAirportId,
                     ProvenanceId = provenanceId
                 };
 

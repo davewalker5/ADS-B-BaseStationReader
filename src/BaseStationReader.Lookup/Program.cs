@@ -70,6 +70,12 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAirportImportAsync();
                 }
 
+                // If a CSV file containing flight details has been supplied, import it
+                if (parser.IsPresent(CommandLineOptionType.ImportFlights))
+                {
+                    await new ImportHandler(settings, parser, logger, factory).HandleFlightImportAsync();
+                }
+
                 // If a CSV file containing manufacturer details has been supplied, import it
                 if (parser.IsPresent(CommandLineOptionType.ImportManufacturers))
                 {

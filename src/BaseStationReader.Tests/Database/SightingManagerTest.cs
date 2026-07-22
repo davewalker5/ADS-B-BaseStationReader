@@ -42,7 +42,17 @@ namespace BaseStationReader.Tests.Database
 
             // Set up an airline and a flight
             var airline = await new AirlineManager(context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            _flight = await new FlightManager(context).AddAsync(FlightIATA, FlightICAO, FlightICAO, Embarkation, Destination, airline.Id);
+            var airportManager = new AirportManager(context);
+            var origin = await airportManager.AddAsync(new Airport
+            {
+                IATA = Embarkation, ICAO = "EGLL", Name = "London Heathrow", ProvenanceId = airline.ProvenanceId
+            });
+            var destination = await airportManager.AddAsync(new Airport
+            {
+                IATA = Destination, ICAO = "KEWR", Name = "Newark", ProvenanceId = airline.ProvenanceId
+            });
+            _flight = await new FlightManager(context).AddAsync(
+                FlightIATA, FlightICAO, FlightICAO, airline.Id, origin.Id, destination.Id);
         }
 
         [TestMethod]

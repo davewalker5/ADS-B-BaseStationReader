@@ -62,6 +62,9 @@ public sealed class DataImportService : IDataImportService
                     case DataImportType.Airports:
                         await new AirportImporter(databaseFactory).ImportAsync(temporaryPath);
                         break;
+                    case DataImportType.Flights:
+                        await new FlightImporter(databaseFactory).ImportAsync(temporaryPath);
+                        break;
                     case DataImportType.Manufacturers:
                         await new ManufacturerImporter(databaseFactory).ImportAsync(temporaryPath);
                         break;

@@ -12,9 +12,11 @@ namespace BaseStationReader.Interfaces.Database
             string iata,
             string icao,
             string callsign,
-            string embarkation,
-            string destination,
             int airlineId,
-            int provenanceId = 0);
+            int originAirportId,
+            int destinationAirportId,
+            int provenanceId = 0,
+            string embarkation = "",
+            string destination = "");
     }
 }

@@ -21,6 +21,7 @@
         ImportAircraft,
         ImportAirlines,
         ImportAirports,
+        ImportFlights,
         ImportManufacturers,
         ImportModels,
         ListExclusions,

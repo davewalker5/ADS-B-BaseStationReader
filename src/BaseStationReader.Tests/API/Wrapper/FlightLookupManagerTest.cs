@@ -126,9 +126,7 @@ namespace BaseStationReader.Tests.API.Wrapper
         [TestMethod]
         public async Task LookupFromDatabaseWithExistingFlightTestAsync()
         {
-            _ = await AddFlightAsync();
-            var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            var local = await _factory.FlightManager.AddAsync(FlightIATA, null, Callsign, Embarkation, Destination, airline.Id);
+            var local = await AddFlightAsync();
             var trackedAircraft = await _factory.TrackedAircraftWriter.WriteAsync(new()
             {
                 Address = Address,
@@ -266,8 +264,18 @@ namespace BaseStationReader.Tests.API.Wrapper
         private async Task<Flight> AddFlightAsync()
         {
             var airline = await _factory.AirlineManager.AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            var origin = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Embarkation, ICAO = EmbarkationICAO, Name = EmbarkationName,
+                ProvenanceId = airline.ProvenanceId
+            });
+            var destination = await _factory.AirportManager.AddAsync(new Airport
+            {
+                IATA = Destination, ICAO = "LGRP", Name = "Rhodes International Airport",
+                ProvenanceId = airline.ProvenanceId
+            });
             return await _factory.FlightManager.AddAsync(
-                FlightIATA, null, Callsign, Embarkation, Destination, airline.Id);
+                FlightIATA, null, Callsign, airline.Id, origin.Id, destination.Id);
         }
     }
 }

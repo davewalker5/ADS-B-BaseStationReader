@@ -341,6 +341,6 @@ namespace BaseStationReader.Api.Wrapper
                 $"ICAO = {flight.ICAO}, " +
                 $"Embarkation = {flight.Embarkation}, " +
                 $"Destination = {flight.Destination}, " +
-                $"Airline = {flight.Airline.Name}");
+                $"Airline = {flight.Airline?.Name ?? string.Empty}");
     }
 }

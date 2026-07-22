@@ -160,13 +160,24 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.ICAO).HasColumnName("ICAO");
                 entity.Property(e => e.IATA).IsRequired().HasColumnName("IATA");
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
-                entity.Property(e => e.Embarkation).IsRequired().HasColumnName("Embarkation");
-                entity.Property(e => e.Destination).IsRequired().HasColumnName("Destination");
+                entity.Property(e => e.AirlineId).IsRequired().HasColumnName("AirlineId");
+                entity.Property(e => e.OriginAirportId).IsRequired().HasColumnName("OriginAirportId");
+                entity.Property(e => e.DestinationAirportId).IsRequired().HasColumnName("DestinationAirportId");
                 entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
                 entity.HasOne(e => e.Airline)
                     .WithMany()
                     .HasForeignKey(e => e.AirlineId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.OriginAirport)
+                    .WithMany()
+                    .HasForeignKey(e => e.OriginAirportId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.DestinationAirport)
+                    .WithMany()
+                    .HasForeignKey(e => e.DestinationAirportId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.Provenance)

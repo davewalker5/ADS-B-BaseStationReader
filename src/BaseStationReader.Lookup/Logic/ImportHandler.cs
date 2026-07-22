@@ -51,6 +51,16 @@ namespace BaseStationReader.Lookup.Logic
         }
 
         /// <summary>
+        /// Handle the flight import command.
+        /// </summary>
+        public async Task HandleFlightImportAsync()
+        {
+            var filePath = Parser.GetValues(CommandLineOptionType.ImportFlights)[0];
+            var flightImporter = new FlightImporter(Factory);
+            await flightImporter.ImportAsync(filePath);
+        }
+
+        /// <summary>
         /// Handle the manufacturer import command
         /// </summary>
         /// <returns></returns>
