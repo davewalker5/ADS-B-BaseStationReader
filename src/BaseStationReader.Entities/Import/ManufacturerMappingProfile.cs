@@ -10,6 +10,7 @@ namespace BaseStationReader.Entities.Import
         public ManufacturerMappingProfile()
         {
             Map(m => m.Name).Name("Name");
+            Map(m => m.ProvenanceRef).Name("Provenance");
         }
     }
 }

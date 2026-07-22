@@ -206,6 +206,12 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Provenance>(entity =>

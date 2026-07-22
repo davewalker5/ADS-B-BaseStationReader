@@ -34,6 +34,7 @@ namespace BaseStationReader.Tests.Database
             Assert.IsNotNull(manufacturer);
             Assert.IsGreaterThan(0, manufacturer.Id);
             Assert.AreEqual(Name, manufacturer.Name);
+            Assert.AreEqual("LOCAL", manufacturer.Provenance.SourceRef);
         }
 
         [TestMethod]
@@ -56,6 +57,13 @@ namespace BaseStationReader.Tests.Database
         {
             var manufacturers = await _manager.ListAsync(e => e.Name == "Missing");
             Assert.IsEmpty(manufacturers);
+        }
+
+        [TestMethod]
+        public async Task AddWithMissingProvenanceTestAsync()
+        {
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+                _manager.AddAsync("Missing provenance", 999));
         }
     }
 }
