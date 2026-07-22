@@ -6,8 +6,8 @@
   <MSTest>
     <!-- Disable or tune parallelization here -->
     <Parallelize>
-      <Workers>0</Workers>          <!-- 0 = no parallel threads -->
-      <Scope>ClassLevel</Scope>     <!-- Required: ClassLevel or MethodLevel -->
+      <DisableParallelization>true</DisableParallelization>
+      <Scope>ClassLevel</Scope>
     </Parallelize>
   </MSTest>
 </RunSettings>
