@@ -7,18 +7,26 @@ services:
     ports:
       - "8104:5000"
     environment:
+      # Host and port for the BaseStation message feed
       ApplicationSettings__Host: host.docker.internal
       ApplicationSettings__Port: 30003
+      # Receiver co-ordinates
       ApplicationSettings__ReceiverLatitude: 51.470020
       ApplicationSettings__ReceiverLongitude: -0.454295
+      # API keys for external API integrations
       ApplicationSettings__ApiServices__0__Key: put-your-aerodatabox-api-key-here
       ApplicationSettings__ApiServices__1__Key: put-your-airlabs-api-key-here
       ApplicationSettings__ApiServices__2__Key: put-your-checkwx-api-key-here
       ApplicationSettings__ApiServices__3__Key: put-your-skylink-api-key-here
       Mapbox__AccessToken: put-your-mapbox-api-key-here
+      # In-container host and port for the SignalR hub
       WebUi__SignalRHubUrl: http://127.0.0.1:5000/hubs/aircraft
+      # In-container folder where the tracking profiles are stored
       WebUI__TrackingProfilesPath: /var/opt/adsbtrackingprofiles/
+      # In-container path to the tracking database
       ConnectionStrings__BaseStationReaderDB: "Data Source=/var/opt/adsbtracker/aircrafttracker.db;Default Timeout=5;Pooling=True"
     volumes:
+      # Map the host folder where the database is stored
       - /path/to/adsb/tracking/database/folder:/var/opt/adsbtracker/
+      # Map the host folder where tracking profiles are stored into the container
       - /path/to/tracking/profiles/folder:/var/opt/adsbtrackingprofiles/
