@@ -6,12 +6,12 @@
 @inject ITrackingSessionQueryService SessionQueries
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
-<PageTitle>Live Tracking · ADS-B Tracker</PageTitle>
+<PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
 
 <section class="page-heading">
     <div>
         <p class="eyebrow">Observation workflow</p>
-        <h1>Live Tracking</h1>
+        <h1>Live Tracker</h1>
         <p class="lede">Prepare a session, then monitor aircraft visible to the receiver.</p>
     </div>
     <div class="connection @ConnectionClass" role="status" aria-live="polite">
@@ -85,7 +85,7 @@
                     <div><dt>Minimum altitude</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MinimumTrackedAltitude, " ft")</dd></div>
                     <div><dt>Maximum altitude</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MaximumTrackedAltitude, " ft")</dd></div>
                     <div><dt>Maximum distance</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MaximumTrackedDistance, " nm")</dd></div>
-                    <div class="wide"><dt>Included behaviours</dt><dd>@Display(LiveAircraft.TrackingOptions?.TrackedBehaviours)</dd></div>
+                    <div><dt>Included behaviours</dt><dd>@Display(LiveAircraft.TrackingOptions?.TrackedBehaviours)</dd></div>
                 </dl>
             </div>
 
