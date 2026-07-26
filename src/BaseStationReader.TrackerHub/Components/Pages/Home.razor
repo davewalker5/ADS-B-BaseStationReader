@@ -119,7 +119,7 @@
                     {
                         <tr class="@StatusClass(aircraft.Status) @SelectedClass(aircraft)" @onclick="() => SelectAircraft(aircraft)">
                             <td><strong>@Display(aircraft.Callsign)</strong></td>
-                            <td class="mono">@aircraft.Address</td>
+                            <td class="mono"><a class="row-link" href="@HistoryUrl(aircraft)" @onclick:stopPropagation>@aircraft.Address →</a></td>
                             <td><span class="status-pill @StatusClass(aircraft.Status)">@aircraft.Status</span></td>
                             <td class="numeric">@FormatNumber(aircraft.Altitude, "N0", " ft")</td>
                             <td class="numeric behaviour">@BehaviourIndicator(aircraft.Behaviour) @FormatNumber(aircraft.VerticalRate, "N0", " fpm")</td>
@@ -185,6 +185,12 @@
     private static string LookupUrl(TrackedAircraftDto aircraft)
         => $"lookup?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}" +
            $"&callsign={Uri.EscapeDataString(aircraft.Callsign ?? string.Empty)}";
+
+    /// <summary>
+    /// Builds a Database-tab URL filtered to the live aircraft's ICAO address.
+    /// </summary>
+    private static string HistoryUrl(TrackedAircraftDto aircraft)
+        => $"history?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {
