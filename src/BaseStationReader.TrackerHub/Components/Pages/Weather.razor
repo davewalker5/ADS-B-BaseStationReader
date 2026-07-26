@@ -1,15 +1,16 @@
 @page "/weather"
+@page "/lookup/weather"
 @inject IAirportWeatherLookupService WeatherService
 @inject ITrackerHubPageState PageState
 
 <PageTitle>Airport Weather · ADS-B Tracker</PageTitle>
 
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">Aviation reports</p>
-        <h1>Airport Weather</h1>
-        <p class="lede">Retrieve and decode current observations or terminal forecasts for a selected airport.</p>
-    </div>
+<LookupTabs />
+
+<section class="lookup-tab-heading">
+    <p class="eyebrow">Aviation reports</p>
+    <h2>Weather</h2>
+    <p>Retrieve and decode current observations or terminal forecasts for a selected airport.</p>
 </section>
 
 <form class="weather-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>

@@ -25,6 +25,11 @@ public interface ITrackingSessionQueryService
     Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
         CancellationToken cancellationToken = default);
 
+    /// <summary>Searches persisted observation sessions by session start date.</summary>
+    Task<PagedResult<ObservationSessionDto>> SearchObservationSessionsAsync(
+        ObservationSessionFilter filter,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Searches historical tracking sessions using validated filters and pagination.
     /// </summary>

@@ -1,29 +1,5 @@
 @page "/radar"
-@implements IAsyncDisposable
-@inject ILiveAircraftService LiveAircraft
-@inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
-
-<PageTitle>Live Radar · ADS-B Tracker</PageTitle>
-
-<section class="page-heading">
-    <div><p class="eyebrow">Receiver-relative surveillance</p><h1>Live Radar</h1><p class="lede">Current aircraft range and bearing from the active receiver.</p></div>
-    <label class="radar-range"><span>Displayed range</span><select @bind="_maximumRange"><option value="10">10 nm</option><option value="25">25 nm</option><option value="50">50 nm</option><option value="100">100 nm</option><option value="200">200 nm</option></select></label>
-</section>
-
-@if (_startError is not null)
-{
-    <div class="alert" role="alert"><strong>Tracker connection unavailable</strong><span>@_startError</span><button @onclick="StartAsync">Try again</button></div>
-}
-
-<section class="radar-summary" aria-label="Radar summary">
-    <span><strong>@LiveAircraft.Aircraft.Count</strong> tracked</span>
-    <span><strong>@PositionedAircraftCount</strong> positioned</span>
-    <span><strong>@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong> profile</span>
-    <span class="connection @ConnectionClass"><i class="connection-dot"></i><strong>@LiveAircraft.ConnectionState</strong></span>
-</section>
-
-<RadarDisplay Aircraft="LiveAircraft.Aircraft" MaximumRange="_maximumRange" Options="RadarConfiguration.Value"
-              ConnectionState="LiveAircraft.ConnectionState" SelectedAddress="@Address" />
+@inject NavigationManager Navigation
 
 @code {
 #nullable enable
@@ -31,57 +7,12 @@
     [SupplyParameterFromQuery(Name = "address")]
     public string? Address { get; set; }
 
-    private string? _startError;
-    private double _maximumRange;
-    private int PositionedAircraftCount => LiveAircraft.Aircraft.Count(aircraft => aircraft.Distance.HasValue && aircraft.Latitude.HasValue && aircraft.Longitude.HasValue);
-    private string ConnectionClass => LiveAircraft.ConnectionState.ToString().ToLowerInvariant();
-
-    /// <summary>
-    /// Subscribes to the shared live state and starts its SignalR connection.
-    /// </summary>
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        // Configuration supplies the initial range while the selector supports temporary viewing changes.
-        _maximumRange = RadarConfiguration.Value.MaximumRange;
-        LiveAircraft.StateChanged += OnLiveStateChanged;
-        await StartAsync();
-    }
+        var destination = string.IsNullOrWhiteSpace(Address)
+            ? "/?tab=radar"
+            : $"/?tab=radar&address={Uri.EscapeDataString(Address)}";
 
-    /// <summary>
-    /// Removes the page subscription when its Blazor circuit releases the component.
-    /// </summary>
-    public ValueTask DisposeAsync()
-    {
-        // The scoped live service owns and eventually disposes the underlying SignalR transport.
-        LiveAircraft.StateChanged -= OnLiveStateChanged;
-        return ValueTask.CompletedTask;
-    }
-
-    /// <summary>
-    /// Starts the live service and exposes a concise failure to the user.
-    /// </summary>
-    private async Task StartAsync()
-    {
-        try
-        {
-            // Reuse the scoped connection when navigation originated on the live tracker page.
-            _startError = null;
-            await LiveAircraft.StartAsync();
-        }
-        catch (Exception exception)
-        {
-            _startError = exception.Message;
-        }
-    }
-
-    /// <summary>
-    /// Schedules a radar refresh for an incoming SignalR state change.
-    /// </summary>
-    /// <param name="sender">Live service raising the event.</param>
-    /// <param name="args">Empty state-change arguments.</param>
-    private void OnLiveStateChanged(object? sender, EventArgs args)
-    {
-        // SignalR callbacks may run outside the Blazor renderer dispatcher.
-        _ = InvokeAsync(StateHasChanged);
+        Navigation.NavigateTo(destination, replace: true);
     }
 }
