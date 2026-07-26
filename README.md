@@ -11,7 +11,7 @@
 
 ## About
 
-![ADS-B BaseStation Reader Observation Session](Diagrams/001-live-tracker-session.png)
+![ADS-B BaseStation Reader Observation Session](Diagrams/002-live-tracker-tracking.png)
 
 **ADS-B BaseStation Reader** is a local-first aircraft observation workspace that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
 
