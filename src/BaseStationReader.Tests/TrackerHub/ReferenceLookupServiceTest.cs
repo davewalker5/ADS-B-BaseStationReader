@@ -73,6 +73,10 @@ public class ReferenceLookupServiceTest
     {
         var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
         var logger = new Mock<ITrackerLogger>();
-        return new ReferenceLookupService(settings, contextFactory.Object, logger.Object);
+        return new ReferenceLookupService(
+            settings,
+            contextFactory.Object,
+            logger.Object,
+            new MemoryOnlyTransientResponseCache());
     }
 }

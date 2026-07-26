@@ -1,0 +1,152 @@
+@page "/route"
+@inject IAirportRouteService RouteService
+
+<PageTitle>Route Plotter · ADS-B Tracker</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Great-circle mapper</p>
+        <h1>Route</h1>
+        <p class="lede">Plot a direct route between two airports on a Mercator world map.</p>
+    </div>
+</section>
+
+<form class="route-search" @onsubmit="PlotAsync" @onsubmit:preventDefault>
+    <div class="route-fields">
+        <label>
+            <span>Origin airport (IATA)</span>
+            <input value="@_originIata" @oninput="ChangeOrigin" maxlength="3"
+                   autocomplete="off" spellcheck="false" placeholder="Enter IATA code" />
+        </label>
+        <label>
+            <span>Destination airport (IATA)</span>
+            <input value="@_destinationIata" @oninput="ChangeDestination" maxlength="3"
+                   autocomplete="off" spellcheck="false" placeholder="Enter IATA code" />
+        </label>
+        <button class="primary-button" type="submit" disabled="@(!CanPlot)">
+            @(_loading ? "Plotting…" : "Plot")
+        </button>
+    </div>
+    <p class="route-note">Airport codes are checked against the local airport database.</p>
+</form>
+
+@if (_warning is not null)
+{
+    <div class="alert" role="alert">
+        <strong>Route cannot be plotted</strong>
+        <span>@_warning</span>
+    </div>
+}
+
+@if (_route is not null)
+{
+    <section class="route-results" aria-live="polite">
+        <div class="route-results-heading">
+            <div>
+                <p class="eyebrow">@_route.Origin.Iata → @_route.Destination.Iata</p>
+                <h2>@_route.Origin.Name to @_route.Destination.Name</h2>
+            </div>
+            <span>@_route.DistanceNauticalMiles.ToString("N0") nautical miles</span>
+        </div>
+        <RouteMap Route="_route" @key="_route" />
+        <div class="route-endpoints">
+            <div>
+                <span>Origin</span>
+                <strong>@_route.Origin.Iata · @_route.Origin.Name</strong>
+                <small>@FormatCoordinates(_route.Origin)</small>
+            </div>
+            <div>
+                <span>Destination</span>
+                <strong>@_route.Destination.Iata · @_route.Destination.Name</strong>
+                <small>@FormatCoordinates(_route.Destination)</small>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+#nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "origin")]
+    public string? Origin { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "destination")]
+    public string? Destination { get; set; }
+
+    private string _originIata = string.Empty;
+    private string _destinationIata = string.Empty;
+    private RoutePlotDto? _route;
+    private string? _warning;
+    private bool _loading;
+    private bool _parametersHandled;
+    private string _handledOrigin = string.Empty;
+    private string _handledDestination = string.Empty;
+    private bool CanPlot => !_loading && IsIata(_originIata) && IsIata(_destinationIata);
+
+    /// <summary>
+    /// Applies route endpoints supplied by a schedule row and plots them automatically.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        var origin = NormaliseInput(Origin);
+        var destination = NormaliseInput(Destination);
+        if (_parametersHandled &&
+            string.Equals(origin, _handledOrigin, StringComparison.Ordinal) &&
+            string.Equals(destination, _handledDestination, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _parametersHandled = true;
+        _handledOrigin = origin;
+        _handledDestination = destination;
+        _originIata = origin;
+        _destinationIata = destination;
+        if (CanPlot)
+        {
+            await PlotAsync();
+        }
+    }
+
+    private void ChangeOrigin(ChangeEventArgs args)
+        => _originIata = NormaliseInput(args.Value?.ToString());
+
+    private void ChangeDestination(ChangeEventArgs args)
+        => _destinationIata = NormaliseInput(args.Value?.ToString());
+
+    private async Task PlotAsync()
+    {
+        if (!CanPlot) return;
+
+        _loading = true;
+        _warning = null;
+        _route = null;
+        try
+        {
+            _route = await RouteService.BuildRouteAsync(_originIata, _destinationIata);
+        }
+        catch (ArgumentException exception)
+        {
+            _warning = exception.Message;
+        }
+        catch (Exception)
+        {
+            _warning = "The airport database could not be queried. Please try again.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string NormaliseInput(string? value)
+        => (value ?? string.Empty).Trim().ToUpperInvariant();
+
+    private static bool IsIata(string value)
+        => value.Length == 3 && value.All(character => character is >= 'A' and <= 'Z');
+
+    private static string FormatCoordinates(RouteAirportDto airport)
+        => $"{Math.Abs(airport.Latitude):0.0000}°{(airport.Latitude >= 0 ? "N" : "S")}, " +
+           $"{Math.Abs(airport.Longitude):0.0000}°{(airport.Longitude >= 0 ? "E" : "W")}";
+}

@@ -1,5 +1,6 @@
 @page "/weather"
 @inject IAirportWeatherLookupService WeatherService
+@inject ITrackerHubPageState PageState
 
 <PageTitle>Airport Weather · ADS-B Tracker</PageTitle>
 
@@ -114,6 +115,10 @@
 
 @code {
 #nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "iata")]
+    public string? Iata { get; set; }
+
     private ApiEndpointType _endpointType = ApiEndpointType.METAR;
     private ApiServiceType _serviceType = ApiServiceType.None;
     private IReadOnlyList<ApiServiceType> _services = [];
@@ -123,6 +128,8 @@
     private string? _error;
     private bool _loading;
     private bool _searched;
+    private bool _parametersHandled;
+    private string _handledIata = string.Empty;
     private bool CanLookup => !_loading && _services.Count > 0 && IsValidIcao(_icao);
     private string ReportHeading => _endpointType == ApiEndpointType.METAR ? "Current weather" : "Weather forecast";
     private string ReportDescription => _endpointType == ApiEndpointType.METAR ? "a current observation" : "a forecast";
@@ -138,6 +145,65 @@
         // Select the first airport so a populated database produces a ready-to-use form.
         _airports = await WeatherService.GetAirportsAsync();
         _icao = _airports.FirstOrDefault()?.ICAO ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Resolves a schedule-supplied IATA code, selects METAR mode, and runs the lookup automatically.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        var requestedIata = Iata?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (_parametersHandled &&
+            string.Equals(requestedIata, _handledIata, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _parametersHandled = true;
+        _handledIata = requestedIata;
+        if (string.IsNullOrEmpty(requestedIata))
+        {
+            if (PageState.Weather is not { } saved) return;
+
+            // Restore only scoped in-process values when no explicit schedule link supplied an airport.
+            _endpointType = saved.Endpoint;
+            RefreshServices();
+            _serviceType = _services.Contains(saved.Service) ? saved.Service : _services.FirstOrDefault();
+            _icao = _airports.Any(airport =>
+                string.Equals(airport.ICAO, saved.Icao, StringComparison.OrdinalIgnoreCase))
+                ? saved.Icao
+                : string.Empty;
+            if (CanLookup) await LookupAsync();
+            return;
+        }
+
+        _endpointType = ApiEndpointType.METAR;
+        RefreshServices();
+        _reports = [];
+        _searched = false;
+        var airport = _airports.FirstOrDefault(option =>
+            string.Equals(option.IATA, requestedIata, StringComparison.OrdinalIgnoreCase));
+        if (airport is null)
+        {
+            _error = $"Airport {requestedIata} does not exist in the airport database.";
+            return;
+        }
+
+        if (!IsValidIcao(airport.ICAO))
+        {
+            _error = $"Airport {requestedIata} does not have a valid ICAO code for weather lookup.";
+            return;
+        }
+
+        if (_services.Count == 0)
+        {
+            _error = "No API service is configured for METAR lookups.";
+            return;
+        }
+
+        _error = null;
+        _icao = airport.ICAO;
+        await LookupAsync();
     }
 
     /// <summary>
@@ -179,6 +245,8 @@
         _error = null;
         _reports = [];
         _icao = _icao.Trim().ToUpperInvariant();
+        // Retain submitted criteria in this UI session only; nothing is serialized or persisted.
+        PageState.Weather = new WeatherPageState(_endpointType, _serviceType, _icao);
 
         try
         {

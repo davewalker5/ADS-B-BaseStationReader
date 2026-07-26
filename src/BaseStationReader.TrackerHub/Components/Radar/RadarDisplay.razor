@@ -55,7 +55,7 @@
         }
         else
         {
-            <p class="eyebrow">Selected target</p><h2>@SelectedPoint.Label</h2><span class="mono">@SelectedPoint.Address</span>
+            <p class="eyebrow">Selected aircraft</p><h2>@SelectedPoint.Label</h2><span class="mono">@SelectedPoint.Address</span>
             <dl class="detail-grid radar-detail-grid">
                 <div><dt>Status</dt><dd><span class="status-pill @StatusClass(SelectedPoint.Status)">@SelectedPoint.Status</span></dd></div>
                 <div><dt>Range</dt><dd>@SelectedPoint.Distance.ToString("N1") nm</dd></div>
@@ -64,6 +64,10 @@
                 <div><dt>Track</dt><dd>@FormatTrack(SelectedPoint.Track)</dd></div>
                 <div><dt>Last seen</dt><dd>@SelectedPoint.Timestamp.ToLocalTime().ToString("HH:mm:ss")</dd></div>
             </dl>
+            @if (SelectedAircraft is not null)
+            {
+                <a class="primary-button radar-lookup-button" href="@LookupUrl(SelectedAircraft)">Lookup →</a>
+            }
         }
     </aside>
 </div>
@@ -73,11 +77,13 @@
     private readonly Dictionary<string, List<RadarPointDto>> _trails = new(StringComparer.OrdinalIgnoreCase);
     private readonly string _gradientId = $"radar-gradient-{Guid.NewGuid():N}";
     private string? _selectedAddress;
+    private string? _handledSelectedAddress;
 
     [Parameter, EditorRequired] public IReadOnlyCollection<TrackedAircraftDto> Aircraft { get; set; } = Array.Empty<TrackedAircraftDto>();
     [Parameter] public double MaximumRange { get; set; } = 50;
     [Parameter] public RadarOptions Options { get; set; } = new();
     [Parameter] public ConnectionState ConnectionState { get; set; }
+    [Parameter] public string? SelectedAddress { get; set; }
 
     private static double[] RangeRings => [0.25, 0.5, 0.75, 1];
     private IReadOnlyList<RadarPointDto> ProjectedPoints => Aircraft.Select(a => Projection.Project(a, MaximumRange)).OfType<RadarPointDto>().ToArray();
@@ -85,7 +91,16 @@
     private IEnumerable<(RadarPointDto Point, IReadOnlyList<IReadOnlyList<RadarPointDto>> Segments)> VisibleTrails => VisiblePoints.Select(point =>
         (point, TrailSegments(_trails.GetValueOrDefault(point.Address) ?? [])));
     private RadarPointDto? SelectedPoint => ProjectedPoints.FirstOrDefault(p => p.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
+    private TrackedAircraftDto? SelectedAircraft => Aircraft.FirstOrDefault(
+        aircraft => aircraft.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
     private string ConnectionLabel => ConnectionState == ConnectionState.Reconnecting ? "Radar reconnecting…" : ConnectionState == ConnectionState.Connecting ? "Radar connecting…" : "Radar disconnected";
+
+    /// <summary>
+    /// Builds an automatically executed Lookup-tab URL for the selected target.
+    /// </summary>
+    private static string LookupUrl(TrackedAircraftDto aircraft)
+        => $"lookup?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}" +
+           $"&callsign={Uri.EscapeDataString(aircraft.Callsign ?? string.Empty)}";
 
     /// <summary>
     /// Captures new positions and prunes bounded UI-memory trails whenever live parameters change.
@@ -94,6 +109,15 @@
     {
         var now = DateTime.UtcNow;
         var activeAddresses = Aircraft.Select(a => a.Address).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var requestedAddress = SelectedAddress?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(requestedAddress) &&
+            !string.Equals(requestedAddress, _handledSelectedAddress, StringComparison.OrdinalIgnoreCase))
+        {
+            // Apply a navigation-supplied selection once, leaving later manual target choices untouched.
+            _selectedAddress = requestedAddress;
+            _handledSelectedAddress = requestedAddress;
+        }
 
         // Remove aircraft immediately when they leave the authoritative live collection.
         foreach (var address in _trails.Keys.Where(address => !activeAddresses.Contains(address)).ToArray())

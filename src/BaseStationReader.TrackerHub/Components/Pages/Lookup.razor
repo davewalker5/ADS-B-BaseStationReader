@@ -1,5 +1,6 @@
 @page "/lookup"
 @inject IReferenceLookupService LookupService
+@inject ITrackerHubPageState PageState
 
 <PageTitle>Aircraft and Flight Lookup · ADS-B Tracker</PageTitle>
 
@@ -107,7 +108,7 @@
     private bool _searched;
     private bool _lookupAircraft;
     private bool _lookupFlight;
-    private bool _autoLookupHandled;
+    private string? _handledNavigationKey;
     private bool HasValidAddress => string.IsNullOrWhiteSpace(_address) ||
         (_address.Trim().Length == 6 && _address.Trim().All(Uri.IsHexDigit));
     private bool CanLookup => !_loading && HasValidAddress &&
@@ -131,11 +132,29 @@
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        if (_autoLookupHandled) return;
-        _autoLookupHandled = true;
+        var navigationKey = $"{Address?.Trim()}\u001f{Callsign?.Trim()}";
+        if (string.Equals(navigationKey, _handledNavigationKey, StringComparison.Ordinal)) return;
+        _handledNavigationKey = navigationKey;
 
-        _address = Address?.Trim() ?? string.Empty;
-        _callsign = Callsign?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(Address) || !string.IsNullOrWhiteSpace(Callsign))
+        {
+            // Explicit navigation parameters always take precedence over remembered session criteria.
+            _address = Address?.Trim() ?? string.Empty;
+            _callsign = Callsign?.Trim() ?? string.Empty;
+        }
+        else if (PageState.Lookup is { } saved)
+        {
+            // The scoped state contains object values only; restoring it performs no persistent-storage read.
+            _aircraftService = _aircraftServices.Contains(saved.AircraftService)
+                ? saved.AircraftService
+                : _aircraftServices.FirstOrDefault();
+            _flightService = _flightServices.Contains(saved.FlightService)
+                ? saved.FlightService
+                : _flightServices.FirstOrDefault();
+            _address = saved.Address;
+            _callsign = saved.Callsign;
+        }
+
         if (CanLookup)
         {
             await LookupAsync();
@@ -159,6 +178,9 @@
         _callsign = _callsign.Trim().ToUpperInvariant();
         _lookupAircraft = _address.Length > 0;
         _lookupFlight = _callsign.Length > 0;
+        // Retain submitted inputs only in the current Blazor session; responses remain in the separate memory cache.
+        PageState.Lookup = new LookupPageState(
+            _aircraftService, _flightService, _address, _callsign);
         try
         {
             var result = await LookupService.LookupAsync(_aircraftService, _flightService, _address, _callsign);

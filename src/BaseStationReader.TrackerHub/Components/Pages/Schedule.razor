@@ -1,5 +1,6 @@
 @page "/schedule"
 @inject IAirportScheduleLookupService ScheduleService
+@inject ITrackerHubPageState PageState
 
 <PageTitle>Airport Schedule · ADS-B Tracker</PageTitle>
 
@@ -105,6 +106,7 @@
                         <th>Destination</th>
                         <th>Direction</th>
                         <th>Status</th>
+                        <th>Route</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,12 +122,40 @@
                             <td>@Display(mapping.AirportIATA)</td>
                             <td>@Display(mapping.AirportICAO)</td>
                             <td>@Display(mapping.AirportName)</td>
-                            <td>@Display(mapping.Embarkation)</td>
-                            <td>@Display(mapping.Destination)</td>
+                            <td>
+                                @if (IsValidIata(mapping.Embarkation))
+                                {
+                                    <a class="row-link" href="@WeatherUrl(mapping.Embarkation)">@mapping.Embarkation.Trim().ToUpperInvariant() →</a>
+                                }
+                                else
+                                {
+                                    @Display(mapping.Embarkation)
+                                }
+                            </td>
+                            <td>
+                                @if (IsValidIata(mapping.Destination))
+                                {
+                                    <a class="row-link" href="@WeatherUrl(mapping.Destination)">@mapping.Destination.Trim().ToUpperInvariant() →</a>
+                                }
+                                else
+                                {
+                                    @Display(mapping.Destination)
+                                }
+                            </td>
                             <td><span class="status-pill">@mapping.AirportType</span></td>
                             <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
                                 @(eligible ? "Complete" : "Incomplete")
                             </span></td>
+                            <td>
+                                @if (CanPlotRoute(mapping))
+                                {
+                                    <a class="row-link" href="@RouteUrl(mapping)">Route →</a>
+                                }
+                                else
+                                {
+                                    <span class="schedule-route-unavailable">—</span>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -188,6 +218,19 @@
         _airports = await ScheduleService.GetAirportsAsync();
         _iata = _airports.FirstOrDefault(airport => IsValidIata(airport.IATA))?.IATA ?? string.Empty;
         (_from, _to) = ScheduleService.GetDefaultRange(DateTime.Today);
+
+        if (PageState.Schedule is { } saved)
+        {
+            // Restore criteria from this Blazor session only; no browser, file, or database state is read.
+            _serviceType = _services.Contains(saved.Service) ? saved.Service : _services.FirstOrDefault();
+            _iata = _airports.Any(airport =>
+                string.Equals(airport.IATA, saved.Iata, StringComparison.OrdinalIgnoreCase))
+                ? saved.Iata
+                : _iata;
+            _from = saved.From;
+            _to = saved.To;
+            if (CanLookup) await LookupAsync();
+        }
     }
 
     /// <summary>
@@ -223,6 +266,9 @@
         _error = null;
         _mappings = [];
         _page = 1;
+        // Store submitted inputs as scoped in-process values; the API response cache remains memory-only too.
+        PageState.Schedule = new SchedulePageState(
+            _serviceType, _iata.Trim().ToUpperInvariant(), _from!.Value, _to!.Value);
         try
         {
             _mappings = await ScheduleService.LookupAsync(
@@ -272,6 +318,27 @@
     /// </summary>
     private static string Display(string? value)
         => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    /// <summary>
+    /// Determines whether a schedule row contains two usable IATA route endpoints.
+    /// </summary>
+    private static bool CanPlotRoute(FlightScheduleEntry mapping)
+        => IsValidIata(mapping.Embarkation) &&
+           IsValidIata(mapping.Destination) &&
+           !string.Equals(mapping.Embarkation, mapping.Destination, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Builds a Route-tab URL populated from the schedule row.
+    /// </summary>
+    private static string RouteUrl(FlightScheduleEntry mapping)
+        => $"route?origin={Uri.EscapeDataString(mapping.Embarkation.Trim())}" +
+           $"&destination={Uri.EscapeDataString(mapping.Destination.Trim())}";
+
+    /// <summary>
+    /// Builds a Weather-tab URL populated with one schedule airport.
+    /// </summary>
+    private static string WeatherUrl(string iata)
+        => $"weather?iata={Uri.EscapeDataString(iata.Trim().ToUpperInvariant())}";
 
     /// <summary>
     /// Clears feedback made stale by a changed search range.

@@ -89,18 +89,43 @@
 
 @code {
 #nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "address")]
+    public string? Address { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "callsign")]
+    public string? Callsign { get; set; }
+
     private TrackingSessionFilter _filter = new();
     private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 10 };
     private bool _loading;
     private string? _error;
+    private bool _parametersHandled;
+    private string _handledAddress = string.Empty;
+    private string _handledCallsign = string.Empty;
     private string ResultDescription => _result.TotalCount == 1 ? "1 matching record" : $"{_result.TotalCount:N0} matching records";
 
     /// <summary>
-    /// Loads the default completed-record search when the page opens.
+    /// Applies an ICAO address or callsign supplied by the Live Tracker and automatically runs the database search.
     /// </summary>
-    protected override Task OnInitializedAsync()
+    protected override Task OnParametersSetAsync()
     {
-        // Use the same guarded search path as all later filter and paging actions.
+        var address = Address?.Trim().ToUpperInvariant() ?? string.Empty;
+        var callsign = Callsign?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (_parametersHandled &&
+            string.Equals(address, _handledAddress, StringComparison.Ordinal) &&
+            string.Equals(callsign, _handledCallsign, StringComparison.Ordinal))
+        {
+            return Task.CompletedTask;
+        }
+
+        _parametersHandled = true;
+        _handledAddress = address;
+        _handledCallsign = callsign;
+        _filter.Address = address;
+        _filter.Callsign = callsign;
+        _filter.Page = 1;
         return LoadAsync();
     }
 

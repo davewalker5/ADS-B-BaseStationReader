@@ -134,6 +134,10 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSignalR().AddMessagePackProtocol();
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+                // This cache is strictly process memory: it has no database, distributed, or file-backed provider.
+                builder.Services.AddSingleton<ITransientResponseCache, MemoryOnlyTransientResponseCache>();
+                // Scoped UI state lives only in one Blazor circuit and has no persistent storage backing.
+                builder.Services.AddScoped<ITrackerHubPageState, TrackerHubPageState>();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
                 builder.Services.AddSingleton(defaultSettings);
                 builder.Services.AddSingleton(
@@ -152,6 +156,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<IAirportWeatherLookupService, AirportWeatherLookupService>();
                 builder.Services.AddScoped<IAirportScheduleLookupService, AirportScheduleLookupService>();
+                builder.Services.AddScoped<IAirportRouteService, AirportRouteService>();
                 builder.Services.AddScoped<IReferenceLookupService, ReferenceLookupService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
                 builder.Services.AddScoped<IProvenanceService, ProvenanceService>();

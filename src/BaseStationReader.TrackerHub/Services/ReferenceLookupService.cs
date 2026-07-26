@@ -15,9 +15,11 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public sealed class ReferenceLookupService : IReferenceLookupService
 {
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromHours(1);
     private readonly ExternalApiSettings _settings;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
+    private readonly ITransientResponseCache _cache;
     private readonly IExternalApiFactory _apiFactory = new ExternalApiFactory();
 
     /// <summary>
@@ -26,14 +28,17 @@ public sealed class ReferenceLookupService : IReferenceLookupService
     /// <param name="settings">The configured external API services.</param>
     /// <param name="contextFactory">The database context factory.</param>
     /// <param name="logger">The application logger.</param>
+    /// <param name="cache">The process-memory-only transient response cache.</param>
     public ReferenceLookupService(
         ExternalApiSettings settings,
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        ITrackerLogger logger)
+        ITrackerLogger logger,
+        ITransientResponseCache cache)
     {
         _settings = settings;
         _contextFactory = contextFactory;
         _logger = logger;
+        _cache = cache;
     }
 
     /// <inheritdoc />
@@ -71,6 +76,34 @@ public sealed class ReferenceLookupService : IReferenceLookupService
         if (lookupFlight && !GetServices(ApiEndpointType.Flights).Contains(flightService))
             throw new ArgumentException($"{flightService} is not configured for flight lookups.", nameof(flightService));
 
+        // The normalized inputs identify equivalent requests without serializing or persisting any response data.
+        var cacheKey = $"reference:{aircraftService}:{flightService}:{normalisedAddress}:{normalisedCallsign}";
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            CacheLifetime,
+            token => LookupUncachedAsync(
+                aircraftService,
+                flightService,
+                normalisedAddress,
+                normalisedCallsign,
+                lookupAircraft,
+                lookupFlight,
+                token),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Executes one uncached local-first reference lookup.
+    /// </summary>
+    private async Task<ReferenceLookupResult> LookupUncachedAsync(
+        ApiServiceType aircraftService,
+        ApiServiceType flightService,
+        string normalisedAddress,
+        string normalisedCallsign,
+        bool lookupAircraft,
+        bool lookupFlight,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);

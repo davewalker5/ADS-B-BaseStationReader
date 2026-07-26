@@ -118,14 +118,32 @@
                     @foreach (var aircraft in FilteredAircraft)
                     {
                         <tr class="@StatusClass(aircraft.Status) @SelectedClass(aircraft)" @onclick="() => SelectAircraft(aircraft)">
-                            <td><strong>@Display(aircraft.Callsign)</strong></td>
-                            <td class="mono">@aircraft.Address</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(aircraft.Callsign))
+                                {
+                                    <strong>—</strong>
+                                }
+                                else
+                                {
+                                    <a class="row-link" href="@HistoryCallsignUrl(aircraft)" @onclick:stopPropagation><strong>@aircraft.Callsign.Trim()</strong> →</a>
+                                }
+                            </td>
+                            <td class="mono"><a class="row-link" href="@HistoryUrl(aircraft)" @onclick:stopPropagation>@aircraft.Address →</a></td>
                             <td><span class="status-pill @StatusClass(aircraft.Status)">@aircraft.Status</span></td>
                             <td class="numeric">@FormatNumber(aircraft.Altitude, "N0", " ft")</td>
                             <td class="numeric behaviour">@BehaviourIndicator(aircraft.Behaviour) @FormatNumber(aircraft.VerticalRate, "N0", " fpm")</td>
                             <td class="numeric">@FormatNumber(aircraft.GroundSpeed, "N0", " kt")</td>
                             <td class="numeric">@FormatNumber(aircraft.Track, "N0", "°")</td>
-                            <td class="numeric">@FormatNumber(aircraft.Distance, "N1", " nm")</td>
+                            <td class="numeric">
+                                @if (aircraft.Distance.HasValue)
+                                {
+                                    <a class="row-link" href="@RadarUrl(aircraft)" @onclick:stopPropagation>@FormatNumber(aircraft.Distance, "N1", " nm") →</a>
+                                }
+                                else
+                                {
+                                    @FormatNumber(aircraft.Distance, "N1", " nm")
+                                }
+                            </td>
                             <td class="numeric">@aircraft.Messages.ToString("N0")</td>
                             <td><time datetime="@aircraft.LastSeen.ToString("O")">@aircraft.LastSeen.ToLocalTime().ToString("HH:mm:ss")</time></td>
                             <td><a class="row-link" href="@LookupUrl(aircraft)" @onclick:stopPropagation>Lookup →</a></td>
@@ -185,6 +203,24 @@
     private static string LookupUrl(TrackedAircraftDto aircraft)
         => $"lookup?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}" +
            $"&callsign={Uri.EscapeDataString(aircraft.Callsign ?? string.Empty)}";
+
+    /// <summary>
+    /// Builds a Database-tab URL filtered to the live aircraft's ICAO address.
+    /// </summary>
+    private static string HistoryUrl(TrackedAircraftDto aircraft)
+        => $"history?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
+
+    /// <summary>
+    /// Builds a Database-tab URL filtered to the live aircraft's callsign.
+    /// </summary>
+    private static string HistoryCallsignUrl(TrackedAircraftDto aircraft)
+        => $"history?callsign={Uri.EscapeDataString(aircraft.Callsign?.Trim() ?? string.Empty)}";
+
+    /// <summary>
+    /// Builds a Radar-tab URL that selects the live aircraft.
+    /// </summary>
+    private static string RadarUrl(TrackedAircraftDto aircraft)
+        => $"radar?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {

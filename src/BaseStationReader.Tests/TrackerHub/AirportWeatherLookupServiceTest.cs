@@ -30,7 +30,10 @@ public class AirportWeatherLookupServiceTest
             .Setup(factory => factory.CreateDbContextAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(context);
         var service = new AirportWeatherLookupService(
-            new ExternalApiSettings(), contextFactory.Object, new Mock<ITrackerLogger>().Object);
+            new ExternalApiSettings(),
+            contextFactory.Object,
+            new Mock<ITrackerLogger>().Object,
+            new MemoryOnlyTransientResponseCache());
 
         var airports = await service.GetAirportsAsync();
 
@@ -105,6 +108,10 @@ public class AirportWeatherLookupServiceTest
         // These tests exercise filtering before either dependency is used for a remote lookup.
         var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
         var logger = new Mock<ITrackerLogger>();
-        return new AirportWeatherLookupService(settings, contextFactory.Object, logger.Object);
+        return new AirportWeatherLookupService(
+            settings,
+            contextFactory.Object,
+            logger.Object,
+            new MemoryOnlyTransientResponseCache());
     }
 }
