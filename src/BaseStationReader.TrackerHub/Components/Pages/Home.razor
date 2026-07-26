@@ -4,13 +4,13 @@
 @inject ITrackingProfileService TrackingProfiles
 @inject ITrackingControlService TrackingControl
 
-<PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
+<PageTitle>Observation Session · ADS-B Tracker</PageTitle>
 
 <section class="page-heading">
     <div>
-        <p class="eyebrow">Real-time surveillance</p>
-        <h1>Live Tracker</h1>
-        <p class="lede">Aircraft currently visible to the Tracker Hub receiver.</p>
+        <p class="eyebrow">Observation workflow</p>
+        <h1>Session</h1>
+        <p class="lede">Prepare a session, then monitor aircraft visible to the receiver.</p>
     </div>
     <div class="connection @ConnectionClass" role="status" aria-live="polite">
         <span class="connection-dot"></span>
@@ -21,36 +21,80 @@
     </div>
 </section>
 
-<section class="tracking-controls" aria-label="Tracking configuration">
-    <div class="profile-selector">
-        <label for="tracking-profile">Tracking profile</label>
-        <select id="tracking-profile" @bind="_selectedProfile" disabled="@(_applyingProfile || _profiles.Count == 0)">
-            @foreach (var profile in _profiles)
-            {
-                <option value="@profile.FileName">@profile.DisplayName</option>
-            }
-        </select>
-        <button class="primary-button" @onclick="ApplyProfileAsync"
-                disabled="@(_controlsBusy || _applyingProfile || string.IsNullOrWhiteSpace(_selectedProfile))">
-            @(_applyingProfile ? "Applying…" : "Apply")
-        </button>
-        <button class="primary-button" @onclick="StartTrackingAsync"
-                disabled="@(_controlsBusy || TrackingControl.IsTracking)">Start</button>
-        <button class="secondary-button" @onclick="StopTrackingAsync"
-                disabled="@(_controlsBusy || !TrackingControl.IsTracking)">Stop</button>
-        @if (_profileMessage is not null)
-        {
-            <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
-        }
-    </div>
-    <div class="receiver-position" aria-label="Current receiver position">
-        <span>Receiver position</span>
-        <dl>
-            <div><dt>Latitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLatitude)</dd></div>
-            <div><dt>Longitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLongitude)</dd></div>
-        </dl>
-    </div>
-</section>
+<div class="session-tabs" role="tablist" aria-label="Observation session">
+    <button class="@TabClass(SessionTab.Preparation)" role="tab"
+            aria-selected="@(_activeTab == SessionTab.Preparation)"
+            @onclick="() => SelectTab(SessionTab.Preparation)">
+        Session
+    </button>
+    <button class="@TabClass(SessionTab.Tracking)" role="tab"
+            aria-selected="@(_activeTab == SessionTab.Tracking)"
+            disabled="@(!TrackingControl.IsTracking)"
+            @onclick="() => SelectTab(SessionTab.Tracking)">
+        Tracking
+    </button>
+</div>
+
+@if (_activeTab == SessionTab.Preparation)
+{
+    <section class="session-preparation" aria-label="Session preparation">
+        <div class="session-form">
+            <div class="session-form-heading">
+                <div>
+                    <h2>Prepare session</h2>
+                    <p>Choose the conditions that will be recorded with this tracking run.</p>
+                </div>
+                @if (TrackingControl.IsTracking)
+                {
+                    <span class="read-only-badge"><span>●</span> Session active · read only</span>
+                }
+            </div>
+
+            <label class="session-field" for="tracking-profile">
+                <span>Tracking profile</span>
+                <select id="tracking-profile" value="@_selectedProfile" @onchange="OnProfileChangedAsync"
+                        disabled="@(_applyingProfile || TrackingControl.IsTracking || _profiles.Count == 0)">
+                    @foreach (var profile in _profiles)
+                    {
+                        <option value="@profile.FileName">@profile.DisplayName</option>
+                    }
+                </select>
+            </label>
+
+            <div class="effective-profile" aria-label="Effective tracking profile">
+                <h3>Effective tracking profile</h3>
+                <dl>
+                    <div><dt>Profile</dt><dd>@EffectiveProfileName</dd></div>
+                    <div><dt>Latitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLatitude)</dd></div>
+                    <div><dt>Longitude</dt><dd>@FormatCoordinate(LiveAircraft.TrackingOptions?.ReceiverLongitude)</dd></div>
+                    <div><dt>Elevation</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.ReceiverElevation, " ft")</dd></div>
+                    <div><dt>Minimum altitude</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MinimumTrackedAltitude, " ft")</dd></div>
+                    <div><dt>Maximum altitude</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MaximumTrackedAltitude, " ft")</dd></div>
+                    <div><dt>Maximum distance</dt><dd>@FormatValue(LiveAircraft.TrackingOptions?.MaximumTrackedDistance, " nm")</dd></div>
+                    <div class="wide"><dt>Included behaviours</dt><dd>@Display(LiveAircraft.TrackingOptions?.TrackedBehaviours)</dd></div>
+                </dl>
+            </div>
+
+            <label class="session-field" for="session-notes">
+                <span>Session notes <small>Optional</small></span>
+                <textarea id="session-notes" @bind="_sessionNotes" maxlength="4000" rows="5"
+                          disabled="@TrackingControl.IsTracking"
+                          placeholder="Purpose, weather conditions, or other context…"></textarea>
+            </label>
+
+            <div class="session-actions">
+                <button class="primary-button" @onclick="StartTrackingAsync"
+                        disabled="@(_controlsBusy || _applyingProfile || TrackingControl.IsTracking)">
+                    @(_controlsBusy ? "Starting…" : "Start Session")
+                </button>
+                @if (_profileMessage is not null)
+                {
+                    <span class="profile-message @(_profileError ? "error" : "success")" role="status">@_profileMessage</span>
+                }
+            </div>
+        </div>
+    </section>
+}
 
 @if (_startError is not null)
 {
@@ -60,6 +104,18 @@
         <button @onclick="RetryAsync">Try again</button>
     </div>
 }
+
+@if (_activeTab == SessionTab.Tracking && TrackingControl.IsTracking)
+{
+<section class="session-status" aria-label="Session status">
+    <div>
+        <span class="live-indicator"><i></i> Session active</span>
+        <strong>@EffectiveProfileName</strong>
+    </div>
+    <button class="secondary-button" @onclick="StopTrackingAsync" disabled="@_controlsBusy">
+        @(_controlsBusy ? "Stopping…" : "Stop Session")
+    </button>
+</section>
 
 <section class="summary-grid" aria-label="Tracker summary">
     <article class="summary-card accent">
@@ -180,6 +236,7 @@
         </dl>
     </aside>
 }
+}
 
 @code {
 #nullable enable
@@ -194,6 +251,8 @@
     private bool _profileError;
     private bool _applyingProfile;
     private bool _controlsBusy;
+    private string _sessionNotes = string.Empty;
+    private SessionTab _activeTab = SessionTab.Preparation;
 
     /// <summary>
     /// Builds a Lookup-tab URL populated from a live aircraft row.
@@ -264,6 +323,12 @@
     private static string FormatCoordinate(double? coordinate)
         => coordinate?.ToString("F6") ?? "Not configured";
 
+    private static string FormatValue(int? value, string suffix)
+        => value.HasValue ? $"{value:N0}{suffix}" : "Not configured";
+
+    private string EffectiveProfileName
+        => LiveAircraft.TrackingOptions?.TrackingProfileName ?? "Loading…";
+
     /// <summary>
     /// Subscribes to service changes and starts the live transport.
     /// </summary>
@@ -322,8 +387,9 @@
         return StartAsync();
     }
 
-    private async Task ApplyProfileAsync()
+    private async Task OnProfileChangedAsync(ChangeEventArgs args)
     {
+        _selectedProfile = args.Value?.ToString() ?? TrackingProfileService.DefaultProfileValue;
         if (string.IsNullOrWhiteSpace(_selectedProfile)) return;
         _applyingProfile = true;
         _profileMessage = null;
@@ -331,9 +397,7 @@
         {
             await TrackingProfiles.ApplyAsync(_selectedProfile);
             _profileError = false;
-            _profileMessage = TrackingControl.IsTracking
-                ? "Tracking restarted with the selected profile."
-                : "The selected profile will be used when tracking starts.";
+            _profileMessage = "Effective profile updated.";
         }
         catch (Exception exception)
         {
@@ -356,10 +420,16 @@
         _profileMessage = null;
         try
         {
-            if (start) await TrackingControl.StartAsync();
+            if (start) await TrackingControl.StartAsync(_sessionNotes);
             else await TrackingControl.StopAsync();
             _profileError = false;
-            _profileMessage = start ? "Tracking started." : "Tracking stopped.";
+            _profileMessage = start ? null : "Session stopped. Prepare the next session.";
+            _activeTab = start ? SessionTab.Tracking : SessionTab.Preparation;
+            if (!start)
+            {
+                _sessionNotes = string.Empty;
+                _selected = null;
+            }
         }
         catch (Exception exception)
         {
@@ -380,6 +450,14 @@
         // Marshal the render onto Blazor's component dispatcher.
         _ = InvokeAsync(StateHasChanged);
     }
+
+    private void SelectTab(SessionTab tab)
+    {
+        if (tab == SessionTab.Tracking && !TrackingControl.IsTracking) return;
+        _activeTab = tab;
+    }
+
+    private string TabClass(SessionTab tab) => _activeTab == tab ? "active" : string.Empty;
 
     /// <summary>
     /// Selects an aircraft for the detail panel.
@@ -495,5 +573,11 @@
         Altitude,
         Distance,
         LastSeen
+    }
+
+    private enum SessionTab
+    {
+        Preparation,
+        Tracking
     }
 }

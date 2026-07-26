@@ -26,6 +26,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly TrackerApplicationSettings _settings;
         private readonly BaseStationReaderDbContext _context;
         private readonly bool _ownsContext;
+        private readonly string _sessionNotes;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
@@ -50,11 +51,13 @@ namespace BaseStationReader.BusinessLogic.Tracking
             BaseStationReaderDbContext context,
             ITrackerTcpClient tcpClient,
             TrackerApplicationSettings settings,
-            bool ownsContext = false)
+            bool ownsContext = false,
+            string sessionNotes = null)
         {
             _settings = settings;
             _context = context;
             _ownsContext = ownsContext;
+            _sessionNotes = string.IsNullOrWhiteSpace(sessionNotes) ? null : sessionNotes.Trim();
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
@@ -214,6 +217,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 StartedAtUtc = DateTime.UtcNow,
                 ProfileName = profileName,
+                Notes = _sessionNotes,
                 ReceiverLatitude = _settings.ReceiverLatitude,
                 ReceiverLongitude = _settings.ReceiverLongitude,
                 ReceiverElevation = _settings.ReceiverElevation,

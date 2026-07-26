@@ -15,6 +15,8 @@ namespace BaseStationReader.Entities.Tracking
         [Required]
         public string ProfileName { get; set; } = "";
 
+        public string Notes { get; set; }
+
         public double? ReceiverLatitude { get; set; }
 
         public double? ReceiverLongitude { get; set; }

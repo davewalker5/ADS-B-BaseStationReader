@@ -116,12 +116,13 @@ namespace BaseStationReader.TrackerHub
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Initialise the tracker wrapper
-                var runtime = new TrackingRuntime(_settings, settings => new TrackerController(
+                var runtime = new TrackingRuntime(_settings, (settings, notes) => new TrackerController(
                     _logger,
                     new BaseStationReaderDbContext(contextOptions),
                     new TrackerTcpClient(),
                     settings,
-                    ownsContext: true));
+                    ownsContext: true,
+                    sessionNotes: notes));
                 _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file

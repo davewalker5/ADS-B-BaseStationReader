@@ -10,7 +10,7 @@ namespace BaseStationReader.TrackerHub.Services;
 /// <summary>Stable facade around the controller that may be replaced when a profile changes.</summary>
 public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvider
 {
-    private readonly Func<TrackerApplicationSettings, ITrackerController> _factory;
+    private readonly Func<TrackerApplicationSettings, string?, ITrackerController> _factory;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _stateLock = new();
     private TrackerApplicationSettings _settings;
@@ -20,7 +20,8 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private CancellationToken _applicationToken;
     private bool _started;
 
-    public TrackingRuntime(TrackerApplicationSettings settings, Func<TrackerApplicationSettings, ITrackerController> factory)
+    public TrackingRuntime(TrackerApplicationSettings settings,
+        Func<TrackerApplicationSettings, string?, ITrackerController> factory)
     {
         _settings = settings;
         _factory = factory;
@@ -43,8 +44,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         try
         {
             _started = true;
-            // Start tracking with the active profile as soon as the application runtime is ready.
-            if (!IsTracking) StartController();
         }
         finally { _gate.Release(); }
 
@@ -54,14 +53,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         _started = false;
     }
 
-    public async Task StartTrackingAsync(CancellationToken token = default)
+    public async Task StartTrackingAsync(string? notes = null, CancellationToken token = default)
     {
         await _gate.WaitAsync(token);
         try
         {
             if (!_started)
                 throw new InvalidOperationException("The tracking runtime is not ready.");
-            if (!IsTracking) StartController();
+            if (!IsTracking) StartController(notes);
         }
         finally { _gate.Release(); }
     }
@@ -78,10 +77,9 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         await _gate.WaitAsync(token);
         try
         {
-            var restartTracking = IsTracking;
-            await StopControllerCoreAsync();
+            if (IsTracking)
+                throw new InvalidOperationException("The tracking profile cannot be changed during an active session.");
             lock (_stateLock) _settings = settings;
-            if (restartTracking) StartController();
         }
         finally { _gate.Release(); }
     }
@@ -93,10 +91,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         if (controller is not null) await controller.FlushQueueAsync();
     }
 
-    private void StartController()
+    private void StartController(string? notes = null)
     {
         if (_applicationToken.IsCancellationRequested) return;
-        var controller = _factory(_settings);
+        var controller = _factory(_settings, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)

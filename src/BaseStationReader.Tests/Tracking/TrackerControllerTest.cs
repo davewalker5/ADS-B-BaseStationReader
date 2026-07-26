@@ -62,7 +62,8 @@ namespace BaseStationReader.Tests.Tracking
 
             // Construct the tracker controller itself
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _controller = new TrackerController(_logger, _context, tcpClient, _settings);
+            _controller = new TrackerController(_logger, _context, tcpClient, _settings,
+                sessionNotes: "Clear skies; testing session context.");
         }
 
         [TestMethod]
@@ -115,6 +116,7 @@ namespace BaseStationReader.Tests.Tracking
             // The run creates one immutable profile snapshot and links every persisted observation to it.
             var session = _context.ObservationSessions.Single();
             Assert.AreEqual("Test Default Profile", session.ProfileName);
+            Assert.AreEqual("Clear skies; testing session context.", session.Notes);
             Assert.AreEqual(120, session.ReceiverElevation);
             Assert.IsNull(session.MinimumAltitude);
             Assert.IsNull(session.MaximumAltitude);

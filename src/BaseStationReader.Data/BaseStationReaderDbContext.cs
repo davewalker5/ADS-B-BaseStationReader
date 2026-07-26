@@ -108,6 +108,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.StartedAtUtc).IsRequired().HasColumnName("StartedAtUtc").HasColumnType("DATETIME");
                 entity.Property(e => e.ProfileName).IsRequired().HasColumnName("ProfileName");
+                entity.Property(e => e.Notes).HasColumnName("Notes");
                 entity.Property(e => e.ReceiverLatitude).HasColumnType("REAL").HasColumnName("ReceiverLatitude");
                 entity.Property(e => e.ReceiverLongitude).HasColumnType("REAL").HasColumnName("ReceiverLongitude");
                 entity.Property(e => e.ReceiverElevation).HasColumnName("ReceiverElevation");

@@ -6,9 +6,9 @@ public sealed class TrackingControlService(TrackingRuntime runtime, IEventBridge
 {
     public bool IsTracking => runtime.IsTracking;
 
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(string notes = null, CancellationToken cancellationToken = default)
     {
-        await runtime.StartTrackingAsync(cancellationToken);
+        await runtime.StartTrackingAsync(notes, cancellationToken);
         await bridge.PublishResetAsync(runtime.TrackingOptions, cancellationToken);
     }
 

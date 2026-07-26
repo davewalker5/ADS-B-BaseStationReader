@@ -10,11 +10,11 @@ namespace BaseStationReader.Tests.TrackerHub;
 public class TrackingRuntimeTest
 {
     [TestMethod]
-    public async Task ApplyStopsCurrentControllerAndStartsReplacementTest()
+    public async Task ApplyRejectsProfileChangeDuringActiveSessionTest()
     {
         var controllers = new List<FakeController>();
         var initial = Settings("Initial.json");
-        var runtime = new TrackingRuntime(initial, settings =>
+        var runtime = new TrackingRuntime(initial, (settings, _) =>
         {
             var controller = new FakeController(settings);
             controllers.Add(controller);
@@ -25,23 +25,23 @@ public class TrackingRuntimeTest
         await runtime.StartTrackingAsync();
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
 
-        await runtime.ApplyAsync(Settings("Replacement.json"));
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => runtime.ApplyAsync(Settings("Replacement.json")));
 
-        Assert.HasCount(2, controllers);
-        Assert.IsTrue(controllers[0].Stopped);
-        Assert.IsTrue(controllers[1].Started);
-        Assert.AreEqual("Replacement.json", runtime.TrackingOptions.TrackingProfile);
+        Assert.HasCount(1, controllers);
+        Assert.IsFalse(controllers[0].Stopped);
+        Assert.AreEqual("Initial.json", runtime.TrackingOptions.TrackingProfile);
 
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.IsTrue(controllers[1].Stopped);
+        Assert.IsTrue(controllers[0].Stopped);
     }
 
     [TestMethod]
-    public async Task RuntimeStartsTrackingAutomaticallyAndAllowsManualControlTest()
+    public async Task RuntimeWaitsForSessionStartAndAllowsManualControlTest()
     {
         var controllers = new List<FakeController>();
-        var runtime = new TrackingRuntime(Settings("Initial.json"), settings =>
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _) =>
         {
             var controller = new FakeController(settings);
             controllers.Add(controller);
@@ -50,6 +50,11 @@ public class TrackingRuntimeTest
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
 
+        await Task.Delay(25);
+        Assert.IsEmpty(controllers);
+        Assert.IsFalse(runtime.IsTracking);
+
+        await runtime.StartTrackingAsync();
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
         Assert.IsTrue(runtime.IsTracking);
 
@@ -59,7 +64,6 @@ public class TrackingRuntimeTest
 
         await runtime.StartTrackingAsync();
         await WaitUntilAsync(() => controllers.Count == 2 && controllers[1].Started);
-        Assert.IsTrue(runtime.IsTracking);
 
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
