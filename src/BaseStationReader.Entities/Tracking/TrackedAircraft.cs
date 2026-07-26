@@ -13,6 +13,10 @@ namespace BaseStationReader.Entities.Tracking
         [Key]
         public int Id { get; set; }
 
+        public int? SessionId { get; set; }
+
+        public ObservationSession Session { get; set; } = null;
+
         [Export("ICAO Address", 1)]
         [Required]
         public string Address { get; set; } = "";

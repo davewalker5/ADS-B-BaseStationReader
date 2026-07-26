@@ -3,6 +3,7 @@ using System;
 using BaseStationReader.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseStationReader.Data.Migrations
 {
     [DbContext(typeof(BaseStationReaderDbContext))]
-    partial class BaseStationReaderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260726113623_AddObservationSessions")]
+    partial class AddObservationSessions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -456,10 +459,6 @@ namespace BaseStationReader.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("ProfileName");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Notes");
 
                     b.Property<int?>("ReceiverElevation")
                         .HasColumnType("INTEGER")

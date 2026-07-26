@@ -11,11 +11,11 @@
 
 ## About
 
-![ADS-B BaseStation Reader Live Tracking](Diagrams/001-live-tracker.png)
+![ADS-B BaseStation Reader Observation Session](Diagrams/001-live-tracker-session.png)
 
 **ADS-B BaseStation Reader** is a local-first aircraft observation workspace that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
 
-The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI supporting live observation, investigation, contextual aviation information, reference-data management and post-session analysis.
+The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It organises each tracking run as an observation session, maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI supporting live observation, investigation, contextual aviation information, reference-data management and post-session analysis.
 
 Core tracking does not depend on a commercial flight-tracking service. External APIs are optional and are used only for transient ancillary lookup, schedule, weather and enrichment workflows.
 
@@ -23,11 +23,14 @@ Core tracking does not depend on a commercial flight-tracking service. External 
 
 The project currently supports:
 
-- **Live aircraft tracking** from a BaseStation-compatible TCP message feed
+- **Session-based aircraft observation** from a BaseStation-compatible TCP message feed
+- **Observation-session preparation** with tracking-profile selection and optional contextual notes
+- **Live aircraft tracking** within the active observation session
+- **Read-only session summaries** covering observation totals, identification coverage and session highlights
 - **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
-- **Local SQLite persistence** of aircraft observations and optional position histories
+- **Local SQLite persistence** of observation sessions, aircraft records and optional position histories
 - **Integrated browser-based UI** organised around live observation, contextual aviation information and reference-data management
-- **Historical observation browsing** with filtering and record inspection
+- **Historical observation browsing** with session-based filtering and record inspection
 - **Interactive radar plus 2D and 3D flight-path visualisation**
 - **Aircraft and flight lookup** using local reference data and optional external services
 - **Airport schedules, route visualisation and METAR/TAF weather lookup**
@@ -112,14 +115,33 @@ The Tracker Hub hosts the main browser-based interface and brings the project's 
 
 The interface is organised around the natural workflow of an aircraft observer:
 
-### Live Observation
+### Observation Workflow
+
+The Live Tracker guides an observation through three stages:
+
+```text
+Session
+   ↓
+Tracking
+   ↓
+Summary
+```
+
+- **Session** — select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
+- **Tracking** — monitor the live aircraft collection, inspect current telemetry, and move directly to Radar, Lookup, or historical records
+- **Summary** — review the persisted session context, observation totals, identification coverage, and notable observations
+
+Each session records a snapshot of the effective tracking profile and groups the aircraft records created during that run. The profile and notes become read-only after the session starts. When tracking stops, outstanding observations are persisted before the completed summary is displayed.
+
+### Observation and Investigation
 
 The primary observation tools used while tracking aircraft:
 
-- Live Tracking
-- Radar
+- Session-based Live Tracking
+- Receiver-centred Radar
 - Aircraft and Flight Lookup
-- Historical Database Browser
+- Historical Database Browser with observation-session filtering
+- Historical aircraft details and flight analysis
 
 These views focus on aircraft currently being observed or previously recorded, allowing observations to be inspected, identified and analysed.
 

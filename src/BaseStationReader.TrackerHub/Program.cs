@@ -116,12 +116,13 @@ namespace BaseStationReader.TrackerHub
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Initialise the tracker wrapper
-                var runtime = new TrackingRuntime(_settings, settings => new TrackerController(
+                var runtime = new TrackingRuntime(_settings, (settings, notes) => new TrackerController(
                     _logger,
                     new BaseStationReaderDbContext(contextOptions),
                     new TrackerTcpClient(),
                     settings,
-                    ownsContext: true));
+                    ownsContext: true,
+                    sessionNotes: notes));
                 _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file
@@ -146,6 +147,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.AddSingleton<ITrackingControlService, TrackingControlService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
+                builder.Services.Configure<DatabaseBrowserOptions>(builder.Configuration.GetSection("WebUi:Database"));
                 builder.Services.Configure<ScheduleOptions>(builder.Configuration.GetSection("ApplicationSettings"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));

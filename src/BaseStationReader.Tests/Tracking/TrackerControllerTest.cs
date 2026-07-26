@@ -29,6 +29,8 @@ namespace BaseStationReader.Tests.Tracking
             SocketReadTimeout = MaximumTestRunTimeMs,
             ReceiverLatitude = 51.14810180664062,
             ReceiverLongitude = -0.19027799367905,
+            ReceiverElevation = 120,
+            DefaultProfileName = "Test Default Profile",
             EnableSqlWriter = true,
             TrackedBehaviours = [.. Enum.GetValues<AircraftBehaviour>()],
             TrackPosition = true,
@@ -40,6 +42,7 @@ namespace BaseStationReader.Tests.Tracking
 
         private ITrackerLogger _logger = new MockFileLogger();
         private ITrackerController _controller;
+        private BaseStationReaderDbContext _context;
 
         private List<AircraftNotificationData> _notifications = [];
 
@@ -58,8 +61,9 @@ namespace BaseStationReader.Tests.Tracking
             var tcpClient = new MockTrackerTcpClient(buffer);
 
             // Construct the tracker controller itself
-            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _controller = new TrackerController(_logger, context, tcpClient, _settings);
+            _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            _controller = new TrackerController(_logger, _context, tcpClient, _settings,
+                sessionNotes: "Clear skies; testing session context.");
         }
 
         [TestMethod]
@@ -108,6 +112,18 @@ namespace BaseStationReader.Tests.Tracking
 
             // A removed aircraft must not survive in the authoritative snapshot consumed by the Hub UI.
             Assert.IsEmpty(_controller.State);
+
+            // The run creates one immutable profile snapshot and links every persisted observation to it.
+            var session = _context.ObservationSessions.Single();
+            Assert.AreEqual("Test Default Profile", session.ProfileName);
+            Assert.AreEqual("Clear skies; testing session context.", session.Notes);
+            Assert.AreEqual(120, session.ReceiverElevation);
+            Assert.IsNull(session.MinimumAltitude);
+            Assert.IsNull(session.MaximumAltitude);
+            Assert.IsNull(session.MaximumDistance);
+            Assert.AreEqual(string.Join(",", _settings.TrackedBehaviours), session.IncludedBehaviours);
+            Assert.AreEqual(DateTimeKind.Utc, session.StartedAtUtc.Kind);
+            Assert.IsTrue(_context.TrackedAircraft.All(x => x.SessionId == session.Id));
         }
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)

@@ -18,6 +18,16 @@
         <button class="text-button" type="button" @onclick="ClearFiltersAsync">Clear filters</button>
     </div>
     <div class="filter-grid">
+        <label class="filter-grid-full-row">
+            <span>Session</span>
+            <InputSelect @bind-Value="_filter.SessionId">
+                <option value="">Any session</option>
+                @foreach (var session in _sessions)
+                {
+                    <option value="@session.Id">@FormatSession(session)</option>
+                }
+            </InputSelect>
+        </label>
         <label><span>From date</span><InputDate @bind-Value="_filter.FromDate" /></label>
         <label><span>To date</span><InputDate @bind-Value="_filter.ToDate" /></label>
         <label><span>ICAO address</span><input @bind="_filter.Address" placeholder="e.g. 406B90" maxlength="12" /></label>
@@ -98,6 +108,7 @@
     public string? Callsign { get; set; }
 
     private TrackingSessionFilter _filter = new();
+    private IReadOnlyList<ObservationSessionOptionDto> _sessions = [];
     private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 10 };
     private bool _loading;
     private string? _error;
@@ -105,6 +116,14 @@
     private string _handledAddress = string.Empty;
     private string _handledCallsign = string.Empty;
     private string ResultDescription => _result.TotalCount == 1 ? "1 matching record" : $"{_result.TotalCount:N0} matching records";
+
+    /// <summary>
+    /// Loads the observation-session choices independently of the current search filters.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        _sessions = await QueryService.ListSessionsAsync();
+    }
 
     /// <summary>
     /// Applies an ICAO address or callsign supplied by the Live Tracker and automatically runs the database search.
@@ -209,6 +228,14 @@
     {
         // Stored tracker timestamps are displayed consistently with the live tracker.
         return value.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss");
+    }
+
+    /// <summary>
+    /// Formats a session for the historical database selector.
+    /// </summary>
+    private static string FormatSession(ObservationSessionOptionDto session)
+    {
+        return $"{session.ProfileName} - {session.StartedAtUtc.ToLocalTime():dd-MMM-yyyy - HH:mm:ss}";
     }
 
     /// <summary>

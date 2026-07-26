@@ -9,6 +9,7 @@ namespace BaseStationReader.Data
     public partial class BaseStationReaderDbContext : DbContext
     {
         public virtual DbSet<TrackedAircraft> TrackedAircraft { get; set; }
+        public virtual DbSet<ObservationSession> ObservationSessions { get; set; }
         public virtual DbSet<AircraftPosition> Positions { get; set; }
         public virtual DbSet<Flight> Flights { get; set; }
         public virtual DbSet<Airline> Airlines { get; set; }
@@ -49,6 +50,7 @@ namespace BaseStationReader.Data
         {
             await TruncateTable("POSITION");
             await TruncateTable("TRACKED_AIRCRAFT");
+            await TruncateTable("SESSION");
         }
 
         /// <summary>
@@ -74,6 +76,7 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Status).HasColumnName("Status");
                 entity.Property(e => e.Messages).HasColumnName("Messages");
                 entity.Property(e => e.Distance).HasColumnType("REAL").HasColumnName("Distance");
+                entity.Property(e => e.SessionId).HasColumnName("SessionId");
 
                 entity.Property(e => e.FirstSeen)
                     .IsRequired()
@@ -91,6 +94,30 @@ namespace BaseStationReader.Data
                 entity.HasIndex(e => e.FirstSeen);
                 entity.HasIndex(e => e.LastSeen);
                 entity.HasIndex(e => e.Status);
+
+                entity.HasOne(e => e.Session)
+                    .WithMany(e => e.TrackedAircraft)
+                    .HasForeignKey(e => e.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ObservationSession>(entity =>
+            {
+                entity.ToTable("SESSION");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.StartedAtUtc).IsRequired().HasColumnName("StartedAtUtc").HasColumnType("DATETIME");
+                entity.Property(e => e.ProfileName).IsRequired().HasColumnName("ProfileName");
+                entity.Property(e => e.Notes).HasColumnName("Notes");
+                entity.Property(e => e.ReceiverLatitude).HasColumnType("REAL").HasColumnName("ReceiverLatitude");
+                entity.Property(e => e.ReceiverLongitude).HasColumnType("REAL").HasColumnName("ReceiverLongitude");
+                entity.Property(e => e.ReceiverElevation).HasColumnName("ReceiverElevation");
+                entity.Property(e => e.MinimumAltitude).HasColumnName("MinimumAltitude");
+                entity.Property(e => e.MaximumAltitude).HasColumnName("MaximumAltitude");
+                entity.Property(e => e.MaximumDistance).HasColumnName("MaximumDistance");
+                entity.Property(e => e.IncludedBehaviours).IsRequired().HasColumnName("IncludedBehaviours");
+
+                entity.HasIndex(e => e.StartedAtUtc);
             });
 
             modelBuilder.Entity<AircraftPosition>(entity =>

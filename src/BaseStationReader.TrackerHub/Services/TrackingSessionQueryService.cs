@@ -4,6 +4,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BaseStationReader.TrackerHub.Services;
 
@@ -16,6 +17,7 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly IFlightProfileBuilder _flightProfileBuilder;
     private readonly IFlightPathBuilder _flightPathBuilder;
+    private readonly DatabaseBrowserOptions _options;
 
     /// <summary>
     /// Initialises a query service with a factory for short-lived database contexts.
@@ -26,12 +28,214 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     public TrackingSessionQueryService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
         IFlightProfileBuilder flightProfileBuilder,
-        IFlightPathBuilder flightPathBuilder)
+        IFlightPathBuilder flightPathBuilder,
+        IOptions<DatabaseBrowserOptions> options)
     {
         // Keep persistence querying and reusable chart preparation behind injected abstractions.
         _contextFactory = contextFactory;
         _flightProfileBuilder = flightProfileBuilder;
         _flightPathBuilder = flightPathBuilder;
+        _options = options.Value;
+    }
+
+    /// <inheritdoc />
+    public async Task<int?> GetLatestSessionIdAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.ObservationSessions
+            .AsNoTracking()
+            .OrderByDescending(session => session.StartedAtUtc)
+            .ThenByDescending(session => session.Id)
+            .Select(session => (int?)session.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<ObservationSessionSummaryDto?> GetObservationSessionSummaryAsync(
+        int sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+        var session = await context.ObservationSessions
+            .AsNoTracking()
+            .Where(item => item.Id == sessionId)
+            .Select(item => new
+            {
+                item.Id,
+                item.StartedAtUtc,
+                item.ProfileName,
+                item.Notes,
+                item.ReceiverLatitude,
+                item.ReceiverLongitude,
+                item.ReceiverElevation,
+                item.MinimumAltitude,
+                item.MaximumAltitude,
+                item.MaximumDistance,
+                item.IncludedBehaviours
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (session is null) return null;
+
+        var records = await context.TrackedAircraft
+            .AsNoTracking()
+            .Where(record => record.SessionId == sessionId)
+            .Select(record => new
+            {
+                record.Id,
+                record.Address,
+                record.Callsign,
+                record.Altitude,
+                record.Distance,
+                record.FirstSeen,
+                record.LastSeen
+            })
+            .ToListAsync(cancellationToken);
+
+        var recordIds = records.Select(record => record.Id).ToArray();
+        var addresses = records.Select(record => record.Address).Distinct().ToArray();
+        var positions = await context.Positions
+            .AsNoTracking()
+            .Where(position => recordIds.Contains(position.AircraftId))
+            .Select(position => new
+            {
+                position.AircraftId,
+                position.Altitude,
+                position.Distance,
+                position.Timestamp
+            })
+            .ToListAsync(cancellationToken);
+
+        var identifiedAddresses = await context.Aircraft
+            .AsNoTracking()
+            .Where(aircraft => addresses.Contains(aircraft.Address))
+            .Select(aircraft => aircraft.Address)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var sessionEnd = records.Select(record => (DateTime?)record.LastSeen).Max();
+        var sessionStartLocal = DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime();
+        var resolvedCallsigns = await context.Sightings
+            .AsNoTracking()
+            .Where(sighting => addresses.Contains(sighting.Aircraft.Address) &&
+                               sighting.Timestamp >= sessionStartLocal &&
+                               (!sessionEnd.HasValue || sighting.Timestamp <= sessionEnd.Value))
+            .Select(sighting => new
+            {
+                sighting.Aircraft.Address,
+                sighting.Timestamp,
+                Callsign = sighting.Flight.Callsign
+            })
+            .ToListAsync(cancellationToken);
+
+        var callsigns = records
+            .Select(record => record.Callsign?.Trim())
+            .Where(callsign => !string.IsNullOrWhiteSpace(callsign))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var resolvedFlights = callsigns.Count(callsign => resolvedCallsigns.Any(sighting =>
+            callsign!.Equals(sighting.Callsign?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+            records.Any(record => record.Address == sighting.Address &&
+                                  sighting.Timestamp >= record.FirstSeen &&
+                                  sighting.Timestamp <= record.LastSeen)));
+
+        var positionRecordIds = positions.Select(position => position.AircraftId).Distinct().ToHashSet();
+        var altitudeCandidates = positions
+            .Where(position => position.Altitude.HasValue)
+            .Select(position => (AircraftId: position.AircraftId, Altitude: position.Altitude))
+            .Concat(records.Where(record => record.Altitude.HasValue)
+                .Select(record => (AircraftId: record.Id, Altitude: record.Altitude)));
+        var distanceCandidates = positions
+            .Where(position => position.Distance.HasValue)
+            .Select(position => (AircraftId: position.AircraftId, Distance: position.Distance))
+            .Concat(records.Where(record => record.Distance.HasValue)
+                .Select(record => (AircraftId: record.Id, Distance: record.Distance)));
+
+        var lowest = altitudeCandidates.OrderBy(item => item.Altitude).FirstOrDefault();
+        var highest = altitudeCandidates.OrderByDescending(item => item.Altitude).FirstOrDefault();
+        var furthest = distanceCandidates.OrderByDescending(item => item.Distance).FirstOrDefault();
+        var longest = records.OrderByDescending(record => record.LastSeen - record.FirstSeen).FirstOrDefault();
+        var lastActivity = records.Select(record => (DateTime?)record.LastSeen)
+            .Concat(positions.Select(position => (DateTime?)position.Timestamp))
+            .Max();
+        var distinctAircraft = addresses.Length;
+        var identifiedAircraft = identifiedAddresses.Count;
+
+        ObservationHighlightDto? Highlight(int aircraftId, decimal? altitude = null,
+            double? distance = null, TimeSpan? duration = null)
+        {
+            if (aircraftId == 0) return null;
+            var record = records.First(item => item.Id == aircraftId);
+            return new ObservationHighlightDto
+            {
+                Address = record.Address,
+                Callsign = record.Callsign?.Trim() ?? string.Empty,
+                Altitude = altitude,
+                Distance = distance,
+                Duration = duration
+            };
+        }
+
+        return new ObservationSessionSummaryDto
+        {
+            SessionId = session.Id,
+            StartedAtUtc = session.StartedAtUtc,
+            LastActivity = lastActivity,
+            ObservedDuration = lastActivity.HasValue
+                ? lastActivity.Value - sessionStartLocal
+                : TimeSpan.Zero,
+            ProfileName = session.ProfileName,
+            Notes = session.Notes ?? string.Empty,
+            ReceiverLatitude = session.ReceiverLatitude,
+            ReceiverLongitude = session.ReceiverLongitude,
+            ReceiverElevation = session.ReceiverElevation,
+            MinimumAltitudeLimit = session.MinimumAltitude,
+            MaximumAltitudeLimit = session.MaximumAltitude,
+            MaximumDistanceLimit = session.MaximumDistance,
+            IncludedBehaviours = session.IncludedBehaviours,
+            ObservationRecords = records.Count,
+            DistinctAircraft = distinctAircraft,
+            DistinctCallsigns = callsigns.Length,
+            AircraftWithPositionHistory = positionRecordIds.Count,
+            PositionRecords = positions.Count,
+            IdentifiedAircraft = identifiedAircraft,
+            ResolvedFlights = resolvedFlights,
+            UnidentifiedAircraft = distinctAircraft - identifiedAircraft,
+            AircraftResolutionPercentage = Percentage(identifiedAircraft, distinctAircraft),
+            FlightResolutionPercentage = Percentage(resolvedFlights, callsigns.Length),
+            LowestAltitude = Highlight(lowest.AircraftId, altitude: lowest.Altitude),
+            HighestAltitude = Highlight(highest.AircraftId, altitude: highest.Altitude),
+            FurthestAircraft = Highlight(furthest.AircraftId, distance: furthest.Distance),
+            LongestObservedAircraft = longest is null
+                ? null
+                : Highlight(longest.Id, duration: longest.LastSeen - longest.FirstSeen)
+        };
+    }
+
+    private static double Percentage(int resolved, int total)
+        => total == 0 ? 0 : Math.Round(resolved * 100d / total, 1);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var historyDays = _options.SessionHistoryDays > 0 ? _options.SessionHistoryDays : 7;
+        var earliestSession = DateTime.UtcNow.AddDays(-historyDays);
+
+        return await context.ObservationSessions
+            .AsNoTracking()
+            .Where(session => session.StartedAtUtc >= earliestSession)
+            .OrderByDescending(session => session.StartedAtUtc)
+            .ThenByDescending(session => session.Id)
+            .Select(session => new ObservationSessionOptionDto
+            {
+                Id = session.Id,
+                ProfileName = session.ProfileName,
+                StartedAtUtc = session.StartedAtUtc
+            })
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -54,6 +258,11 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
         var query = context.TrackedAircraft.AsNoTracking().AsQueryable();
 
         // Apply scalar tracking-record filters first so indexed columns can reduce the candidate set.
+        if (filter.SessionId.HasValue)
+        {
+            query = query.Where(record => record.SessionId == filter.SessionId.Value);
+        }
+
         if (filter.FromDate.HasValue)
         {
             query = query.Where(record => record.LastSeen >= filter.FromDate.Value.Date);

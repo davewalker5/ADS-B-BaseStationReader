@@ -109,8 +109,10 @@ public sealed class TrackingProfileService : ITrackingProfileService
     internal static void ApplyProfile(TrackerApplicationSettings settings, string fileName, TrackingProfile profile)
     {
         settings.TrackingProfile = fileName;
+        settings.TrackingProfileName = profile.Name;
         settings.ReceiverLatitude = profile.ReceiverLatitude;
         settings.ReceiverLongitude = profile.ReceiverLongitude;
+        settings.ReceiverElevation = profile.ReceiverElevation;
         settings.MinimumTrackedAltitude = profile.MinimumTrackedAltitude;
         settings.MaximumTrackedAltitude = profile.MaximumTrackedAltitude;
         settings.MaximumTrackedDistance = profile.MaximumTrackedDistance;
@@ -125,9 +127,12 @@ public sealed class TrackingProfileService : ITrackingProfileService
         TimeToStale = source.TimeToStale, TimeToRemoval = source.TimeToRemoval, TimeToLock = source.TimeToLock,
         LogFile = source.LogFile, VerboseLogging = source.VerboseLogging, EnableSqlWriter = source.EnableSqlWriter,
         ClearDown = source.ClearDown, MaximumRows = source.MaximumRows, ReceiverLatitude = source.ReceiverLatitude,
-        ReceiverLongitude = source.ReceiverLongitude, MaximumTrackedDistance = source.MaximumTrackedDistance,
+        ReceiverLongitude = source.ReceiverLongitude, ReceiverElevation = source.ReceiverElevation,
+        MaximumTrackedDistance = source.MaximumTrackedDistance,
         MinimumTrackedAltitude = source.MinimumTrackedAltitude, MaximumTrackedAltitude = source.MaximumTrackedAltitude,
         TrackPosition = source.TrackPosition, AircraftNotificationInterval = source.AircraftNotificationInterval,
-        TrackingProfile = source.TrackingProfile, Columns = [.. source.Columns], TrackedBehaviours = [.. source.TrackedBehaviours]
+        TrackingProfile = source.TrackingProfile, TrackingProfileName = source.TrackingProfileName,
+        DefaultProfileName = source.DefaultProfileName,
+        Columns = [.. source.Columns], TrackedBehaviours = [.. source.TrackedBehaviours]
     };
 }

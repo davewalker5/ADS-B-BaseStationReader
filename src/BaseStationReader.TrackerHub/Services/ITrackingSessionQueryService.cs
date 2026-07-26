@@ -9,6 +9,22 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public interface ITrackingSessionQueryService
 {
+    /// <summary>Returns the newest persisted observation session identifier.</summary>
+    Task<int?> GetLatestSessionIdAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Builds a read-only summary from data persisted for one observation session.</summary>
+    Task<ObservationSessionSummaryDto?> GetObservationSessionSummaryAsync(
+        int sessionId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists observation sessions that contain historical tracking records.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>Available sessions ordered from newest to oldest.</returns>
+    Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Searches historical tracking sessions using validated filters and pagination.
     /// </summary>
