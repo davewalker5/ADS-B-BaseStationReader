@@ -109,6 +109,7 @@ public class AirportScheduleLookupServiceTest
             settings,
             Options.Create(scheduleOptions ?? new ScheduleOptions()),
             contextFactory.Object,
-            logger.Object);
+            logger.Object,
+            new MemoryOnlyTransientResponseCache());
     }
 }

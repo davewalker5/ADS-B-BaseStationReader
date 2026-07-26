@@ -16,9 +16,11 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
 {
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(5);
     private readonly ExternalApiSettings _settings;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
+    private readonly ITransientResponseCache _cache;
     private readonly IExternalApiFactory _apiFactory = new ExternalApiFactory();
 
     /// <summary>
@@ -27,14 +29,17 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
     /// <param name="settings">The external API settings bound from appsettings.json.</param>
     /// <param name="contextFactory">The factory used to create a context for API-call logging.</param>
     /// <param name="logger">The application logger.</param>
+    /// <param name="cache">The process-memory-only transient response cache.</param>
     public AirportWeatherLookupService(
         ExternalApiSettings settings,
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        ITrackerLogger logger)
+        ITrackerLogger logger,
+        ITransientResponseCache cache)
     {
         _settings = settings;
         _contextFactory = contextFactory;
         _logger = logger;
+        _cache = cache;
     }
 
     /// <inheritdoc />
@@ -85,8 +90,25 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
         if (normalisedIcao.Length != 4 || !normalisedIcao.All(character => character is >= 'A' and <= 'Z'))
             throw new ArgumentException("Enter a four-letter airport ICAO code.", nameof(icao));
 
-        cancellationToken.ThrowIfCancellationRequested();
+        // Weather expires quickly, and the cache retains objects in process memory only—never in a file or database.
+        var cacheKey = $"weather:{endpointType}:{serviceType}:{normalisedIcao}";
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            CacheLifetime,
+            token => LookupUncachedAsync(endpointType, serviceType, normalisedIcao, token),
+            cancellationToken);
+    }
 
+    /// <summary>
+    /// Executes and decodes one uncached weather API request.
+    /// </summary>
+    private async Task<IReadOnlyList<AirportWeatherReport>> LookupUncachedAsync(
+        ApiEndpointType endpointType,
+        ApiServiceType serviceType,
+        string normalisedIcao,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         // Keep the context alive for API usage logging until the remote request has completed.
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);

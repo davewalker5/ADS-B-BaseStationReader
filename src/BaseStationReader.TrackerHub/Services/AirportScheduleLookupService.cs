@@ -18,10 +18,12 @@ namespace BaseStationReader.TrackerHub.Services;
 public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
 {
     private static readonly TimeSpan MaximumRange = TimeSpan.FromHours(12);
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(15);
     private readonly ExternalApiSettings _settings;
     private readonly ScheduleOptions _scheduleOptions;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
+    private readonly ITransientResponseCache _cache;
     private readonly IExternalApiFactory _apiFactory = new ExternalApiFactory();
 
     /// <summary>
@@ -31,12 +33,14 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
         ExternalApiSettings settings,
         IOptions<ScheduleOptions> scheduleOptions,
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        ITrackerLogger logger)
+        ITrackerLogger logger,
+        ITransientResponseCache cache)
     {
         _settings = settings;
         _scheduleOptions = scheduleOptions.Value;
         _contextFactory = contextFactory;
         _logger = logger;
+        _cache = cache;
     }
 
     /// <inheritdoc />
@@ -92,6 +96,25 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
         if (to <= from || to - from > MaximumRange)
             throw new ArgumentException("The schedule range must be greater than zero and no more than 12 hours.", nameof(to));
 
+        // Exact normalized schedule inputs share a short-lived in-process object; no cache data is persisted.
+        var cacheKey = $"schedule:{serviceType}:{normalisedIata}:{from.Ticks}:{to.Ticks}";
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            CacheLifetime,
+            token => LookupUncachedAsync(serviceType, normalisedIata, from, to, token),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Executes one uncached schedule API request.
+    /// </summary>
+    private async Task<IReadOnlyList<FlightScheduleEntry>> LookupUncachedAsync(
+        ApiServiceType serviceType,
+        string normalisedIata,
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken)
+    {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
         var wrapper = _apiFactory.GetWrapperInstance(

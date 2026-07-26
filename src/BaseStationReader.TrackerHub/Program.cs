@@ -134,6 +134,8 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSignalR().AddMessagePackProtocol();
                 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+                // This cache is strictly process memory: it has no database, distributed, or file-backed provider.
+                builder.Services.AddSingleton<ITransientResponseCache, MemoryOnlyTransientResponseCache>();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
                 builder.Services.AddSingleton(defaultSettings);
                 builder.Services.AddSingleton(
