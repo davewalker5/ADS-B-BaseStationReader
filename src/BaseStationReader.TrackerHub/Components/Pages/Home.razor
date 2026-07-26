@@ -118,7 +118,16 @@
                     @foreach (var aircraft in FilteredAircraft)
                     {
                         <tr class="@StatusClass(aircraft.Status) @SelectedClass(aircraft)" @onclick="() => SelectAircraft(aircraft)">
-                            <td><strong>@Display(aircraft.Callsign)</strong></td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(aircraft.Callsign))
+                                {
+                                    <strong>—</strong>
+                                }
+                                else
+                                {
+                                    <a class="row-link" href="@HistoryCallsignUrl(aircraft)" @onclick:stopPropagation><strong>@aircraft.Callsign.Trim()</strong> →</a>
+                                }
+                            </td>
                             <td class="mono"><a class="row-link" href="@HistoryUrl(aircraft)" @onclick:stopPropagation>@aircraft.Address →</a></td>
                             <td><span class="status-pill @StatusClass(aircraft.Status)">@aircraft.Status</span></td>
                             <td class="numeric">@FormatNumber(aircraft.Altitude, "N0", " ft")</td>
@@ -191,6 +200,12 @@
     /// </summary>
     private static string HistoryUrl(TrackedAircraftDto aircraft)
         => $"history?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
+
+    /// <summary>
+    /// Builds a Database-tab URL filtered to the live aircraft's callsign.
+    /// </summary>
+    private static string HistoryCallsignUrl(TrackedAircraftDto aircraft)
+        => $"history?callsign={Uri.EscapeDataString(aircraft.Callsign?.Trim() ?? string.Empty)}";
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {
