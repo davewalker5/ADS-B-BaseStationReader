@@ -4,6 +4,7 @@ using BaseStationReader.Data;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BaseStationReader.TrackerHub.Services;
 
@@ -16,6 +17,7 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly IFlightProfileBuilder _flightProfileBuilder;
     private readonly IFlightPathBuilder _flightPathBuilder;
+    private readonly DatabaseBrowserOptions _options;
 
     /// <summary>
     /// Initialises a query service with a factory for short-lived database contexts.
@@ -26,12 +28,36 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     public TrackingSessionQueryService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
         IFlightProfileBuilder flightProfileBuilder,
-        IFlightPathBuilder flightPathBuilder)
+        IFlightPathBuilder flightPathBuilder,
+        IOptions<DatabaseBrowserOptions> options)
     {
         // Keep persistence querying and reusable chart preparation behind injected abstractions.
         _contextFactory = contextFactory;
         _flightProfileBuilder = flightProfileBuilder;
         _flightPathBuilder = flightPathBuilder;
+        _options = options.Value;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var historyDays = _options.SessionHistoryDays > 0 ? _options.SessionHistoryDays : 7;
+        var earliestSession = DateTime.UtcNow.AddDays(-historyDays);
+
+        return await context.ObservationSessions
+            .AsNoTracking()
+            .Where(session => session.StartedAtUtc >= earliestSession)
+            .OrderByDescending(session => session.StartedAtUtc)
+            .ThenByDescending(session => session.Id)
+            .Select(session => new ObservationSessionOptionDto
+            {
+                Id = session.Id,
+                ProfileName = session.ProfileName,
+                StartedAtUtc = session.StartedAtUtc
+            })
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -54,6 +80,11 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
         var query = context.TrackedAircraft.AsNoTracking().AsQueryable();
 
         // Apply scalar tracking-record filters first so indexed columns can reduce the candidate set.
+        if (filter.SessionId.HasValue)
+        {
+            query = query.Where(record => record.SessionId == filter.SessionId.Value);
+        }
+
         if (filter.FromDate.HasValue)
         {
             query = query.Where(record => record.LastSeen >= filter.FromDate.Value.Date);

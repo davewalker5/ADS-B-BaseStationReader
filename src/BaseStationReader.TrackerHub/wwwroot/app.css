@@ -139,6 +139,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .filter-heading h2 { margin: 0; font-size: 17px; }
 .filter-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
 .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.filter-grid-full-row { grid-column: 1 / -1; }
 .filter-grid label > span, .page-size span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .filter-grid input, .filter-grid select, .page-size select { width: 100%; min-height: 38px; padding: 8px 10px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
 .filter-grid select { height: 38px; font: inherit; line-height: normal; }

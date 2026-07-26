@@ -10,6 +10,14 @@ namespace BaseStationReader.TrackerHub.Services;
 public interface ITrackingSessionQueryService
 {
     /// <summary>
+    /// Lists observation sessions that contain historical tracking records.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>Available sessions ordered from newest to oldest.</returns>
+    Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Searches historical tracking sessions using validated filters and pagination.
     /// </summary>
     /// <param name="filter">The requested search and page criteria.</param>

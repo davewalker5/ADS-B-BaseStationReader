@@ -7,6 +7,7 @@ namespace BaseStationReader.TrackerHub.Models;
 /// </summary>
 public sealed class TrackingSessionFilter
 {
+    public int? SessionId { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
     public string Address { get; set; } = string.Empty;

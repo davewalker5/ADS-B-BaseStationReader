@@ -147,6 +147,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.AddSingleton<ITrackingControlService, TrackingControlService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
+                builder.Services.Configure<DatabaseBrowserOptions>(builder.Configuration.GetSection("WebUi:Database"));
                 builder.Services.Configure<ScheduleOptions>(builder.Configuration.GetSection("ApplicationSettings"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
