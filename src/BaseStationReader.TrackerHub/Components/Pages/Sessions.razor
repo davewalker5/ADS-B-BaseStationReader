@@ -68,16 +68,17 @@
                     <th>Included behaviours</th>
                     <th class="session-notes-heading">Notes</th>
                     <th class="session-analysis-heading">Analysis</th>
+                    <th class="session-records-heading">Tracking Records</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="11" class="table-empty">Loading sessions…</td></tr>
+                    <tr><td colspan="12" class="table-empty">Loading sessions…</td></tr>
                 }
                 else if (_result.Items.Count == 0)
                 {
-                    <tr><td colspan="11" class="table-empty">No sessions match these filters.</td></tr>
+                    <tr><td colspan="12" class="table-empty">No sessions match these filters.</td></tr>
                 }
                 else
                 {
@@ -110,6 +111,12 @@
                                         @onclick="() => ShowAnalysisAsync(session)">
                                     <span aria-hidden="true">📊</span>
                                 </button>
+                            </td>
+                            <td class="session-records-action">
+                                <a class="row-link" href="@TrackingRecordsUrl(session)"
+                                   aria-label="View tracking records for session started @FormatDateTime(session.StartedAtUtc)">
+                                    Records →
+                                </a>
                             </td>
                         </tr>
                     }
@@ -325,6 +332,9 @@
 
     private static string DisplayBehaviours(string? value)
         => string.IsNullOrWhiteSpace(value) ? "—" : value.Replace(",", ", ");
+
+    private static string TrackingRecordsUrl(ObservationSessionDto session)
+        => $"history?sessionId={session.SessionId}";
 
     private void ShowNotes(ObservationSessionDto session)
     {

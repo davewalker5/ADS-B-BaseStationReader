@@ -83,6 +83,7 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-filter-actions { justify-content: flex-end; }
 .session-results table { min-width: 1450px; }
 .session-notes-heading, .session-notes-action, .session-analysis-heading, .session-analysis-action { width: 64px; text-align: center; }
+.session-records-heading, .session-records-action { width: 112px; text-align: center; }
 .notes-button { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; color: var(--cyan); background: rgba(53,212,208,.08); border: 1px solid rgba(53,212,208,.3); border-radius: 7px; cursor: pointer; font-size: 17px; }
 .notes-button:hover:not(:disabled) { background: rgba(53,212,208,.16); border-color: var(--cyan); }
 .notes-button:disabled { filter: grayscale(1); opacity: .28; cursor: default; }
