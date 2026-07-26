@@ -136,6 +136,8 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 // This cache is strictly process memory: it has no database, distributed, or file-backed provider.
                 builder.Services.AddSingleton<ITransientResponseCache, MemoryOnlyTransientResponseCache>();
+                // Scoped UI state lives only in one Blazor circuit and has no persistent storage backing.
+                builder.Services.AddScoped<ITrackerHubPageState, TrackerHubPageState>();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
                 builder.Services.AddSingleton(defaultSettings);
                 builder.Services.AddSingleton(

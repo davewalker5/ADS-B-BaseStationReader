@@ -1,5 +1,6 @@
 @page "/schedule"
 @inject IAirportScheduleLookupService ScheduleService
+@inject ITrackerHubPageState PageState
 
 <PageTitle>Airport Schedule · ADS-B Tracker</PageTitle>
 
@@ -217,6 +218,19 @@
         _airports = await ScheduleService.GetAirportsAsync();
         _iata = _airports.FirstOrDefault(airport => IsValidIata(airport.IATA))?.IATA ?? string.Empty;
         (_from, _to) = ScheduleService.GetDefaultRange(DateTime.Today);
+
+        if (PageState.Schedule is { } saved)
+        {
+            // Restore criteria from this Blazor session only; no browser, file, or database state is read.
+            _serviceType = _services.Contains(saved.Service) ? saved.Service : _services.FirstOrDefault();
+            _iata = _airports.Any(airport =>
+                string.Equals(airport.IATA, saved.Iata, StringComparison.OrdinalIgnoreCase))
+                ? saved.Iata
+                : _iata;
+            _from = saved.From;
+            _to = saved.To;
+            if (CanLookup) await LookupAsync();
+        }
     }
 
     /// <summary>
@@ -252,6 +266,9 @@
         _error = null;
         _mappings = [];
         _page = 1;
+        // Store submitted inputs as scoped in-process values; the API response cache remains memory-only too.
+        PageState.Schedule = new SchedulePageState(
+            _serviceType, _iata.Trim().ToUpperInvariant(), _from!.Value, _to!.Value);
         try
         {
             _mappings = await ScheduleService.LookupAsync(
