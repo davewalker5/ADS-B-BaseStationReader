@@ -88,7 +88,10 @@ namespace BaseStationReader.BusinessLogic.Database
             // is first tracked
             var aircraft = template.Id > 0 ?
                     await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id) :
-                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => (x.Address == template.Address) && (x.Status == TrackingStatus.Active));
+                    await _context.TrackedAircraft.FirstOrDefaultAsync(x =>
+                        (x.Address == template.Address) &&
+                        (x.Status == TrackingStatus.Active) &&
+                        (x.SessionId == template.SessionId));
 
             if (aircraft != null)
             {

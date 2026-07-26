@@ -24,12 +24,15 @@ namespace BaseStationReader.Entities.Config
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
+        public int? ReceiverElevation { get; set; }
         public int? MaximumTrackedDistance { get; set;  }
         public int? MinimumTrackedAltitude { get; set; }
         public int? MaximumTrackedAltitude { get; set; }
         public bool TrackPosition { get; set; }
         public int AircraftNotificationInterval { get; set; }
         public string TrackingProfile { get; set; }
+        public string TrackingProfileName { get; set; }
+        public string DefaultProfileName { get; set; } = "Default Location - All Traffic";
         public List<TrackerColumn> Columns { get; set; } = [];
         public List<AircraftBehaviour> TrackedBehaviours { get; set; } = [];
     }

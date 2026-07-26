@@ -118,8 +118,10 @@ namespace BaseStationReader.BusinessLogic.Configuration
             {
                 var profile = reader.Read(values[0]);
                 settings.TrackingProfile = Path.GetFileName(values[0]);
+                settings.TrackingProfileName = profile.Name;
                 settings.ReceiverLatitude = profile.ReceiverLatitude;
                 settings.ReceiverLongitude = profile.ReceiverLongitude;
+                settings.ReceiverElevation = profile.ReceiverElevation;
                 settings.MinimumTrackedAltitude = profile.MinimumTrackedAltitude;
                 settings.MaximumTrackedAltitude = profile.MaximumTrackedAltitude;
                 settings.MaximumTrackedDistance = profile.MaximumTrackedDistance;

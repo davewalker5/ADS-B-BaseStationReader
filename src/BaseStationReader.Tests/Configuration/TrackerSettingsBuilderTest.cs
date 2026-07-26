@@ -256,6 +256,8 @@ namespace BaseStationReader.Tests.Configuration
 
             Assert.AreEqual("51.471", settings.ReceiverLatitude?.ToString("#.###"));
             Assert.AreEqual("-.462", settings.ReceiverLongitude?.ToString("#.###"));
+            Assert.AreEqual(83, settings.ReceiverElevation);
+            Assert.AreEqual("London Heathrow - Landing", settings.TrackingProfileName);
             Assert.AreEqual(15, settings.MaximumTrackedDistance);
             Assert.AreEqual(200, settings.MinimumTrackedAltitude);
             Assert.AreEqual(5000, settings.MaximumTrackedAltitude);

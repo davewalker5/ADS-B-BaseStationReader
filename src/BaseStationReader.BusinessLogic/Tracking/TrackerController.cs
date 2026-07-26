@@ -28,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly bool _ownsContext;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
+        private ObservationSession _activeSession = null;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
@@ -132,6 +133,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 await _factory.Context<BaseStationReaderDbContext>()?.ClearDown();
             }
 
+            // Persist the session before tracking begins so every subsequent aircraft record can refer to it.
+            if (_writer != null)
+            {
+                _activeSession = CreateObservationSession();
+                await _context.ObservationSessions.AddAsync(_activeSession, token);
+                await _context.SaveChangesAsync(token);
+            }
+
             // Attach the aircraft tracking event handlers
             _tracker.AircraftEvent += OnAircraftEvent;
 
@@ -163,6 +172,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Detach the aircraft tracking event handlers
                 _tracker.AircraftEvent -= OnAircraftEvent;
 
+                // A stopped controller must not associate any later events with the completed tracking run.
+                _activeSession = null;
+
                 if (_ownsContext)
                 {
                     await _context.DisposeAsync();
@@ -185,6 +197,31 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 await _writer.FlushQueueAsync();
             }
+        }
+
+        /// <summary>
+        /// Create a historical snapshot of the effective tracking profile for the new run
+        /// </summary>
+        /// <returns></returns>
+        private ObservationSession CreateObservationSession()
+        {
+            // Named profiles take precedence; the configured default supplies a meaningful name otherwise.
+            var profileName = string.IsNullOrWhiteSpace(_settings.TrackingProfileName)
+                ? _settings.DefaultProfileName
+                : _settings.TrackingProfileName;
+
+            return new ObservationSession
+            {
+                StartedAtUtc = DateTime.UtcNow,
+                ProfileName = profileName,
+                ReceiverLatitude = _settings.ReceiverLatitude,
+                ReceiverLongitude = _settings.ReceiverLongitude,
+                ReceiverElevation = _settings.ReceiverElevation,
+                MinimumAltitude = _settings.MinimumTrackedAltitude,
+                MaximumAltitude = _settings.MaximumTrackedAltitude,
+                MaximumDistance = _settings.MaximumTrackedDistance,
+                IncludedBehaviours = string.Join(",", _settings.TrackedBehaviours)
+            };
         }
 
         /// <summary>
@@ -240,6 +277,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="position"></param>
         private void HandleAircraftEvent(TrackedAircraft aircraft, AircraftPosition position)
         {
+            // Associate the aircraft with the session that was active when this tracking run began.
+            aircraft.SessionId = _activeSession?.Id;
+
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
             var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);
             if (!existingAircraft)
