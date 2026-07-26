@@ -66,12 +66,48 @@
 
 @code {
 #nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "origin")]
+    public string? Origin { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "destination")]
+    public string? Destination { get; set; }
+
     private string _originIata = string.Empty;
     private string _destinationIata = string.Empty;
     private RoutePlotDto? _route;
     private string? _warning;
     private bool _loading;
+    private bool _parametersHandled;
+    private string _handledOrigin = string.Empty;
+    private string _handledDestination = string.Empty;
     private bool CanPlot => !_loading && IsIata(_originIata) && IsIata(_destinationIata);
+
+    /// <summary>
+    /// Applies route endpoints supplied by a schedule row and plots them automatically.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        var origin = NormaliseInput(Origin);
+        var destination = NormaliseInput(Destination);
+        if (_parametersHandled &&
+            string.Equals(origin, _handledOrigin, StringComparison.Ordinal) &&
+            string.Equals(destination, _handledDestination, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _parametersHandled = true;
+        _handledOrigin = origin;
+        _handledDestination = destination;
+        _originIata = origin;
+        _destinationIata = destination;
+        if (CanPlot)
+        {
+            await PlotAsync();
+        }
+    }
 
     private void ChangeOrigin(ChangeEventArgs args)
         => _originIata = NormaliseInput(args.Value?.ToString());

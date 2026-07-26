@@ -105,6 +105,7 @@
                         <th>Destination</th>
                         <th>Direction</th>
                         <th>Status</th>
+                        <th>Route</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,6 +127,16 @@
                             <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
                                 @(eligible ? "Complete" : "Incomplete")
                             </span></td>
+                            <td>
+                                @if (CanPlotRoute(mapping))
+                                {
+                                    <a class="row-link" href="@RouteUrl(mapping)">Route →</a>
+                                }
+                                else
+                                {
+                                    <span class="schedule-route-unavailable">—</span>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -272,6 +283,21 @@
     /// </summary>
     private static string Display(string? value)
         => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    /// <summary>
+    /// Determines whether a schedule row contains two usable IATA route endpoints.
+    /// </summary>
+    private static bool CanPlotRoute(FlightScheduleEntry mapping)
+        => IsValidIata(mapping.Embarkation) &&
+           IsValidIata(mapping.Destination) &&
+           !string.Equals(mapping.Embarkation, mapping.Destination, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Builds a Route-tab URL populated from the schedule row.
+    /// </summary>
+    private static string RouteUrl(FlightScheduleEntry mapping)
+        => $"route?origin={Uri.EscapeDataString(mapping.Embarkation.Trim())}" +
+           $"&destination={Uri.EscapeDataString(mapping.Destination.Trim())}";
 
     /// <summary>
     /// Clears feedback made stale by a changed search range.
