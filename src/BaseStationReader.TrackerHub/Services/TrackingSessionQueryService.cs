@@ -239,6 +239,67 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
     }
 
     /// <inheritdoc />
+    public async Task<PagedResult<ObservationSessionDto>> SearchObservationSessionsAsync(
+        ObservationSessionFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+
+        var page = Math.Max(1, filter.Page);
+        var pageSize = Math.Clamp(filter.PageSize, 1, MaximumPageSize);
+
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var query = context.ObservationSessions.AsNoTracking().AsQueryable();
+
+        if (filter.SessionId.HasValue)
+        {
+            query = query.Where(session => session.Id == filter.SessionId.Value);
+        }
+
+        // Session date filters deliberately apply to the persisted UTC start timestamp.
+        if (filter.FromDate.HasValue)
+        {
+            query = query.Where(session => session.StartedAtUtc >= filter.FromDate.Value.Date.ToUniversalTime());
+        }
+
+        if (filter.ToDate.HasValue)
+        {
+            var exclusiveEnd = filter.ToDate.Value.Date.AddDays(1).ToUniversalTime();
+            query = query.Where(session => session.StartedAtUtc < exclusiveEnd);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(session => session.StartedAtUtc)
+            .ThenByDescending(session => session.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(session => new ObservationSessionDto
+            {
+                SessionId = session.Id,
+                StartedAtUtc = session.StartedAtUtc,
+                ProfileName = session.ProfileName,
+                Notes = session.Notes,
+                ReceiverLatitude = session.ReceiverLatitude,
+                ReceiverLongitude = session.ReceiverLongitude,
+                ReceiverElevation = session.ReceiverElevation,
+                MinimumAltitude = session.MinimumAltitude,
+                MaximumAltitude = session.MaximumAltitude,
+                MaximumDistance = session.MaximumDistance,
+                IncludedBehaviours = session.IncludedBehaviours
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ObservationSessionDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<PagedResult<TrackingSessionSummaryDto>> SearchAsync(
         TrackingSessionFilter filter,
         CancellationToken cancellationToken = default)
