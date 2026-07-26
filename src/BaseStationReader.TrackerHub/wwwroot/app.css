@@ -68,6 +68,10 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-tabs button:hover:not(:disabled) { color: var(--text); }
 .session-tabs button.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 .session-tabs button:disabled { opacity: .38; cursor: default; }
+.radar-tab { margin-top: 28px; }
+.radar-tab-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.radar-tab-heading h2 { margin: 2px 0 6px; }
+.radar-tab-heading p:last-child { margin: 0; color: var(--muted); }
 .session-preparation { width: 100%; margin-top: 20px; }
 .session-form { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 22px 60px rgba(0,0,0,.18); }
 .session-form-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
@@ -490,6 +494,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .provenance-fields { grid-template-columns: 1fr; }
     .provenance-fields label.wide { grid-column: auto; }
     .plotly-path.scene { min-height: 540px; }
+    .radar-tab-heading { align-items: stretch; flex-direction: column; }
     .radar-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
     .radar-summary .connection { margin-left: 0; }
     .radar-scope-wrap, .radar-scope { min-height: 480px; }

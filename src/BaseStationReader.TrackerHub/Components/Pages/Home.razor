@@ -4,6 +4,7 @@
 @inject ITrackingProfileService TrackingProfiles
 @inject ITrackingControlService TrackingControl
 @inject ITrackingSessionQueryService SessionQueries
+@inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracking · ADS-B Tracker</PageTitle>
 
@@ -33,6 +34,12 @@
             disabled="@(!TrackingControl.IsTracking)"
             @onclick="() => SelectTab(SessionTab.Tracking)">
         Tracking
+    </button>
+    <button class="@TabClass(SessionTab.Radar)" role="tab"
+            aria-selected="@(_activeTab == SessionTab.Radar)"
+            disabled="@(!TrackingControl.IsTracking)"
+            @onclick="() => SelectTab(SessionTab.Radar)">
+        Radar
     </button>
     <button class="@TabClass(SessionTab.Summary)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Summary)"
@@ -197,6 +204,40 @@
     </section>
 }
 
+@if (_activeTab == SessionTab.Radar && TrackingControl.IsTracking)
+{
+    <section class="radar-tab" aria-label="Live radar">
+        <div class="radar-tab-heading">
+            <div>
+                <p class="eyebrow">Receiver-relative surveillance</p>
+                <h2>Live Radar</h2>
+                <p>Current aircraft range and bearing from the active receiver.</p>
+            </div>
+            <label class="radar-range">
+                <span>Displayed range</span>
+                <select @bind="_maximumRadarRange">
+                    <option value="10">10 nm</option>
+                    <option value="25">25 nm</option>
+                    <option value="50">50 nm</option>
+                    <option value="100">100 nm</option>
+                    <option value="200">200 nm</option>
+                </select>
+            </label>
+        </div>
+
+        <section class="radar-summary" aria-label="Radar summary">
+            <span><strong>@LiveAircraft.Aircraft.Count</strong> tracked</span>
+            <span><strong>@PositionedAircraftCount</strong> positioned</span>
+            <span><strong>@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong> profile</span>
+            <span class="connection @ConnectionClass"><i class="connection-dot"></i><strong>@LiveAircraft.ConnectionState</strong></span>
+        </section>
+
+        <RadarDisplay Aircraft="LiveAircraft.Aircraft" MaximumRange="_maximumRadarRange"
+                      Options="RadarConfiguration.Value" ConnectionState="LiveAircraft.ConnectionState"
+                      SelectedAddress="@Address" />
+    </section>
+}
+
 @if (_activeTab == SessionTab.Tracking && TrackingControl.IsTracking)
 {
 <section class="session-status" aria-label="Session status">
@@ -350,6 +391,15 @@
     private int? _sessionId;
     private ObservationSessionSummaryDto? _summary;
     private string? _summaryError;
+    private double _maximumRadarRange;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? RequestedTab { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "address")]
+    public string? Address { get; set; }
 
     /// <summary>
     /// Builds a Lookup-tab URL populated from a live aircraft row.
@@ -376,7 +426,7 @@
     /// Builds a Radar-tab URL that selects the live aircraft.
     /// </summary>
     private static string RadarUrl(TrackedAircraftDto aircraft)
-        => $"radar?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
+        => $"?tab=radar&address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}";
 
     private IEnumerable<TrackedAircraftDto> FilteredAircraft
     {
@@ -416,6 +466,8 @@
     private string EmptyMessage => string.IsNullOrWhiteSpace(_filter)
         ? "Waiting for aircraft messages…"
         : "No aircraft match this filter.";
+    private int PositionedAircraftCount => LiveAircraft.Aircraft.Count(aircraft =>
+        aircraft.Distance.HasValue && aircraft.Latitude.HasValue && aircraft.Longitude.HasValue);
 
     private static string FormatCoordinate(double? coordinate)
         => coordinate?.ToString("F6") ?? "Not configured";
@@ -426,6 +478,16 @@
     private string EffectiveProfileName
         => LiveAircraft.TrackingOptions?.TrackingProfileName ?? "Loading…";
 
+    protected override void OnParametersSet()
+    {
+        // Aircraft links update only the query string while this component remains mounted.
+        if (TrackingControl.IsTracking &&
+            RequestedTab?.Equals("radar", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            _activeTab = SessionTab.Radar;
+        }
+    }
+
     /// <summary>
     /// Subscribes to service changes and starts the live transport.
     /// </summary>
@@ -433,6 +495,7 @@
     {
         // Subscribe before starting so the connecting state is rendered immediately.
         LiveAircraft.StateChanged += OnLiveStateChanged;
+        _maximumRadarRange = RadarConfiguration.Value.MaximumRange;
         _profiles = TrackingProfiles.List();
         await StartAsync();
         var activeProfile = LiveAircraft.TrackingOptions?.TrackingProfile;
@@ -453,7 +516,9 @@
         {
             _sessionStarted = true;
             _sessionId = await SessionQueries.GetLatestSessionIdAsync();
-            _activeTab = SessionTab.Tracking;
+            _activeTab = RequestedTab?.Equals("radar", StringComparison.OrdinalIgnoreCase) == true
+                ? SessionTab.Radar
+                : SessionTab.Tracking;
         }
     }
 
@@ -585,7 +650,7 @@
 
     private async Task SelectTab(SessionTab tab)
     {
-        if (tab == SessionTab.Tracking && !TrackingControl.IsTracking) return;
+        if ((tab == SessionTab.Tracking || tab == SessionTab.Radar) && !TrackingControl.IsTracking) return;
         if (tab == SessionTab.Summary && !_sessionStarted) return;
         _activeTab = tab;
         if (tab == SessionTab.Summary && (_summary is null || TrackingControl.IsTracking))
@@ -813,6 +878,7 @@
     {
         Preparation,
         Tracking,
+        Radar,
         Summary
     }
 }
