@@ -55,7 +55,7 @@
         }
         else
         {
-            <p class="eyebrow">Selected target</p><h2>@SelectedPoint.Label</h2><span class="mono">@SelectedPoint.Address</span>
+            <p class="eyebrow">Selected aircraft</p><h2>@SelectedPoint.Label</h2><span class="mono">@SelectedPoint.Address</span>
             <dl class="detail-grid radar-detail-grid">
                 <div><dt>Status</dt><dd><span class="status-pill @StatusClass(SelectedPoint.Status)">@SelectedPoint.Status</span></dd></div>
                 <div><dt>Range</dt><dd>@SelectedPoint.Distance.ToString("N1") nm</dd></div>
@@ -64,6 +64,10 @@
                 <div><dt>Track</dt><dd>@FormatTrack(SelectedPoint.Track)</dd></div>
                 <div><dt>Last seen</dt><dd>@SelectedPoint.Timestamp.ToLocalTime().ToString("HH:mm:ss")</dd></div>
             </dl>
+            @if (SelectedAircraft is not null)
+            {
+                <a class="primary-button radar-lookup-button" href="@LookupUrl(SelectedAircraft)">Lookup →</a>
+            }
         }
     </aside>
 </div>
@@ -85,7 +89,16 @@
     private IEnumerable<(RadarPointDto Point, IReadOnlyList<IReadOnlyList<RadarPointDto>> Segments)> VisibleTrails => VisiblePoints.Select(point =>
         (point, TrailSegments(_trails.GetValueOrDefault(point.Address) ?? [])));
     private RadarPointDto? SelectedPoint => ProjectedPoints.FirstOrDefault(p => p.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
+    private TrackedAircraftDto? SelectedAircraft => Aircraft.FirstOrDefault(
+        aircraft => aircraft.Address.Equals(_selectedAddress, StringComparison.OrdinalIgnoreCase));
     private string ConnectionLabel => ConnectionState == ConnectionState.Reconnecting ? "Radar reconnecting…" : ConnectionState == ConnectionState.Connecting ? "Radar connecting…" : "Radar disconnected";
+
+    /// <summary>
+    /// Builds an automatically executed Lookup-tab URL for the selected target.
+    /// </summary>
+    private static string LookupUrl(TrackedAircraftDto aircraft)
+        => $"lookup?address={Uri.EscapeDataString(aircraft.Address ?? string.Empty)}" +
+           $"&callsign={Uri.EscapeDataString(aircraft.Callsign ?? string.Empty)}";
 
     /// <summary>
     /// Captures new positions and prunes bounded UI-memory trails whenever live parameters change.

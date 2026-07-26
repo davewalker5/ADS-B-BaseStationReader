@@ -240,6 +240,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .radar-detail-grid { grid-template-columns: 1fr; margin-top: 20px; }
 .radar-detail-empty { display: grid; gap: 7px; padding: 70px 10px; color: var(--muted); text-align: center; }
 .radar-detail-empty strong { color: var(--text); font-size: 16px; }
+.radar-lookup-button { display: block; margin-top: 22px; text-align: center; text-decoration: none; }
 .weather-search { margin: 34px 0 20px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
 .weather-fields { display: grid; grid-template-columns: 1.15fr 1fr 1fr auto; gap: 14px; align-items: end; }
 .weather-fields label > span, .weather-raw > span, .weather-decoded > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
