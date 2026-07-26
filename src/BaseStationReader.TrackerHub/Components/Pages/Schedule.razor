@@ -121,8 +121,26 @@
                             <td>@Display(mapping.AirportIATA)</td>
                             <td>@Display(mapping.AirportICAO)</td>
                             <td>@Display(mapping.AirportName)</td>
-                            <td>@Display(mapping.Embarkation)</td>
-                            <td>@Display(mapping.Destination)</td>
+                            <td>
+                                @if (IsValidIata(mapping.Embarkation))
+                                {
+                                    <a class="row-link" href="@WeatherUrl(mapping.Embarkation)">@mapping.Embarkation.Trim().ToUpperInvariant() →</a>
+                                }
+                                else
+                                {
+                                    @Display(mapping.Embarkation)
+                                }
+                            </td>
+                            <td>
+                                @if (IsValidIata(mapping.Destination))
+                                {
+                                    <a class="row-link" href="@WeatherUrl(mapping.Destination)">@mapping.Destination.Trim().ToUpperInvariant() →</a>
+                                }
+                                else
+                                {
+                                    @Display(mapping.Destination)
+                                }
+                            </td>
                             <td><span class="status-pill">@mapping.AirportType</span></td>
                             <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
                                 @(eligible ? "Complete" : "Incomplete")
@@ -298,6 +316,12 @@
     private static string RouteUrl(FlightScheduleEntry mapping)
         => $"route?origin={Uri.EscapeDataString(mapping.Embarkation.Trim())}" +
            $"&destination={Uri.EscapeDataString(mapping.Destination.Trim())}";
+
+    /// <summary>
+    /// Builds a Weather-tab URL populated with one schedule airport.
+    /// </summary>
+    private static string WeatherUrl(string iata)
+        => $"weather?iata={Uri.EscapeDataString(iata.Trim().ToUpperInvariant())}";
 
     /// <summary>
     /// Clears feedback made stale by a changed search range.
