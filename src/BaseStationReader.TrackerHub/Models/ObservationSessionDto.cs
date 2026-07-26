@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace BaseStationReader.TrackerHub.Models;
 
 /// <summary>

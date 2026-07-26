@@ -16,6 +16,7 @@
 </nav>
 
 @code {
+#nullable enable
     private string? TabClass(params string[] paths)
     {
         var currentPath = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
