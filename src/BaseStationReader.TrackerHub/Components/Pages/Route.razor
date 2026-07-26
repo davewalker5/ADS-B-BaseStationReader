@@ -16,12 +16,12 @@
         <label>
             <span>Origin airport (IATA)</span>
             <input value="@_originIata" @oninput="ChangeOrigin" maxlength="3"
-                   autocomplete="off" spellcheck="false" placeholder="LHR" />
+                   autocomplete="off" spellcheck="false" placeholder="Enter IATA code" />
         </label>
         <label>
             <span>Destination airport (IATA)</span>
             <input value="@_destinationIata" @oninput="ChangeDestination" maxlength="3"
-                   autocomplete="off" spellcheck="false" placeholder="JFK" />
+                   autocomplete="off" spellcheck="false" placeholder="Enter IATA code" />
         </label>
         <button class="primary-button" type="submit" disabled="@(!CanPlot)">
             @(_loading ? "Plotting…" : "Plot")
