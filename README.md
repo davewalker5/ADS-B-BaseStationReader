@@ -13,9 +13,9 @@
 
 ![ADS-B BaseStation Reader Live Tracking](Diagrams/001-live-tracker.png)
 
-**ADS-B BaseStation Reader** is a local-first personal aircraft observation and analysis system that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
+**ADS-B BaseStation Reader** is a local-first aircraft observation workspace that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
 
-The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI for monitoring, investigation, reference-data management and post-session analysis.
+The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI supporting live observation, investigation, contextual aviation information, reference-data management and post-session analysis.
 
 Core tracking does not depend on a commercial flight-tracking service. External APIs are optional and are used only for transient ancillary lookup, schedule, weather and enrichment workflows.
 
@@ -26,12 +26,11 @@ The project currently supports:
 - **Live aircraft tracking** from a BaseStation-compatible TCP message feed
 - **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
 - **Local SQLite persistence** of aircraft observations and optional position histories
-- **Integrated browser-based UI** hosted by the Tracker Hub
+- **Integrated browser-based UI** organised around live observation, contextual aviation information and reference-data management
 - **Historical observation browsing** with filtering and record inspection
-- **2D and interactive 3D flight-path visualisation**
+- **Interactive radar plus 2D and 3D flight-path visualisation**
 - **Aircraft and flight lookup** using local reference data and optional external services
-- **Airport schedules** for supported external providers
-- **METAR and TAF weather lookup**
+- **Airport schedules, route visualisation and METAR/TAF weather lookup**
 - **Reference-data management and CSV import** for:
   - Airlines
   - Manufacturers
@@ -72,9 +71,15 @@ Information derived locally from those observations, including:
 - Aircraft lifecycle state
 - Flight-path history
 
+### Context
+
+Operational information used to support an observing session, including airport schedules, route visualisation and weather.
+
+Context helps explain what is being observed but is intentionally treated as transient information. Unlike locally curated reference data, it is not considered part of the observation record and is not used to populate the application's reference database.
+
 ### Enrichment
 
-Additional information used to make an observation more recognisable, such as:
+Additional reference information used to make an observation more recognisable, such as:
 
 - Aircraft registration
 - Manufacturer and model
@@ -105,19 +110,38 @@ This allows locally stored reference information to remain traceable to the data
 
 The Tracker Hub hosts the main browser-based interface and brings the project's operational workflows together in one application.
 
-The UI includes:
+The interface is organised around the natural workflow of an aircraft observer:
+
+### Live Observation
+
+The primary observation tools used while tracking aircraft:
 
 - Live Tracking
-- Tracking Profile selection
-- Database Browser
-- Aircraft Details
-- Flight-path plotting and interactive rendering
+- Radar
 - Aircraft and Flight Lookup
+- Historical Database Browser
+
+These views focus on aircraft currently being observed or previously recorded, allowing observations to be inspected, identified and analysed.
+
+### Operational Context
+
+Supporting aviation information that provides context for an observing session without becoming part of the observation record:
+
 - Airport Schedules
+- Route Visualisation
 - Airport Weather
+
+These workflows help explain what is being observed while remaining conceptually separate from the tracking data itself.
+
+### Reference Data Management
+
+Tools for maintaining the locally curated reference data used by the application:
+
 - Reference Data Import
 - Provenance Management
-- Exclusion Management
+- Aircraft and Callsign Exclusion Management
+
+This organisation reinforces the distinction between observed ADS-B data, transient contextual information and locally managed enrichment data.
 
 The same underlying tracking core can also be used through the console tracker or exposed headlessly through SignalR.
 
