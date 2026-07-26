@@ -22,10 +22,15 @@
     <span class="connection @ConnectionClass"><i class="connection-dot"></i><strong>@LiveAircraft.ConnectionState</strong></span>
 </section>
 
-<RadarDisplay Aircraft="LiveAircraft.Aircraft" MaximumRange="_maximumRange" Options="RadarConfiguration.Value" ConnectionState="LiveAircraft.ConnectionState" />
+<RadarDisplay Aircraft="LiveAircraft.Aircraft" MaximumRange="_maximumRange" Options="RadarConfiguration.Value"
+              ConnectionState="LiveAircraft.ConnectionState" SelectedAddress="@Address" />
 
 @code {
 #nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "address")]
+    public string? Address { get; set; }
+
     private string? _startError;
     private double _maximumRange;
     private int PositionedAircraftCount => LiveAircraft.Aircraft.Count(aircraft => aircraft.Distance.HasValue && aircraft.Latitude.HasValue && aircraft.Longitude.HasValue);

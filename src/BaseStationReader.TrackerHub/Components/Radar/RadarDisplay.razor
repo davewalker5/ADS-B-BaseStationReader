@@ -77,11 +77,13 @@
     private readonly Dictionary<string, List<RadarPointDto>> _trails = new(StringComparer.OrdinalIgnoreCase);
     private readonly string _gradientId = $"radar-gradient-{Guid.NewGuid():N}";
     private string? _selectedAddress;
+    private string? _handledSelectedAddress;
 
     [Parameter, EditorRequired] public IReadOnlyCollection<TrackedAircraftDto> Aircraft { get; set; } = Array.Empty<TrackedAircraftDto>();
     [Parameter] public double MaximumRange { get; set; } = 50;
     [Parameter] public RadarOptions Options { get; set; } = new();
     [Parameter] public ConnectionState ConnectionState { get; set; }
+    [Parameter] public string? SelectedAddress { get; set; }
 
     private static double[] RangeRings => [0.25, 0.5, 0.75, 1];
     private IReadOnlyList<RadarPointDto> ProjectedPoints => Aircraft.Select(a => Projection.Project(a, MaximumRange)).OfType<RadarPointDto>().ToArray();
@@ -107,6 +109,15 @@
     {
         var now = DateTime.UtcNow;
         var activeAddresses = Aircraft.Select(a => a.Address).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var requestedAddress = SelectedAddress?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(requestedAddress) &&
+            !string.Equals(requestedAddress, _handledSelectedAddress, StringComparison.OrdinalIgnoreCase))
+        {
+            // Apply a navigation-supplied selection once, leaving later manual target choices untouched.
+            _selectedAddress = requestedAddress;
+            _handledSelectedAddress = requestedAddress;
+        }
 
         // Remove aircraft immediately when they leave the authoritative live collection.
         foreach (var address in _trails.Keys.Where(address => !activeAddresses.Contains(address)).ToArray())
