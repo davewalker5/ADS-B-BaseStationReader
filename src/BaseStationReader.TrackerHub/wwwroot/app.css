@@ -54,7 +54,7 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .tracking-controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 14px; margin: 24px 0; }
 .profile-selector { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .profile-selector label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
-.profile-selector select { min-width: 230px; padding: 9px 11px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; }
+.profile-selector select { min-width: 230px; height: 38px; padding: 8px 11px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; font: inherit; line-height: normal; }
 .profile-message { font-size: 12px; }
 .profile-message.success { color: var(--cyan); }
 .profile-message.error { color: #ff8d8d; }
