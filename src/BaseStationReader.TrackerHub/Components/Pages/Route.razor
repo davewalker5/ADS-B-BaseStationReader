@@ -1,14 +1,15 @@
 @page "/route"
+@page "/lookup/route"
 @inject IAirportRouteService RouteService
 
 <PageTitle>Route Plotter · ADS-B Tracker</PageTitle>
 
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">Great-circle mapper</p>
-        <h1>Route</h1>
-        <p class="lede">Plot a direct route between two airports on a Mercator world map.</p>
-    </div>
+<LookupTabs />
+
+<section class="lookup-tab-heading">
+    <p class="eyebrow">Great-circle mapper</p>
+    <h2>Route</h2>
+    <p>Plot a direct route between two airports on a Mercator world map.</p>
 </section>
 
 <form class="route-search" @onsubmit="PlotAsync" @onsubmit:preventDefault>

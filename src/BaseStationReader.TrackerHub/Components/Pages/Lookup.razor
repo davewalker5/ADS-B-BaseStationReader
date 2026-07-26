@@ -4,12 +4,12 @@
 
 <PageTitle>Aircraft and Flight Lookup · ADS-B Tracker</PageTitle>
 
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">External reference data</p>
-        <h1>Aircraft and Flight Lookup</h1>
-        <p class="lede">Resolve locally stored details first, with transient API lookup when local data is unavailable.</p>
-    </div>
+<LookupTabs />
+
+<section class="lookup-tab-heading">
+    <p class="eyebrow">External reference data</p>
+    <h2>Aircraft and Flights</h2>
+    <p>Resolve locally stored details first, with transient API lookup when local data is unavailable.</p>
 </section>
 
 <form class="lookup-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>

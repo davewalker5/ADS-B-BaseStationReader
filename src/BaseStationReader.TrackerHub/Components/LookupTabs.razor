@@ -1,0 +1,26 @@
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Contextual aviation information</p>
+        <h1>Lookup</h1>
+        <p class="lede">Research aircraft, flights, airport schedules, routes, and aviation weather.</p>
+    </div>
+</section>
+
+@inject NavigationManager Navigation
+
+<nav class="lookup-tabs" aria-label="Lookup tools">
+    <a href="lookup" class="@TabClass("/lookup")">Aircraft and Flights</a>
+    <a href="lookup/schedule" class="@TabClass("/lookup/schedule", "/schedule")">Schedule</a>
+    <a href="lookup/route" class="@TabClass("/lookup/route", "/route")">Route</a>
+    <a href="lookup/weather" class="@TabClass("/lookup/weather", "/weather")">Weather</a>
+</nav>
+
+@code {
+    private string? TabClass(params string[] paths)
+    {
+        var currentPath = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+        return paths.Any(path => currentPath.Equals(path, StringComparison.OrdinalIgnoreCase))
+            ? "active"
+            : null;
+    }
+}

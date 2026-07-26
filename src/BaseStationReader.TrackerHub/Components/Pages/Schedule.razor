@@ -1,15 +1,16 @@
 @page "/schedule"
+@page "/lookup/schedule"
 @inject IAirportScheduleLookupService ScheduleService
 @inject ITrackerHubPageState PageState
 
 <PageTitle>Airport Schedule · ADS-B Tracker</PageTitle>
 
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">Flight schedules</p>
-        <h1>Airport Schedule</h1>
-        <p class="lede">Retrieve and inspect an airport schedule.</p>
-    </div>
+<LookupTabs />
+
+<section class="lookup-tab-heading">
+    <p class="eyebrow">Flight schedules</p>
+    <h2>Schedule</h2>
+    <p>Retrieve and inspect an airport schedule.</p>
 </section>
 
 <form class="schedule-search" @onsubmit="LookupAsync" @onsubmit:preventDefault>
@@ -331,14 +332,14 @@
     /// Builds a Route-tab URL populated from the schedule row.
     /// </summary>
     private static string RouteUrl(FlightScheduleEntry mapping)
-        => $"route?origin={Uri.EscapeDataString(mapping.Embarkation.Trim())}" +
+        => $"lookup/route?origin={Uri.EscapeDataString(mapping.Embarkation.Trim())}" +
            $"&destination={Uri.EscapeDataString(mapping.Destination.Trim())}";
 
     /// <summary>
     /// Builds a Weather-tab URL populated with one schedule airport.
     /// </summary>
     private static string WeatherUrl(string iata)
-        => $"weather?iata={Uri.EscapeDataString(iata.Trim().ToUpperInvariant())}";
+        => $"lookup/weather?iata={Uri.EscapeDataString(iata.Trim().ToUpperInvariant())}";
 
     /// <summary>
     /// Clears feedback made stale by a changed search range.

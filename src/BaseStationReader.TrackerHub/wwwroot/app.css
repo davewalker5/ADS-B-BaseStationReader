@@ -68,6 +68,13 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-tabs button:hover:not(:disabled) { color: var(--text); }
 .session-tabs button.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 .session-tabs button:disabled { opacity: .38; cursor: default; }
+.lookup-tabs { display: flex; gap: 6px; margin-top: 30px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.lookup-tabs a { flex: 0 0 auto; padding: 12px 22px; color: var(--muted); border-bottom: 2px solid transparent; text-decoration: none; font-weight: 700; }
+.lookup-tabs a:hover { color: var(--text); }
+.lookup-tabs a.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.lookup-tab-heading { margin: 28px 0 20px; }
+.lookup-tab-heading h2 { margin: 2px 0 6px; font-size: 25px; }
+.lookup-tab-heading p:last-child { margin: 0; color: var(--muted); }
 .radar-tab { margin-top: 28px; }
 .radar-tab-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .radar-tab-heading h2 { margin: 2px 0 6px; }
