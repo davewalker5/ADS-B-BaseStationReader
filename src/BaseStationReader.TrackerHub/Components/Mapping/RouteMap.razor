@@ -1,0 +1,26 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JavaScript
+
+<div id="@_elementId" class="route-map" aria-label="Mercator map showing the direct route from @Route.Origin.Iata to @Route.Destination.Iata"></div>
+
+@code {
+#nullable enable
+    private readonly string _elementId = $"route-map-{Guid.NewGuid():N}";
+    private IJSObjectReference? _module;
+
+    [Parameter, EditorRequired] public RoutePlotDto Route { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>(
+            "import", "./js/routeMap.js?v=1.2.0");
+        await _module.InvokeVoidAsync("renderRouteMap", _elementId, Route);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null) return;
+        await _module.InvokeVoidAsync("disposeRouteMap", _elementId);
+        await _module.DisposeAsync();
+    }
+}

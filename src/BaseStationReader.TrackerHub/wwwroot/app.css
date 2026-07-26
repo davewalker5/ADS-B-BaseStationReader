@@ -286,6 +286,25 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .schedule-eligibility.incomplete { color: var(--amber); background: rgba(248,189,89,.07); border-color: rgba(248,189,89,.28); }
 .schedule-pagination { justify-content: flex-end; }
 .schedule-pagination .page-size { margin-left: 12px; }
+.route-search { margin: 34px 0 20px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.route-fields { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; }
+.route-fields label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.route-fields input { width: 100%; min-height: 40px; padding: 8px 10px; color: var(--text); text-transform: uppercase; background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
+.route-fields input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
+.route-fields .primary-button { min-height: 40px; min-width: 90px; }
+.route-note { margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+.route-results { margin-top: 22px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 18px 50px rgba(0,0,0,.15); }
+.route-results-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.route-results-heading h2 { margin: 0; font-size: 23px; }
+.route-results-heading > span { color: var(--cyan); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.route-map { width: 100%; height: clamp(500px, 65vh, 760px); background: #081524; }
+.route-endpoints { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.route-endpoints > div { padding: 17px 22px; }
+.route-endpoints > div:first-child { border-right: 1px solid var(--line); }
+.route-endpoints span, .route-endpoints strong, .route-endpoints small { display: block; }
+.route-endpoints span { color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.route-endpoints strong { margin-top: 6px; font-size: 13px; }
+.route-endpoints small { margin-top: 5px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .lookup-search { margin: 34px 0 20px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
 .lookup-fields { display: grid; grid-template-columns: 1fr 1fr .8fr .8fr auto; gap: 14px; align-items: end; }
 .lookup-fields label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
@@ -374,6 +393,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .weather-fields { grid-template-columns: 1fr 1fr; }
     .schedule-fields { grid-template-columns: 1fr 1fr; }
     .schedule-fields .primary-button { grid-column: 1 / -1; }
+    .route-fields { grid-template-columns: 1fr 1fr; }
+    .route-fields .primary-button { grid-column: 1 / -1; }
     .lookup-fields { grid-template-columns: 1fr 1fr; }
     .lookup-fields .primary-button { grid-column: 1 / -1; }
     .weather-decoded dl { grid-template-columns: 1fr; }
