@@ -312,7 +312,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .lookup-fields { display: grid; grid-template-columns: 1fr 1fr .8fr .8fr auto; gap: 14px; align-items: end; }
 .lookup-fields label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .lookup-fields input, .lookup-fields select { width: 100%; min-height: 40px; padding: 8px 10px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
-.lookup-fields select { height: 40px; line-height: normal; }
+.lookup-fields select { height: 40px; font: inherit; line-height: normal; }
 .lookup-fields input:focus, .lookup-fields select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
 .lookup-fields .primary-button { min-height: 40px; white-space: nowrap; }
 .lookup-note { margin: 13px 0 0; color: var(--muted); font-size: 11px; }
