@@ -22,5 +22,6 @@ namespace BaseStationReader.Interfaces.Database
         IExcludedCallsignManager ExcludedCallsignManager { get; }
         IApiLogManager ApiLogManager { get; }
         IProvenanceManager ProvenanceManager { get; }
+        IObservationSessionManager ObservationSessionManager { get; }
     }
 }

@@ -11,7 +11,7 @@
 
 ## About
 
-![ADS-B BaseStation Reader Observation Session](Diagrams/002-live-tracker-tracking.png)
+![ADS-B BaseStation Reader Observation Session](Diagrams/0200-live-tracker-tracking.png)
 
 **ADS-B BaseStation Reader** is a local-first aircraft observation workspace that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
 
@@ -24,13 +24,14 @@ Core tracking does not depend on a commercial flight-tracking service. External 
 The project currently supports:
 
 - **Session-based aircraft observation** from a BaseStation-compatible TCP message feed
-- **Observation-session preparation** with tracking-profile selection and optional contextual notes
+- **Observation-session preparation** with receiver host and port, tracking-profile selection and optional contextual notes
 - **Live aircraft tracking and receiver-centred radar** within the active observation session
 - **Read-only session summaries** covering observation totals, identification coverage and session highlights
 - **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
 - **Local SQLite persistence** of observation sessions, aircraft records and optional position histories
 - **Integrated browser-based UI** organised around live observation, contextual aviation information and reference-data management
-- **Historical observation browsing** with dedicated session and tracking-record views, filtering and record inspection
+- **Historical observation browsing** with dedicated session, session-editor and tracking-record views, filtering and record inspection
+- **Historical session management** with notes-only editing and confirmed deletion while no observation session is active
 - **Post-session analysis** available directly from the session browser
 - **Interactive live radar plus 2D and 3D flight-path visualisation**
 - **Tabbed contextual lookup workspace** for aircraft and flights, airport schedules, route visualisation and METAR/TAF weather
@@ -121,12 +122,12 @@ The Live Tracker brings the active observation workflow together in four tabs:
 
 > Session &rarr; Tracking &harr; Radar &rarr; Summary
 
-- **Session** — select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
+- **Session** — set the receiver host and port, select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
 - **Tracking** — monitor the live aircraft collection, inspect current telemetry, and move directly to Lookup or historical records
 - **Radar** — view positioned aircraft by range and bearing from the receiver; this tab is available only while a session is active
 - **Summary** — review the persisted session context, observation totals, identification coverage, and notable observations
 
-Each session records a snapshot of the effective tracking profile and groups the aircraft records created during that run. The profile and notes become read-only after the session starts. When tracking stops, outstanding observations are persisted before the completed summary is displayed.
+Each session records the receiver host and port, a snapshot of the effective tracking profile, and the aircraft records created during that run. Receiver details initially default to the values configured in `appsettings` and then retain the last-used values until Tracker Hub is restarted. Session parameters become fixed when tracking starts; after the session has stopped, its notes can be updated through the Database Session Editor. When tracking stops, outstanding observations are persisted before the completed summary is displayed.
 
 ### Observation and Investigation
 
@@ -135,12 +136,14 @@ The primary observation tools used while tracking aircraft:
 - Session-based Live Tracking
 - Integrated receiver-centred Radar
 - Aircraft and Flight Lookup
-- Historical Database Browser with Sessions and Tracking Records tabs
+- Historical Database Browser with Sessions, Tracking Records and Session Editor tabs
 - Historical aircraft details and flight analysis
 
 These views focus on aircraft currently being observed or previously recorded, allowing observations to be inspected, identified and analysed.
 
-The Database opens on the **Sessions** tab. Sessions can be filtered using the recent-session selector or an unrestricted start-date range. Each row exposes its recorded context, provides session notes in a popup, opens the same analysis shown by the Live Tracker Summary tab, and links directly to the associated tracking records. The **Tracking Records** tab retains aircraft, callsign, session and telemetry filtering, along with links to detailed historical records.
+The Database opens on the **Sessions** tab. Sessions can be filtered using the recent-session selector or an unrestricted start-date range. Each row exposes its recorded context, including receiver host and port, provides session notes in a popup, opens the same analysis shown by the Live Tracker Summary tab, and links directly to the associated tracking records—even when the session is older than the recent-session dropdown.
+
+When no observation session is active, session results provide **Edit** and **Delete** actions. Edit opens **Session Editor**, where notes can be updated and the session can also be deleted. Deletion requires confirmation and removes the session together with its tracked-aircraft records and position histories. The editor and both actions are unavailable during an active session. The **Tracking Records** tab retains aircraft, callsign, session and telemetry filtering, along with links to detailed historical records.
 
 ### Operational Context
 

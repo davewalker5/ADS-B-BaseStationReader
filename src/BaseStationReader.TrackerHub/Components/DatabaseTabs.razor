@@ -1,13 +1,23 @@
+@inject ITrackingControlService TrackingControl
+
 <section class="page-heading">
     <div>
         <p class="eyebrow">Recorded surveillance</p>
         <h1>Tracking Database</h1>
         <p class="lede">Browse tracking records and their observation sessions.</p>
     </div>
-    <div class="read-only-badge"><span>●</span> Read-only access</div>
+    <div class="read-only-badge"><span>●</span> @(TrackingControl.IsTracking ? "Read-only while session active" : "Session notes editable")</div>
 </section>
 
 <nav class="database-tabs" aria-label="Tracking database">
     <NavLink href="history/sessions">Sessions</NavLink>
     <NavLink href="history" Match="NavLinkMatch.All">Tracking Records</NavLink>
+    @if (TrackingControl.IsTracking)
+    {
+        <span class="database-tab-disabled" aria-disabled="true">Session Editor</span>
+    }
+    else
+    {
+        <NavLink href="history/session-editor">Session Editor</NavLink>
+    }
 </nav>

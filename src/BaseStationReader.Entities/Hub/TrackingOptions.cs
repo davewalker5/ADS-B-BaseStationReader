@@ -6,6 +6,8 @@ namespace BaseStationReader.Entities.Hub
     {
         public string TrackingProfile { get; set; }
         public string TrackingProfileName { get; set; }
+        public string ReceiverHost { get; set; }
+        public int ReceiverPort { get; set; }
         public double? ReceiverLatitude { get; set; }
         public double? ReceiverLongitude { get; set; }
         public int? ReceiverElevation { get; set; }
@@ -21,6 +23,8 @@ namespace BaseStationReader.Entities.Hub
                 TrackingProfileName = string.IsNullOrWhiteSpace(settings.TrackingProfileName)
                     ? settings.DefaultProfileName
                     : settings.TrackingProfileName,
+                ReceiverHost = settings.Host,
+                ReceiverPort = settings.Port,
                 ReceiverLatitude = settings.ReceiverLatitude,
                 ReceiverLongitude = settings.ReceiverLongitude,
                 ReceiverElevation = settings.ReceiverElevation,

@@ -156,6 +156,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(runtime));
                 builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
+                builder.Services.AddScoped<IObservationSessionEditorService, ObservationSessionEditorService>();
                 builder.Services.AddScoped<IAirportWeatherLookupService, AirportWeatherLookupService>();
                 builder.Services.AddScoped<IAirportScheduleLookupService, AirportScheduleLookupService>();
                 builder.Services.AddScoped<IAirportRouteService, AirportRouteService>();

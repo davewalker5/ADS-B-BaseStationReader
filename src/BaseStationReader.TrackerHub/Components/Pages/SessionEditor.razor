@@ -1,0 +1,239 @@
+@page "/history/session-editor"
+@inject IObservationSessionEditorService Editor
+@inject ITrackingControlService TrackingControl
+@inject NavigationManager Navigation
+
+<PageTitle>Session Editor · Tracking Database · ADS-B Tracker</PageTitle>
+
+<DatabaseTabs />
+
+@if (TrackingControl.IsTracking)
+{
+    <div class="alert session-editor-alert" role="alert">
+        <strong>Session editor unavailable</strong>
+        <span>Sessions cannot be edited while a tracking session is active.</span>
+    </div>
+}
+else if (_loading)
+{
+    <section class="session-preparation session-editor" aria-busy="true">
+        <div class="session-form"><p class="table-empty">Loading session…</p></div>
+    </section>
+}
+else if (_session is null)
+{
+    <div class="alert session-editor-alert" role="alert">
+        <strong>@(SessionId.HasValue ? "Session not found" : "No session selected")</strong>
+        <span>@(SessionId.HasValue
+            ? "The selected session could not be loaded."
+            : "Choose the Edit action for a session on the Sessions tab.")</span>
+    </div>
+}
+else
+{
+    <section class="session-preparation session-editor" aria-label="Session editor">
+        <div class="session-form">
+            <div class="session-form-heading">
+                <div>
+                    <h2>Edit session</h2>
+                    <p>Update the notes recorded with this tracking run. Other session parameters are fixed.</p>
+                </div>
+                <span class="read-only-badge"><span>●</span> Session parameters fixed</span>
+            </div>
+
+            <label class="session-field" for="editor-tracking-profile">
+                <span>Tracking profile</span>
+                <input id="editor-tracking-profile" value="@_session.ProfileName" disabled />
+            </label>
+
+            <div class="receiver-endpoint">
+                <label class="session-field" for="editor-receiver-host">
+                    <span>Receiver host</span>
+                    <input id="editor-receiver-host" value="@_session.Host" disabled />
+                </label>
+                <label class="session-field" for="editor-receiver-port">
+                    <span>Receiver port</span>
+                    <input id="editor-receiver-port" value="@_session.Port" disabled />
+                </label>
+            </div>
+
+            <div class="effective-profile" aria-label="Recorded tracking profile">
+                <h3>Recorded tracking profile</h3>
+                <dl>
+                    <div><dt>Started</dt><dd>@FormatDateTime(_session.StartedAtUtc)</dd></div>
+                    <div><dt>Profile</dt><dd>@Display(_session.ProfileName)</dd></div>
+                    <div><dt>Latitude</dt><dd>@FormatCoordinate(_session.ReceiverLatitude)</dd></div>
+                    <div><dt>Longitude</dt><dd>@FormatCoordinate(_session.ReceiverLongitude)</dd></div>
+                    <div><dt>Elevation</dt><dd>@FormatValue(_session.ReceiverElevation, " ft")</dd></div>
+                    <div><dt>Minimum altitude</dt><dd>@FormatValue(_session.MinimumAltitude, " ft")</dd></div>
+                    <div><dt>Maximum altitude</dt><dd>@FormatValue(_session.MaximumAltitude, " ft")</dd></div>
+                    <div><dt>Maximum distance</dt><dd>@FormatValue(_session.MaximumDistance, " nm")</dd></div>
+                    <div><dt>Included behaviours</dt><dd>@DisplayBehaviours(_session.IncludedBehaviours)</dd></div>
+                </dl>
+            </div>
+
+            <label class="session-field" for="editor-session-notes">
+                <span>Session notes <small>Optional</small></span>
+                <textarea id="editor-session-notes" @bind="_notes" maxlength="4000" rows="5"
+                          disabled="@(_saving || TrackingControl.IsTracking)"
+                          placeholder="Purpose, weather conditions, or other context…"></textarea>
+            </label>
+
+            <div class="session-actions">
+                <button class="primary-button" type="button" @onclick="SaveAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Saving…" : "Save session")
+                </button>
+                @if (_message is not null)
+                {
+                    <span class="profile-message @(_saveError ? "error" : "success")" role="status">@_message</span>
+                }
+                <button class="danger-button session-delete-action-button" type="button" @onclick="ConfirmDelete"
+                        disabled="@(_saving || _deleting || TrackingControl.IsTracking)">
+                    Delete session
+                </button>
+            </div>
+        </div>
+    </section>
+}
+
+@if (_showDeleteConfirmation && _session is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-session-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-session-title">Delete session?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_deleting">×</button>
+            </header>
+            <p>This will permanently delete this session, including all of its tracking and position records.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Session deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_deleting">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_deleting || TrackingControl.IsTracking)">
+                    @(_deleting ? "Deleting…" : "Delete session")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+#nullable enable
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "sessionId")]
+    public int? SessionId { get; set; }
+
+    private ObservationSessionDto? _session;
+    private string _notes = string.Empty;
+    private bool _loading = true;
+    private bool _saving;
+    private string? _message;
+    private bool _saveError;
+    private int? _loadedSessionId;
+    private bool _showDeleteConfirmation;
+    private bool _deleting;
+    private string? _deleteError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SessionId == _loadedSessionId && !_loading) return;
+        _loadedSessionId = SessionId;
+        _loading = true;
+        _message = null;
+        try
+        {
+            _session = !TrackingControl.IsTracking && SessionId.HasValue
+                ? await Editor.GetAsync(SessionId.Value)
+                : null;
+            _notes = _session?.Notes ?? string.Empty;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_session is null || TrackingControl.IsTracking) return;
+        _saving = true;
+        _message = null;
+        try
+        {
+            await Editor.SaveNotesAsync(_session.SessionId, _notes);
+            _session.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
+            _notes = _session.Notes ?? string.Empty;
+            _saveError = false;
+            _message = "Session saved.";
+        }
+        catch (Exception exception)
+        {
+            _saveError = true;
+            _message = exception.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void ConfirmDelete()
+    {
+        if (_session is null || TrackingControl.IsTracking) return;
+        _deleteError = null;
+        _showDeleteConfirmation = true;
+    }
+
+    private void CloseDelete()
+    {
+        if (_deleting) return;
+        _showDeleteConfirmation = false;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_session is null || TrackingControl.IsTracking) return;
+        _deleting = true;
+        _deleteError = null;
+        try
+        {
+            await Editor.DeleteAsync(_session.SessionId);
+            Navigation.NavigateTo("history/sessions");
+        }
+        catch (Exception exception)
+        {
+            _deleteError = exception.Message;
+            _deleting = false;
+        }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
+    }
+
+    private static string FormatDateTime(DateTime value)
+        => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime().ToString("dd MMM yyyy HH:mm:ss");
+
+    private static string FormatCoordinate(double? value)
+        => value?.ToString("F6") ?? "Not configured";
+
+    private static string FormatValue(int? value, string suffix)
+        => value.HasValue ? $"{value:N0}{suffix}" : "Not configured";
+
+    private static string Display(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "Not configured" : value;
+
+    private static string DisplayBehaviours(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "Not configured" : value.Replace(",", ", ");
+}

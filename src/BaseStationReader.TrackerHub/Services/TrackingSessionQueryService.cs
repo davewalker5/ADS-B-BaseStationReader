@@ -280,6 +280,8 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
                 StartedAtUtc = session.StartedAtUtc,
                 ProfileName = session.ProfileName,
                 Notes = session.Notes,
+                Host = session.Host,
+                Port = session.Port,
                 ReceiverLatitude = session.ReceiverLatitude,
                 ReceiverLongitude = session.ReceiverLongitude,
                 ReceiverElevation = session.ReceiverElevation,
