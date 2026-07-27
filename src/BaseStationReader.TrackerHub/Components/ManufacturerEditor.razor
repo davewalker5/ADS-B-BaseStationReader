@@ -1,0 +1,223 @@
+@inject IManufacturerReferenceService ManufacturerService
+@inject IProvenanceService ProvenanceService
+@inject ITrackingControlService TrackingControl
+
+<section class="aircraft-panel">
+    <div class="aircraft-filter manufacturer-filter">
+        <label><span>Name</span><InputText @bind-Value="_name" /></label>
+        <button class="primary-button" type="button" @onclick="FindAsync" disabled="@_loading">
+            @(_loading ? "Searching…" : "Find manufacturers")
+        </button>
+    </div>
+
+    <div class="table-wrap provenance-table-wrap aircraft-table-wrap">
+        <table>
+            <thead><tr><th>Name</th><th>Provenance</th><th>Delete</th></tr></thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="3" class="table-empty">Searching manufacturers…</td></tr>
+                }
+                else if (!_searchPerformed)
+                {
+                    <tr><td colspan="3" class="table-empty">Enter a manufacturer name to search.</td></tr>
+                }
+                else if (_manufacturers.Count == 0)
+                {
+                    <tr><td colspan="3" class="table-empty">No manufacturers matched that filter.</td></tr>
+                }
+                else
+                {
+                    @foreach (var manufacturer in _manufacturers)
+                    {
+                        <tr class="@(manufacturer.Id == _editModel.Id ? "selected" : null)" tabindex="0"
+                            @onclick="() => Edit(manufacturer)" @onkeydown="args => SelectFromKeyboard(args, manufacturer)">
+                            <td><strong>@manufacturer.Name</strong></td>
+                            <td>@manufacturer.Provenance?.SourceRef</td>
+                            <td class="session-delete-action" @onclick:stopPropagation="true">
+                                <button class="session-delete-button" type="button"
+                                        disabled="@(TrackingControl.IsTracking || _saving)"
+                                        title="@(TrackingControl.IsTracking ? "Manufacturer deletion is unavailable while a session is active" : "Delete manufacturer")"
+                                        aria-label="Delete manufacturer @manufacturer.Name"
+                                        @onclick="() => ConfirmDelete(manufacturer)">
+                                    <span aria-hidden="true">🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="provenance-editor">
+        <div>
+            <h2>@(_editModel.Id == 0 ? "Add manufacturer" : "Edit manufacturer")</h2>
+            <p>@(_editModel.Id == 0 ? "Create a new manufacturer record." : $"Editing {_editModel.Name}.")</p>
+        </div>
+        <EditForm Model="_editModel" OnValidSubmit="SaveAsync" FormName="manufacturer-editor">
+            <DataAnnotationsValidator />
+            <div class="provenance-fields">
+                <label><span>Name</span><InputText @bind-Value="_editModel.Name" disabled="@(!CanEdit)" /></label>
+                <label>
+                    <span>Provenance</span>
+                    <InputSelect @bind-Value="_editModel.ProvenanceId" disabled="@(!CanEdit)">
+                        <option value="0">Select provenance</option>
+                        @foreach (var provenance in _provenance)
+                        {
+                            <option value="@provenance.Id">@provenance.SourceRef - @provenance.Source</option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+            <ValidationSummary />
+            @if (TrackingControl.IsTracking)
+            {
+                <p class="editor-read-only">Manufacturers cannot be changed while a live tracking session is active.</p>
+            }
+            <div class="provenance-editor-actions">
+                <button class="primary-button" type="submit" disabled="@(!CanEdit)">Save manufacturer</button>
+                <button class="secondary-button" type="button" @onclick="Clear" disabled="@_saving">Clear</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@if (_deleteModel is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-manufacturer-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-manufacturer-title">Delete manufacturer?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_saving">×</button>
+            </header>
+            <p>This will permanently delete manufacturer <strong>@_deleteModel.Name</strong>.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Manufacturer deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_saving">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Deleting…" : "Delete manufacturer")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+@if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
+
+@code {
+#nullable enable
+    private string _name = "";
+    private bool _loading;
+    private bool _saving;
+    private bool _searchPerformed;
+    private string? _error;
+    private string? _success;
+    private string? _deleteError;
+    private List<Manufacturer> _manufacturers = [];
+    private List<Provenance> _provenance = [];
+    private Manufacturer _editModel = new();
+    private Manufacturer? _deleteModel;
+    private bool CanEdit => !_saving && !TrackingControl.IsTracking;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _provenance = (await ProvenanceService.ListAsync()).OrderBy(x => x.SourceRef).ToList(); }
+        catch (Exception exception) { _error = exception.Message; }
+    }
+
+    private async Task FindAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _manufacturers = [];
+            _searchPerformed = false;
+            _error = "Enter a manufacturer name before searching.";
+            _success = null;
+            return;
+        }
+
+        _loading = true; _searchPerformed = true; _error = null; _success = null;
+        try
+        {
+            _manufacturers = (await ManufacturerService.FindAsync(_name))
+                .OrderBy(x => x.Name).ToList();
+            Clear();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loading = false; }
+    }
+
+    private void Edit(Manufacturer manufacturer) => _editModel = Copy(manufacturer);
+    private void SelectFromKeyboard(KeyboardEventArgs args, Manufacturer manufacturer)
+    {
+        if (args.Key is "Enter" or " ") Edit(manufacturer);
+    }
+
+    private void Clear() => _editModel = new();
+
+    private async Task SaveAsync()
+    {
+        if (!CanEdit) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _editModel.Id == 0;
+            var saved = await ManufacturerService.SaveAsync(_editModel);
+            if (string.IsNullOrWhiteSpace(_name)) _name = saved.Name;
+            await FindAsync();
+            _success = isNew ? "Manufacturer record added." : "Manufacturer record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void ConfirmDelete(Manufacturer manufacturer)
+    {
+        if (_saving || TrackingControl.IsTracking) return;
+        _deleteModel = Copy(manufacturer);
+        _deleteError = null;
+    }
+
+    private void CloseDelete()
+    {
+        if (_saving) return;
+        _deleteModel = null;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await ManufacturerService.DeleteAsync(_deleteModel.Id);
+            _deleteModel = null;
+            await FindAsync();
+            _success = "Manufacturer record deleted.";
+        }
+        catch (Exception exception) { _deleteError = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
+    }
+
+    private static Manufacturer Copy(Manufacturer source) => new()
+    {
+        Id = source.Id, Name = source.Name, ProvenanceId = source.ProvenanceId
+    };
+}

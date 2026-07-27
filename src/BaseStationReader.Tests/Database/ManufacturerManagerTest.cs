@@ -65,5 +65,22 @@ namespace BaseStationReader.Tests.Database
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
                 _manager.AddAsync("Missing provenance", 999));
         }
+
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var manufacturer = await _manager.GetAsync(x => x.Name == Name);
+            var updated = await _manager.UpdateAsync(manufacturer.Id, "Boeing", manufacturer.ProvenanceId);
+
+            Assert.AreEqual("Boeing", updated.Name);
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var manufacturer = await _manager.GetAsync(x => x.Name == Name);
+            await _manager.DeleteAsync(manufacturer.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
     }
 }
