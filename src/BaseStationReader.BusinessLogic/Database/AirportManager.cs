@@ -78,5 +78,45 @@ namespace BaseStationReader.BusinessLogic.Database
 
             return existing;
         }
+
+        /// <summary>
+        /// Update an existing airport.
+        /// </summary>
+        public async Task<Airport> UpdateAsync(Airport airport)
+        {
+            ArgumentNullException.ThrowIfNull(airport);
+            var existing = await _context.Airports.FindAsync(airport.Id)
+                ?? throw new InvalidOperationException($"Airport record {airport.Id} does not exist.");
+            if (!await _context.Provenance.AnyAsync(x => x.Id == airport.ProvenanceId))
+                throw new InvalidOperationException($"Provenance record {airport.ProvenanceId} does not exist.");
+
+            var cleanIATA = StringCleaner.CleanIATA(airport.IATA);
+            var cleanICAO = StringCleaner.CleanICAO(airport.ICAO);
+            var cleanName = StringCleaner.CleanName(airport.Name);
+            if (await _context.Airports.AnyAsync(x => x.Id != airport.Id && x.IATA == cleanIATA))
+                throw new InvalidOperationException($"An airport with IATA code '{cleanIATA}' already exists.");
+            if (await _context.Airports.AnyAsync(x => x.Id != airport.Id && x.ICAO == cleanICAO))
+                throw new InvalidOperationException($"An airport with ICAO code '{cleanICAO}' already exists.");
+
+            existing.IATA = cleanIATA;
+            existing.ICAO = cleanICAO;
+            existing.Name = cleanName;
+            existing.Latitude = airport.Latitude;
+            existing.Longitude = airport.Longitude;
+            existing.ProvenanceId = airport.ProvenanceId;
+            await _context.SaveChangesAsync();
+            return await GetAsync(x => x.Id == airport.Id);
+        }
+
+        /// <summary>
+        /// Delete an airport.
+        /// </summary>
+        public async Task DeleteAsync(int id)
+        {
+            var airport = await _context.Airports.FindAsync(id)
+                ?? throw new InvalidOperationException($"Airport record {id} does not exist.");
+            _context.Airports.Remove(airport);
+            await _context.SaveChangesAsync();
+        }
     }
 }

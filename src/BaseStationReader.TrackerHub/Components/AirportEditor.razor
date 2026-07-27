@@ -1,0 +1,249 @@
+@inject IAirportReferenceService AirportService
+@inject IProvenanceService ProvenanceService
+@inject ITrackingControlService TrackingControl
+
+<section class="aircraft-panel">
+    <div class="aircraft-filter airline-filter">
+        <label><span>IATA code</span><InputText @bind-Value="_iata" /></label>
+        <label><span>ICAO code</span><InputText @bind-Value="_icao" /></label>
+        <label><span>Name</span><InputText @bind-Value="_name" /></label>
+        <button class="primary-button" type="button" @onclick="FindAsync" disabled="@_loading">
+            @(_loading ? "Searching…" : "Find airports")
+        </button>
+    </div>
+
+    <div class="table-wrap provenance-table-wrap aircraft-table-wrap">
+        <table>
+            <thead><tr><th>IATA</th><th>ICAO</th><th>Name</th><th>Latitude</th><th>Longitude</th><th>Provenance</th><th>Delete</th></tr></thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="7" class="table-empty">Searching airports…</td></tr>
+                }
+                else if (!_searchPerformed)
+                {
+                    <tr><td colspan="7" class="table-empty">Enter an IATA code, ICAO code, or airport name to find airports.</td></tr>
+                }
+                else if (_airports.Count == 0)
+                {
+                    <tr><td colspan="7" class="table-empty">No airports matched those filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var airport in _airports)
+                    {
+                        <tr class="@(airport.Id == _editModel.Id ? "selected" : null)" tabindex="0"
+                            @onclick="() => Edit(airport)" @onkeydown="args => SelectFromKeyboard(args, airport)">
+                            <td><strong>@airport.IATA</strong></td>
+                            <td><strong>@airport.ICAO</strong></td>
+                            <td>@airport.Name</td>
+                            <td class="numeric">@airport.Latitude.ToString("0.#####")</td>
+                            <td class="numeric">@airport.Longitude.ToString("0.#####")</td>
+                            <td>@airport.Provenance?.SourceRef</td>
+                            <td class="session-delete-action" @onclick:stopPropagation="true">
+                                <button class="session-delete-button" type="button"
+                                        disabled="@(TrackingControl.IsTracking || _saving)"
+                                        title="@(TrackingControl.IsTracking ? "Airport deletion is unavailable while a session is active" : "Delete airport")"
+                                        aria-label="Delete airport @airport.Name"
+                                        @onclick="() => ConfirmDelete(airport)">
+                                    <span aria-hidden="true">🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="provenance-editor">
+        <div>
+            <h2>@(_editModel.Id == 0 ? "Add airport" : "Edit airport")</h2>
+            <p>@(_editModel.Id == 0 ? "Create a new airport record." : $"Editing {_editModel.Name}.")</p>
+        </div>
+        <EditForm Model="_editModel" OnValidSubmit="SaveAsync" FormName="airport-editor">
+            <DataAnnotationsValidator />
+            <div class="provenance-fields">
+                <label><span>IATA code</span><InputText @bind-Value="_editModel.IATA" disabled="@(!CanEdit)" /></label>
+                <label><span>ICAO code</span><InputText @bind-Value="_editModel.ICAO" disabled="@(!CanEdit)" /></label>
+                <label><span>Name</span><InputText @bind-Value="_editModel.Name" disabled="@(!CanEdit)" /></label>
+                <label><span>Latitude</span><InputNumber class="coordinate-input" @bind-Value="_editModel.Latitude" step="any" disabled="@(!CanEdit)" /></label>
+                <label><span>Longitude</span><InputNumber class="coordinate-input" @bind-Value="_editModel.Longitude" step="any" disabled="@(!CanEdit)" /></label>
+                <label>
+                    <span>Provenance</span>
+                    <InputSelect @bind-Value="_editModel.ProvenanceId" disabled="@(!CanEdit)">
+                        <option value="0">Select provenance</option>
+                        @foreach (var provenance in _provenance)
+                        {
+                            <option value="@provenance.Id">@provenance.SourceRef - @provenance.Source</option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+            <ValidationSummary />
+            @if (TrackingControl.IsTracking)
+            {
+                <p class="editor-read-only">Airports cannot be changed while a live tracking session is active.</p>
+            }
+            <div class="provenance-editor-actions">
+                <button class="primary-button" type="submit" disabled="@(!CanEdit)">Save airport</button>
+                <button class="secondary-button" type="button" @onclick="Clear" disabled="@_saving">Clear</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@if (_deleteModel is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-airport-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-airport-title">Delete airport?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_saving">×</button>
+            </header>
+            <p>This will permanently delete airport <strong>@_deleteModel.Name</strong>
+                (@_deleteModel.IATA / @_deleteModel.ICAO).</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Airport deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_saving">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Deleting…" : "Delete airport")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+@if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
+
+@code {
+#nullable enable
+    private string _iata = "";
+    private string _icao = "";
+    private string _name = "";
+    private bool _loading;
+    private bool _saving;
+    private bool _searchPerformed;
+    private string? _error;
+    private string? _success;
+    private string? _deleteError;
+    private List<Airport> _airports = [];
+    private List<Provenance> _provenance = [];
+    private Airport _editModel = new();
+    private Airport? _deleteModel;
+    private bool CanEdit => !_saving && !TrackingControl.IsTracking;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _provenance = (await ProvenanceService.ListAsync()).OrderBy(x => x.SourceRef).ToList(); }
+        catch (Exception exception) { _error = exception.Message; }
+    }
+
+    private async Task FindAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_iata) &&
+            string.IsNullOrWhiteSpace(_icao) &&
+            string.IsNullOrWhiteSpace(_name))
+        {
+            _airports = [];
+            _searchPerformed = false;
+            _error = "Enter an IATA code, ICAO code, or airport name before searching.";
+            _success = null;
+            return;
+        }
+
+        _loading = true; _searchPerformed = true; _error = null; _success = null;
+        try
+        {
+            _airports = (await AirportService.FindAsync(_iata, _icao, _name))
+                .OrderBy(x => x.Name).ToList();
+            Clear();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loading = false; }
+    }
+
+    private void Edit(Airport airport) => _editModel = Copy(airport);
+    private void SelectFromKeyboard(KeyboardEventArgs args, Airport airport)
+    {
+        if (args.Key is "Enter" or " ") Edit(airport);
+    }
+
+    private void Clear() => _editModel = new();
+
+    private async Task SaveAsync()
+    {
+        if (!CanEdit) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _editModel.Id == 0;
+            var saved = await AirportService.SaveAsync(_editModel);
+            if (string.IsNullOrWhiteSpace(_iata) &&
+                string.IsNullOrWhiteSpace(_icao) &&
+                string.IsNullOrWhiteSpace(_name))
+            {
+                _icao = saved.ICAO;
+            }
+            await FindAsync();
+            _success = isNew ? "Airport record added." : "Airport record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void ConfirmDelete(Airport airport)
+    {
+        if (_saving || TrackingControl.IsTracking) return;
+        _deleteModel = Copy(airport);
+        _deleteError = null;
+    }
+
+    private void CloseDelete()
+    {
+        if (_saving) return;
+        _deleteModel = null;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await AirportService.DeleteAsync(_deleteModel.Id);
+            _deleteModel = null;
+            await FindAsync();
+            _success = "Airport record deleted.";
+        }
+        catch (Exception exception) { _deleteError = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
+    }
+
+    private static Airport Copy(Airport source) => new()
+    {
+        Id = source.Id,
+        IATA = source.IATA,
+        ICAO = source.ICAO,
+        Name = source.Name,
+        Latitude = source.Latitude,
+        Longitude = source.Longitude,
+        ProvenanceId = source.ProvenanceId
+    };
+}
