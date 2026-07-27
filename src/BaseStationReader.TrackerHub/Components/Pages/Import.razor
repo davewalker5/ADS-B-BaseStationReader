@@ -1,6 +1,8 @@
 @page "/import"
 @inject IDataImportService ImportService
 @inject IProvenanceService ProvenanceService
+@inject IAircraftReferenceService AircraftService
+@inject ITrackingControlService TrackingControl
 @inject IJSRuntime JS
 @using BaseStationReader.Entities.Api
 
@@ -19,6 +21,8 @@
             class="@(_activeTab == ReferenceTab.Import ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Import)">Import</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Provenance)"
             class="@(_activeTab == ReferenceTab.Provenance ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Provenance)">Provenance</button>
+    <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Aircraft)"
+            class="@(_activeTab == ReferenceTab.Aircraft ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Aircraft)">Aircraft</button>
 </div>
 
 @if (_activeTab == ReferenceTab.Import)
@@ -60,7 +64,7 @@
         <p class="import-note">Imports add or update records using the lookup tool's existing rules. The maximum upload size is 50 MB.</p>
     </section>
 }
-else
+else if (_activeTab == ReferenceTab.Provenance)
 {
     <section class="provenance-panel">
         <div class="table-wrap provenance-table-wrap">
@@ -115,6 +119,146 @@ else
         </div>
     </section>
 }
+else
+{
+    <section class="aircraft-panel">
+        <div class="aircraft-filter">
+            <label><span>ICAO address</span><InputText @bind-Value="_aircraftAddress" /></label>
+            <label><span>Registration</span><InputText @bind-Value="_aircraftRegistration" /></label>
+            <button class="primary-button" type="button" @onclick="FindAircraftAsync" disabled="@_loadingAircraft">
+                @(_loadingAircraft ? "Searching…" : "Find aircraft")
+            </button>
+        </div>
+
+        <div class="table-wrap provenance-table-wrap aircraft-table-wrap">
+            <table>
+                <thead><tr><th>ICAO address</th><th>Registration</th><th>Model</th><th>Manufactured</th><th>Age</th><th>Provenance</th><th>Delete</th></tr></thead>
+                <tbody>
+                    @if (_loadingAircraft)
+                    {
+                        <tr><td colspan="7" class="table-empty">Searching aircraft…</td></tr>
+                    }
+                    else if (!_aircraftSearchPerformed)
+                    {
+                        <tr><td colspan="7" class="table-empty">Enter an ICAO address or registration to find aircraft.</td></tr>
+                    }
+                    else if (_aircraft.Count == 0)
+                    {
+                        <tr><td colspan="7" class="table-empty">No aircraft matched those filters.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var record in _aircraft)
+                        {
+                            <tr class="@(record.Id == _aircraftEditModel.Id ? "selected" : null)" tabindex="0"
+                                @onclick="() => EditAircraft(record)" @onkeydown="args => SelectAircraftFromKeyboard(args, record)">
+                                <td><strong>@record.Address</strong></td>
+                                <td>@record.Registration</td>
+                                <td>@record.Model?.Name <span class="table-subtitle">@record.Model?.ICAO</span></td>
+                                <td>@record.Manufactured</td><td>@record.Age</td>
+                                <td>@record.Provenance?.SourceRef</td>
+                                <td class="session-delete-action" @onclick:stopPropagation="true">
+                                    <button class="session-delete-button" type="button"
+                                            disabled="@(TrackingControl.IsTracking || _saving)"
+                                            title="@(TrackingControl.IsTracking ? "Aircraft deletion is unavailable while a session is active" : "Delete aircraft")"
+                                            aria-label="Delete aircraft @record.Address"
+                                            @onclick="() => ConfirmDeleteAircraft(record)">
+                                        <span aria-hidden="true">🗑️</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="provenance-editor">
+            <div>
+                <h2>@(_aircraftEditModel.Id == 0 ? "Add aircraft" : "Edit aircraft")</h2>
+                <p>@(_aircraftEditModel.Id == 0 ? "Create a new aircraft record." : $"Editing {_aircraftEditModel.Address}.")</p>
+            </div>
+            <EditForm Model="_aircraftEditModel" OnValidSubmit="SaveAircraftAsync" FormName="aircraft-editor">
+                <DataAnnotationsValidator />
+                <div class="provenance-fields">
+                    <label><span>ICAO address</span><InputText @bind-Value="_aircraftEditModel.Address" disabled="@(!CanEditAircraft)" /></label>
+                    <label><span>Registration</span><InputText @bind-Value="_aircraftEditModel.Registration" disabled="@(!CanEditAircraft)" /></label>
+                    <label><span>Manufactured</span><InputNumber @bind-Value="_aircraftEditModel.Manufactured" disabled="@(!CanEditAircraft)" /></label>
+                    <label><span>Age</span><InputNumber @bind-Value="_aircraftEditModel.Age" disabled="@(!CanEditAircraft)" /></label>
+                    <label>
+                        <span>Manufacturer</span>
+                        <select value="@_selectedManufacturerId" @onchange="SelectManufacturer" disabled="@(!CanEditAircraft)">
+                            <option value="0">Select a manufacturer</option>
+                            @foreach (var manufacturer in Manufacturers)
+                            {
+                                <option value="@manufacturer.Id">@manufacturer.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Model</span>
+                        <InputSelect @bind-Value="_aircraftEditModel.ModelId" disabled="@(!CanEditAircraft)">
+                            <option value="0">Select a model</option>
+                            @foreach (var model in FilteredModels)
+                            {
+                                <option value="@model.Id">@ModelLabel(model)</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label>
+                        <span>Provenance</span>
+                        <InputSelect @bind-Value="_aircraftEditModel.ProvenanceId" disabled="@(!CanEditAircraft)">
+                            <option value="0">Select provenance</option>
+                            @foreach (var provenance in _provenance)
+                            {
+                                <option value="@provenance.Id">@provenance.SourceRef - @provenance.Source</option>
+                            }
+                        </InputSelect>
+                    </label>
+                </div>
+                <ValidationSummary />
+                @if (TrackingControl.IsTracking)
+                {
+                    <p class="editor-read-only">Aircraft cannot be changed while a live tracking session is active.</p>
+                }
+                <div class="provenance-editor-actions">
+                    <button class="primary-button" type="submit" disabled="@(!CanEditAircraft)">Save aircraft</button>
+                    <button class="secondary-button" type="button" @onclick="ClearAircraftSelection" disabled="@_saving">Clear</button>
+                </div>
+            </EditForm>
+        </div>
+    </section>
+}
+
+@if (_deleteAircraft is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDeleteAircraft">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-aircraft-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteAircraftKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-aircraft-title">Delete aircraft?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDeleteAircraft" disabled="@_saving">×</button>
+            </header>
+            <p>This will permanently delete aircraft <strong>@_deleteAircraft.Address</strong>
+                (@_deleteAircraft.Registration).</p>
+            @if (_aircraftDeleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Aircraft deletion failed</strong><span>@_aircraftDeleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDeleteAircraft" disabled="@_saving">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAircraftAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Deleting…" : "Delete aircraft")
+                </button>
+            </div>
+        </section>
+    </div>
+}
 
 @if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
 @if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
@@ -138,10 +282,30 @@ else
     private bool _importing;
     private bool _loadingProvenance;
     private bool _saving;
+    private bool _loadingAircraft;
+    private bool _aircraftSearchPerformed;
     private string? _error;
     private string? _success;
     private List<Provenance> _provenance = [];
+    private List<Aircraft> _aircraft = [];
+    private List<Model> _models = [];
     private Provenance _editModel = new();
+    private Aircraft _aircraftEditModel = new();
+    private Aircraft? _deleteAircraft;
+    private string? _aircraftDeleteError;
+    private string _aircraftAddress = "";
+    private string _aircraftRegistration = "";
+    private int _selectedManufacturerId;
+    private bool CanEditAircraft => !_saving && !TrackingControl.IsTracking;
+    private IEnumerable<Manufacturer> Manufacturers => _models
+        .Select(x => x.Manufacturer)
+        .Where(x => x is not null)
+        .GroupBy(x => x.Id)
+        .Select(x => x.First())
+        .OrderBy(x => x.Name);
+    private IEnumerable<Model> FilteredModels => _selectedManufacturerId == 0
+        ? []
+        : _models.Where(x => x.ManufacturerId == _selectedManufacturerId).OrderBy(x => x.Name);
     private bool CanImport => !_importing && _file is not null && _file.Size <= MaximumFileSize &&
         string.Equals(Path.GetExtension(_file.Name), ".csv", StringComparison.OrdinalIgnoreCase);
     private ImportOption SelectedOption => ImportOptions.First(option => option.Type == _importType);
@@ -152,6 +316,11 @@ else
         _error = null;
         _success = null;
         if (tab == ReferenceTab.Provenance && _provenance.Count == 0) await LoadProvenanceAsync();
+        if (tab == ReferenceTab.Aircraft)
+        {
+            if (_provenance.Count == 0) await LoadProvenanceAsync();
+            if (_models.Count == 0) _models = (await AircraftService.ListModelsAsync()).OrderBy(x => x.Name).ToList();
+        }
     }
 
     private async Task LoadProvenanceAsync()
@@ -205,6 +374,106 @@ else
         finally { _saving = false; }
     }
 
+    private async Task FindAircraftAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_aircraftAddress) &&
+            string.IsNullOrWhiteSpace(_aircraftRegistration))
+        {
+            _aircraft = [];
+            _aircraftSearchPerformed = false;
+            _error = "Enter an ICAO address or registration before searching.";
+            _success = null;
+            return;
+        }
+
+        _loadingAircraft = true; _aircraftSearchPerformed = true; _error = null; _success = null;
+        try
+        {
+            _aircraft = (await AircraftService.FindAsync(_aircraftAddress, _aircraftRegistration))
+                .OrderBy(x => x.Address).ToList();
+            ClearAircraftSelection();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loadingAircraft = false; }
+    }
+
+    private void EditAircraft(Aircraft record)
+    {
+        _aircraftEditModel = Copy(record);
+        _selectedManufacturerId = _models
+            .FirstOrDefault(x => x.Id == record.ModelId)?.ManufacturerId ?? 0;
+    }
+    private void SelectAircraftFromKeyboard(KeyboardEventArgs args, Aircraft record)
+    {
+        if (args.Key is "Enter" or " ") EditAircraft(record);
+    }
+
+    private async Task SaveAircraftAsync()
+    {
+        if (!CanEditAircraft) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _aircraftEditModel.Id == 0;
+            var saved = await AircraftService.SaveAsync(_aircraftEditModel);
+            if (string.IsNullOrWhiteSpace(_aircraftAddress) &&
+                string.IsNullOrWhiteSpace(_aircraftRegistration))
+                _aircraftAddress = saved.Address;
+            await FindAircraftAsync();
+            _success = isNew ? "Aircraft record added." : "Aircraft record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void ConfirmDeleteAircraft(Aircraft aircraft)
+    {
+        if (_saving || TrackingControl.IsTracking) return;
+        _deleteAircraft = Copy(aircraft);
+        _aircraftDeleteError = null;
+    }
+
+    private void CloseDeleteAircraft()
+    {
+        if (_saving) return;
+        _deleteAircraft = null;
+        _aircraftDeleteError = null;
+    }
+
+    private async Task DeleteAircraftAsync()
+    {
+        if (_deleteAircraft is null || TrackingControl.IsTracking) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await AircraftService.DeleteAsync(_deleteAircraft.Id);
+            _deleteAircraft = null;
+            await FindAircraftAsync();
+            _success = "Aircraft record deleted.";
+        }
+        catch (Exception exception) { _aircraftDeleteError = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void HandleDeleteAircraftKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDeleteAircraft();
+    }
+
+    private void SelectManufacturer(ChangeEventArgs args)
+    {
+        _selectedManufacturerId = int.TryParse(args.Value?.ToString(), out var id) ? id : 0;
+        if (!_models.Any(x => x.Id == _aircraftEditModel.ModelId &&
+                             x.ManufacturerId == _selectedManufacturerId))
+            _aircraftEditModel.ModelId = 0;
+    }
+
+    private void ClearAircraftSelection()
+    {
+        _aircraftEditModel = new();
+        _selectedManufacturerId = 0;
+    }
+
     private void SelectType(DataImportType importType) { _importType = importType; _error = null; _success = null; }
     private void SelectFile(InputFileChangeEventArgs args)
     {
@@ -232,7 +501,15 @@ else
         Id = source.Id, SourceRef = source.SourceRef, Source = source.Source, SourceUrl = source.SourceUrl,
         SourceDataset = source.SourceDataset, SourceVersion = source.SourceVersion, Licence = source.Licence
     };
+    private static Aircraft Copy(Aircraft source) => new()
+    {
+        Id = source.Id, Address = source.Address, Registration = source.Registration,
+        Manufactured = source.Manufactured, Age = source.Age, ModelId = source.ModelId,
+        ProvenanceId = source.ProvenanceId
+    };
+    private static string ModelLabel(Model model) =>
+        string.IsNullOrWhiteSpace(model.ICAO) ? model.Name : $"{model.ICAO} - {model.Name}";
     private static string FormatSize(long bytes) => bytes < 1024 * 1024 ? $"{Math.Max(1, bytes / 1024d):0.#} KB" : $"{bytes / 1024d / 1024d:0.#} MB";
     private sealed record ImportOption(DataImportType Type, string Name, string Description);
-    private enum ReferenceTab { Import, Provenance }
+    private enum ReferenceTab { Import, Provenance, Aircraft }
 }
