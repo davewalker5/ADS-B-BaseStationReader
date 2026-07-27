@@ -11,6 +11,16 @@ namespace BaseStationReader.Interfaces.Database
         Task<Airport> AddAsync(Airport airport);
 
         /// <summary>
+        /// Update an existing airport.
+        /// </summary>
+        Task<Airport> UpdateAsync(Airport airport);
+
+        /// <summary>
+        /// Delete an airport.
+        /// </summary>
+        Task DeleteAsync(int id);
+
+        /// <summary>
         /// Return an airport by ICAO, IATA or name, in that order.
         /// </summary>
         Task<Airport> GetAsync(string iata, string icao, string name);

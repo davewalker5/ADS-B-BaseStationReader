@@ -94,6 +94,33 @@ namespace BaseStationReader.Tests.Database
         public async Task ListMissingTestAsync()
             => Assert.IsEmpty(await _manager.ListAsync(x => x.Name == "Missing"));
 
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var airport = await _manager.GetAsync(x => x.ICAO == ICAO);
+            airport.IATA = "LGW";
+            airport.ICAO = "EGKK";
+            airport.Name = "London Gatwick Airport";
+            airport.Latitude = 51.1537;
+            airport.Longitude = -0.1821;
+
+            var updated = await _manager.UpdateAsync(airport);
+
+            Assert.AreEqual("LGW", updated.IATA);
+            Assert.AreEqual("EGKK", updated.ICAO);
+            Assert.AreEqual("London Gatwick Airport", updated.Name);
+            Assert.AreEqual(51.1537, updated.Latitude);
+            Assert.AreEqual(-0.1821, updated.Longitude);
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var airport = await _manager.GetAsync(x => x.ICAO == ICAO);
+            await _manager.DeleteAsync(airport.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
+
         /// <summary>
         /// Create an airport matching the import format.
         /// </summary>
