@@ -1,6 +1,7 @@
 @page "/history/session-editor"
 @inject IObservationSessionEditorService Editor
 @inject ITrackingControlService TrackingControl
+@inject NavigationManager Navigation
 
 <PageTitle>Session Editor · Tracking Database · ADS-B Tracker</PageTitle>
 
@@ -87,9 +88,42 @@ else
                 {
                     <span class="profile-message @(_saveError ? "error" : "success")" role="status">@_message</span>
                 }
+                <button class="danger-button session-delete-action-button" type="button" @onclick="ConfirmDelete"
+                        disabled="@(_saving || _deleting || TrackingControl.IsTracking)">
+                    Delete session
+                </button>
             </div>
         </div>
     </section>
+}
+
+@if (_showDeleteConfirmation && _session is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-session-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-session-title">Delete session?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_deleting">×</button>
+            </header>
+            <p>This will permanently delete this session, including all of its tracking and position records.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Session deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_deleting">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_deleting || TrackingControl.IsTracking)">
+                    @(_deleting ? "Deleting…" : "Delete session")
+                </button>
+            </div>
+        </section>
+    </div>
 }
 
 @code {
@@ -105,6 +139,9 @@ else
     private string? _message;
     private bool _saveError;
     private int? _loadedSessionId;
+    private bool _showDeleteConfirmation;
+    private bool _deleting;
+    private string? _deleteError;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -147,6 +184,42 @@ else
         {
             _saving = false;
         }
+    }
+
+    private void ConfirmDelete()
+    {
+        if (_session is null || TrackingControl.IsTracking) return;
+        _deleteError = null;
+        _showDeleteConfirmation = true;
+    }
+
+    private void CloseDelete()
+    {
+        if (_deleting) return;
+        _showDeleteConfirmation = false;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_session is null || TrackingControl.IsTracking) return;
+        _deleting = true;
+        _deleteError = null;
+        try
+        {
+            await Editor.DeleteAsync(_session.SessionId);
+            Navigation.NavigateTo("history/sessions");
+        }
+        catch (Exception exception)
+        {
+            _deleteError = exception.Message;
+            _deleting = false;
+        }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
     }
 
     private static string FormatDateTime(DateTime value)

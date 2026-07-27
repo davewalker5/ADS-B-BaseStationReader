@@ -1,6 +1,8 @@
 #nullable enable
 
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +10,8 @@ namespace BaseStationReader.TrackerHub.Services;
 
 public sealed class ObservationSessionEditorService(
     IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-    TrackingRuntime runtime) : IObservationSessionEditorService
+    TrackingRuntime runtime,
+    ITrackerLogger logger) : IObservationSessionEditorService
 {
     public async Task<ObservationSessionDto?> GetAsync(
         int sessionId,
@@ -58,4 +61,12 @@ public sealed class ObservationSessionEditorService(
             await context.SaveChangesAsync(cancellationToken);
         }, cancellationToken);
     }
+
+    public Task DeleteAsync(int sessionId, CancellationToken cancellationToken = default)
+        => runtime.ExecuteWhileIdleAsync(async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var manager = new DatabaseManagementFactory(logger, context, 0).ObservationSessionManager;
+            await manager.DeleteAsync(sessionId, cancellationToken);
+        }, cancellationToken);
 }

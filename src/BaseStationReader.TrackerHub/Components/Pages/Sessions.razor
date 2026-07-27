@@ -1,5 +1,6 @@
 @page "/history/sessions"
 @inject ITrackingSessionQueryService QueryService
+@inject IObservationSessionEditorService Editor
 @inject ITrackingControlService TrackingControl
 @inject Microsoft.Extensions.Options.IOptions<DatabaseBrowserOptions> DatabaseConfiguration
 
@@ -72,17 +73,18 @@
                     <th class="session-notes-heading">Notes</th>
                     <th class="session-analysis-heading">Analysis</th>
                     <th class="session-edit-heading">Edit</th>
+                    <th class="session-delete-heading">Delete</th>
                     <th class="session-records-heading">Tracking Records</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="15" class="table-empty">Loading sessions…</td></tr>
+                    <tr><td colspan="16" class="table-empty">Loading sessions…</td></tr>
                 }
                 else if (_result.Items.Count == 0)
                 {
-                    <tr><td colspan="15" class="table-empty">No sessions match these filters.</td></tr>
+                    <tr><td colspan="16" class="table-empty">No sessions match these filters.</td></tr>
                 }
                 else
                 {
@@ -136,6 +138,15 @@
                                     </a>
                                 }
                             </td>
+                            <td class="session-delete-action">
+                                <button class="session-delete-button" type="button"
+                                        disabled="@(TrackingControl.IsTracking || _deleting)"
+                                        title="@(TrackingControl.IsTracking ? "Session deletion is unavailable while a session is active" : "Delete session")"
+                                        aria-label="Delete session started @FormatDateTime(session.StartedAtUtc)"
+                                        @onclick="() => ConfirmDelete(session)">
+                                    <span aria-hidden="true">🗑️</span>
+                                </button>
+                            </td>
                             <td class="session-records-action">
                                 <a class="row-link" href="@TrackingRecordsUrl(session)"
                                    aria-label="View tracking records for session started @FormatDateTime(session.StartedAtUtc)">
@@ -170,6 +181,35 @@
                         autofocus @onclick="CloseNotes">×</button>
             </header>
             <div class="notes-modal-content">@_notesSession.Notes</div>
+        </section>
+    </div>
+}
+
+@if (_deleteSession is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-session-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-session-title">Delete session?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_deleting">×</button>
+            </header>
+            <p>This will permanently delete the session started <strong>@FormatDateTime(_deleteSession.StartedAtUtc)</strong>, including all of its tracking and position records.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Session deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_deleting">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_deleting || TrackingControl.IsTracking)">
+                    @(_deleting ? "Deleting…" : "Delete session")
+                </button>
+            </div>
         </section>
     </div>
 }
@@ -270,6 +310,9 @@
     private string? _analysisError;
     private bool _analysisLoading;
     private int? _analysisSessionId;
+    private ObservationSessionDto? _deleteSession;
+    private bool _deleting;
+    private string? _deleteError;
     private int SessionHistoryDays => DatabaseConfiguration.Value.SessionHistoryDays > 0
         ? DatabaseConfiguration.Value.SessionHistoryDays
         : 7;
@@ -373,6 +416,47 @@
     private void HandleNotesKeyDown(KeyboardEventArgs args)
     {
         if (args.Key == "Escape") CloseNotes();
+    }
+
+    private void ConfirmDelete(ObservationSessionDto session)
+    {
+        if (TrackingControl.IsTracking) return;
+        _deleteSession = session;
+        _deleteError = null;
+    }
+
+    private void CloseDelete()
+    {
+        if (_deleting) return;
+        _deleteSession = null;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_deleteSession is null || TrackingControl.IsTracking) return;
+        _deleting = true;
+        _deleteError = null;
+        try
+        {
+            await Editor.DeleteAsync(_deleteSession.SessionId);
+            _deleteSession = null;
+            _sessions = await QueryService.ListSessionsAsync();
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            _deleteError = exception.Message;
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
     }
 
     private async Task ShowAnalysisAsync(ObservationSessionDto session)
