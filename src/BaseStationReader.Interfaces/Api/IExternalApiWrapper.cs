@@ -15,7 +15,6 @@ namespace BaseStationReader.Interfaces.Api
         /// </summary>
         Task<Flight> LookupFlightAsync(string address, string callsign);
 
-        Task<LookupResult> LookupAsync(ApiLookupRequest request);
         Task<IEnumerable<string>> LookupCurrentAirportWeatherAsync(string icao);
         Task<IEnumerable<string>> LookupAirportWeatherForecastAsync(string icao);
         /// <summary>

@@ -10,7 +10,6 @@
         AircraftApi,
         ApplicationTimeout,
         ClearDown,
-        CreateSightings,
         EnableSqlWriter,
         AirportSchedule,
         Flight,

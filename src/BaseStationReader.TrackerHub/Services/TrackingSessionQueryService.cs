@@ -1,6 +1,7 @@
 #nullable enable
 
 using BaseStationReader.Data;
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
@@ -116,18 +117,18 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
 
         var sessionEnd = records.Select(record => (DateTime?)record.LastSeen).Max();
         var sessionStartLocal = DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime();
-        var resolvedCallsigns = await context.Sightings
-            .AsNoTracking()
-            .Where(sighting => addresses.Contains(sighting.Aircraft.Address) &&
-                               sighting.Timestamp >= sessionStartLocal &&
-                               (!sessionEnd.HasValue || sighting.Timestamp <= sessionEnd.Value))
+        var sightingManager = new SightingManager(context);
+        var resolvedCallsigns = (await sightingManager.ListAsync(sighting =>
+                addresses.Contains(sighting.Aircraft.Address) &&
+                sighting.Timestamp >= sessionStartLocal &&
+                (!sessionEnd.HasValue || sighting.Timestamp <= sessionEnd.Value)))
             .Select(sighting => new
             {
                 sighting.Aircraft.Address,
                 sighting.Timestamp,
                 Callsign = sighting.Flight.Callsign
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var callsigns = records
             .Select(record => record.Callsign?.Trim())
@@ -391,26 +392,26 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
                 aircraft.Address == record.Address && aircraft.Registration.Contains(registration)));
         }
 
-        // Sightings link aircraft and flights by observation time, so constrain matches to the session window.
+        // Resolve view-backed sightings through the query manager before applying reference-data filters.
         if (!string.IsNullOrWhiteSpace(airline))
         {
-            query = query.Where(record => context.Sightings.Any(sighting =>
-                sighting.Aircraft.Address == record.Address &&
-                sighting.Timestamp >= record.FirstSeen &&
-                sighting.Timestamp <= record.LastSeen &&
+            var matchingIds = (await new SightingManager(context).ListAsync(sighting =>
                 sighting.Flight.Airline != null &&
                 (sighting.Flight.Airline.Name.Contains(airline) ||
                  sighting.Flight.Airline.IATA.Contains(airline) ||
-                 sighting.Flight.Airline.ICAO.Contains(airline))));
+                 sighting.Flight.Airline.ICAO.Contains(airline))))
+                .Select(sighting => sighting.Id)
+                .ToArray();
+            query = query.Where(record => matchingIds.Contains(record.Id));
         }
 
         if (!string.IsNullOrWhiteSpace(flightNumber))
         {
-            query = query.Where(record => context.Sightings.Any(sighting =>
-                sighting.Aircraft.Address == record.Address &&
-                sighting.Timestamp >= record.FirstSeen &&
-                sighting.Timestamp <= record.LastSeen &&
-                (sighting.Flight.IATA.Contains(flightNumber) || sighting.Flight.ICAO.Contains(flightNumber))));
+            var matchingIds = (await new SightingManager(context).ListAsync(sighting =>
+                    sighting.Flight.IATA.Contains(flightNumber) || sighting.Flight.ICAO.Contains(flightNumber)))
+                .Select(sighting => sighting.Id)
+                .ToArray();
+            query = query.Where(record => matchingIds.Contains(record.Id));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -560,23 +561,15 @@ public sealed class TrackingSessionQueryService : ITrackingSessionQueryService
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        // Select the closest sighting inside the session as the best available flight association.
-        var flightInfo = await context.Sightings
-            .AsNoTracking()
-            .Where(sighting =>
-                sighting.Aircraft.Address == record.Address &&
-                sighting.Timestamp >= record.FirstSeen &&
-                sighting.Timestamp <= record.LastSeen)
-            .OrderBy(sighting => sighting.Timestamp)
-            .Select(sighting => new
-            {
-                FlightIata = sighting.Flight.IATA,
-                FlightIcao = sighting.Flight.ICAO,
-                sighting.Flight.Embarkation,
-                sighting.Flight.Destination,
-                AirlineName = sighting.Flight.Airline == null ? string.Empty : sighting.Flight.Airline.Name
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+        var sighting = await new SightingManager(context).GetAsync(item => item.Id == trackingRecordId);
+        var flightInfo = sighting == null ? null : new
+        {
+            FlightIata = sighting.Flight.IATA,
+            FlightIcao = sighting.Flight.ICAO,
+            sighting.Flight.Embarkation,
+            sighting.Flight.Destination,
+            AirlineName = sighting.Flight.Airline == null ? string.Empty : sighting.Flight.Airline.Name
+        };
 
         return new TrackingSessionDetailDto
         {

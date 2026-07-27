@@ -344,7 +344,6 @@ namespace BaseStationReader.Data.Migrations
             modelBuilder.Entity("BaseStationReader.Entities.Api.Sighting", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasColumnName("Id");
 
@@ -366,7 +365,7 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasIndex("FlightId");
 
-                    b.ToTable("SIGHTING", (string)null);
+                    b.ToView("SIGHTING", (string)null);
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
@@ -689,13 +688,11 @@ namespace BaseStationReader.Data.Migrations
                     b.HasOne("BaseStationReader.Entities.Api.Aircraft", "Aircraft")
                         .WithMany()
                         .HasForeignKey("AircraftId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("BaseStationReader.Entities.Api.Flight", "Flight")
                         .WithMany()
                         .HasForeignKey("FlightId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Aircraft");

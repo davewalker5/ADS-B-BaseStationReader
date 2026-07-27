@@ -94,12 +94,6 @@ namespace BaseStationReader.Lookup
                     await new ImportHandler(settings, parser, logger, factory).HandleAircraftImportAsync();
                 }
 
-                // Resolve locally known tracked aircraft and flights and create sightings for them
-                if (parser.IsPresent(CommandLineOptionType.CreateSightings))
-                {
-                    await new SightingCreationHandler(settings, parser, logger, factory, apiFactory).HandleAsync();
-                }
-
                 // Look up and tabulate an aircraft using its ICAO address
                 if (parser.IsPresent(CommandLineOptionType.Aircraft))
                 {

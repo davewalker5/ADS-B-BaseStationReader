@@ -285,22 +285,20 @@ namespace BaseStationReader.Data
 
             modelBuilder.Entity<Sighting>(entity =>
             {
-                entity.ToTable("SIGHTING");
+                entity.ToView("SIGHTING");
 
-                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedNever();
                 entity.Property(e => e.AircraftId).IsRequired().HasColumnName("AircraftId");
                 entity.Property(e => e.FlightId).IsRequired().HasColumnName("FlightId");
                 entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
 
                 entity.HasOne(e => e.Aircraft)
                     .WithMany()
-                    .HasForeignKey(e => e.AircraftId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .HasForeignKey(e => e.AircraftId);
 
                 entity.HasOne(e => e.Flight)
                     .WithMany()
-                    .HasForeignKey(e => e.FlightId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .HasForeignKey(e => e.FlightId);
             });
 
             modelBuilder.Entity<ExcludedAddress>(entity =>

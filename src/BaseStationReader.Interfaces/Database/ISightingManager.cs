@@ -7,6 +7,5 @@ namespace BaseStationReader.Interfaces.Database
     {
         Task<Sighting> GetAsync(Expression<Func<Sighting, bool>> predicate);
         Task<List<Sighting>> ListAsync(Expression<Func<Sighting, bool>> predicate);
-        Task<Sighting> AddAsync(int aircraftId, int flightId, DateTime timestamp);
     }
 }

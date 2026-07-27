@@ -2,6 +2,9 @@ using BaseStationReader.Data;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Entities.Tracking;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -26,23 +29,31 @@ namespace BaseStationReader.Tests.Database
         private ISightingManager _manager = null;
         private Aircraft _aircraft;
         private Flight _flight;
+        private BaseStationReaderDbContext _context;
+        private SqliteConnection _connection;
 
         [TestInitialize]
         public async Task InitialiseAsync()
         {
             // Create a context and a sighting management class to test
-            BaseStationReaderDbContext context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-            _manager = new SightingManager(context);
+            _connection = new SqliteConnection("Data Source=:memory:");
+            await _connection.OpenAsync();
+            var options = new DbContextOptionsBuilder<BaseStationReaderDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            _context = new BaseStationReaderDbContext(options);
+            await _context.Database.MigrateAsync();
+            _manager = new SightingManager(_context);
 
             // Set up a manufacturer, an aircraft model and an aircraft
             int age = DateTime.Now.Year - Manufactured;
-            var manufacturer = await new ManufacturerManager(context).AddAsync(Manufacturer);
-            var model = await new ModelManager(context).AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
-            _aircraft = await new AircraftManager(context).AddAsync(Address, Registration, Manufactured, age, model.Id);
+            var manufacturer = await new ManufacturerManager(_context).AddAsync(Manufacturer);
+            var model = await new ModelManager(_context).AddAsync(ModelIATA, ModelICAO, ModelName, manufacturer.Id);
+            _aircraft = await new AircraftManager(_context).AddAsync(Address, Registration, Manufactured, age, model.Id);
 
             // Set up an airline and a flight
-            var airline = await new AirlineManager(context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
-            var airportManager = new AirportManager(context);
+            var airline = await new AirlineManager(_context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            var airportManager = new AirportManager(_context);
             var origin = await airportManager.AddAsync(new Airport
             {
                 IATA = Embarkation, ICAO = "EGLL", Name = "London Heathrow", ProvenanceId = airline.ProvenanceId
@@ -51,41 +62,44 @@ namespace BaseStationReader.Tests.Database
             {
                 IATA = Destination, ICAO = "KEWR", Name = "Newark", ProvenanceId = airline.ProvenanceId
             });
-            _flight = await new FlightManager(context).AddAsync(
+            _flight = await new FlightManager(_context).AddAsync(
                 FlightIATA, FlightICAO, FlightICAO, airline.Id, origin.Id, destination.Id);
-        }
 
-        [TestMethod]
-        public async Task AddTestAsync()
-        {
-            var timestamp = DateTime.Today;
-            var sighting = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
-            Assert.AreEqual(_aircraft.Id, sighting.AircraftId);
-            Assert.AreEqual(_flight.Id, sighting.FlightId);
-            Assert.AreEqual(timestamp, sighting.Timestamp);
+            await _context.TrackedAircraft.AddAsync(new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = FlightICAO,
+                FirstSeen = DateTime.Today,
+                LastSeen = DateTime.Today.AddMinutes(1),
+                Status = TrackingStatus.Locked
+            });
+            await _context.SaveChangesAsync();
         }
 
         [TestMethod]
         public async Task GetTestAsync()
         {
-            var timestamp = DateTime.Today;
-            var sighting = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
-            var retrieved = await _manager.GetAsync(x => x.Id == sighting.Id);
+            var retrieved = await _manager.GetAsync(x => x.AircraftId == _aircraft.Id);
             Assert.AreEqual(_aircraft.Id, retrieved.AircraftId);
             Assert.AreEqual(_flight.Id, retrieved.FlightId);
-            Assert.AreEqual(timestamp, retrieved.Timestamp);
+            Assert.AreEqual(DateTime.Today, retrieved.Timestamp);
         }
 
         [TestMethod]
         public async Task ListTestAsync()
         {
-            var timestamp = DateTime.Today;
-            _ = await _manager.AddAsync(_aircraft.Id, _flight.Id, timestamp);
             var sightings = await _manager.ListAsync(x => true);
             Assert.HasCount(1, sightings);
             Assert.AreEqual(_aircraft.Id, sightings[0].AircraftId);
             Assert.AreEqual(_flight.Id, sightings[0].FlightId);
-            Assert.AreEqual(timestamp, sightings[0].Timestamp);
+            Assert.AreEqual(DateTime.Today, sightings[0].Timestamp);
+        }
+
+        [TestCleanup]
+        public async Task CleanupAsync()
+        {
+            await _context.DisposeAsync();
+            await _connection.DisposeAsync();
         }
     }
 }
