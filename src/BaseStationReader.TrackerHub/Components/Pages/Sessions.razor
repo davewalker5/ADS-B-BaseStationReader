@@ -1,5 +1,6 @@
 @page "/history/sessions"
 @inject ITrackingSessionQueryService QueryService
+@inject ITrackingControlService TrackingControl
 @inject Microsoft.Extensions.Options.IOptions<DatabaseBrowserOptions> DatabaseConfiguration
 
 <PageTitle>Sessions · Tracking Database · ADS-B Tracker</PageTitle>
@@ -70,17 +71,18 @@
                     <th>Included behaviours</th>
                     <th class="session-notes-heading">Notes</th>
                     <th class="session-analysis-heading">Analysis</th>
+                    <th class="session-edit-heading">Edit</th>
                     <th class="session-records-heading">Tracking Records</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="14" class="table-empty">Loading sessions…</td></tr>
+                    <tr><td colspan="15" class="table-empty">Loading sessions…</td></tr>
                 }
                 else if (_result.Items.Count == 0)
                 {
-                    <tr><td colspan="14" class="table-empty">No sessions match these filters.</td></tr>
+                    <tr><td colspan="15" class="table-empty">No sessions match these filters.</td></tr>
                 }
                 else
                 {
@@ -115,6 +117,24 @@
                                         @onclick="() => ShowAnalysisAsync(session)">
                                     <span aria-hidden="true">📊</span>
                                 </button>
+                            </td>
+                            <td class="session-edit-action">
+                                @if (TrackingControl.IsTracking)
+                                {
+                                    <button class="edit-button" type="button" disabled
+                                            title="Session editing is unavailable while a session is active"
+                                            aria-label="Session editing unavailable">
+                                        <span aria-hidden="true">✏️</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <a class="edit-button" href="@SessionEditorUrl(session)"
+                                       title="Edit session"
+                                       aria-label="Edit session started @FormatDateTime(session.StartedAtUtc)">
+                                        <span aria-hidden="true">✏️</span>
+                                    </a>
+                                }
                             </td>
                             <td class="session-records-action">
                                 <a class="row-link" href="@TrackingRecordsUrl(session)"
@@ -339,6 +359,9 @@
 
     private static string TrackingRecordsUrl(ObservationSessionDto session)
         => $"history?sessionId={session.SessionId}";
+
+    private static string SessionEditorUrl(ObservationSessionDto session)
+        => $"history/session-editor?sessionId={session.SessionId}";
 
     private void ShowNotes(ObservationSessionDto session)
     {

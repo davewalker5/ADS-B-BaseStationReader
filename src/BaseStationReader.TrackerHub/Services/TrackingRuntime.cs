@@ -98,6 +98,19 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         finally { _gate.Release(); }
     }
 
+    internal async Task ExecuteWhileIdleAsync(Func<Task> action, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        await _gate.WaitAsync(token);
+        try
+        {
+            if (IsTracking)
+                throw new InvalidOperationException("Sessions cannot be edited while a tracking session is active.");
+            await action();
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task FlushQueueAsync()
     {
         ITrackerController? controller;
