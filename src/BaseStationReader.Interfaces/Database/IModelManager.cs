@@ -11,5 +11,7 @@ namespace BaseStationReader.Interfaces.Database
         Task<Model> GetAsync(Expression<Func<Model, bool>> predicate);
         Task<List<Model>> ListAsync(Expression<Func<Model, bool>> predicate);
         Task<Model> AddAsync(string? iata, string? icao, string name, int manufacturerId, int provenanceId = 0);
+        Task<Model> UpdateAsync(int id, string? iata, string? icao, string name, int manufacturerId, int provenanceId);
+        Task DeleteAsync(int id);
     }
 }
