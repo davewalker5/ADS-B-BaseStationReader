@@ -1,0 +1,269 @@
+@inject IModelReferenceService ModelService
+@inject IProvenanceService ProvenanceService
+@inject ITrackingControlService TrackingControl
+
+<section class="aircraft-panel">
+    <div class="aircraft-filter model-filter">
+        <label><span>Manufacturer name</span><InputText @bind-Value="_filterManufacturerName" /></label>
+        <label><span>Model name</span><InputText @bind-Value="_filterModelName" /></label>
+        <label><span>Model ICAO</span><InputText @bind-Value="_filterModelIcao" /></label>
+        <button class="primary-button" type="button" @onclick="FindAsync" disabled="@_loading">
+            @(_loading ? "Searching…" : "Find models")
+        </button>
+    </div>
+
+    <div class="table-wrap provenance-table-wrap aircraft-table-wrap">
+        <table>
+            <thead><tr><th>Manufacturer</th><th>Model</th><th>IATA</th><th>ICAO</th><th>Provenance</th><th>Delete</th></tr></thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="6" class="table-empty">Searching models…</td></tr>
+                }
+                else if (!_searchPerformed)
+                {
+                    <tr><td colspan="6" class="table-empty">Enter a manufacturer name, model name, or model ICAO code to search.</td></tr>
+                }
+                else if (_results.Count == 0)
+                {
+                    <tr><td colspan="6" class="table-empty">No models matched those filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var model in _results)
+                    {
+                        <tr class="@(model.Id == _editModel.Id ? "selected" : null)" tabindex="0"
+                            @onclick="() => Edit(model)" @onkeydown="args => SelectFromKeyboard(args, model)">
+                            <td>@model.Manufacturer?.Name</td>
+                            <td><strong>@model.Name</strong></td>
+                            <td>@model.IATA</td>
+                            <td>@model.ICAO</td>
+                            <td>@model.Provenance?.SourceRef</td>
+                            <td class="session-delete-action" @onclick:stopPropagation="true">
+                                <button class="session-delete-button" type="button"
+                                        disabled="@(TrackingControl.IsTracking || _saving)"
+                                        title="@(TrackingControl.IsTracking ? "Model deletion is unavailable while a session is active" : "Delete model")"
+                                        aria-label="Delete model @model.Name"
+                                        @onclick="() => ConfirmDelete(model)">
+                                    <span aria-hidden="true">🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="provenance-editor">
+        <div>
+            <h2>@(_editModel.Id == 0 ? "Add model" : "Edit model")</h2>
+            <p>@(_editModel.Id == 0 ? "Create a new aircraft model record." : $"Editing {_editModel.Name}.")</p>
+        </div>
+        <EditForm Model="_editModel" OnValidSubmit="SaveAsync" FormName="model-editor">
+            <DataAnnotationsValidator />
+            <div class="provenance-fields">
+                <label>
+                    <span>Manufacturer</span>
+                    <InputSelect @bind-Value="_editModel.ManufacturerId" disabled="@(!CanEdit)">
+                        <option value="0">Select a manufacturer</option>
+                        @foreach (var manufacturer in _manufacturers)
+                        {
+                            <option value="@manufacturer.Id">@manufacturer.Name</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label><span>Model name</span><InputText @bind-Value="_editModel.Name" disabled="@(!CanEdit)" /></label>
+                <label><span>IATA code</span><InputText @bind-Value="_editModel.IATA" disabled="@(!CanEdit)" /></label>
+                <label><span>ICAO code</span><InputText @bind-Value="_editModel.ICAO" disabled="@(!CanEdit)" /></label>
+                <label>
+                    <span>Provenance</span>
+                    <InputSelect @bind-Value="_editModel.ProvenanceId" disabled="@(!CanEdit)">
+                        <option value="0">Select provenance</option>
+                        @foreach (var provenance in _provenance)
+                        {
+                            <option value="@provenance.Id">@provenance.SourceRef - @provenance.Source</option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+            <ValidationSummary />
+            @if (_loadingReferences)
+            {
+                <p class="editor-read-only">Loading manufacturers and models…</p>
+            }
+            else if (TrackingControl.IsTracking)
+            {
+                <p class="editor-read-only">Models cannot be changed while a live tracking session is active.</p>
+            }
+            <div class="provenance-editor-actions">
+                <button class="primary-button" type="submit" disabled="@(!CanEdit)">Save model</button>
+                <button class="secondary-button" type="button" @onclick="Clear" disabled="@_saving">Clear</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@if (_deleteModel is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-model-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-model-title">Delete model?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_saving">×</button>
+            </header>
+            <p>This will permanently delete model <strong>@_deleteModel.Name</strong>.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Model deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_saving">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Deleting…" : "Delete model")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+@if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
+
+@code {
+#nullable enable
+    private string _filterManufacturerName = "";
+    private string _filterModelName = "";
+    private string _filterModelIcao = "";
+    private bool _loading;
+    private bool _loadingReferences = true;
+    private bool _saving;
+    private bool _searchPerformed;
+    private string? _error;
+    private string? _success;
+    private string? _deleteError;
+    private List<Manufacturer> _manufacturers = [];
+    private List<Model> _results = [];
+    private List<Provenance> _provenance = [];
+    private Model _editModel = new();
+    private Model? _deleteModel;
+    private bool CanEdit => !_loadingReferences && !_saving && !TrackingControl.IsTracking;
+    protected override async Task OnInitializedAsync()
+    {
+        try { await LoadReferencesAsync(); }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loadingReferences = false; }
+    }
+
+    private async Task LoadReferencesAsync()
+    {
+        var manufacturersTask = ModelService.ListManufacturersAsync();
+        var provenanceTask = ProvenanceService.ListAsync();
+        await Task.WhenAll(manufacturersTask, provenanceTask);
+        _manufacturers = (await manufacturersTask).OrderBy(x => x.Name).ToList();
+        _provenance = (await provenanceTask).OrderBy(x => x.SourceRef).ToList();
+    }
+
+    private async Task FindAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_filterManufacturerName) &&
+            string.IsNullOrWhiteSpace(_filterModelName) &&
+            string.IsNullOrWhiteSpace(_filterModelIcao))
+        {
+            _results = [];
+            _searchPerformed = false;
+            _error = "Enter a manufacturer name, model name, or model ICAO code before searching.";
+            _success = null;
+            return;
+        }
+
+        _loading = true; _searchPerformed = true; _error = null; _success = null;
+        try
+        {
+            _results = (await ModelService.FindAsync(
+                    _filterManufacturerName, _filterModelName, _filterModelIcao))
+                .OrderBy(x => x.Name).ToList();
+            Clear();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loading = false; }
+    }
+
+    private void Edit(Model model) => _editModel = Copy(model);
+    private void SelectFromKeyboard(KeyboardEventArgs args, Model model)
+    {
+        if (args.Key is "Enter" or " ") Edit(model);
+    }
+
+    private void Clear() => _editModel = new();
+
+    private async Task SaveAsync()
+    {
+        if (!CanEdit) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _editModel.Id == 0;
+            var saved = await ModelService.SaveAsync(_editModel);
+            await LoadReferencesAsync();
+            if (string.IsNullOrWhiteSpace(_filterManufacturerName) &&
+                string.IsNullOrWhiteSpace(_filterModelName) &&
+                string.IsNullOrWhiteSpace(_filterModelIcao))
+                _filterModelName = saved.Name;
+            await FindAsync();
+            _success = isNew ? "Model record added." : "Model record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void ConfirmDelete(Model model)
+    {
+        if (_saving || TrackingControl.IsTracking) return;
+        _deleteModel = Copy(model);
+        _deleteError = null;
+    }
+
+    private void CloseDelete()
+    {
+        if (_saving) return;
+        _deleteModel = null;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await ModelService.DeleteAsync(_deleteModel.Id);
+            _deleteModel = null;
+            await FindAsync();
+            _success = "Model record deleted.";
+        }
+        catch (Exception exception) { _deleteError = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
+    }
+
+    private static Model Copy(Model source) => new()
+    {
+        Id = source.Id,
+        Name = source.Name,
+        IATA = source.IATA,
+        ICAO = source.ICAO,
+        ManufacturerId = source.ManufacturerId,
+        ProvenanceId = source.ProvenanceId
+    };
+}

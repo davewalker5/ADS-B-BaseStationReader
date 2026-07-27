@@ -127,5 +127,25 @@ namespace BaseStationReader.Tests.Database
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
                 _manager.AddAsync("333", "A333", "Missing provenance", _manufacturer.Id, 999));
         }
+
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var model = await _manager.GetAsync(x => x.ICAO == ModelICAO);
+            var updated = await _manager.UpdateAsync(
+                model.Id, "333", "A333", "A330-300", _manufacturer.Id, model.ProvenanceId);
+
+            Assert.AreEqual("333", updated.IATA);
+            Assert.AreEqual("A333", updated.ICAO);
+            Assert.AreEqual("A330-300", updated.Name);
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var model = await _manager.GetAsync(x => x.ICAO == ModelICAO);
+            await _manager.DeleteAsync(model.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
     }
 }

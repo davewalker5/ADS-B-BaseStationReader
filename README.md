@@ -168,6 +168,7 @@ The **Reference Data** area provides tools for maintaining the locally curated i
   - Airports
   - Flights
   - Manufacturers
+  - Models
 
 The data management tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
 
