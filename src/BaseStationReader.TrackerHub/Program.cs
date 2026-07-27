@@ -163,6 +163,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<IReferenceLookupService, ReferenceLookupService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
                 builder.Services.AddScoped<IProvenanceService, ProvenanceService>();
+                builder.Services.AddScoped<IAircraftReferenceService, AircraftReferenceService>();
                 builder.Services.AddHttpClient<IMapboxStaticMapService, MapboxStaticMapService>(client =>
                     client.Timeout = TimeSpan.FromSeconds(30));
 

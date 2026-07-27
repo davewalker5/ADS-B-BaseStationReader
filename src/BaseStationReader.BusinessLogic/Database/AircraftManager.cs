@@ -97,5 +97,36 @@ namespace BaseStationReader.BusinessLogic.Database
 
             return aircraft;
         }
+
+        public async Task<Aircraft> UpdateAsync(int id, string address, string registration, int? manufactured, int? age, int modelId, int provenanceId)
+        {
+            var aircraft = await _context.Aircraft.FindAsync(id)
+                ?? throw new InvalidOperationException($"Aircraft record {id} does not exist.");
+
+            if (!await _context.Models.AnyAsync(x => x.Id == modelId))
+                throw new InvalidOperationException($"Aircraft model {modelId} does not exist.");
+            if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+                throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            if (await _context.Aircraft.AnyAsync(x => x.Id != id && x.Address == address))
+                throw new InvalidOperationException($"An aircraft with ICAO address '{address}' already exists.");
+
+            aircraft.Address = address;
+            aircraft.Registration = registration;
+            aircraft.Manufactured = manufactured;
+            aircraft.Age = age;
+            aircraft.ModelId = modelId;
+            aircraft.ProvenanceId = provenanceId;
+            await _context.SaveChangesAsync();
+
+            return await GetAsync(x => x.Id == id);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var aircraft = await _context.Aircraft.FindAsync(id)
+                ?? throw new InvalidOperationException($"Aircraft record {id} does not exist.");
+            _context.Aircraft.Remove(aircraft);
+            await _context.SaveChangesAsync();
+        }
     }
 }

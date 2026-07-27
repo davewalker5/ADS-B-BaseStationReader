@@ -95,5 +95,26 @@ namespace BaseStationReader.Tests.Database
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
                 _manager.AddAsync("ABC123", Registration, Manufactured, _age, _model.Id, 999));
         }
+
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var aircraft = await _manager.GetAsync(a => a.Address == Address);
+            var updated = await _manager.UpdateAsync(
+                aircraft.Id, "ABC123", "G-WXYZ", 2020, 6, _model.Id, aircraft.ProvenanceId);
+
+            Assert.AreEqual("ABC123", updated.Address);
+            Assert.AreEqual("G-WXYZ", updated.Registration);
+            Assert.AreEqual(2020, updated.Manufactured);
+            Assert.AreEqual(6, updated.Age);
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var aircraft = await _manager.GetAsync(a => a.Address == Address);
+            await _manager.DeleteAsync(aircraft.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
     }
 }
