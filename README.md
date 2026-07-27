@@ -163,8 +163,9 @@ The **Reference Data** area provides tools for maintaining the locally curated i
 - Import
 - Provenance
 - Aircraft
+- Airlines
 
-The **Aircraft** tab searches reference records by ICAO address or registration and supports manual addition, editing and confirmed deletion. Manufacturer selection filters the available models, and each aircraft is linked to the provenance record describing its source. Aircraft records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
+The **Aircraft** and **Airlines** tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
 
 This organisation reinforces the distinction between observed ADS-B data, transient contextual information and locally managed enrichment data.
 

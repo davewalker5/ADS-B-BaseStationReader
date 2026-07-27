@@ -492,6 +492,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .aircraft-filter label > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .aircraft-filter input, .provenance-fields select { width: 100%; height: 40px; padding: 8px 10px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; font: inherit; line-height: normal; }
 .aircraft-filter input:focus, .provenance-fields select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
+.airline-filter { grid-template-columns: 1fr 1fr 2fr auto; }
 .aircraft-table-wrap { max-height: 360px; }
 .editor-read-only { margin: 14px 0 0; color: #ffe4a3; font-size: 11px; }
 
@@ -533,6 +534,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .import-upload .primary-button { grid-column: 1 / -1; }
     .provenance-fields { grid-template-columns: 1fr 1fr; }
     .aircraft-filter { grid-template-columns: 1fr 1fr; }
+    .airline-filter { grid-template-columns: 1fr 1fr; }
     .aircraft-filter .primary-button { grid-column: 1 / -1; }
 }
 
@@ -557,6 +559,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .provenance-fields { grid-template-columns: 1fr; }
     .provenance-fields label.wide { grid-column: auto; }
     .aircraft-filter { grid-template-columns: 1fr; }
+    .airline-filter { grid-template-columns: 1fr; }
     .aircraft-filter .primary-button { grid-column: auto; }
     .plotly-path.scene { min-height: 540px; }
     .radar-tab-heading { align-items: stretch; flex-direction: column; }
