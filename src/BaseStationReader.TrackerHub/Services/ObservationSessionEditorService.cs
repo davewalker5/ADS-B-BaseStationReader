@@ -45,20 +45,12 @@ public sealed class ObservationSessionEditorService(
         string? notes,
         CancellationToken cancellationToken = default)
     {
-        var normalisedNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
-        if (normalisedNotes?.Length > 4000)
-            throw new ArgumentException("Session notes cannot exceed 4,000 characters.", nameof(notes));
-
         // The runtime gate prevents a tracking session from starting until this update completes.
         await runtime.ExecuteWhileIdleAsync(async () =>
         {
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-            var session = await context.ObservationSessions
-                .SingleOrDefaultAsync(item => item.Id == sessionId, cancellationToken)
-                ?? throw new InvalidOperationException("The selected session could not be found.");
-
-            session.Notes = normalisedNotes;
-            await context.SaveChangesAsync(cancellationToken);
+            var manager = new DatabaseManagementFactory(logger, context, 0).ObservationSessionManager;
+            await manager.UpdateAsync(sessionId, notes, cancellationToken);
         }, cancellationToken);
     }
 

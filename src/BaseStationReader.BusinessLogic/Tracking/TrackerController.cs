@@ -140,8 +140,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             if (_writer != null)
             {
                 _activeSession = CreateObservationSession();
-                await _context.ObservationSessions.AddAsync(_activeSession, token);
-                await _context.SaveChangesAsync(token);
+                await _factory.ObservationSessionManager.AddAsync(_activeSession, token);
             }
 
             // Attach the aircraft tracking event handlers

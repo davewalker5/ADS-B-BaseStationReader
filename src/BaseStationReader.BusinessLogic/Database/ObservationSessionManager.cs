@@ -1,4 +1,7 @@
+#nullable enable
+
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +14,48 @@ namespace BaseStationReader.BusinessLogic.Database
         public ObservationSessionManager(BaseStationReaderDbContext context)
         {
             _context = context;
+        }
+
+        /// <summary>
+        /// Add a new observation session
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task AddAsync(
+            ObservationSession session,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(session);
+
+            await _context.ObservationSessions.AddAsync(session, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Update the properties of an observation session
+        /// </summary>
+        /// <param name="sessionId"></param>
+        /// <param name="notes"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task UpdateAsync(
+            int sessionId,
+            string? notes,
+            CancellationToken cancellationToken = default)
+        {
+            var normalisedNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+            if (normalisedNotes?.Length > 4000)
+                throw new ArgumentException("Session notes cannot exceed 4,000 characters.", nameof(notes));
+
+            var session = await _context.ObservationSessions
+                .SingleOrDefaultAsync(item => item.Id == sessionId, cancellationToken)
+                ?? throw new InvalidOperationException("The selected session could not be found.");
+
+            session.Notes = normalisedNotes;
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>
