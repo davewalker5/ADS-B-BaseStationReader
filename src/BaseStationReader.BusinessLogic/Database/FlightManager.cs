@@ -61,8 +61,6 @@ namespace BaseStationReader.BusinessLogic.Database
                 throw new ArgumentException("A callsign is required.", nameof(callsign));
 
             callsign = callsign.Trim().ToUpperInvariant();
-            iata = iata?.Trim().ToUpperInvariant() ?? "";
-            icao = icao?.Trim().ToUpperInvariant() ?? "";
 
             if (provenanceId == 0)
             {
