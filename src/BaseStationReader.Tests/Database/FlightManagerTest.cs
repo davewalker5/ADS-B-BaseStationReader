@@ -110,5 +110,26 @@ namespace BaseStationReader.Tests.Database
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
                 _manager.AddAsync("BA186", "BAW186", "BAW186A", _airline.Id, _origin.Id, _destination.Id, 999));
         }
+
+        [TestMethod]
+        public async Task UpdateTestAsync()
+        {
+            var flight = await _manager.GetAsync(x => x.Callsign == Callsign);
+            var updated = await _manager.UpdateAsync(
+                flight.Id, "BA186", "BAW186", "BAW186A", _airline.Id,
+                _origin.Id, _destination.Id, flight.ProvenanceId);
+
+            Assert.AreEqual("BA186", updated.IATA);
+            Assert.AreEqual("BAW186", updated.ICAO);
+            Assert.AreEqual("BAW186A", updated.Callsign);
+        }
+
+        [TestMethod]
+        public async Task DeleteTestAsync()
+        {
+            var flight = await _manager.GetAsync(x => x.Callsign == Callsign);
+            await _manager.DeleteAsync(flight.Id);
+            Assert.IsEmpty(await _manager.ListAsync(x => true));
+        }
     }
 }

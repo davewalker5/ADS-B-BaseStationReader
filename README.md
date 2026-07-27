@@ -165,8 +165,9 @@ The **Reference Data** area provides tools for maintaining the locally curated i
 - Aircraft
 - Airlines
 - Airports
+- Flights
 
-The **Aircraft**, **Airlines** and **Airports** tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
+The **Aircraft**, **Airlines**, **Airports** and **Flights** tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
 
 This organisation reinforces the distinction between observed ADS-B data, transient contextual information and locally managed enrichment data.
 

@@ -18,5 +18,17 @@ namespace BaseStationReader.Interfaces.Database
             int provenanceId = 0,
             string embarkation = "",
             string destination = "");
+
+        Task<Flight> UpdateAsync(
+            int id,
+            string iata,
+            string icao,
+            string callsign,
+            int airlineId,
+            int originAirportId,
+            int destinationAirportId,
+            int provenanceId);
+
+        Task DeleteAsync(int id);
     }
 }
