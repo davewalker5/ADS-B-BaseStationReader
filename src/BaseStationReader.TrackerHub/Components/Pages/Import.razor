@@ -27,6 +27,8 @@
             class="@(_activeTab == ReferenceTab.Airlines ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Airlines)">Airlines</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Airports)"
             class="@(_activeTab == ReferenceTab.Airports ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Airports)">Airports</button>
+    <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Flights)"
+            class="@(_activeTab == ReferenceTab.Flights ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Flights)">Flights</button>
 </div>
 
 @if (_activeTab == ReferenceTab.Import)
@@ -237,9 +239,13 @@ else if (_activeTab == ReferenceTab.Airlines)
 {
     <AirlineEditor />
 }
-else
+else if (_activeTab == ReferenceTab.Airports)
 {
     <AirportEditor />
+}
+else
+{
+    <FlightEditor />
 }
 
 @if (_deleteAircraft is not null)
@@ -523,5 +529,5 @@ else
         string.IsNullOrWhiteSpace(model.ICAO) ? model.Name : $"{model.ICAO} - {model.Name}";
     private static string FormatSize(long bytes) => bytes < 1024 * 1024 ? $"{Math.Max(1, bytes / 1024d):0.#} KB" : $"{bytes / 1024d / 1024d:0.#} MB";
     private sealed record ImportOption(DataImportType Type, string Name, string Description);
-    private enum ReferenceTab { Import, Provenance, Aircraft, Airlines, Airports }
+    private enum ReferenceTab { Import, Provenance, Aircraft, Airlines, Airports, Flights }
 }

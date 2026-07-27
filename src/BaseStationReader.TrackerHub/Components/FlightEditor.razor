@@ -1,0 +1,302 @@
+@inject IFlightReferenceService FlightService
+@inject IProvenanceService ProvenanceService
+@inject ITrackingControlService TrackingControl
+
+<section class="aircraft-panel">
+    <div class="aircraft-filter airline-filter">
+        <label><span>Callsign</span><InputText @bind-Value="_callsign" /></label>
+        <label><span>Flight IATA</span><InputText @bind-Value="_iata" /></label>
+        <label><span>Flight ICAO</span><InputText @bind-Value="_icao" /></label>
+        <button class="primary-button" type="button" @onclick="FindAsync" disabled="@_loading">
+            @(_loading ? "Searching…" : "Find flights")
+        </button>
+    </div>
+
+    <div class="table-wrap provenance-table-wrap aircraft-table-wrap">
+        <table>
+            <thead><tr><th>Callsign</th><th>IATA</th><th>ICAO</th><th>Airline</th><th>Origin</th><th>Destination</th><th>Provenance</th><th>Delete</th></tr></thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="8" class="table-empty">Searching flights…</td></tr>
+                }
+                else if (!_searchPerformed)
+                {
+                    <tr><td colspan="8" class="table-empty">Enter a callsign, flight IATA code, or flight ICAO code to find flights.</td></tr>
+                }
+                else if (_flights.Count == 0)
+                {
+                    <tr><td colspan="8" class="table-empty">No flights matched those filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var flight in _flights)
+                    {
+                        <tr class="@(flight.Id == _editModel.Id ? "selected" : null)" tabindex="0"
+                            @onclick="() => Edit(flight)" @onkeydown="args => SelectFromKeyboard(args, flight)">
+                            <td><strong>@flight.Callsign</strong></td>
+                            <td>@flight.IATA</td>
+                            <td>@flight.ICAO</td>
+                            <td>@flight.Airline?.Name</td>
+                            <td>@AirportCode(flight.OriginAirport)</td>
+                            <td>@AirportCode(flight.DestinationAirport)</td>
+                            <td>@flight.Provenance?.SourceRef</td>
+                            <td class="session-delete-action" @onclick:stopPropagation="true">
+                                <button class="session-delete-button" type="button"
+                                        disabled="@(TrackingControl.IsTracking || _saving)"
+                                        title="@(TrackingControl.IsTracking ? "Flight deletion is unavailable while a session is active" : "Delete flight")"
+                                        aria-label="Delete flight @flight.Callsign"
+                                        @onclick="() => ConfirmDelete(flight)">
+                                    <span aria-hidden="true">🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="provenance-editor">
+        <div>
+            <h2>@(_editModel.Id == 0 ? "Add flight" : "Edit flight")</h2>
+            <p>@(_editModel.Id == 0 ? "Create a new flight reference record." : $"Editing {_editModel.Callsign}.")</p>
+        </div>
+        <EditForm Model="_editModel" OnValidSubmit="SaveAsync" FormName="flight-editor">
+            <DataAnnotationsValidator />
+            <div class="provenance-fields">
+                <label><span>Callsign</span><InputText @bind-Value="_editModel.Callsign" disabled="@(!CanEdit)" /></label>
+                <label><span>Flight IATA</span><InputText @bind-Value="_editModel.IATA" disabled="@(!CanEdit)" /></label>
+                <label><span>Flight ICAO</span><InputText @bind-Value="_editModel.ICAO" disabled="@(!CanEdit)" /></label>
+                <label>
+                    <span>Airline</span>
+                    <InputSelect @bind-Value="_editModel.AirlineId" disabled="@(!CanEdit)">
+                        <option value="0">Select an airline</option>
+                        @foreach (var airline in _airlines)
+                        {
+                            <option value="@airline.Id">@AirlineLabel(airline)</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    <span>Origin airport</span>
+                    <InputSelect @bind-Value="_editModel.OriginAirportId" disabled="@(!CanEdit)">
+                        <option value="0">Select an origin</option>
+                        @foreach (var airport in _airports)
+                        {
+                            <option value="@airport.Id">@AirportLabel(airport)</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    <span>Destination airport</span>
+                    <InputSelect @bind-Value="_editModel.DestinationAirportId" disabled="@(!CanEdit)">
+                        <option value="0">Select a destination</option>
+                        @foreach (var airport in _airports)
+                        {
+                            <option value="@airport.Id">@AirportLabel(airport)</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    <span>Provenance</span>
+                    <InputSelect @bind-Value="_editModel.ProvenanceId" disabled="@(!CanEdit)">
+                        <option value="0">Select provenance</option>
+                        @foreach (var provenance in _provenance)
+                        {
+                            <option value="@provenance.Id">@provenance.SourceRef - @provenance.Source</option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+            <ValidationSummary />
+            @if (_loadingReferences)
+            {
+                <p class="editor-read-only">Loading airlines and airports…</p>
+            }
+            else if (TrackingControl.IsTracking)
+            {
+                <p class="editor-read-only">Flights cannot be changed while a live tracking session is active.</p>
+            }
+            <div class="provenance-editor-actions">
+                <button class="primary-button" type="submit" disabled="@(!CanEdit)">Save flight</button>
+                <button class="secondary-button" type="button" @onclick="Clear" disabled="@_saving">Clear</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@if (_deleteModel is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDelete">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-flight-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="delete-flight-title">Delete flight?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close delete confirmation"
+                        autofocus @onclick="CloseDelete" disabled="@_saving">×</button>
+            </header>
+            <p>This will permanently delete flight <strong>@_deleteModel.Callsign</strong>.</p>
+            @if (_deleteError is not null)
+            {
+                <div class="alert" role="alert"><strong>Flight deletion failed</strong><span>@_deleteError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_saving">Cancel</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync"
+                        disabled="@(_saving || TrackingControl.IsTracking)">
+                    @(_saving ? "Deleting…" : "Delete flight")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+@if (_success is not null) { <div class="import-success" role="status"><strong>Complete</strong><span>@_success</span></div> }
+
+@code {
+#nullable enable
+    private string _callsign = "";
+    private string _iata = "";
+    private string _icao = "";
+    private bool _loading;
+    private bool _loadingReferences = true;
+    private bool _saving;
+    private bool _searchPerformed;
+    private string? _error;
+    private string? _success;
+    private string? _deleteError;
+    private List<Flight> _flights = [];
+    private List<Airline> _airlines = [];
+    private List<Airport> _airports = [];
+    private List<Provenance> _provenance = [];
+    private Flight _editModel = new();
+    private Flight? _deleteModel;
+    private bool CanEdit => !_loadingReferences && !_saving && !TrackingControl.IsTracking;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var airlinesTask = FlightService.ListAirlinesAsync();
+            var airportsTask = FlightService.ListAirportsAsync();
+            var provenanceTask = ProvenanceService.ListAsync();
+            await Task.WhenAll(airlinesTask, airportsTask, provenanceTask);
+            _airlines = (await airlinesTask).OrderBy(x => x.Name).ToList();
+            _airports = (await airportsTask).OrderBy(x => x.Name).ToList();
+            _provenance = (await provenanceTask).OrderBy(x => x.SourceRef).ToList();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loadingReferences = false; }
+    }
+
+    private async Task FindAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_callsign) &&
+            string.IsNullOrWhiteSpace(_iata) &&
+            string.IsNullOrWhiteSpace(_icao))
+        {
+            _flights = [];
+            _searchPerformed = false;
+            _error = "Enter a callsign, flight IATA code, or flight ICAO code before searching.";
+            _success = null;
+            return;
+        }
+
+        _loading = true; _searchPerformed = true; _error = null; _success = null;
+        try
+        {
+            _flights = (await FlightService.FindAsync(_callsign, _iata, _icao))
+                .OrderBy(x => x.Callsign).ToList();
+            Clear();
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _loading = false; }
+    }
+
+    private void Edit(Flight flight) => _editModel = Copy(flight);
+    private void SelectFromKeyboard(KeyboardEventArgs args, Flight flight)
+    {
+        if (args.Key is "Enter" or " ") Edit(flight);
+    }
+
+    private void Clear() => _editModel = new();
+
+    private async Task SaveAsync()
+    {
+        if (!CanEdit) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            var isNew = _editModel.Id == 0;
+            var saved = await FlightService.SaveAsync(_editModel);
+            if (string.IsNullOrWhiteSpace(_callsign) &&
+                string.IsNullOrWhiteSpace(_iata) &&
+                string.IsNullOrWhiteSpace(_icao))
+                _callsign = saved.Callsign;
+            await FindAsync();
+            _success = isNew ? "Flight record added." : "Flight record updated.";
+        }
+        catch (Exception exception) { _error = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void ConfirmDelete(Flight flight)
+    {
+        if (_saving || TrackingControl.IsTracking) return;
+        _deleteModel = Copy(flight);
+        _deleteError = null;
+    }
+
+    private void CloseDelete()
+    {
+        if (_saving) return;
+        _deleteModel = null;
+        _deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        _saving = true; _error = null; _success = null;
+        try
+        {
+            await FlightService.DeleteAsync(_deleteModel.Id);
+            _deleteModel = null;
+            await FindAsync();
+            _success = "Flight record deleted.";
+        }
+        catch (Exception exception) { _deleteError = exception.Message; }
+        finally { _saving = false; }
+    }
+
+    private void HandleDeleteKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") CloseDelete();
+    }
+
+    private static Flight Copy(Flight source) => new()
+    {
+        Id = source.Id,
+        IATA = source.IATA,
+        ICAO = source.ICAO,
+        Callsign = source.Callsign,
+        AirlineId = source.AirlineId,
+        OriginAirportId = source.OriginAirportId,
+        DestinationAirportId = source.DestinationAirportId,
+        ProvenanceId = source.ProvenanceId
+    };
+
+    private static string AirlineLabel(Airline airline)
+        => $"{airline.IATA} / {airline.ICAO} - {airline.Name}";
+
+    private static string AirportLabel(Airport airport)
+        => $"{airport.IATA} / {airport.ICAO} - {airport.Name}";
+
+    private static string AirportCode(Airport? airport)
+        => airport is null ? "" : !string.IsNullOrWhiteSpace(airport.IATA) ? airport.IATA : airport.ICAO;
+}
