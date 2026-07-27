@@ -12,7 +12,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.AddExcludedCallsign, false, "--exclude-callsign", "-exc", "Add a callsign to the excluded callsigns list", 1, 1);
             Add(CommandLineOptionType.Aircraft, false, "--aircraft", "-a", "Look up an aircraft by ICAO address", 1, 1);
             Add(CommandLineOptionType.AircraftApi, false, "--aircraft-api", "-aapi", "Specify the name of an API to use for aircraft lookups", 1, 1);
-            Add(CommandLineOptionType.CreateSightings, false, "--create-sightings", "-cs", "Create sightings for tracked aircraft and flights using local reference data", 0, 0);
             Add(CommandLineOptionType.AirportSchedule, false, "--airport-schedule", "-as", "Look up and tabulate schedule information for an airport", 1, 3);
             Add(CommandLineOptionType.Flight, false, "--flight", "-f", "Look up a flight by callsign", 1, 1);
             Add(CommandLineOptionType.FlightApi, false, "--flight-api", "-fapi", "Specify the name of an API to use for flight lookups", 1, 1);

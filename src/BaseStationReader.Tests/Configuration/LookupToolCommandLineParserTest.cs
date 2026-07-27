@@ -38,21 +38,6 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         /// <summary>
-        /// Verify the sighting creation command accepts its long and short forms without a value.
-        /// </summary>
-        [TestMethod]
-        [DataRow("--create-sightings")]
-        [DataRow("-cs")]
-        public void CreateSightingsOptionTest(string option)
-        {
-            var parser = new LookupToolCommandLineParser(null);
-            parser.Parse([option]);
-
-            Assert.IsTrue(parser.IsPresent(CommandLineOptionType.CreateSightings));
-            Assert.IsEmpty(parser.GetValues(CommandLineOptionType.CreateSightings));
-        }
-
-        /// <summary>
         /// Verifies that aircraft lookup accepts an ICAO address in its long and short forms.
         /// </summary>
         [TestMethod]

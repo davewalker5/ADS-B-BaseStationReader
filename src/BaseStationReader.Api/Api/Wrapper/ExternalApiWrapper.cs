@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Logging;
@@ -10,8 +9,6 @@ namespace BaseStationReader.Api.Wrapper
 {
     internal class ExternalApiWrapper : IExternalApiWrapper
     {
-        private static readonly Regex _addressRegex = new(@"^[A-Za-z0-9]{6}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
         private readonly IExternalApiRegister _register;
         private readonly IDatabaseManagementFactory _factory;
         private readonly IAircraftLookupManager _aircraftLookupManager;
@@ -87,72 +84,6 @@ namespace BaseStationReader.Api.Wrapper
             return string.IsNullOrWhiteSpace(trackedAircraft.Address)
                 ? null
                 : await _flightLookupManager.IdentifyFlightAsync(trackedAircraft, null, null, true);
-        }
-
-        /// <summary>
-        /// Lookup a flight and aircraft given a 24-bit aircraft ICAO address and filtering parameters
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task<LookupResult> LookupAsync(ApiLookupRequest request)
-        {
-            var departureAirports = request.DepartureAirportCodes != null ? string.Join(", ", request.DepartureAirportCodes) : "";
-            var arrivalAirports = request.ArrivalAirportCodes != null ? string.Join(", ", request.ArrivalAirportCodes) : "";
-
-            _factory.Logger.LogMessage(Severity.Info,
-                $"Attempting lookup: " +
-                $"Aircraft Address = {request.AircraftAddress}, " +
-                $"Departure Airports = {departureAirports}, " +
-                $"Arrival Airports = {arrivalAirports}, " +
-                $"Create Sighting = {request.CreateSighting}");
-
-            // Check the address matches the 24-bit ICAO address pattern
-            if (!_addressRegex.IsMatch(request.AircraftAddress))
-            {
-                _factory.Logger.LogMessage(Severity.Warning, $"'{request.AircraftAddress}' is not a valid aircraft address");
-                return new(false, false);
-            }
-
-            // See if the aircraft is a valid candidate for lookup - the retrieval accounts for exclusions
-            var trackedAircraft = await _factory.TrackedAircraftWriter.GetSightingCreationCandidateAsync(request.AircraftAddress);
-            if (trackedAircraft == null)
-            {
-                // As we didn't find a tracked aircraft record, there's no point attempting to update the lookup properties
-                // but requeues are allowed in case the tracked aircraft record hasn't been written yet
-                _factory.Logger.LogMessage(Severity.Warning, $"'{request.AircraftAddress}' is not a candidate for lookup");
-                return new(false, true);
-            }
-
-            // Lookup the aircraft
-            var aircraft = await _aircraftLookupManager.IdentifyAircraftAsync(
-                request.AircraftAddress,
-                request.AllowExternalApiLookup);
-            if (aircraft == null)
-            {
-                return new(false, false);
-            }
-
-            // Lookup the flight
-            var flight = await _flightLookupManager.IdentifyFlightAsync(
-                trackedAircraft,
-                request.DepartureAirportCodes,
-                request.ArrivalAirportCodes,
-                request.AllowExternalApiLookup);
-            if (flight == null)
-            {
-                // If the callsign is blank, the aircraft may become eligible for lookup if the callsign is subsequently
-                // filled in, so allow requeues. Otherwise, the exclusion is more permanent so don't allow requeues
-                var allowRequeue = string.IsNullOrEmpty(trackedAircraft?.Callsign);
-                return new(false, allowRequeue);
-            }
-
-            // We have both an aircraft and a flight - if required, create a sighting
-            if (request.CreateSighting && aircraft.Id > 0 && flight.Id > 0)
-            {
-                _ = await _factory.SightingManager.AddAsync(aircraft.Id, flight.Id, trackedAircraft.FirstSeen);
-            }
-
-            return new(true, false);
         }
 
         /// <summary>

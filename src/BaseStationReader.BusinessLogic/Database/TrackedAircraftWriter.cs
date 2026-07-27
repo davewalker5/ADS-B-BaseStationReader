@@ -32,18 +32,6 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
-        /// Return the lookup candidate with the specified address
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        public async Task<TrackedAircraft> GetSightingCreationCandidateAsync(string address)
-        {
-            var candidates = await ListSightingCreationCandidatesAsync();
-            var aircraft = candidates.FirstOrDefault(x => x.Address == address);
-            return aircraft;
-        }
-
-        /// <summary>
         /// List all aircraft matching the specified criteria, most recent first
         /// </summary>
         /// <param name="predicate"></param>
@@ -53,27 +41,6 @@ namespace BaseStationReader.BusinessLogic.Database
                              .Where(predicate)
                              .OrderByDescending(x => x.LastSeen)
                              .ToListAsync();
-
-        /// <summary>
-        /// Return tracked aircraft for which a sighting has not already been created
-        /// </summary>
-        /// <returns></returns>
-        public async Task<List<TrackedAircraft>> ListSightingCreationCandidatesAsync()
-        {
-            // Get an initial list of candidates for sighting creation
-            var eligibilityPredicate = EligibleForSightingCreation();
-            var aircraft = await ListAsync(eligibilityPredicate);
-
-            // Get a list of excluded aircraft addresses and remove them from the list
-            var excludedAddresses = await _context.ExcludedAddresses.Select(x => x.Address).ToListAsync();
-            aircraft.RemoveAll(x => excludedAddresses.Contains(x.Address));
-
-            // Get a list of excluded callsigns and remove them from the list
-            var excludedCallsigns = await _context.ExcludedCallsigns.Select(x => x.Callsign).ToListAsync();
-            aircraft.RemoveAll(x => excludedCallsigns.Contains(x.Callsign));
-
-            return aircraft;
-        }
 
         /// <summary>
         /// Write an aircraft to the database, either creating a new record or updating an existing one
@@ -125,31 +92,5 @@ namespace BaseStationReader.BusinessLogic.Database
             }
         }
 
-        /// <summary>
-        /// Define a predicate for filtering a collection of tracked aircraft records to identify those
-        /// that are eligible for lookup:
-        /// 
-        /// 1. The address is populated
-        /// 2. The callsign is populated
-        /// 3. A sighting has not already been created for the aircraft, flight and tracking time
-        /// 4. The record isn't locked
-        /// 
-        /// The locking state criterion is necessary as it ensures a given aircraft address is unique in
-        /// the returned results (an aircraft can only appear once in a non-locked state but may occur
-        /// multiple times in a locked state, from multiple sessions).
-        /// </summary>
-        /// <returns></returns>
-        private Expression<Func<TrackedAircraft, bool>> EligibleForSightingCreation()
-        {
-            return x =>
-                !string.IsNullOrEmpty(x.Address) &&
-                (x.Address != "000000") &&
-                !string.IsNullOrEmpty(x.Callsign) &&
-                !_context.Sightings.Any(sighting =>
-                    sighting.Timestamp == x.FirstSeen &&
-                    sighting.Aircraft.Address == x.Address &&
-                    sighting.Flight.Callsign == x.Callsign) &&
-                (x.Status != TrackingStatus.Locked);
-        }
     }
 }

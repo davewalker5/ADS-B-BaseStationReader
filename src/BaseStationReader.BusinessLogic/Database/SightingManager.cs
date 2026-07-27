@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Database;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    internal class SightingManager : ISightingManager
+    public class SightingManager : ISightingManager
     {
         private readonly BaseStationReaderDbContext _context;
 
@@ -33,6 +33,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<List<Sighting>> ListAsync(Expression<Func<Sighting, bool>> predicate)
             => await _context.Sightings
+                .AsNoTracking()
                 .Where(predicate)
                 .Include(x => x.Aircraft)
                     .ThenInclude(x => x.Model)
@@ -41,40 +42,5 @@ namespace BaseStationReader.BusinessLogic.Database
                     .ThenInclude(x => x.Airline)
                 .ToListAsync();
 
-        /// <summary>
-        /// Add a sighting
-        /// </summary>
-        /// <param name="aircraftId"></param>
-        /// <param name="flightId"></param>
-        /// <param name="timestamp"></param>
-        /// <returns></returns>
-        public async Task<Sighting> AddAsync(int aircraftId, int flightId, DateTime timestamp)
-        {
-            // See if there's an existing sighting on this date for this aircraft and flight
-            var sighting = await GetAsync(x =>
-                (x.AircraftId == aircraftId) &&
-                (x.FlightId == flightId) &&
-                (x.Timestamp == timestamp));
-
-            if (sighting == null)
-            {
-                // No existing sighting, so create a new one
-                sighting = new Sighting
-                {
-                    AircraftId = aircraftId,
-                    FlightId = flightId,
-                    Timestamp = timestamp
-                };
-
-                // Save the sighting
-                await _context.Sightings.AddAsync(sighting);
-                await _context.SaveChangesAsync();
-
-                // Re-load to retrieve the associated entities
-                sighting = await GetAsync(x => x.Id == sighting.Id);
-            }
-
-            return sighting;
-        }
     }
 }

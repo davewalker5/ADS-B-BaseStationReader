@@ -145,46 +145,6 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
-        public async Task ExistingSightingIsNotReturnedAsCandidateTestAsync()
-        {
-            var tracked = await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
-            {
-                Address = Address,
-                Callsign = Callsign,
-                FirstSeen = FirstSeen,
-                LastSeen = LastSeen,
-                Status = TrackingStatus.Active
-            });
-
-            var candidates = await _factory.TrackedAircraftWriter.ListSightingCreationCandidatesAsync();
-            Assert.HasCount(1, candidates);
-
-            var aircraft = new Aircraft
-            {
-                Address = Address,
-                Registration = "G-TEST"
-            };
-            var flight = new Flight
-            {
-                Callsign = Callsign,
-                IATA = "BA486"
-            };
-            await _context.Aircraft.AddAsync(aircraft);
-            await _context.Flights.AddAsync(flight);
-            await _context.SaveChangesAsync();
-            await _context.Sightings.AddAsync(new Sighting
-            {
-                AircraftId = aircraft.Id,
-                FlightId = flight.Id,
-                Timestamp = tracked.FirstSeen
-            });
-            await _context.SaveChangesAsync();
-
-            candidates = await _factory.TrackedAircraftWriter.ListSightingCreationCandidatesAsync();
-            Assert.IsEmpty(candidates);
-        }
-
-        [TestMethod]
         public async Task AddSecondTestAsync()
         {
             await _factory.TrackedAircraftWriter.WriteAsync(new TrackedAircraft
