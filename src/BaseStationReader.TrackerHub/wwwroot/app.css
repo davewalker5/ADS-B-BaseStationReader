@@ -114,11 +114,12 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-field { display: block; margin-top: 20px; }
 .session-field > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .session-field > span small { margin-left: 6px; color: #667f98; font-size: 9px; }
-.session-field select, .session-field textarea { width: 100%; padding: 10px 12px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; font: inherit; }
+.session-field select, .session-field textarea, .session-field input { width: 100%; padding: 10px 12px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; font: inherit; }
 .session-field select { height: 42px; line-height: normal; }
 .session-field textarea { resize: vertical; line-height: 1.5; }
-.session-field select:focus, .session-field textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
-.session-field select:disabled, .session-field textarea:disabled { color: #91a4b7; opacity: .75; cursor: default; }
+.session-field select:focus, .session-field textarea:focus, .session-field input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
+.session-field select:disabled, .session-field textarea:disabled, .session-field input:disabled { color: #91a4b7; opacity: .75; cursor: default; }
+.receiver-endpoint { display: grid; grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr); gap: 16px; }
 .effective-profile { margin-top: 20px; padding: 19px; background: rgba(8,21,36,.65); border: 1px solid var(--line); border-radius: 10px; }
 .effective-profile h3 { margin: 0 0 14px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 .effective-profile dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; }
@@ -511,6 +512,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 @media (max-width: 520px) {
     .topbar { height: auto; min-height: 72px; align-items: flex-start; flex-direction: column; padding-top: 14px; }
     .session-form-heading, .session-status, .session-status > div, .summary-heading { align-items: flex-start; flex-direction: column; }
+    .receiver-endpoint { grid-template-columns: 1fr; gap: 0; }
     .summary-details, .session-metrics, .highlight-grid { grid-template-columns: 1fr; }
     .summary-details div.wide { grid-column: auto; }
     nav a { padding: 12px 3px; }

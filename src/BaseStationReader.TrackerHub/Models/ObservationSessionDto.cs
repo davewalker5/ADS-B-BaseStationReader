@@ -12,6 +12,8 @@ public sealed class ObservationSessionDto
     public DateTime StartedAtUtc { get; set; }
     public string ProfileName { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; }
     public double? ReceiverLatitude { get; set; }
     public double? ReceiverLongitude { get; set; }
     public int? ReceiverElevation { get; set; }

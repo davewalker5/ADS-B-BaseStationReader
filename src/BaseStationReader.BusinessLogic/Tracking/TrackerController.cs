@@ -218,6 +218,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 StartedAtUtc = DateTime.UtcNow,
                 ProfileName = profileName,
                 Notes = _sessionNotes,
+                Host = _settings.Host,
+                Port = _settings.Port,
                 ReceiverLatitude = _settings.ReceiverLatitude,
                 ReceiverLongitude = _settings.ReceiverLongitude,
                 ReceiverElevation = _settings.ReceiverElevation,

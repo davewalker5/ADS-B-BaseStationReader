@@ -117,6 +117,8 @@ namespace BaseStationReader.Tests.Tracking
             var session = _context.ObservationSessions.Single();
             Assert.AreEqual("Test Default Profile", session.ProfileName);
             Assert.AreEqual("Clear skies; testing session context.", session.Notes);
+            Assert.AreEqual(_settings.Host, session.Host);
+            Assert.AreEqual(_settings.Port, session.Port);
             Assert.AreEqual(120, session.ReceiverElevation);
             Assert.IsNull(session.MinimumAltitude);
             Assert.IsNull(session.MaximumAltitude);

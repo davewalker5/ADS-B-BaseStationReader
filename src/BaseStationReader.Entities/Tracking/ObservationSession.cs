@@ -17,6 +17,11 @@ namespace BaseStationReader.Entities.Tracking
 
         public string Notes { get; set; }
 
+        [Required]
+        public string Host { get; set; } = "";
+
+        public int Port { get; set; }
+
         public double? ReceiverLatitude { get; set; }
 
         public double? ReceiverLongitude { get; set; }

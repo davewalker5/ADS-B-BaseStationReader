@@ -75,6 +75,18 @@
                 </select>
             </label>
 
+            <div class="receiver-endpoint">
+                <label class="session-field" for="receiver-host">
+                    <span>Receiver host</span>
+                    <input id="receiver-host" @bind="_receiverHost" disabled="@_sessionStarted" />
+                </label>
+                <label class="session-field" for="receiver-port">
+                    <span>Receiver port</span>
+                    <input id="receiver-port" type="number" min="1" max="65535"
+                           @bind="_receiverPort" disabled="@_sessionStarted" />
+                </label>
+            </div>
+
             <div class="effective-profile" aria-label="Effective tracking profile">
                 <h3>Effective tracking profile</h3>
                 <dl>
@@ -385,6 +397,8 @@
     private bool _applyingProfile;
     private bool _controlsBusy;
     private string _sessionNotes = string.Empty;
+    private string _receiverHost = string.Empty;
+    private int _receiverPort;
     private SessionTab _activeTab = SessionTab.Preparation;
     private bool _sessionStarted;
     private bool _summaryLoading;
@@ -498,6 +512,8 @@
         _maximumRadarRange = RadarConfiguration.Value.MaximumRange;
         _profiles = TrackingProfiles.List();
         await StartAsync();
+        _receiverHost = LiveAircraft.TrackingOptions?.ReceiverHost ?? string.Empty;
+        _receiverPort = LiveAircraft.TrackingOptions?.ReceiverPort ?? 0;
         var activeProfile = LiveAircraft.TrackingOptions?.TrackingProfile;
         var matchingProfile = _profiles.FirstOrDefault(profile =>
             profile.FileName.Equals(activeProfile, StringComparison.OrdinalIgnoreCase));
@@ -595,7 +611,7 @@
             if (start)
             {
                 previousSessionId = await SessionQueries.GetLatestSessionIdAsync();
-                await TrackingControl.StartAsync(_sessionNotes);
+                await TrackingControl.StartAsync(_receiverHost, _receiverPort, _sessionNotes);
             }
             else
             {

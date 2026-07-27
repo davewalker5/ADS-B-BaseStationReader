@@ -53,14 +53,28 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         _started = false;
     }
 
-    public async Task StartTrackingAsync(string? notes = null, CancellationToken token = default)
+    public async Task StartTrackingAsync(string receiverHost, int receiverPort, string? notes = null,
+        CancellationToken token = default)
     {
+        if (string.IsNullOrWhiteSpace(receiverHost))
+            throw new ArgumentException("Receiver host is required.", nameof(receiverHost));
+        if (receiverPort is < 1 or > 65535)
+            throw new ArgumentOutOfRangeException(nameof(receiverPort), "Receiver port must be between 1 and 65535.");
+
         await _gate.WaitAsync(token);
         try
         {
             if (!_started)
                 throw new InvalidOperationException("The tracking runtime is not ready.");
-            if (!IsTracking) StartController(notes);
+            if (!IsTracking)
+            {
+                lock (_stateLock)
+                {
+                    _settings.Host = receiverHost.Trim();
+                    _settings.Port = receiverPort;
+                }
+                StartController(notes);
+            }
         }
         finally { _gate.Release(); }
     }

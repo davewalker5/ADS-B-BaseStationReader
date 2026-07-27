@@ -22,7 +22,7 @@ public class TrackingRuntimeTest
         });
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
-        await runtime.StartTrackingAsync();
+        await runtime.StartTrackingAsync("initial.receiver", 30003);
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
@@ -54,7 +54,7 @@ public class TrackingRuntimeTest
         Assert.IsEmpty(controllers);
         Assert.IsFalse(runtime.IsTracking);
 
-        await runtime.StartTrackingAsync();
+        await runtime.StartTrackingAsync("first.receiver", 30003);
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
         Assert.IsTrue(runtime.IsTracking);
 
@@ -62,8 +62,12 @@ public class TrackingRuntimeTest
         Assert.IsFalse(runtime.IsTracking);
         Assert.IsTrue(controllers[0].Stopped);
 
-        await runtime.StartTrackingAsync();
+        await runtime.StartTrackingAsync("second.receiver", 30004);
         await WaitUntilAsync(() => controllers.Count == 2 && controllers[1].Started);
+        Assert.AreEqual("second.receiver", runtime.TrackingOptions.ReceiverHost);
+        Assert.AreEqual(30004, runtime.TrackingOptions.ReceiverPort);
+        Assert.AreEqual("second.receiver", controllers[1].TrackingOptions.ReceiverHost);
+        Assert.AreEqual(30004, controllers[1].TrackingOptions.ReceiverPort);
 
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
@@ -73,6 +77,8 @@ public class TrackingRuntimeTest
     private static TrackerApplicationSettings Settings(string profile) => new()
     {
         TrackingProfile = profile,
+        Host = "appsettings.receiver",
+        Port = 30003,
         TrackedBehaviours = []
     };
 

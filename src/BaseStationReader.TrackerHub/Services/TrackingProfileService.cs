@@ -76,7 +76,9 @@ public sealed class TrackingProfileService : ITrackingProfileService
     {
         if (fileName == DefaultProfileValue)
         {
-            await _runtime.ApplyAsync(Clone(_baseSettings), cancellationToken);
+            var defaultSettings = Clone(_baseSettings);
+            PreserveReceiverEndpoint(defaultSettings);
+            await _runtime.ApplyAsync(defaultSettings, cancellationToken);
             await PersistSelectionAsync(DefaultProfileValue, cancellationToken);
             await _bridge.PublishResetAsync(_runtime.TrackingOptions, cancellationToken);
             return;
@@ -94,9 +96,16 @@ public sealed class TrackingProfileService : ITrackingProfileService
         var profile = _reader.Read(path) ?? throw new InvalidDataException("The selected tracking profile is empty.");
         var settings = Clone(_baseSettings);
         ApplyProfile(settings, fileName, profile);
+        PreserveReceiverEndpoint(settings);
         await _runtime.ApplyAsync(settings, cancellationToken);
         await PersistSelectionAsync(fileName, cancellationToken);
         await _bridge.PublishResetAsync(_runtime.TrackingOptions, cancellationToken);
+    }
+
+    private void PreserveReceiverEndpoint(TrackerApplicationSettings settings)
+    {
+        settings.Host = _runtime.TrackingOptions.ReceiverHost;
+        settings.Port = _runtime.TrackingOptions.ReceiverPort;
     }
 
     private async Task PersistSelectionAsync(string selection, CancellationToken cancellationToken)

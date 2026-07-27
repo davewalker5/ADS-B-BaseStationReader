@@ -59,6 +59,8 @@
                 <tr>
                     <th>Started</th>
                     <th>Profile</th>
+                    <th>Receiver host</th>
+                    <th class="numeric">Receiver port</th>
                     <th class="numeric">Latitude</th>
                     <th class="numeric">Longitude</th>
                     <th class="numeric">Elevation</th>
@@ -74,11 +76,11 @@
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="12" class="table-empty">Loading sessions…</td></tr>
+                    <tr><td colspan="14" class="table-empty">Loading sessions…</td></tr>
                 }
                 else if (_result.Items.Count == 0)
                 {
-                    <tr><td colspan="12" class="table-empty">No sessions match these filters.</td></tr>
+                    <tr><td colspan="14" class="table-empty">No sessions match these filters.</td></tr>
                 }
                 else
                 {
@@ -87,6 +89,8 @@
                         <tr>
                             <td>@FormatDateTime(session.StartedAtUtc)</td>
                             <td>@Display(session.ProfileName)</td>
+                            <td class="mono">@Display(session.Host)</td>
+                            <td class="numeric mono">@session.Port</td>
                             <td class="numeric mono">@FormatCoordinate(session.ReceiverLatitude)</td>
                             <td class="numeric mono">@FormatCoordinate(session.ReceiverLongitude)</td>
                             <td class="numeric">@FormatNumber(session.ReceiverElevation, "N0", " ft")</td>
