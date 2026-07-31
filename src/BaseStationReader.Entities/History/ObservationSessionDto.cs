@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Exposes the non-key columns of one persisted observation session.

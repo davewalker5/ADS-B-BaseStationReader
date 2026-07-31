@@ -1,6 +1,6 @@
 using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Represents one tracking record in the historical result list.

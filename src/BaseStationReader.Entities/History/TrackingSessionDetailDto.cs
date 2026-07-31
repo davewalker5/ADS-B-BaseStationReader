@@ -2,7 +2,7 @@
 
 using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Contains the read-only historical detail for one tracking record.

@@ -18,10 +18,15 @@ public class AirportWeatherLookupServiceTest
     public async Task ListAirportsTestAsync()
     {
         var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+        var provenance = new Provenance { SourceRef = "TEST" };
+        await context.Provenance.AddAsync(provenance);
+        await context.SaveChangesAsync();
+
+        // AirportManager loads required provenance alongside selector records.
         await context.Airports.AddRangeAsync(new Airport[]
         {
-            new() { Name = "Zurich Airport", IATA = "ZRH", ICAO = "LSZH", Latitude = 47.4581, Longitude = 8.5555 },
-            new() { Name = "Amsterdam Airport Schiphol", IATA = "AMS", ICAO = "EHAM", Latitude = 52.3086, Longitude = 4.76389 }
+            new() { Name = "Zurich Airport", IATA = "ZRH", ICAO = "LSZH", Latitude = 47.4581, Longitude = 8.5555, ProvenanceId = provenance.Id },
+            new() { Name = "Amsterdam Airport Schiphol", IATA = "AMS", ICAO = "EHAM", Latitude = 52.3086, Longitude = 4.76389, ProvenanceId = provenance.Id }
         });
         await context.SaveChangesAsync();
 

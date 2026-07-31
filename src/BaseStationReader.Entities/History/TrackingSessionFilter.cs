@@ -1,6 +1,6 @@
 using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Defines the supported read-only tracking-session search criteria.

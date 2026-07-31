@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>A read-only aggregate of one persisted observation session.</summary>
 public sealed class ObservationSessionSummaryDto
