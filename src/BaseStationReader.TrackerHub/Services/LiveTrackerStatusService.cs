@@ -1,7 +1,9 @@
 #nullable enable
 
 using BaseStationReader.Data;
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +15,8 @@ namespace BaseStationReader.TrackerHub.Services;
 public sealed class LiveTrackerStatusService(
     IDbContextFactory<BaseStationReaderDbContext> contextFactory,
     ITransientResponseCache cache,
-    TrackingRuntime runtime) : ILiveTrackerStatusService
+    TrackingRuntime runtime,
+    ITrackerLogger logger) : ILiveTrackerStatusService
 {
     /// <inheritdoc />
     public async Task<LiveTrackerStatusDto?> GetAsync(
@@ -40,16 +43,24 @@ public sealed class LiveTrackerStatusService(
             .Cast<string>()
             .Distinct()
             .ToArray();
-        var localAddresses = await context.Aircraft.AsNoTracking()
-            .Where(item => addresses.Contains(item.Address))
+        // Route local reference reads through the same business-logic managers used by the editor UI.
+        var databaseFactory = new DatabaseManagementFactory(logger, context, 0);
+        var localAircraft = await databaseFactory.AircraftManager
+            .ListAsync(item => addresses.Contains(item.Address));
+        cancellationToken.ThrowIfCancellationRequested();
+        var localFlights = await databaseFactory.FlightManager
+            .ListAsync(item => callsigns.Contains(item.Callsign));
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Count distinct normalized identities in case imported reference data contains duplicate rows.
+        var localAddresses = localAircraft
             .Select(item => item.Address)
-            .Distinct()
-            .CountAsync(cancellationToken);
-        var localCallsigns = await context.Flights.AsNoTracking()
-            .Where(item => callsigns.Contains(item.Callsign))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+        var localCallsigns = localFlights
             .Select(item => item.Callsign)
-            .Distinct()
-            .CountAsync(cancellationToken);
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
         var transient = cache.GetReferenceLookupStatus();
 
         return new LiveTrackerStatusDto
