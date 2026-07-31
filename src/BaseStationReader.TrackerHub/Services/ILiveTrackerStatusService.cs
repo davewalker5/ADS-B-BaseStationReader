@@ -6,7 +6,7 @@ using BaseStationReader.TrackerHub.Models;
 namespace BaseStationReader.TrackerHub.Services;
 
 /// <summary>
-/// Builds a read-only operational snapshot for the Live Tracker Status tab.
+/// Builds a read-only operational snapshot for the Live Tracker Summary tab.
 /// </summary>
 public interface ILiveTrackerStatusService
 {

@@ -58,6 +58,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <inheritdoc />
         public long AircraftRemoved => _tracker?.AircraftRemoved ?? 0;
 
+        /// <inheritdoc />
+        public long DistinctAircraft => _tracker?.DistinctAircraft ?? 0;
+
+        /// <inheritdoc />
+        public long DistinctCallsigns => _tracker?.DistinctCallsigns ?? 0;
+
+        /// <inheritdoc />
+        public long AircraftWithPositionRecords => _writer?.AircraftWithPositionRecords ?? 0;
+
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,

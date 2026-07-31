@@ -26,6 +26,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private long _messagesProcessed;
         private long _aircraftAdded;
         private long _aircraftRemoved;
+        private readonly ConcurrentDictionary<string, byte> _observedAddresses = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, byte> _observedCallsigns = new(StringComparer.OrdinalIgnoreCase);
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
@@ -37,6 +39,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
         /// <inheritdoc />
         public long AircraftRemoved => Interlocked.Read(ref _aircraftRemoved);
+
+        /// <inheritdoc />
+        public long DistinctAircraft => _observedAddresses.Count;
+
+        /// <inheritdoc />
+        public long DistinctCallsigns => _observedCallsigns.Count;
 
         public AircraftTracker(
             IMessageReader reader,
@@ -131,6 +139,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
                 // Count each accepted message once, independently of mutable per-aircraft lifetimes.
                 Interlocked.Increment(ref _messagesProcessed);
+
+                // Retain session-wide distinct identities independently of live-aircraft removal and row reuse.
+                _observedAddresses.TryAdd(msg.Address, 0);
+                if (!string.IsNullOrWhiteSpace(msg.Callsign))
+                    _observedCallsigns.TryAdd(msg.Callsign.Trim(), 0);
 
                 // Create a new tracked aircraft instance and update it from the message
                 var newTrackedAircraft = new TrackedAircraft() { FirstSeen = DateTime.Now };

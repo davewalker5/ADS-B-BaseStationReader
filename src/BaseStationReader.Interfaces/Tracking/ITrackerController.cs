@@ -30,6 +30,15 @@ namespace BaseStationReader.Interfaces.Tracking
         /// </summary>
         long AircraftRemoved => 0;
 
+        /// <summary>Gets the number of distinct ICAO addresses observed during the current session.</summary>
+        long DistinctAircraft => 0;
+
+        /// <summary>Gets the number of distinct callsigns observed during the current session.</summary>
+        long DistinctCallsigns => 0;
+
+        /// <summary>Gets the number of distinct aircraft with successfully written position records.</summary>
+        long AircraftWithPositionRecords => 0;
+
         Task StartAsync(CancellationToken token);
         int QueueSize { get; }
         Task FlushQueueAsync();

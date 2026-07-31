@@ -15,11 +15,15 @@ namespace BaseStationReader.BusinessLogic.Database
         private Task _runTask = null;
         private int _pending = 0;
         private long _positionRecordsWritten;
+        private readonly ConcurrentDictionary<string, byte> _positionAircraft = new(StringComparer.OrdinalIgnoreCase);
 
         public int QueueSize { get => _queue.Count; }
 
         /// <inheritdoc />
         public long PositionRecordsWritten => Interlocked.Read(ref _positionRecordsWritten);
+
+        /// <inheritdoc />
+        public long AircraftWithPositionRecords => _positionAircraft.Count;
 
         public ContinuousWriter(IDatabaseManagementFactory factory)
         {
@@ -64,6 +68,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // Each writer run belongs to one observation session, so begin its successful-write count at zero.
                 Interlocked.Exchange(ref _positionRecordsWritten, 0);
+                _positionAircraft.Clear();
 
                 // Create a cancellation token source linked to the token passed in. This ensures that
                 // cancelling the token that's passed in will cancel this one, too
@@ -303,6 +308,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Increment only after persistence succeeds so the status value describes records actually written.
             Interlocked.Increment(ref _positionRecordsWritten);
+            _positionAircraft.TryAdd(position.Address, 0);
 
             return true;
         }

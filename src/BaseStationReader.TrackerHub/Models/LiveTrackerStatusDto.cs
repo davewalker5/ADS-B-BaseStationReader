@@ -16,6 +16,9 @@ public sealed record LiveTrackerStatusDto
     public long AircraftRemoved { get; init; }
     public long PositionRecords { get; init; }
     public long MessagesProcessed { get; init; }
+    public long DistinctAircraft { get; init; }
+    public long DistinctCallsigns { get; init; }
+    public long AircraftWithPositionRecords { get; init; }
     public int AircraftLocallyResolved { get; init; }
     public int AircraftUnresolved { get; init; }
     public int FlightsLocallyResolved { get; init; }

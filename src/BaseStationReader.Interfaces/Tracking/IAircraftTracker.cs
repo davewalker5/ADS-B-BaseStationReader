@@ -21,6 +21,12 @@ namespace BaseStationReader.Interfaces.Tracking
         /// </summary>
         long AircraftRemoved => 0;
 
+        /// <summary>Gets the number of distinct ICAO addresses observed during this tracker run.</summary>
+        long DistinctAircraft => 0;
+
+        /// <summary>Gets the number of distinct non-empty callsigns observed during this tracker run.</summary>
+        long DistinctCallsigns => 0;
+
         Task StartAsync(CancellationToken token);
     }
 }
