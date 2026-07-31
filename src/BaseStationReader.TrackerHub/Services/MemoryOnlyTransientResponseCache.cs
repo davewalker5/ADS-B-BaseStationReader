@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
+using BaseStationReader.TrackerHub.Models;
 
 namespace BaseStationReader.TrackerHub.Services;
 
@@ -21,6 +22,41 @@ public sealed class MemoryOnlyTransientResponseCache : ITransientResponseCache, 
     });
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _entryLocks =
         new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _knownKeys = new(StringComparer.Ordinal);
+
+    /// <inheritdoc />
+    public TransientLookupStatus GetReferenceLookupStatus()
+    {
+        // Read only live reference entries so expired cache responses never inflate the status counts.
+        var results = new List<ReferenceLookupResult>();
+        foreach (var key in _knownKeys.Keys)
+        {
+            if (_cache.TryGetValue(key, out ReferenceLookupResult? result) && result is not null)
+            {
+                results.Add(result);
+            }
+            else
+            {
+                // Discard metadata for expired and non-reference entries without retaining their response values.
+                _knownKeys.TryRemove(key, out _);
+            }
+        }
+
+        // Count distinct identities because one combined request can be cached under several provider choices.
+        var aircraft = results
+            .Where(result => result.AircraftSource == ReferenceLookupSource.Api && result.Aircraft is not null)
+            .Select(result => result.Aircraft!.Address)
+            .Where(address => !string.IsNullOrWhiteSpace(address))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+        var flights = results
+            .Where(result => result.FlightSource == ReferenceLookupSource.Api && result.Flight is not null)
+            .Select(result => result.Flight!.Callsign)
+            .Where(callsign => !string.IsNullOrWhiteSpace(callsign))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+        return new TransientLookupStatus(aircraft, flights);
+    }
 
     /// <inheritdoc />
     public async Task<T> GetOrCreateAsync<T>(
@@ -56,6 +92,8 @@ public sealed class MemoryOnlyTransientResponseCache : ITransientResponseCache, 
                 AbsoluteExpirationRelativeToNow = lifetime,
                 Size = 1
             });
+            // Retain only cache keys, never a second copy of transient response data.
+            _knownKeys.TryAdd(key, 0);
             return created;
         }
         finally
@@ -77,5 +115,6 @@ public sealed class MemoryOnlyTransientResponseCache : ITransientResponseCache, 
             entryLock.Dispose();
         }
         _entryLocks.Clear();
+        _knownKeys.Clear();
     }
 }

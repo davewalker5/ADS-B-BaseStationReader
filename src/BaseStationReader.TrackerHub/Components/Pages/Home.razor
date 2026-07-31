@@ -4,6 +4,7 @@
 @inject ITrackingProfileService TrackingProfiles
 @inject ITrackingControlService TrackingControl
 @inject ITrackingSessionQueryService SessionQueries
+@inject ILiveTrackerStatusService LiveStatus
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -176,9 +177,9 @@
             </section>
 
             <section class="summary-section">
-                <h3>Observation totals</h3>
-                <div class="session-metrics">
-                    @foreach (var metric in ObservationMetrics(_summary))
+                <h3>Tracking</h3>
+                <div class="session-metrics status-metrics">
+                    @foreach (var metric in SummaryTrackingMetrics(_summary, _status))
                     {
                         <article class="session-metric">
                             <span>@metric.Label</span><strong>@metric.Value.ToString("N0")</strong>
@@ -187,18 +188,12 @@
                 </div>
             </section>
 
-            <section class="summary-section">
-                <h3>Identification</h3>
-                <div class="session-metrics">
-                    @foreach (var metric in IdentificationMetrics(_summary))
-                    {
-                        <article class="session-metric">
-                            <span>@metric.Label</span><strong>@metric.Value.ToString("N0")</strong>
-                            @if (metric.Detail is not null) { <small>@metric.Detail</small> }
-                        </article>
-                    }
-                </div>
-            </section>
+            @if (_status is not null)
+            {
+                <StatusMetrics Title="Local aircraft identification" Metrics="@LocalIdentificationMetrics(_status)" />
+                <StatusMetrics Title="Local flight identification" Metrics="@FlightIdentificationMetrics(_status)" />
+                <StatusMetrics Title="Transient lookup" Metrics="@TransientLookupMetrics(_status)" />
+            }
 
             <section class="summary-section">
                 <h3>Session highlights</h3>
@@ -405,6 +400,7 @@
     private int? _sessionId;
     private ObservationSessionSummaryDto? _summary;
     private string? _summaryError;
+    private LiveTrackerStatusDto? _status;
     private double _maximumRadarRange;
 
     [Parameter]
@@ -664,8 +660,12 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
+    /// <summary>
+    /// Activates an available session tab and refreshes data-backed tabs on demand.
+    /// </summary>
     private async Task SelectTab(SessionTab tab)
     {
+        // Live visualisations require tracking, while Summary requires any started session.
         if ((tab == SessionTab.Tracking || tab == SessionTab.Radar) && !TrackingControl.IsTracking) return;
         if (tab == SessionTab.Summary && !_sessionStarted) return;
         _activeTab = tab;
@@ -682,11 +682,18 @@
         if (!_sessionStarted || _summaryLoading) return;
         _summaryLoading = true;
         _summaryError = null;
+        _status = null;
         try
         {
             _summary = _sessionId.HasValue
                 ? await SessionQueries.GetObservationSessionSummaryAsync(_sessionId.Value)
                 : null;
+
+            // Refresh operational tracking counters alongside the persisted Summary snapshot.
+            _status = await LiveStatus.GetAsync(
+                _sessionId,
+                LiveAircraft.Aircraft,
+                TrackingControl.IsTracking);
         }
         catch (Exception exception)
         {
@@ -698,33 +705,97 @@
         }
     }
 
+    /// <summary>
+    /// Returns the Live Tracker workflow to editable session preparation.
+    /// </summary>
     private void PrepareNewSession()
     {
+        // Reset both persisted-summary and operational-status views before accepting new session details.
         if (TrackingControl.IsTracking) return;
         _sessionStarted = false;
         _sessionId = null;
         _summary = null;
         _summaryError = null;
+        _status = null;
         _sessionNotes = string.Empty;
         _profileMessage = null;
         _activeTab = SessionTab.Preparation;
     }
 
-    private static IEnumerable<(string Label, int Value)> ObservationMetrics(ObservationSessionSummaryDto summary) =>
-    [
-        ("Observation records", summary.ObservationRecords),
-        ("Distinct aircraft", summary.DistinctAircraft),
-        ("Distinct callsigns", summary.DistinctCallsigns),
-        ("Aircraft with positions", summary.AircraftWithPositionHistory),
-        ("Position records", summary.PositionRecords)
-    ];
+    /// <summary>
+    /// Combines persisted Summary measures with operational tracking counters.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> SummaryTrackingMetrics(
+        ObservationSessionSummaryDto summary,
+        LiveTrackerStatusDto? status)
+    {
+        // Prefer the monotonic operational value for the overlapping position-record measure.
+        var metrics = new List<StatusMetric>();
 
-    private static IEnumerable<(string Label, int Value, string? Detail)> IdentificationMetrics(ObservationSessionSummaryDto summary) =>
-    [
-        ("Aircraft identified", summary.IdentifiedAircraft, $"{summary.AircraftResolutionPercentage:N1}% resolved"),
-        ("Flights resolved", summary.ResolvedFlights, $"{summary.FlightResolutionPercentage:N1}% resolved"),
-        ("Unidentified aircraft", summary.UnidentifiedAircraft, null)
-    ];
+        if (status is null)
+        {
+            // Retain persisted distinct and position totals if operational state is temporarily unavailable.
+            metrics.Add(new StatusMetric("Distinct aircraft", summary.DistinctAircraft));
+            metrics.Add(new StatusMetric("Distinct callsigns", summary.DistinctCallsigns));
+            metrics.Add(new StatusMetric("Aircraft with positions", summary.AircraftWithPositionHistory));
+            metrics.Add(new StatusMetric("Position records", summary.PositionRecords));
+            return metrics;
+        }
+
+        metrics.Add(new StatusMetric("Distinct aircraft", status.DistinctAircraft));
+        metrics.Add(new StatusMetric("Distinct callsigns", status.DistinctCallsigns));
+        metrics.Add(new StatusMetric("Aircraft with positions", status.AircraftWithPositionRecords));
+        metrics.AddRange(TrackingStatusMetrics(status));
+        return metrics;
+    }
+
+    /// <summary>
+    /// Returns the operational tracking metrics shown in the Summary tab.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> TrackingStatusMetrics(LiveTrackerStatusDto status)
+    {
+        // Keep the display restricted to counters already recorded by the live tracking workflow.
+        return
+        [
+            new("Currently tracked", status.CurrentlyTracked),
+            new("Added this session", status.AircraftAdded),
+            new("Removed this session", status.AircraftRemoved),
+            new("Position records", status.PositionRecords),
+            new("Messages processed", status.MessagesProcessed)
+        ];
+    }
+
+    /// <summary>
+    /// Returns local aircraft reference resolution metrics.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> LocalIdentificationMetrics(LiveTrackerStatusDto status)
+    {
+        // Split every current ICAO identity into mutually exclusive resolved and unresolved groups.
+        return [new("Aircraft locally resolved", status.AircraftLocallyResolved), new("Aircraft unresolved", status.AircraftUnresolved)];
+    }
+
+    /// <summary>
+    /// Returns local flight mapping resolution metrics.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> FlightIdentificationMetrics(LiveTrackerStatusDto status)
+    {
+        // Keep missing callsigns separate because they cannot participate in flight mapping.
+        return
+        [
+            new("Flights locally resolved", status.FlightsLocallyResolved),
+            new("Flights unresolved", status.FlightsUnresolved),
+            new("Aircraft without callsign", status.AircraftWithoutCallsign)
+        ];
+    }
+
+    /// <summary>
+    /// Returns successful API resolutions still present in the transient cache.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> TransientLookupMetrics(LiveTrackerStatusDto status)
+    {
+        // These values describe process-memory results only and never imply local persistence.
+        return [new("Aircraft transiently resolved", status.AircraftTransientlyResolved), new("Flights transiently resolved", status.FlightsTransientlyResolved)];
+    }
 
     private static IEnumerable<(string Label, ObservationHighlightDto? Item, string Value)> Highlights(ObservationSessionSummaryDto summary) =>
     [

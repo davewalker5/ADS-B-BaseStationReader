@@ -19,6 +19,13 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private Task? _controllerTask;
     private CancellationToken _applicationToken;
     private bool _started;
+    private long _lastMessagesProcessed;
+    private long _lastPositionRecordsWritten;
+    private long _lastAircraftAdded;
+    private long _lastAircraftRemoved;
+    private long _lastDistinctAircraft;
+    private long _lastDistinctCallsigns;
+    private long _lastAircraftWithPositionRecords;
 
     public TrackingRuntime(TrackerApplicationSettings settings,
         Func<TrackerApplicationSettings, string?, ITrackerController> factory)
@@ -31,6 +38,13 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public IEnumerable<TrackedAircraftDto> State { get { lock (_stateLock) return _controller?.State.ToArray() ?? []; } }
     public TrackingOptions TrackingOptions { get { lock (_stateLock) return TrackingOptions.FromTrackerSettings(_settings); } }
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
+    public long MessagesProcessed { get { lock (_stateLock) return _controller?.MessagesProcessed ?? _lastMessagesProcessed; } }
+    public long PositionRecordsWritten { get { lock (_stateLock) return _controller?.PositionRecordsWritten ?? _lastPositionRecordsWritten; } }
+    public long AircraftAdded { get { lock (_stateLock) return _controller?.AircraftAdded ?? _lastAircraftAdded; } }
+    public long AircraftRemoved { get { lock (_stateLock) return _controller?.AircraftRemoved ?? _lastAircraftRemoved; } }
+    public long DistinctAircraft { get { lock (_stateLock) return _controller?.DistinctAircraft ?? _lastDistinctAircraft; } }
+    public long DistinctCallsigns { get { lock (_stateLock) return _controller?.DistinctCallsigns ?? _lastDistinctCallsigns; } }
+    public long AircraftWithPositionRecords { get { lock (_stateLock) return _controller?.AircraftWithPositionRecords ?? _lastAircraftWithPositionRecords; } }
     public bool IsTracking { get { lock (_stateLock) return _controller is not null; } }
     public (double? Latitude, double? Longitude) ReceiverPosition
     {
@@ -118,14 +132,26 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         if (controller is not null) await controller.FlushQueueAsync();
     }
 
+    /// <summary>
+    /// Creates and starts the replaceable controller for a new observation session.
+    /// </summary>
+    /// <param name="notes">Optional notes recorded with the new session.</param>
     private void StartController(string? notes = null)
     {
+        // A new controller represents a new observation session, so reset the retained final count.
         if (_applicationToken.IsCancellationRequested) return;
         var controller = _factory(_settings, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)
         {
+            _lastMessagesProcessed = 0;
+            _lastPositionRecordsWritten = 0;
+            _lastAircraftAdded = 0;
+            _lastAircraftRemoved = 0;
+            _lastDistinctAircraft = 0;
+            _lastDistinctCallsigns = 0;
+            _lastAircraftWithPositionRecords = 0;
             _controller = controller;
             _controllerCancellation = cancellation;
             _controllerTask = controller.StartAsync(cancellation.Token);
@@ -158,6 +184,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         cancellation.Dispose();
         lock (_stateLock)
         {
+            // Preserve the completed session total after releasing its controller.
+            _lastMessagesProcessed = controller.MessagesProcessed;
+            _lastPositionRecordsWritten = controller.PositionRecordsWritten;
+            _lastAircraftAdded = controller.AircraftAdded;
+            _lastAircraftRemoved = controller.AircraftRemoved;
+            _lastDistinctAircraft = controller.DistinctAircraft;
+            _lastDistinctCallsigns = controller.DistinctCallsigns;
+            _lastAircraftWithPositionRecords = controller.AircraftWithPositionRecords;
             _controller = null;
             _controllerCancellation = null;
             _controllerTask = null;
