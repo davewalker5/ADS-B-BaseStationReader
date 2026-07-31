@@ -12,6 +12,7 @@ declare -a exclusions=(
     "database.ipynb"
     "export.ipynb"
     "pathutils.ipynb"
+    "report-header.ipynb"
     "plot_flight_path.ipynb"
     "plot_multiple_flight_paths.ipynb"
 )
