@@ -1,5 +1,6 @@
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Api;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.TrackerHub.Services;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -73,7 +74,7 @@ public class AirportRouteServiceTest
     public async Task RejectInvalidIataTestAsync()
     {
         var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
-        var service = new AirportRouteService(contextFactory.Object);
+        var service = new AirportRouteService(contextFactory.Object, Mock.Of<ITrackerLogger>());
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => service.BuildRouteAsync("LH", "JFK"));
@@ -101,12 +102,18 @@ public class AirportRouteServiceTest
     private static async Task<AirportRouteService> CreateServiceAsync(params Airport[] airports)
     {
         var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+
+        // Supply the required relationship that AirportManager loads with every airport result.
+        var provenance = new Provenance { SourceRef = "TEST" };
+        await context.Provenance.AddAsync(provenance);
+        await context.SaveChangesAsync();
+        foreach (var airport in airports) airport.ProvenanceId = provenance.Id;
         await context.Airports.AddRangeAsync(airports);
         await context.SaveChangesAsync();
         var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
         contextFactory
             .Setup(factory => factory.CreateDbContextAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(context);
-        return new AirportRouteService(contextFactory.Object);
+        return new AirportRouteService(contextFactory.Object, Mock.Of<ITrackerLogger>());
     }
 }

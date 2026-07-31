@@ -1,4 +1,6 @@
+using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
+using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +14,20 @@ public sealed class AirportRouteService : IAirportRouteService
     private const int RouteSegments = 128;
     private const double EarthRadiusNauticalMiles = 3440.065;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
+    private readonly ITrackerLogger _logger;
 
-    public AirportRouteService(IDbContextFactory<BaseStationReaderDbContext> contextFactory)
+    /// <summary>
+    /// Initialises route plotting with local database and logging dependencies.
+    /// </summary>
+    /// <param name="contextFactory">Creates short-lived contexts for local airport reads.</param>
+    /// <param name="logger">The logger supplied to the database management factory.</param>
+    public AirportRouteService(
+        IDbContextFactory<BaseStationReaderDbContext> contextFactory,
+        ITrackerLogger logger)
     {
+        // Retain injected dependencies for the read-only route lookup performed on demand.
         _contextFactory = contextFactory;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -30,12 +42,16 @@ public sealed class AirportRouteService : IAirportRouteService
             throw new ArgumentException("Origin and destination airports must be different.");
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var airports = await context.Airports
-            .AsNoTracking()
-            .Where(airport => airport.IATA == originCode || airport.IATA == destinationCode)
+        var manager = new DatabaseManagementFactory(_logger, context, 0).AirportManager;
+
+        // Resolve route endpoints through business logic before projecting them into map-specific DTOs.
+        var airportRecords = await manager.ListAsync(
+            airport => airport.IATA == originCode || airport.IATA == destinationCode);
+        cancellationToken.ThrowIfCancellationRequested();
+        var airports = airportRecords
             .Select(airport => new RouteAirportDto(
                 airport.Name, airport.IATA, airport.Latitude, airport.Longitude))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var origin = airports.FirstOrDefault(airport =>
             string.Equals(airport.Iata, originCode, StringComparison.OrdinalIgnoreCase));
