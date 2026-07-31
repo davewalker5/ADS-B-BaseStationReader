@@ -47,15 +47,17 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
         CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).AirportManager;
 
-        // Project only the values required by the selector and avoid tracking read-only reference data.
-        return await context.Airports
-            .AsNoTracking()
+        // Route the local reference read through business logic, then shape the selector options in the UI service.
+        var airports = await manager.ListAsync(airport => true);
+        cancellationToken.ThrowIfCancellationRequested();
+        return airports
             .OrderBy(airport => airport.Name)
             .ThenBy(airport => airport.IATA)
             .ThenBy(airport => airport.ICAO)
             .Select(airport => new AirportWeatherOption(airport.Name, airport.IATA, airport.ICAO))
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     /// <inheritdoc />
