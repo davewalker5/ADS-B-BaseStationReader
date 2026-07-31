@@ -15,7 +15,7 @@
 
 **ADS-B BaseStation Reader** is a local-first aircraft observation workspace that turns ADS-B signals received directly by the user into useful, inspectable records of what was observed.
 
-The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It organises each tracking run as an observation session, maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI supporting live observation, investigation, contextual aviation information, reference-data management and post-session analysis.
+The application consumes decoded messages in BaseStation format, typically supplied by `dump1090` connected to an RTL-SDR receiver. It organises each tracking run as an observation session, maintains a live view of aircraft currently being received, stores observations and position histories locally in SQLite, and provides an integrated browser-based UI supporting live observation, investigation, contextual aviation information, reference-data management and post-session analysis. Historical observations can be explored further using a companion suite of Jupyter notebooks that provide reporting and visual analysis across multiple observation sessions.
 
 Core tracking does not depend on a commercial flight-tracking service. External APIs are optional and are used only for transient ancillary lookup, schedule, weather and enrichment workflows.
 
@@ -33,6 +33,7 @@ The project currently supports:
 - **Historical observation browsing** with dedicated session, session-editor and tracking-record views, filtering and record inspection
 - **Historical session management** with notes-only editing and confirmed deletion while no observation session is active
 - **Post-session analysis** available directly from the session browser
+- **Historical reporting suite** implemented using Jupyter notebooks for session, aircraft, flight, position, reference-data and temporal analysis
 - **Interactive live radar plus 2D and 3D flight-path visualisation**
 - **Tabbed contextual lookup workspace** for aircraft and flights, airport schedules, route visualisation and METAR/TAF weather
 - **Reference-data management and CSV import** for:
@@ -177,6 +178,32 @@ The **Aircraft**, **Airlines**, **Airports** and **Flights** tabs allow search, 
 This organisation reinforces the distinction between observed ADS-B data, transient contextual information and locally managed enrichment data.
 
 The same underlying tracking core can also be used through the console tracker or exposed headlessly through SignalR.
+
+## Historical Reporting
+
+In addition to the integrated operational interface, ADS-B BaseStation Reader includes a companion historical reporting suite implemented using Jupyter notebooks.
+
+These reports analyse accumulated observation data across completed sessions without modifying the application's SQLite database.
+
+The reporting suite currently includes:
+
+- Session Overview
+- Aircraft Activity
+- Callsign & Flight Activity
+- Position & Flight Path Analysis
+- Reference Data Coverage
+- Temporal Activity
+
+Together these reports help answer questions such as:
+
+- Which aircraft are observed most frequently?
+- Which flights and callsigns regularly appear?
+- When is local airspace busiest?
+- Where are aircraft most commonly observed?
+- How complete is the local aviation reference database?
+- How have observation patterns changed over time?
+
+Unlike the integrated UI, which focuses on operational awareness during an active observation session, the reporting suite is intended for historical analysis and exploration across many completed sessions.
 
 ## Deployment
 
