@@ -14,8 +14,12 @@ namespace BaseStationReader.BusinessLogic.Database
         private CancellationTokenSource _source;
         private Task _runTask = null;
         private int _pending = 0;
+        private long _positionRecordsWritten;
 
         public int QueueSize { get => _queue.Count; }
+
+        /// <inheritdoc />
+        public long PositionRecordsWritten => Interlocked.Read(ref _positionRecordsWritten);
 
         public ContinuousWriter(IDatabaseManagementFactory factory)
         {
@@ -57,6 +61,9 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // Clear the queue
                 _queue.Clear();
+
+                // Each writer run belongs to one observation session, so begin its successful-write count at zero.
+                Interlocked.Exchange(ref _positionRecordsWritten, 0);
 
                 // Create a cancellation token source linked to the token passed in. This ensures that
                 // cancelling the token that's passed in will cancel this one, too
@@ -293,6 +300,9 @@ namespace BaseStationReader.BusinessLogic.Database
             // Assign the aircraft ID, for the foreign key relationship, and write the position
             position.AircraftId = activeAircraft.Id;
             await _factory.PositionWriter.WriteAsync(position);
+
+            // Increment only after persistence succeeds so the status value describes records actually written.
+            Interlocked.Increment(ref _positionRecordsWritten);
 
             return true;
         }

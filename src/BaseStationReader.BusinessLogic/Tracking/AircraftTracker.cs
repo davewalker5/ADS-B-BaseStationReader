@@ -23,8 +23,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _recentMs;
         private readonly int _staleMs;
         private readonly int _removedMs;
+        private long _messagesProcessed;
+        private long _aircraftAdded;
+        private long _aircraftRemoved;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
+
+        /// <inheritdoc />
+        public long MessagesProcessed => Interlocked.Read(ref _messagesProcessed);
+
+        /// <inheritdoc />
+        public long AircraftAdded => Interlocked.Read(ref _aircraftAdded);
+
+        /// <inheritdoc />
+        public long AircraftRemoved => Interlocked.Read(ref _aircraftRemoved);
 
         public AircraftTracker(
             IMessageReader reader,
@@ -117,6 +129,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     return;
                 }
 
+                // Count each accepted message once, independently of mutable per-aircraft lifetimes.
+                Interlocked.Increment(ref _messagesProcessed);
+
                 // Create a new tracked aircraft instance and update it from the message
                 var newTrackedAircraft = new TrackedAircraft() { FirstSeen = DateTime.Now };
 
@@ -124,6 +139,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // ICAO address if it's already been added
                 var trackedAircraft = _aircraft.GetOrAdd(msg.Address, _ => newTrackedAircraft);
                 var isNew = ReferenceEquals(trackedAircraft, newTrackedAircraft);
+
+                // Count each lifecycle addition even when an ICAO address reappears later in the same session.
+                if (isNew) Interlocked.Increment(ref _aircraftAdded);
 
                 // If it's not a new aircraft, capture the altitude before updating properties from the message
                 decimal? altitude = isNew ? null : trackedAircraft.Altitude;
@@ -159,8 +177,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // If it's now stale, remove it. Otherwise, set the staleness level and send an update
                 if (elapsed >= _removedMs)
                 {
-                    _aircraft.Remove(aircraft.Address, out _);
-                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Removed, AircraftEvent);
+                    if (_aircraft.Remove(aircraft.Address, out _))
+                    {
+                        // Count only successful removals so concurrent timer ticks cannot duplicate the metric.
+                        Interlocked.Increment(ref _aircraftRemoved);
+                        _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Removed, AircraftEvent);
+                    }
                 }
                 else if (elapsed >= _staleMs)
                 {

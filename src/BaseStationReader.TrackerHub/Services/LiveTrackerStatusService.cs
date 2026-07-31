@@ -12,7 +12,8 @@ namespace BaseStationReader.TrackerHub.Services;
 /// </summary>
 public sealed class LiveTrackerStatusService(
     IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-    ITransientResponseCache cache) : ILiveTrackerStatusService
+    ITransientResponseCache cache,
+    TrackingRuntime runtime) : ILiveTrackerStatusService
 {
     /// <inheritdoc />
     public async Task<LiveTrackerStatusDto?> GetAsync(
@@ -30,16 +31,6 @@ public sealed class LiveTrackerStatusService(
             .AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == sessionId.Value, cancellationToken);
         if (session is null) return null;
-
-        // Read session totals without creating or modifying any reporting records.
-        var observations = context.TrackedAircraft
-            .AsNoTracking()
-            .Where(item => item.SessionId == sessionId.Value);
-        var added = await observations.Select(item => item.Address).Distinct().CountAsync(cancellationToken);
-        var positionRecords = await context.Positions
-            .AsNoTracking()
-            .CountAsync(item => item.Aircraft.SessionId == sessionId.Value, cancellationToken);
-        var messagesProcessed = await observations.SumAsync(item => (int?)item.Messages, cancellationToken) ?? 0;
 
         // Normalise current identities to match the uppercase reference-data keys used by imports.
         var addresses = liveAircraft.Select(item => item.Address.Trim().ToUpperInvariant()).Distinct().ToArray();
@@ -68,10 +59,10 @@ public sealed class LiveTrackerStatusService(
             ProfileName = session.ProfileName,
             Notes = session.Notes,
             CurrentlyTracked = liveAircraft.Length,
-            AircraftAdded = added,
-            AircraftRemoved = Math.Max(0, added - liveAircraft.Select(item => item.Address).Distinct(StringComparer.OrdinalIgnoreCase).Count()),
-            PositionRecords = positionRecords,
-            MessagesProcessed = messagesProcessed,
+            AircraftAdded = runtime.AircraftAdded,
+            AircraftRemoved = runtime.AircraftRemoved,
+            PositionRecords = runtime.PositionRecordsWritten,
+            MessagesProcessed = runtime.MessagesProcessed,
             AircraftLocallyResolved = localAddresses,
             AircraftUnresolved = Math.Max(0, addresses.Length - localAddresses),
             FlightsLocallyResolved = localCallsigns,

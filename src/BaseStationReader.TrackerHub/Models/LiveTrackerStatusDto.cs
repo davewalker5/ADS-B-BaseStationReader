@@ -12,10 +12,10 @@ public sealed record LiveTrackerStatusDto
     public string? ProfileName { get; init; }
     public string? Notes { get; init; }
     public int CurrentlyTracked { get; init; }
-    public int AircraftAdded { get; init; }
-    public int AircraftRemoved { get; init; }
-    public int PositionRecords { get; init; }
-    public int MessagesProcessed { get; init; }
+    public long AircraftAdded { get; init; }
+    public long AircraftRemoved { get; init; }
+    public long PositionRecords { get; init; }
+    public long MessagesProcessed { get; init; }
     public int AircraftLocallyResolved { get; init; }
     public int AircraftUnresolved { get; init; }
     public int FlightsLocallyResolved { get; init; }

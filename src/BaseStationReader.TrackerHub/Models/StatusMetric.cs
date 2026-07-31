@@ -5,4 +5,4 @@ namespace BaseStationReader.TrackerHub.Models;
 /// </summary>
 /// <param name="Label">The user-facing metric label.</param>
 /// <param name="Value">The current metric value.</param>
-public sealed record StatusMetric(string Label, int Value);
+public sealed record StatusMetric(string Label, long Value);

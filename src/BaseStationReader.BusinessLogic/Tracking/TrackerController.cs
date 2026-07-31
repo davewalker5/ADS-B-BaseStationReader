@@ -46,6 +46,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
         public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(_settings);
 
+        /// <inheritdoc />
+        public long MessagesProcessed => _tracker?.MessagesProcessed ?? 0;
+
+        /// <inheritdoc />
+        public long PositionRecordsWritten => _writer?.PositionRecordsWritten ?? 0;
+
+        /// <inheritdoc />
+        public long AircraftAdded => _tracker?.AircraftAdded ?? 0;
+
+        /// <inheritdoc />
+        public long AircraftRemoved => _tracker?.AircraftRemoved ?? 0;
+
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
