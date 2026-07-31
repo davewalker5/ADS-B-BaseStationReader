@@ -1,3 +1,5 @@
+#nullable enable
+
 using BaseStationReader.Entities.Hub;
 using BaseStationReader.TrackerHub.Models;
 

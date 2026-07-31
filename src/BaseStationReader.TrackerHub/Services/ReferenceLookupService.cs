@@ -110,10 +110,13 @@ public sealed class ReferenceLookupService : IReferenceLookupService
 
         BaseStationReader.Entities.Api.Aircraft aircraft = null;
         BaseStationReader.Entities.Api.Flight flight = null;
-        var aircraftIsLocal = lookupAircraft && await context.Aircraft
-            .AnyAsync(item => item.Address == normalisedAddress, cancellationToken);
-        var flightIsLocal = lookupFlight && await context.Flights
-            .AnyAsync(item => item.Callsign == normalisedCallsign, cancellationToken);
+        // Resolve local existence through the business-logic managers before consulting external providers.
+        var aircraftIsLocal = lookupAircraft &&
+            await databaseFactory.AircraftManager.GetAsync(item => item.Address == normalisedAddress) is not null;
+        cancellationToken.ThrowIfCancellationRequested();
+        var flightIsLocal = lookupFlight &&
+            await databaseFactory.FlightManager.GetAsync(item => item.Callsign == normalisedCallsign) is not null;
+        cancellationToken.ThrowIfCancellationRequested();
 
         // Separate wrappers allow each requested lookup type to use its independently selected provider.
         if (lookupAircraft)
