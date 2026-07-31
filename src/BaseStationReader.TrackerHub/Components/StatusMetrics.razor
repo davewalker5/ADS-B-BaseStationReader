@@ -1,0 +1,25 @@
+<section class="summary-section">
+    <h3>@Title</h3>
+    <div class="session-metrics status-metrics">
+        @foreach (var metric in Metrics)
+        {
+            <article class="session-metric">
+                <span>@metric.Label</span><strong>@metric.Value.ToString("N0")</strong>
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    /// <summary>
+    /// Gets the section heading.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the operational metrics rendered in the section.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<StatusMetric> Metrics { get; set; } = [];
+}

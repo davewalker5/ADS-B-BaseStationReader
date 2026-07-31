@@ -166,6 +166,7 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .summary-details dd { margin: 0; overflow-wrap: anywhere; }
 .summary-notes { white-space: pre-wrap; }
 .session-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.status-metrics { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .session-metric, .session-highlight { padding: 17px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; }
 .session-metric span, .session-metric small, .session-highlight span, .session-highlight small { display: block; color: var(--muted); }
 .session-metric span, .session-highlight span { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }

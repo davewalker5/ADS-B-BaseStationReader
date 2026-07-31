@@ -4,6 +4,7 @@
 @inject ITrackingProfileService TrackingProfiles
 @inject ITrackingControlService TrackingControl
 @inject ITrackingSessionQueryService SessionQueries
+@inject ILiveTrackerStatusService LiveStatus
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -46,6 +47,12 @@
             disabled="@(!_sessionStarted)"
             @onclick="() => SelectTab(SessionTab.Summary)">
         Summary
+    </button>
+    <button class="@TabClass(SessionTab.Status)" role="tab"
+            aria-selected="@(_activeTab == SessionTab.Status)"
+            disabled="@(!_sessionStarted)"
+            @onclick="() => SelectTab(SessionTab.Status)">
+        Status
     </button>
 </div>
 
@@ -129,6 +136,51 @@
         <span>@_startError</span>
         <button @onclick="RetryAsync">Try again</button>
     </div>
+}
+
+@if (_activeTab == SessionTab.Status && _sessionStarted)
+{
+    <section class="session-summary" aria-label="Live tracker status" aria-busy="@_statusLoading">
+        <div class="summary-heading">
+            <div>
+                <p class="eyebrow">Operational snapshot</p>
+                <h2>Tracker Status</h2>
+                <p>Current session, identification, and transient lookup state.</p>
+            </div>
+            <div class="summary-actions">
+                <button class="secondary-button" @onclick="LoadStatusAsync" disabled="@_statusLoading">
+                    @(_statusLoading ? "Refreshing…" : "Refresh")
+                </button>
+            </div>
+        </div>
+
+        @if (_statusError is not null)
+        {
+            <div class="alert" role="alert"><strong>Status unavailable</strong><span>@_statusError</span></div>
+        }
+        else if (_status is null)
+        {
+            <div class="summary-empty">@(_statusLoading ? "Reading current tracker state…" : "No session status is available yet.")</div>
+        }
+        else
+        {
+            <section class="summary-section">
+                <h3>Session</h3>
+                <dl class="summary-details">
+                    <div><dt>Session status</dt><dd>@(_status.IsRunning ? "Running" : "Stopped")</dd></div>
+                    <div><dt>Started</dt><dd>@FormatOptionalUtcTimestamp(_status.StartedAtUtc)</dd></div>
+                    <div><dt>Duration</dt><dd>@FormatStatusDuration(_status.StartedAtUtc)</dd></div>
+                    <div><dt>Tracking profile</dt><dd>@Display(_status.ProfileName)</dd></div>
+                    <div class="wide"><dt>Session notes</dt><dd class="summary-notes">@Display(_status.Notes)</dd></div>
+                </dl>
+            </section>
+
+            <StatusMetrics Title="Tracking" Metrics="@TrackingStatusMetrics(_status)" />
+            <StatusMetrics Title="Local identification" Metrics="@LocalIdentificationMetrics(_status)" />
+            <StatusMetrics Title="Flight identification" Metrics="@FlightIdentificationMetrics(_status)" />
+            <StatusMetrics Title="Transient lookup" Metrics="@TransientLookupMetrics(_status)" />
+        }
+    </section>
 }
 
 @if (_activeTab == SessionTab.Summary && _sessionStarted)
@@ -405,6 +457,9 @@
     private int? _sessionId;
     private ObservationSessionSummaryDto? _summary;
     private string? _summaryError;
+    private LiveTrackerStatusDto? _status;
+    private bool _statusLoading;
+    private string? _statusError;
     private double _maximumRadarRange;
 
     [Parameter]
@@ -664,14 +719,45 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
+    /// <summary>
+    /// Activates an available session tab and refreshes data-backed tabs on demand.
+    /// </summary>
     private async Task SelectTab(SessionTab tab)
     {
+        // Live visualisations require tracking, while summary and status require any started session.
         if ((tab == SessionTab.Tracking || tab == SessionTab.Radar) && !TrackingControl.IsTracking) return;
-        if (tab == SessionTab.Summary && !_sessionStarted) return;
+        if ((tab == SessionTab.Summary || tab == SessionTab.Status) && !_sessionStarted) return;
         _activeTab = tab;
         if (tab == SessionTab.Summary && (_summary is null || TrackingControl.IsTracking))
         {
             await LoadSummaryAsync();
+        }
+        else if (tab == SessionTab.Status)
+        {
+            await LoadStatusAsync();
+        }
+    }
+
+    /// <summary>
+    /// Loads a fresh operational snapshot from current memory and local read-only data.
+    /// </summary>
+    private async Task LoadStatusAsync()
+    {
+        // Prevent overlapping refreshes when a user clicks repeatedly during a database read.
+        if (!_sessionStarted || _statusLoading) return;
+        _statusLoading = true;
+        _statusError = null;
+        try
+        {
+            _status = await LiveStatus.GetAsync(_sessionId, LiveAircraft.Aircraft, TrackingControl.IsTracking);
+        }
+        catch (Exception exception)
+        {
+            _statusError = exception.Message;
+        }
+        finally
+        {
+            _statusLoading = false;
         }
     }
 
@@ -682,6 +768,8 @@
         if (!_sessionStarted || _summaryLoading) return;
         _summaryLoading = true;
         _summaryError = null;
+        _status = null;
+        _statusError = null;
         try
         {
             _summary = _sessionId.HasValue
@@ -698,13 +786,19 @@
         }
     }
 
+    /// <summary>
+    /// Returns the Live Tracker workflow to editable session preparation.
+    /// </summary>
     private void PrepareNewSession()
     {
+        // Reset both persisted-summary and operational-status views before accepting new session details.
         if (TrackingControl.IsTracking) return;
         _sessionStarted = false;
         _sessionId = null;
         _summary = null;
         _summaryError = null;
+        _status = null;
+        _statusError = null;
         _sessionNotes = string.Empty;
         _profileMessage = null;
         _activeTab = SessionTab.Preparation;
@@ -725,6 +819,74 @@
         ("Flights resolved", summary.ResolvedFlights, $"{summary.FlightResolutionPercentage:N1}% resolved"),
         ("Unidentified aircraft", summary.UnidentifiedAircraft, null)
     ];
+
+    /// <summary>
+    /// Returns the operational tracking metrics shown in the Status tab.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> TrackingStatusMetrics(LiveTrackerStatusDto status)
+    {
+        // Keep the display restricted to counters already recorded by the live tracking workflow.
+        return
+        [
+            new("Currently tracked", status.CurrentlyTracked),
+            new("Added this session", status.AircraftAdded),
+            new("Removed this session", status.AircraftRemoved),
+            new("Position records", status.PositionRecords),
+            new("Messages processed", status.MessagesProcessed)
+        ];
+    }
+
+    /// <summary>
+    /// Returns local aircraft reference resolution metrics.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> LocalIdentificationMetrics(LiveTrackerStatusDto status)
+    {
+        // Split every current ICAO identity into mutually exclusive resolved and unresolved groups.
+        return [new("Aircraft locally resolved", status.AircraftLocallyResolved), new("Aircraft unresolved", status.AircraftUnresolved)];
+    }
+
+    /// <summary>
+    /// Returns local flight mapping resolution metrics.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> FlightIdentificationMetrics(LiveTrackerStatusDto status)
+    {
+        // Keep missing callsigns separate because they cannot participate in flight mapping.
+        return
+        [
+            new("Flights locally resolved", status.FlightsLocallyResolved),
+            new("Flights unresolved", status.FlightsUnresolved),
+            new("Aircraft without callsign", status.AircraftWithoutCallsign)
+        ];
+    }
+
+    /// <summary>
+    /// Returns successful API resolutions still present in the transient cache.
+    /// </summary>
+    private static IReadOnlyList<StatusMetric> TransientLookupMetrics(LiveTrackerStatusDto status)
+    {
+        // These values describe process-memory results only and never imply local persistence.
+        return [new("Aircraft transiently resolved", status.AircraftTransientlyResolved), new("Flights transiently resolved", status.FlightsTransientlyResolved)];
+    }
+
+    /// <summary>
+    /// Formats an optional UTC session timestamp in local time.
+    /// </summary>
+    private static string FormatOptionalUtcTimestamp(DateTime? value)
+    {
+        // An absent timestamp means a session row has not become available yet.
+        return value.HasValue ? FormatUtcTimestamp(value.Value) : "—";
+    }
+
+    /// <summary>
+    /// Formats elapsed wall-clock time since the session began.
+    /// </summary>
+    private static string FormatStatusDuration(DateTime? startedAtUtc)
+    {
+        // Clamp clock anomalies to zero so the UI never reports a negative duration.
+        if (!startedAtUtc.HasValue) return "—";
+        var duration = DateTime.UtcNow - DateTime.SpecifyKind(startedAtUtc.Value, DateTimeKind.Utc);
+        return FormatDuration(duration < TimeSpan.Zero ? TimeSpan.Zero : duration);
+    }
 
     private static IEnumerable<(string Label, ObservationHighlightDto? Item, string Value)> Highlights(ObservationSessionSummaryDto summary) =>
     [
@@ -895,6 +1057,7 @@
         Preparation,
         Tracking,
         Radar,
-        Summary
+        Summary,
+        Status
     }
 }
