@@ -46,6 +46,24 @@ namespace BaseStationReader.Tests.Database
                 () => _manager.AddAsync(null));
         }
 
+        /// <summary>
+        /// Verifies that session metadata can be read through the manager without change tracking.
+        /// </summary>
+        [TestMethod]
+        public async Task GetTestAsync()
+        {
+            // Clear tracking after setup so the assertion verifies the manager's read behavior.
+            var session = await AddSessionAsync();
+            _context.ChangeTracker.Clear();
+
+            var loaded = await _manager.GetAsync(session.Id);
+
+            Assert.IsNotNull(loaded);
+            Assert.AreEqual(session.Id, loaded.Id);
+            Assert.AreEqual("Original notes", loaded.Notes);
+            Assert.IsEmpty(_context.ChangeTracker.Entries());
+        }
+
         [TestMethod]
         public async Task UpdateNormalisesNotesTestAsync()
         {

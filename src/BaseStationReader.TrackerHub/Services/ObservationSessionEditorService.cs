@@ -13,31 +13,33 @@ public sealed class ObservationSessionEditorService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IObservationSessionEditorService
 {
+    /// <inheritdoc />
     public async Task<ObservationSessionDto?> GetAsync(
         int sessionId,
         CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        return await context.ObservationSessions
-            .AsNoTracking()
-            .Where(session => session.Id == sessionId)
-            .Select(session => new ObservationSessionDto
-            {
-                SessionId = session.Id,
-                StartedAtUtc = session.StartedAtUtc,
-                ProfileName = session.ProfileName,
-                Notes = session.Notes,
-                Host = session.Host,
-                Port = session.Port,
-                ReceiverLatitude = session.ReceiverLatitude,
-                ReceiverLongitude = session.ReceiverLongitude,
-                ReceiverElevation = session.ReceiverElevation,
-                MinimumAltitude = session.MinimumAltitude,
-                MaximumAltitude = session.MaximumAltitude,
-                MaximumDistance = session.MaximumDistance,
-                IncludedBehaviours = session.IncludedBehaviours
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(logger, context, 0).ObservationSessionManager;
+
+        // Retrieve the session through business logic before shaping it for the editor UI.
+        var session = await manager.GetAsync(sessionId, cancellationToken);
+        if (session is null) return null;
+        return new ObservationSessionDto
+        {
+            SessionId = session.Id,
+            StartedAtUtc = session.StartedAtUtc,
+            ProfileName = session.ProfileName,
+            Notes = session.Notes,
+            Host = session.Host,
+            Port = session.Port,
+            ReceiverLatitude = session.ReceiverLatitude,
+            ReceiverLongitude = session.ReceiverLongitude,
+            ReceiverElevation = session.ReceiverElevation,
+            MinimumAltitude = session.MinimumAltitude,
+            MaximumAltitude = session.MaximumAltitude,
+            MaximumDistance = session.MaximumDistance,
+            IncludedBehaviours = session.IncludedBehaviours
+        };
     }
 
     public async Task SaveNotesAsync(

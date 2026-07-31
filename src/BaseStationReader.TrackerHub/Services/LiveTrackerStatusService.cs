@@ -30,9 +30,11 @@ public sealed class LiveTrackerStatusService(
         if (!sessionId.HasValue) return null;
 
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-        var session = await context.ObservationSessions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == sessionId.Value, cancellationToken);
+        var databaseFactory = new DatabaseManagementFactory(logger, context, 0);
+
+        // Resolve session metadata through business logic before combining it with live in-memory state.
+        var session = await databaseFactory.ObservationSessionManager
+            .GetAsync(sessionId.Value, cancellationToken);
         if (session is null) return null;
 
         // Normalise current identities to match the uppercase reference-data keys used by imports.
@@ -44,7 +46,6 @@ public sealed class LiveTrackerStatusService(
             .Distinct()
             .ToArray();
         // Route local reference reads through the same business-logic managers used by the editor UI.
-        var databaseFactory = new DatabaseManagementFactory(logger, context, 0);
         var localAircraft = await databaseFactory.AircraftManager
             .ListAsync(item => addresses.Contains(item.Address));
         cancellationToken.ThrowIfCancellationRequested();

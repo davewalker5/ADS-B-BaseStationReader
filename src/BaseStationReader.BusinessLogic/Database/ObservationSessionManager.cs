@@ -16,6 +16,17 @@ namespace BaseStationReader.BusinessLogic.Database
             _context = context;
         }
 
+        /// <inheritdoc />
+        public async Task<ObservationSession?> GetAsync(
+            int sessionId,
+            CancellationToken cancellationToken = default)
+        {
+            // Session reads are informational, so keep the manager's context free of tracked snapshots.
+            return await _context.ObservationSessions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item => item.Id == sessionId, cancellationToken);
+        }
+
         /// <summary>
         /// Add a new observation session
         /// </summary>
