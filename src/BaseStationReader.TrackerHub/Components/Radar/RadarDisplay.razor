@@ -42,7 +42,7 @@
                 </g>
             }
         </svg>
-        @if (ConnectionState != ConnectionState.Connected)
+        @if (!IsCompletedSession && ConnectionState != ConnectionState.Connected)
         {
             <div class="radar-disconnected" role="status"><strong>@ConnectionLabel</strong><span>Displayed positions may not be current.</span></div>
         }
@@ -83,6 +83,7 @@
     [Parameter] public double MaximumRange { get; set; } = 50;
     [Parameter] public RadarOptions Options { get; set; } = new();
     [Parameter] public ConnectionState ConnectionState { get; set; }
+    [Parameter] public bool IsCompletedSession { get; set; }
     [Parameter] public string? SelectedAddress { get; set; }
 
     private static double[] RangeRings => [0.25, 0.5, 0.75, 1];

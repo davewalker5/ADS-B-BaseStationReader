@@ -1,4 +1,5 @@
 using BaseStationReader.Entities.Config;
+using BaseStationReader.Entities.Hub;
 using BaseStationReader.TrackerHub.Models;
 using BaseStationReader.TrackerHub.Services;
 
@@ -22,12 +23,22 @@ public class TrackerHubPageStateTest
                 new DateTime(2026, 7, 26, 9, 0, 0),
                 new DateTime(2026, 7, 26, 21, 0, 0)),
             Weather = new WeatherPageState(
-                ApiEndpointType.METAR, ApiServiceType.CheckWXApi, "EGLL")
+                ApiEndpointType.METAR, ApiServiceType.CheckWXApi, "EGLL"),
+            CompletedLiveTracker = new CompletedLiveTrackerPageState
+            {
+                SessionId = 28,
+                ActiveTab = "Tracking",
+                MaximumRadarRange = 100,
+                Aircraft = [new TrackedAircraftDto { Address = "406A3D" }]
+            }
         };
 
         Assert.AreEqual("406A3D", state.Lookup.Address);
         Assert.AreEqual("LHR", state.Schedule.Iata);
         Assert.AreEqual("EGLL", state.Weather.Icao);
+        Assert.AreEqual(28, state.CompletedLiveTracker.SessionId);
+        Assert.AreEqual(100, state.CompletedLiveTracker.MaximumRadarRange);
+        Assert.AreEqual("406A3D", state.CompletedLiveTracker.Aircraft.Single().Address);
     }
 
     /// <summary>
@@ -44,6 +55,7 @@ public class TrackerHubPageStateTest
         var secondSession = new TrackerHubPageState();
 
         Assert.IsNotNull(firstSession.Lookup);
+        Assert.IsNull(secondSession.CompletedLiveTracker);
         Assert.IsNull(secondSession.Lookup);
     }
 }

@@ -14,4 +14,5 @@ public sealed class TrackerHubPageState : ITrackerHubPageState
     public LookupPageState? Lookup { get; set; }
     public SchedulePageState? Schedule { get; set; }
     public WeatherPageState? Weather { get; set; }
+    public CompletedLiveTrackerPageState? CompletedLiveTracker { get; set; }
 }

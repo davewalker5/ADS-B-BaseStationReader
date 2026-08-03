@@ -25,7 +25,7 @@ The project currently supports:
 
 - **Session-based aircraft observation** from a BaseStation-compatible TCP message feed
 - **Observation-session preparation** with receiver host and port, tracking-profile selection and optional contextual notes
-- **Live aircraft tracking and receiver-centred radar** within the active observation session
+- **Live aircraft tracking, receiver-centred radar and session position-density visualisation** within the active observation session
 - **Read-only session summaries** covering tracking activity, identification coverage and session highlights
 - **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
 - **Local SQLite persistence** of observation sessions, aircraft records and optional position histories
@@ -119,13 +119,14 @@ The interface is organised around the natural workflow of an aircraft observer:
 
 ### Observation Workflow
 
-The Live Tracker brings the active observation workflow together in four tabs:
+The Live Tracker brings the active observation workflow together in five tabs:
 
-> Session &rarr; Tracking &harr; Radar &rarr; Summary
+> Session &rarr; Tracking &harr; Radar &rarr; Position Density &rarr; Summary
 
 - **Session** — set the receiver host and port, select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
 - **Tracking** — monitor the live aircraft collection, inspect current telemetry, and move directly to Lookup or historical records
-- **Radar** — view positioned aircraft by range and bearing from the receiver; this tab is available only while a session is active
+- **Radar** — view currently positioned aircraft by range and bearing from the receiver; this tab is available only while a session is active
+- **Position Density** — view the accumulated geographical distribution of recorded aircraft positions during the current session, with denser areas highlighted spatially
 - **Summary** — review the persisted session context, tracking activity, identification coverage, and notable observations
 
 Each session records the receiver host and port, a snapshot of the effective tracking profile, and the aircraft records created during that run. Receiver details initially default to the values configured in `appsettings` and then retain the last-used values until Tracker Hub is restarted. Session parameters become fixed when tracking starts; after the session has stopped, its notes can be updated through the Database Session Editor. When tracking stops, outstanding observations are persisted before the completed summary is displayed.

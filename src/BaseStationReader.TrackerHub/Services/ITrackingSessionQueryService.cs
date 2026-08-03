@@ -18,6 +18,16 @@ public interface ITrackingSessionQueryService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Calculates density from valid persisted positions scoped exclusively to one observation session.
+    /// </summary>
+    /// <param name="sessionId">The required current-session identifier.</param>
+    /// <param name="cancellationToken">Cancels a superseded calculation.</param>
+    /// <returns>The density model, or <see langword="null"/> if the session is unavailable.</returns>
+    Task<PositionDensityDto?> GetPositionDensityAsync(
+        int sessionId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Lists observation sessions that contain historical tracking records.
     /// </summary>
     /// <param name="cancellationToken">Cancels the database query.</param>

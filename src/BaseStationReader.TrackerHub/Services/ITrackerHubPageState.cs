@@ -13,4 +13,5 @@ public interface ITrackerHubPageState
     LookupPageState? Lookup { get; set; }
     SchedulePageState? Schedule { get; set; }
     WeatherPageState? Weather { get; set; }
+    CompletedLiveTrackerPageState? CompletedLiveTracker { get; set; }
 }

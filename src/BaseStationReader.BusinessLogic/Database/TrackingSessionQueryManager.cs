@@ -201,6 +201,80 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         };
     }
 
+    /// <inheritdoc />
+    public async Task<PositionDensityDto?> GetPositionDensityAsync(
+        int sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId));
+
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var session = await context.ObservationSessions.AsNoTracking()
+            .Where(item => item.Id == sessionId)
+            .Select(item => new { item.ReceiverLatitude, item.ReceiverLongitude, item.MaximumDistance })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (session is null) return null;
+
+        // Session configuration supplies a fixed viewport, preventing new extrema from moving existing bins.
+        var bounds = CreatePositionDensityBounds(
+            session.ReceiverLatitude,
+            session.ReceiverLongitude,
+            session.MaximumDistance);
+
+        // The relationship constraint is part of the persistence query, so no all-session fallback is possible.
+        var positions = await context.Positions
+            .AsNoTracking()
+            .Where(position => position.Aircraft.SessionId == sessionId &&
+                position.Latitude.HasValue && position.Longitude.HasValue &&
+                position.Latitude >= -90 && position.Latitude <= 90 &&
+                position.Longitude >= -180 && position.Longitude <= 180)
+            .Select(position => new
+            {
+                Latitude = (double)position.Latitude!.Value,
+                Longitude = (double)position.Longitude!.Value
+            })
+            .ToArrayAsync(cancellationToken);
+
+        // Run CPU-bound binning away from a Blazor circuit context after retrieving only the required fields.
+        return await Task.Run(
+            () => PositionDensityAggregator.Aggregate(
+                sessionId,
+                positions.Select(point => new PositionDensityCoordinate(point.Latitude, point.Longitude)).ToArray(),
+                bounds),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates stable geographic density bounds from persisted session receiver settings.
+    /// </summary>
+    /// <param name="receiverLatitude">Persisted receiver latitude.</param>
+    /// <param name="receiverLongitude">Persisted receiver longitude.</param>
+    /// <param name="maximumDistance">Persisted maximum tracking distance in nautical miles.</param>
+    /// <returns>Session-centred bounds, or fixed world bounds when receiver configuration is unavailable.</returns>
+    private static PositionDensityBounds CreatePositionDensityBounds(
+        double? receiverLatitude,
+        double? receiverLongitude,
+        int? maximumDistance)
+    {
+        if (!receiverLatitude.HasValue || !receiverLongitude.HasValue ||
+            !double.IsFinite(receiverLatitude.Value) || !double.IsFinite(receiverLongitude.Value) ||
+            receiverLatitude is < -90 or > 90 || receiverLongitude is < -180 or > 180)
+        {
+            // A fixed world viewport is less detailed but remains stable for legacy sessions without receiver data.
+            return new PositionDensityBounds(-90d, 90d, -180d, 180d);
+        }
+
+        var range = maximumDistance is > 0 ? maximumDistance.Value : 250d;
+        var latitudeRadius = range / 60d;
+        var longitudeScale = Math.Max(Math.Cos(receiverLatitude.Value * Math.PI / 180d), 0.01d);
+        var longitudeRadius = Math.Min(range / (60d * longitudeScale), 180d);
+        return new PositionDensityBounds(
+            Math.Max(-90d, receiverLatitude.Value - latitudeRadius),
+            Math.Min(90d, receiverLatitude.Value + latitudeRadius),
+            Math.Max(-180d, receiverLongitude.Value - longitudeRadius),
+            Math.Min(180d, receiverLongitude.Value + longitudeRadius));
+    }
+
     private static double Percentage(int resolved, int total)
         => total == 0 ? 0 : Math.Round(resolved * 100d / total, 1);
 

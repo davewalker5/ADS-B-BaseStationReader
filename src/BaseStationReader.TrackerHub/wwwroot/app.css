@@ -43,7 +43,7 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .connection small { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .connection strong { margin-top: 3px; font-size: 14px; }
 @keyframes pulse { 50% { opacity: .35; } }
-.summary-grid { display: grid; grid-template-columns: .8fr 1.35fr 1fr; gap: 14px; margin: 0 0 20px; }
+.summary-grid { display: grid; grid-template-columns: .75fr 1fr 1.35fr 1fr; gap: 14px; margin: 0 0 20px; }
 .summary-card { position: relative; overflow: hidden; padding: 21px 23px; min-height: 130px; background: linear-gradient(145deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 12px; }
 .summary-card.accent::after { content: ""; position: absolute; width: 130px; height: 130px; right: -50px; top: -55px; border: 28px solid rgba(53,212,208,.09); border-radius: 50%; }
 .summary-card span, .summary-card small { display: block; color: var(--muted); }
@@ -120,11 +120,10 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .analysis-modal header small { color: var(--muted); }
 .analysis-modal-content { padding-top: 4px; }
 .modal-loading { padding: 70px 20px; color: var(--muted); text-align: center; }
-.radar-tab { margin-top: 28px; }
-.radar-tab-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
-.radar-tab-heading h2 { margin: 2px 0 6px; }
-.radar-tab-heading p:last-child { margin: 0; color: var(--muted); }
+.radar-tab { margin-top: 0; }
 .session-preparation { width: 100%; margin-top: 20px; }
+.session-status + .session-preparation { margin-top: 0; }
+.summary-grid + .session-preparation { margin-top: 0; }
 .session-form { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 22px 60px rgba(0,0,0,.18); }
 .session-form-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .session-form-heading h2 { margin: 0; font-size: 20px; }
@@ -151,12 +150,24 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-status { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 20px 0 16px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .session-status > div { display: flex; align-items: center; gap: 16px; }
 .session-status strong { font-size: 13px; }
-.session-summary { margin-top: 20px; }
+.session-summary { margin-top: 0; }
 .summary-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
 .summary-heading h2 { margin: 3px 0 6px; }
 .summary-heading p:last-child { margin: 0; color: var(--muted); }
 .summary-actions { display: flex; gap: 9px; }
 .summary-empty { padding: 40px 24px; color: var(--muted); text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.position-density { margin-top: 0; }
+.density-chart-card { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.density-chart-meta { display: flex; gap: 28px; padding: 14px 22px; color: var(--muted); border-bottom: 1px solid var(--line); font-size: 12px; }
+.density-chart-meta strong { margin-right: 4px; color: var(--text); }
+.density-chart-scroll { overflow-x: auto; padding: 12px 18px 0; }
+.density-chart { display: block; width: 100%; min-width: 720px; height: auto; }
+.density-bin { stroke: rgba(184, 202, 218, .65); stroke-width: 1.1; opacity: 1; transition: filter .12s; }
+.density-bin:hover, .density-bin:focus { filter: brightness(1.3) drop-shadow(0 0 4px rgba(94, 201, 98, .6)); outline: none; }
+.density-legend { display: flex; align-items: center; gap: 6px; padding: 10px 22px 16px; color: var(--muted); font-size: 10px; }
+.density-legend i { width: 24px; height: 8px; }
+.density-legend small { margin-left: auto; }
+.density-refresh-status { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
 .summary-section { margin-top: 16px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .summary-section h3 { margin: 0 0 18px; font-size: 16px; }
 .summary-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px 24px; margin: 0; }
@@ -176,6 +187,8 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-highlight strong { display: block; margin-top: 10px; font-size: 19px; }
 .live-indicator { color: var(--green); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .live-indicator i { display: inline-block; width: 8px; height: 8px; margin-right: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 11px var(--green); }
+.live-indicator.complete { color: var(--muted); }
+.live-indicator.complete i { background: var(--muted); box-shadow: none; }
 .tracker-panel { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 22px 60px rgba(0,0,0,.18); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px; border-bottom: 1px solid var(--line); }
 .panel-heading h2 { margin: 0; font-size: 17px; }
@@ -322,14 +335,16 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 @keyframes scene-spin { to { transform: rotate(360deg); } }
 .plotly-path { width: 100%; min-height: 560px; }
 .plotly-path.scene { min-height: 720px; }
-.radar-range { min-width: 150px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
-.radar-range span { display: block; margin-bottom: 7px; }
-.radar-range select { width: 100%; padding: 9px 11px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; }
-.radar-summary { display: flex; align-items: center; gap: 22px; margin: 28px 0 16px; padding: 12px 17px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-size: 11px; }
-.radar-summary strong { margin-right: 4px; color: var(--text); }
-.radar-summary .connection { min-width: 0; margin-left: auto; padding: 0; background: none; border: 0; }
-.radar-summary .connection-dot { display: inline-block; }
-.radar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: start; }
+.radar-session-actions { display: flex; align-items: center; gap: 10px; }
+.density-session-actions { display: flex; align-items: center; gap: 10px; }
+.density-session-actions .secondary-button, .density-session-actions .primary-button { height: 42px; }
+.summary-session-actions { display: flex; align-items: center; gap: 10px; }
+.summary-session-actions .secondary-button, .summary-session-actions .primary-button { height: 42px; }
+.radar-range { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.radar-range span { white-space: nowrap; }
+.radar-range select { width: 108px; height: 42px; padding: 0 11px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; font: inherit; font-size: 12px; text-transform: none; letter-spacing: normal; }
+.radar-session-actions .secondary-button, .radar-session-actions .primary-button { height: 42px; }
+.radar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: stretch; }
 .radar-scope-wrap { position: relative; overflow: hidden; min-height: 680px; background: #06121d; border: 1px solid var(--line); border-radius: 14px; box-shadow: inset 0 0 75px rgba(0,0,0,.35); }
 .radar-scope { display: block; width: 100%; height: min(76vh, 800px); min-height: 680px; }
 .radar-background { stroke: rgba(53,212,208,.45); stroke-width: 2; }
@@ -350,7 +365,7 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .radar-target:hover .radar-aircraft, .radar-target:focus .radar-aircraft, .radar-target.selected .radar-aircraft { stroke: #fff; stroke-width: 4; }
 .radar-disconnected { position: absolute; inset: 0; display: grid; place-content: center; gap: 5px; color: var(--muted); background: rgba(6,18,29,.72); backdrop-filter: blur(2px); text-align: center; }
 .radar-disconnected strong { color: var(--red); font-size: 18px; }
-.radar-detail { min-height: 300px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--cyan); border-radius: 12px; }
+.radar-detail { height: 100%; min-height: 300px; box-sizing: border-box; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--cyan); border-radius: 12px; }
 .radar-detail h2 { margin: 4px 0; }.radar-detail > .mono { color: var(--muted); }
 .radar-detail-grid { grid-template-columns: 1fr; margin-top: 20px; }
 .radar-detail-empty { display: grid; gap: 7px; padding: 70px 10px; color: var(--muted); text-align: center; }
@@ -560,6 +575,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .profile-summary div:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
     .chart-legend { align-items: flex-start; flex-wrap: wrap; }
     .chart-legend small { width: 100%; margin: 0; }
+    .density-chart-meta, .density-legend { flex-wrap: wrap; }
+    .density-legend small { width: 100%; margin: 4px 0 0; }
     .plotly-path { min-height: 430px; }
     .import-type-grid, .import-upload { grid-template-columns: 1fr; }
     .import-upload .primary-button { grid-column: auto; }
@@ -571,9 +588,9 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .model-filter { grid-template-columns: 1fr; }
     .aircraft-filter .primary-button { grid-column: auto; }
     .plotly-path.scene { min-height: 540px; }
-    .radar-tab-heading { align-items: stretch; flex-direction: column; }
-    .radar-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
-    .radar-summary .connection { margin-left: 0; }
+    .radar-session-actions { align-items: center !important; flex-direction: row !important; }
+    .density-session-actions { align-items: center !important; flex-direction: row !important; }
+    .summary-session-actions { align-items: center !important; flex-direction: row !important; }
     .radar-scope-wrap, .radar-scope { min-height: 480px; }
     .weather-fields { grid-template-columns: 1fr; }
     .schedule-fields { grid-template-columns: 1fr; }
