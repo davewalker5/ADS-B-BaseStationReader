@@ -42,6 +42,12 @@
             @onclick="() => SelectTab(SessionTab.Radar)">
         Radar
     </button>
+    <button class="@TabClass(SessionTab.PositionDensity)" role="tab"
+            aria-selected="@(_activeTab == SessionTab.PositionDensity)"
+            disabled="@(!_sessionStarted)"
+            @onclick="() => SelectTab(SessionTab.PositionDensity)">
+        Position Density
+    </button>
     <button class="@TabClass(SessionTab.Summary)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Summary)"
             disabled="@(!_sessionStarted)"
@@ -49,6 +55,47 @@
         Summary
     </button>
 </div>
+
+@if (_activeTab == SessionTab.PositionDensity && _sessionStarted)
+{
+    <section class="position-density" aria-label="Session position density" aria-busy="@_densityLoading">
+        <div class="summary-heading">
+            <div>
+                <p class="eyebrow">Observation concentration</p>
+                <h2>Position Density</h2>
+                <p>Persisted aircraft positions recorded during this session only.</p>
+            </div>
+            <button class="secondary-button" @onclick="LoadPositionDensityAsync" disabled="@_densityLoading">
+                @(_densityLoading ? "Recalculating…" : "Refresh")
+            </button>
+        </div>
+
+        @if (_densityError is not null)
+        {
+            <div class="alert" role="alert"><strong>Position density unavailable</strong><span>@_densityError</span></div>
+        }
+        else if (_density is null)
+        {
+            <div class="summary-empty" role="status">
+                @(_densityLoading ? "Calculating position density…" : "No current session is available.")
+            </div>
+        }
+        else if (_density.PositionCount == 0)
+        {
+            <div class="summary-empty" role="status">
+                @(_densityLoading ? "Recalculating position density…" : "No recorded position data is available for this session yet.")
+            </div>
+        }
+        else
+        {
+            <PositionDensityChart Density="_density" />
+            @if (_densityLoading)
+            {
+                <p class="density-refresh-status" role="status">Recalculating with the latest persisted positions…</p>
+            }
+        }
+    </section>
+}
 
 @if (_activeTab == SessionTab.Preparation)
 {
@@ -401,6 +448,11 @@
     private ObservationSessionSummaryDto? _summary;
     private string? _summaryError;
     private LiveTrackerStatusDto? _status;
+    private PositionDensityDto? _density;
+    private string? _densityError;
+    private bool _densityLoading;
+    private long _densityRequestVersion;
+    private CancellationTokenSource? _densityCancellation;
     private double _maximumRadarRange;
 
     [Parameter]
@@ -541,6 +593,8 @@
     {
         // The scoped service owns its connection and is disposed with the circuit.
         LiveAircraft.StateChanged -= OnLiveStateChanged;
+        _densityCancellation?.Cancel();
+        _densityCancellation?.Dispose();
         return ValueTask.CompletedTask;
     }
 
@@ -597,6 +651,10 @@
 
     private Task StopTrackingAsync() => SetTrackingAsync(start: false);
 
+    /// <summary>
+    /// Starts or stops the observation session and moves the page to the appropriate workflow tab.
+    /// </summary>
+    /// <param name="start"><see langword="true"/> to start a new session; otherwise stops the current session.</param>
     private async Task SetTrackingAsync(bool start)
     {
         _controlsBusy = true;
@@ -619,6 +677,7 @@
                 _sessionStarted = true;
                 _sessionId = await WaitForNewSessionIdAsync(previousSessionId);
                 _summary = null;
+                ClearPositionDensity();
                 _activeTab = SessionTab.Tracking;
             }
             else
@@ -667,12 +726,78 @@
     {
         // Live visualisations require tracking, while Summary requires any started session.
         if ((tab == SessionTab.Tracking || tab == SessionTab.Radar) && !TrackingControl.IsTracking) return;
-        if (tab == SessionTab.Summary && !_sessionStarted) return;
+        if ((tab == SessionTab.Summary || tab == SessionTab.PositionDensity) && !_sessionStarted) return;
         _activeTab = tab;
+        if (tab == SessionTab.PositionDensity)
+        {
+            // Every tab entry performs a complete scoped retrieval and recalculation, even within one session.
+            await LoadPositionDensityAsync();
+        }
         if (tab == SessionTab.Summary && (_summary is null || TrackingControl.IsTracking))
         {
             await LoadSummaryAsync();
         }
+    }
+
+    /// <summary>
+    /// Recalculates density for the session currently represented by the Live Tracker page.
+    /// </summary>
+    private async Task LoadPositionDensityAsync()
+    {
+        var requestedSessionId = _sessionId;
+        var requestVersion = Interlocked.Increment(ref _densityRequestVersion);
+        _densityCancellation?.Cancel();
+        _densityCancellation?.Dispose();
+        var cancellation = new CancellationTokenSource();
+        _densityCancellation = cancellation;
+
+        if (!requestedSessionId.HasValue)
+        {
+            // Never infer the latest session here: the plot must follow the page's explicit session identity.
+            _density = null;
+            _densityError = null;
+            _densityLoading = false;
+            return;
+        }
+
+        _densityLoading = true;
+        _densityError = null;
+        try
+        {
+            var result = await SessionQueries.GetPositionDensityAsync(
+                requestedSessionId.Value,
+                cancellation.Token);
+
+            // A superseded request or session change must not replace the current plot with stale data.
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
+            _density = PositionDensitySnapshotMerger.Merge(_density, result);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            // Cancellation is expected when Refresh or a session transition supersedes this calculation.
+        }
+        catch (Exception exception)
+        {
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
+            _densityError = exception.Message;
+        }
+        finally
+        {
+            if (requestVersion == _densityRequestVersion) _densityLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Clears density state and invalidates any calculation associated with the previous session.
+    /// </summary>
+    private void ClearPositionDensity()
+    {
+        // Increment before cancellation so even a provider that ignores cancellation cannot publish stale results.
+        Interlocked.Increment(ref _densityRequestVersion);
+        _densityCancellation?.Cancel();
+        _density = null;
+        _densityError = null;
+        _densityLoading = false;
     }
 
     private string TabClass(SessionTab tab) => _activeTab == tab ? "active" : string.Empty;
@@ -683,6 +808,7 @@
         _summaryLoading = true;
         _summaryError = null;
         _status = null;
+        ClearPositionDensity();
         try
         {
             _summary = _sessionId.HasValue
@@ -966,6 +1092,7 @@
         Preparation,
         Tracking,
         Radar,
+        PositionDensity,
         Summary
     }
 }

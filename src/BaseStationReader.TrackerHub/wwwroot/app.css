@@ -157,6 +157,18 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .summary-heading p:last-child { margin: 0; color: var(--muted); }
 .summary-actions { display: flex; gap: 9px; }
 .summary-empty { padding: 40px 24px; color: var(--muted); text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.position-density { margin-top: 20px; }
+.density-chart-card { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; }
+.density-chart-meta { display: flex; gap: 28px; padding: 14px 22px; color: var(--muted); border-bottom: 1px solid var(--line); font-size: 12px; }
+.density-chart-meta strong { margin-right: 4px; color: var(--text); }
+.density-chart-scroll { overflow-x: auto; padding: 12px 18px 0; }
+.density-chart { display: block; width: 100%; min-width: 720px; height: auto; }
+.density-bin { stroke: rgba(184, 202, 218, .65); stroke-width: 1.1; opacity: 1; transition: filter .12s; }
+.density-bin:hover, .density-bin:focus { filter: brightness(1.3) drop-shadow(0 0 4px rgba(94, 201, 98, .6)); outline: none; }
+.density-legend { display: flex; align-items: center; gap: 6px; padding: 10px 22px 16px; color: var(--muted); font-size: 10px; }
+.density-legend i { width: 24px; height: 8px; }
+.density-legend small { margin-left: auto; }
+.density-refresh-status { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
 .summary-section { margin-top: 16px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .summary-section h3 { margin: 0 0 18px; font-size: 16px; }
 .summary-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px 24px; margin: 0; }
@@ -560,6 +572,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
     .profile-summary div:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
     .chart-legend { align-items: flex-start; flex-wrap: wrap; }
     .chart-legend small { width: 100%; margin: 0; }
+    .density-chart-meta, .density-legend { flex-wrap: wrap; }
+    .density-legend small { width: 100%; margin: 4px 0 0; }
     .plotly-path { min-height: 430px; }
     .import-type-grid, .import-upload { grid-template-columns: 1fr; }
     .import-upload .primary-button { grid-column: auto; }

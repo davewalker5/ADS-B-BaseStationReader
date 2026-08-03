@@ -30,6 +30,13 @@ public sealed class TrackingSessionQueryService(
     }
 
     /// <inheritdoc />
+    public Task<PositionDensityDto?> GetPositionDensityAsync(int sessionId, CancellationToken cancellationToken = default)
+    {
+        // Keep the UI adapter free of persistence and chart-library concerns.
+        return manager.GetPositionDensityAsync(sessionId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(CancellationToken cancellationToken = default)
     {
         // Apply the UI-configured history window at the manager boundary.
