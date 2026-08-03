@@ -58,18 +58,45 @@
 
 @if (_activeTab == SessionTab.PositionDensity && _sessionStarted)
 {
-    <section class="position-density" aria-label="Session position density" aria-busy="@_densityLoading">
-        <div class="summary-heading">
-            <div>
-                <p class="eyebrow">Observation concentration</p>
-                <h2>Position Density</h2>
-                <p>Persisted aircraft positions recorded during this session only.</p>
-            </div>
+    <section class="session-status" aria-label="Session status">
+        <div>
+            <span class="live-indicator @(!TrackingControl.IsTracking ? "complete" : string.Empty)">
+                <i></i> @(TrackingControl.IsTracking ? "Session active" : "Session complete")
+            </span>
+            <strong>@EffectiveProfileName</strong>
+        </div>
+        <div class="density-session-actions">
             <button class="secondary-button" @onclick="LoadPositionDensityAsync" disabled="@_densityLoading">
                 @(_densityLoading ? "Recalculating…" : "Refresh")
             </button>
+            @if (TrackingControl.IsTracking)
+            {
+                <button class="secondary-button" @onclick="StopTrackingAsync" disabled="@_controlsBusy">
+                    @(_controlsBusy ? "Stopping…" : "Stop Session")
+                </button>
+            }
         </div>
+    </section>
 
+    <section class="summary-grid" aria-label="Tracker summary">
+        <article class="summary-card accent">
+            <span>Aircraft</span>
+            <strong>@LiveAircraft.Aircraft.Count</strong>
+            <small>currently tracked</small>
+        </article>
+        <article class="summary-card">
+            <span>Tracking profile</span>
+            <strong class="text-value">@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong>
+            <small>active receiver profile</small>
+        </article>
+        <article class="summary-card">
+            <span>Most recent update</span>
+            <strong class="text-value">@FormatUpdated(LiveAircraft.LastUpdated)</strong>
+            <small>@FormatUpdateAge(LiveAircraft.LastUpdated)</small>
+        </article>
+    </section>
+
+    <section class="position-density" aria-label="Session position density" aria-busy="@_densityLoading">
         @if (_densityError is not null)
         {
             <div class="alert" role="alert"><strong>Position density unavailable</strong><span>@_densityError</span></div>
@@ -182,22 +209,29 @@
 @if (_activeTab == SessionTab.Summary && _sessionStarted)
 {
     <section class="session-summary" aria-label="Observation session summary" aria-busy="@_summaryLoading">
-        <div class="summary-heading">
+        <section class="session-status" aria-label="Session status">
             <div>
-                <p class="eyebrow">Observation Snapshot</p>
-                <h2>Session Summary</h2>
-                <p>@(TrackingControl.IsTracking ? "Observations recorded so far." : "Review the completed observation session.")</p>
+                <span class="live-indicator @(!TrackingControl.IsTracking ? "complete" : string.Empty)">
+                    <i></i> @(TrackingControl.IsTracking ? "Session active" : "Session complete")
+                </span>
+                <strong>@EffectiveProfileName</strong>
             </div>
-            <div class="summary-actions">
+            <div class="summary-session-actions">
                 <button class="secondary-button" @onclick="LoadSummaryAsync" disabled="@_summaryLoading">
                     @(_summaryLoading ? "Refreshing…" : "Refresh")
                 </button>
-                @if (!TrackingControl.IsTracking)
+                @if (TrackingControl.IsTracking)
+                {
+                    <button class="secondary-button" @onclick="StopTrackingAsync" disabled="@_controlsBusy">
+                        @(_controlsBusy ? "Stopping…" : "Stop Session")
+                    </button>
+                }
+                else
                 {
                     <button class="primary-button" @onclick="PrepareNewSession">New Session</button>
                 }
             </div>
-        </div>
+        </section>
 
         @if (_summaryError is not null)
         {
@@ -260,16 +294,15 @@
 
 @if (_activeTab == SessionTab.Radar && TrackingControl.IsTracking)
 {
-    <section class="radar-tab" aria-label="Live radar">
-        <div class="radar-tab-heading">
-            <div>
-                <p class="eyebrow">Receiver-relative surveillance</p>
-                <h2>Live Radar</h2>
-                <p>Current aircraft range and bearing from the active receiver.</p>
-            </div>
+    <section class="session-status" aria-label="Session status">
+        <div>
+            <span class="live-indicator"><i></i> Session active</span>
+            <strong>@EffectiveProfileName</strong>
+        </div>
+        <div class="radar-session-actions">
             <label class="radar-range">
                 <span>Displayed range</span>
-                <select @bind="_maximumRadarRange">
+                <select @bind="_maximumRadarRange" aria-label="Displayed radar range">
                     <option value="10">10 nm</option>
                     <option value="25">25 nm</option>
                     <option value="50">50 nm</option>
@@ -277,15 +310,31 @@
                     <option value="200">200 nm</option>
                 </select>
             </label>
+            <button class="secondary-button" @onclick="StopTrackingAsync" disabled="@_controlsBusy">
+                @(_controlsBusy ? "Stopping…" : "Stop Session")
+            </button>
         </div>
+    </section>
 
-        <section class="radar-summary" aria-label="Radar summary">
-            <span><strong>@LiveAircraft.Aircraft.Count</strong> tracked</span>
-            <span><strong>@PositionedAircraftCount</strong> positioned</span>
-            <span><strong>@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong> profile</span>
-            <span class="connection @ConnectionClass"><i class="connection-dot"></i><strong>@LiveAircraft.ConnectionState</strong></span>
-        </section>
+    <section class="summary-grid" aria-label="Tracker summary">
+        <article class="summary-card accent">
+            <span>Aircraft</span>
+            <strong>@LiveAircraft.Aircraft.Count</strong>
+            <small>currently tracked</small>
+        </article>
+        <article class="summary-card">
+            <span>Tracking profile</span>
+            <strong class="text-value">@(LiveAircraft.TrackingOptions?.TrackingProfile ?? "Loading…")</strong>
+            <small>active receiver profile</small>
+        </article>
+        <article class="summary-card">
+            <span>Most recent update</span>
+            <strong class="text-value">@FormatUpdated(LiveAircraft.LastUpdated)</strong>
+            <small>@FormatUpdateAge(LiveAircraft.LastUpdated)</small>
+        </article>
+    </section>
 
+    <section class="radar-tab" aria-label="Live radar">
         <RadarDisplay Aircraft="LiveAircraft.Aircraft" MaximumRange="_maximumRadarRange"
                       Options="RadarConfiguration.Value" ConnectionState="LiveAircraft.ConnectionState"
                       SelectedAddress="@Address" />
@@ -528,9 +577,6 @@
     private string EmptyMessage => string.IsNullOrWhiteSpace(_filter)
         ? "Waiting for aircraft messages…"
         : "No aircraft match this filter.";
-    private int PositionedAircraftCount => LiveAircraft.Aircraft.Count(aircraft =>
-        aircraft.Distance.HasValue && aircraft.Latitude.HasValue && aircraft.Longitude.HasValue);
-
     private static string FormatCoordinate(double? coordinate)
         => coordinate?.ToString("F6") ?? "Not configured";
 
