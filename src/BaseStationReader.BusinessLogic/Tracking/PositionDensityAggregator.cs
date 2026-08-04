@@ -58,7 +58,10 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
         var bins = counts
             .Select(item => new PositionDensityBin
             {
-                Longitude = minimumLongitude + ((item.Key.Column + (item.Key.Row % 2 == 0 ? 0d : 0.5d)) / GridSize * longitudeSpan),
+                Longitude = Math.Clamp(
+                    minimumLongitude + ((item.Key.Column + (item.Key.Row % 2 == 0 ? 0d : 0.5d)) / GridSize * longitudeSpan),
+                    minimumLongitude,
+                    maximumLongitude),
                 Latitude = minimumLatitude + ((double)item.Key.Row / rowCount * latitudeSpan),
                 Count = item.Value
             })

@@ -314,7 +314,10 @@ namespace BaseStationReader.BusinessLogic.Database
         private async Task<bool> WritePositionDensitySnapshotAsync(PositionDensitySnapshotEntity snapshot)
         {
             // The snapshot manager owns the transaction spanning the header and every populated cell.
-            await _factory.PositionDensitySnapshotManager.AddAsync(snapshot);
+            var snapshotId = await _factory.PositionDensitySnapshotManager.AddAsync(snapshot);
+            _factory.Logger.LogMessage(
+                Severity.Info,
+                $"Persisted position-density snapshot {snapshotId} for session {snapshot.SessionId} with {snapshot.Cells.Count} cells");
             return true;
         }
 
