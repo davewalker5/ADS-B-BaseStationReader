@@ -7,6 +7,7 @@ namespace BaseStationReader.BusinessLogic.Geometry;
 /// </summary>
 public sealed class GeographicCalculator : IGeographicCalculator
 {
+    /// <summary>Mean spherical Earth radius used consistently by all distance and projection operations.</summary>
     private const double EarthRadiusMetres = 6371000d;
 
     /// <inheritdoc />
@@ -54,6 +55,47 @@ public sealed class GeographicCalculator : IGeographicCalculator
         var end = ToUnitVector(toLatitude, toLongitude);
         var dot = Math.Clamp(start.X * end.X + start.Y * end.Y + start.Z * end.Z, -1d, 1d);
         return Math.Acos(dot);
+    }
+
+    /// <inheritdoc />
+    public double CalculateDistanceMetres(
+        double fromLatitude,
+        double fromLongitude,
+        double toLatitude,
+        double toLongitude)
+    {
+        // Convert the shared central angle using the same mean Earth radius as local projections.
+        return CalculateAngularDistance(fromLatitude, fromLongitude, toLatitude, toLongitude) * EarthRadiusMetres;
+    }
+
+    /// <inheritdoc />
+    public (double Latitude, double Longitude) CalculateDestinationPoint(
+        double latitude,
+        double longitude,
+        double bearing,
+        double distanceMetres)
+    {
+        ValidateCoordinate(latitude, longitude, "origin");
+        if (!double.IsFinite(bearing))
+            throw new ArgumentOutOfRangeException(nameof(bearing), "Bearing must be finite.");
+        if (!double.IsFinite(distanceMetres) || distanceMetres < 0d)
+            throw new ArgumentOutOfRangeException(nameof(distanceMetres), "Distance must be finite and non-negative.");
+
+        // Apply the direct great-circle solution from the supplied origin and initial bearing.
+        var latitudeRadians = ToRadians(latitude);
+        var longitudeRadians = ToRadians(longitude);
+        var bearingRadians = ToRadians(bearing);
+        var angularDistance = distanceMetres / EarthRadiusMetres;
+        var destinationLatitude = Math.Asin(
+            Math.Sin(latitudeRadians) * Math.Cos(angularDistance) +
+            Math.Cos(latitudeRadians) * Math.Sin(angularDistance) * Math.Cos(bearingRadians));
+        var destinationLongitude = longitudeRadians + Math.Atan2(
+            Math.Sin(bearingRadians) * Math.Sin(angularDistance) * Math.Cos(latitudeRadians),
+            Math.Cos(angularDistance) - Math.Sin(latitudeRadians) * Math.Sin(destinationLatitude));
+
+        // Normalise longitude so every consumer receives the conventional half-open range.
+        var longitudeDegrees = ((ToDegrees(destinationLongitude) + 540d) % 360d) - 180d;
+        return (ToDegrees(destinationLatitude), longitudeDegrees);
     }
 
     /// <inheritdoc />

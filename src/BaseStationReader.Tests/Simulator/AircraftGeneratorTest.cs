@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using BaseStationReader.BusinessLogic.Simulator;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Tests.Mocks;
@@ -14,7 +15,7 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public void GenerateNewAircraftTest()
         {
-            var generator = new AircraftGenerator(_logger, _settings, null);
+            var generator = new AircraftGenerator(_logger, _settings, null, new GeographicCalculator());
             var aircraft = generator.Generate([]);
 
             Assert.IsNotNull(aircraft);
@@ -70,7 +71,8 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public void SelectAddressWithNoExistingAddressesTest()
         {
-            var generator = new AircraftGenerator(_logger, _settings, ["ABC123", "456DEF"]);
+            var generator = new AircraftGenerator(
+                _logger, _settings, ["ABC123", "456DEF"], new GeographicCalculator());
 
             var address = generator.SelectAddress(null);
             Assert.AreEqual("ABC123", address);
@@ -82,7 +84,8 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public void SelectAddressWithExistingAddressesTest()
         {
-            var generator = new AircraftGenerator(_logger, _settings, ["ABC123", "456DEF"]);
+            var generator = new AircraftGenerator(
+                _logger, _settings, ["ABC123", "456DEF"], new GeographicCalculator());
 
             var address = generator.SelectAddress(["ABC123"]);
             Assert.AreEqual("456DEF", address);
@@ -94,7 +97,7 @@ namespace BaseStationReader.Tests.Simulator
         [TestMethod]
         public void SelectAddressWithNoAddressListTest()
         {
-            var generator = new AircraftGenerator(_logger, _settings, null);
+            var generator = new AircraftGenerator(_logger, _settings, null, new GeographicCalculator());
 
             var address = generator.SelectAddress(null);
             Assert.IsNull(address);

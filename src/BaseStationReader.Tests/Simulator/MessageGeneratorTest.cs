@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Entities.Messages;
 using BaseStationReader.BusinessLogic.Simulator;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Tests.Mocks;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Simulator;
@@ -16,7 +17,8 @@ namespace BaseStationReader.Tests.Simulator
         public void Initialise()
         {
             _logger = new MockFileLogger();
-            _aircraftGenerator = new AircraftGenerator(_logger, _settings, null);
+            _aircraftGenerator = new AircraftGenerator(
+                _logger, _settings, null, new GeographicCalculator());
         }
 
         [TestMethod]

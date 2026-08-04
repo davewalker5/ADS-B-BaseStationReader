@@ -4,6 +4,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Simulator;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Simulator.Logic;
 using System.Diagnostics;
@@ -59,7 +60,9 @@ namespace BaseStationReader.Simulator
                 }
 
                 // Configure the aircraft and message generators
-                IAircraftGenerator aircraftGenerator = new AircraftGenerator(logger, settings, addresses);
+                var geographicCalculator = new GeographicCalculator();
+                IAircraftGenerator aircraftGenerator = new AircraftGenerator(
+                    logger, settings, addresses, geographicCalculator);
                 var generators = new List<IMessageGenerator>
                 {
                     new IdentificationMessageGenerator(logger),
@@ -81,7 +84,8 @@ namespace BaseStationReader.Simulator
                     settings.MaximumAltitude,
                     settings.Port,
                     settings.NumberOfAircraft,
-                    settings.SendInterval))
+                    settings.SendInterval,
+                    geographicCalculator))
                 {
                     // Run the simulator
                     Task.Run(() => simulator.StartAsync());

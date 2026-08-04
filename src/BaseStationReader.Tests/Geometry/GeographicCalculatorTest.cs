@@ -46,6 +46,29 @@ public class GeographicCalculatorTest
     }
 
     /// <summary>
+    /// Verifies linear distance uses the shared mean Earth radius.
+    /// </summary>
+    [TestMethod]
+    public void CalculateDistanceMetresTest()
+    {
+        // One degree along the equator is approximately 111.195 kilometres on the mean-radius sphere.
+        var distance = _calculator.CalculateDistanceMetres(0, 0, 0, 1);
+        Assert.AreEqual(111194.9d, distance, 0.2d);
+    }
+
+    /// <summary>
+    /// Verifies destination calculations use the same distance and bearing model.
+    /// </summary>
+    [TestMethod]
+    public void CalculateDestinationPointTest()
+    {
+        // Travelling the one-degree equatorial distance due east should arrive at one degree longitude.
+        var destination = _calculator.CalculateDestinationPoint(0, 0, 90, 111194.9d);
+        Assert.AreEqual(0d, destination.Latitude, 0.0001);
+        Assert.AreEqual(1d, destination.Longitude, 0.0001);
+    }
+
+    /// <summary>
     /// Verifies antimeridian interpolation follows the short route.
     /// </summary>
     [TestMethod]

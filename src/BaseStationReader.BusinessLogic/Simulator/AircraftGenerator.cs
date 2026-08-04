@@ -1,5 +1,4 @@
-﻿using BaseStationReader.BusinessLogic.Geometry;
-using BaseStationReader.Entities.Config;
+﻿using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Simulator;
 using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
@@ -7,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BaseStationReader.Interfaces.Logging;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Interfaces.Geometry;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {
@@ -18,16 +18,19 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly ITrackerLogger _logger;
         private readonly SimulatorApplicationSettings _settings;
         private readonly List<string> _aircraftAddresses;
+        private readonly SimulatorPositionGenerator _positionGenerator;
         private int _nextAddress = 0;
 
         public AircraftGenerator(
             ITrackerLogger logger,
             SimulatorApplicationSettings settings,
-            IEnumerable<string> aircraftAddresses)
+            IEnumerable<string> aircraftAddresses,
+            IGeographicCalculator geographicCalculator)
         {
             _logger = logger;
             _settings = settings;
             _aircraftAddresses = CuratedAddressList(aircraftAddresses);
+            _positionGenerator = new SimulatorPositionGenerator(geographicCalculator);
         }
 
         /// <summary>
@@ -285,7 +288,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
                     // Use the heading, speed and aircraft lifespan to calculate an initial position that will
                     // result in a landing at the receiver as the aircraft expires. Note that aircraft lifespan
                     // in the settings file is expressed in milliseconds
-                    (latitude, longitude) = CoordinateMathematics.GenerateInboundAircraftPosition(
+                    (latitude, longitude) = _positionGenerator.GenerateInboundPosition(
                         _settings.ReceiverLatitude,
                         _settings.ReceiverLongitude,
                         (double)heading,
@@ -294,7 +297,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
                     break;
                 default:
                     // For level flight, generate a random position in a circle centred on the receiver
-                    (latitude, longitude) = CoordinateMathematics.GenerateRandomStartingPosition(
+                    (latitude, longitude) = _positionGenerator.GenerateRandomStartingPosition(
                         _settings.ReceiverLatitude,
                         _settings.ReceiverLongitude,
                         _settings.MaximumInitialRange);

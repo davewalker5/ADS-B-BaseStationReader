@@ -22,6 +22,20 @@ public interface IGeographicCalculator
         double toLatitude,
         double toLongitude);
 
+    /// <summary>Calculates the great-circle distance in metres between two coordinates.</summary>
+    double CalculateDistanceMetres(
+        double fromLatitude,
+        double fromLongitude,
+        double toLatitude,
+        double toLongitude);
+
+    /// <summary>Calculates a destination coordinate from a start, initial bearing, and distance.</summary>
+    (double Latitude, double Longitude) CalculateDestinationPoint(
+        double latitude,
+        double longitude,
+        double bearing,
+        double distanceMetres);
+
     /// <summary>Interpolates a coordinate along the shortest great-circle route.</summary>
     (double Latitude, double Longitude) InterpolateGreatCircle(
         double fromLatitude,
