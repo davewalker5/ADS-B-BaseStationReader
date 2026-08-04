@@ -1,13 +1,14 @@
 #nullable enable
 
 using BaseStationReader.Entities.History;
+using BaseStationReader.Interfaces.Tracking;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.BusinessLogic.Tracking;
 
 /// <summary>
 /// Maintains a monotonic position-density snapshot while one Live Tracker session remains selected.
 /// </summary>
-public static class PositionDensitySnapshotMerger
+public sealed class PositionDensitySnapshotMerger : IPositionDensitySnapshotMerger
 {
     /// <summary>
     /// Merges a refreshed calculation without allowing occupied cells or recorded counts to disappear.
@@ -15,7 +16,7 @@ public static class PositionDensitySnapshotMerger
     /// <param name="current">The density snapshot already displayed for the current session.</param>
     /// <param name="refreshed">The latest complete persisted-position calculation.</param>
     /// <returns>A monotonic snapshot, or the refreshed result when the session has changed.</returns>
-    public static PositionDensityDto? Merge(PositionDensityDto? current, PositionDensityDto? refreshed)
+    public PositionDensityDto? Merge(PositionDensityDto? current, PositionDensityDto? refreshed)
     {
         if (refreshed is null) return null;
         if (current is null || current.SessionId != refreshed.SessionId) return refreshed;
