@@ -6,7 +6,7 @@
 @inject ITrackingSessionQueryService SessionQueries
 @inject ILiveTrackerStatusService LiveStatus
 @inject ITrackerHubPageState PageState
-@inject IPositionDensitySnapshotMerger PositionDensitySnapshotMerger
+@inject IPositionDensitySnapshotStateManager PositionDensitySnapshots
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -112,13 +112,13 @@
         {
             <div class="alert" role="alert"><strong>Position density unavailable</strong><span>@_densityError</span></div>
         }
-        else if (_density is null)
+        else if (CurrentPositionDensity is not { } density)
         {
             <div class="summary-empty" role="status">
                 @(_densityLoading ? "Calculating position density…" : "No current session is available.")
             </div>
         }
-        else if (_density.PositionCount == 0)
+        else if (density.PositionCount == 0)
         {
             <div class="summary-empty" role="status">
                 @(_densityLoading ? "Recalculating position density…" : "No recorded position data is available for this session yet.")
@@ -126,7 +126,7 @@
         }
         else
         {
-            <PositionDensityChart Density="_density" />
+            <PositionDensityChart Density="density" />
             @if (_densityLoading)
             {
                 <p class="density-refresh-status" role="status">Recalculating with the latest persisted positions…</p>
@@ -574,13 +574,15 @@
     private ObservationSessionSummary? _summary;
     private string? _summaryError;
     private LiveTrackerStatus? _status;
-    private PositionDensity? _density;
     private string? _densityError;
     private bool _densityLoading;
     private long _densityRequestVersion;
     private CancellationTokenSource? _densityCancellation;
     private double _maximumRadarRange;
     private IReadOnlyList<TrackedAircraftDto> _completedAircraft = [];
+
+    private PositionDensity? CurrentPositionDensity
+        => _sessionId.HasValue ? PositionDensitySnapshots.GetSnapshot(_sessionId.Value) : null;
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "tab")]
@@ -984,7 +986,7 @@
         if (!requestedSessionId.HasValue)
         {
             // Never infer the latest session here: the plot must follow the page's explicit session identity.
-            _density = null;
+            PositionDensitySnapshots.Clear();
             _densityError = null;
             _densityLoading = false;
             return;
@@ -1003,7 +1005,10 @@
             {
                 return;
             }
-            _density = PositionDensitySnapshotMerger.Merge(_density, result);
+            if (result is not null)
+            {
+                PositionDensitySnapshots.Merge(result);
+            }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
@@ -1034,7 +1039,7 @@
         // Increment before cancellation so even a provider that ignores cancellation cannot publish stale results.
         Interlocked.Increment(ref _densityRequestVersion);
         _densityCancellation?.Cancel();
-        _density = null;
+        PositionDensitySnapshots.Clear();
         _densityError = null;
         _densityLoading = false;
     }

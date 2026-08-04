@@ -167,6 +167,8 @@ namespace BaseStationReader.TrackerHub
                     new RadarProjectionService(runtime, provider.GetRequiredService<IGeographicCalculator>()));
                 builder.Services.AddSingleton<IPositionDensityAggregator, PositionDensityAggregator>();
                 builder.Services.AddSingleton<IPositionDensitySnapshotMerger, PositionDensitySnapshotMerger>();
+                // Snapshot state is process memory only and survives recreation of the Live Tracker page component.
+                builder.Services.AddSingleton<IPositionDensitySnapshotStateManager, PositionDensitySnapshotStateManager>();
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<ITrackingSessionQueryManager, TrackingSessionQueryManager>();
                 builder.Services.AddScoped<ILiveTrackerStatusService, LiveTrackerStatusService>();
