@@ -159,7 +159,9 @@ public sealed class TrackingProfileService : ITrackingProfileService
         ReceiverLongitude = source.ReceiverLongitude, ReceiverElevation = source.ReceiverElevation,
         MaximumTrackedDistance = source.MaximumTrackedDistance,
         MinimumTrackedAltitude = source.MinimumTrackedAltitude, MaximumTrackedAltitude = source.MaximumTrackedAltitude,
-        TrackPosition = source.TrackPosition, AircraftNotificationInterval = source.AircraftNotificationInterval,
+        TrackPosition = source.TrackPosition, TrackPositionDensity = source.TrackPositionDensity,
+        PositionDensityInterval = source.PositionDensityInterval,
+        AircraftNotificationInterval = source.AircraftNotificationInterval,
         TrackingProfile = source.TrackingProfile, TrackingProfileName = source.TrackingProfileName,
         DefaultProfileName = source.DefaultProfileName,
         Columns = [.. source.Columns], TrackedBehaviours = [.. source.TrackedBehaviours]
