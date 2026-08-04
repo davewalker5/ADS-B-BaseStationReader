@@ -1,5 +1,6 @@
 ﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.History;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 
@@ -10,6 +11,8 @@ namespace BaseStationReader.Data
     {
         public virtual DbSet<TrackedAircraft> TrackedAircraft { get; set; }
         public virtual DbSet<ObservationSession> ObservationSessions { get; set; }
+        public virtual DbSet<PositionDensitySnapshotEntity> PositionDensitySnapshots { get; set; }
+        public virtual DbSet<PositionDensitySnapshotCellEntity> PositionDensitySnapshotCells { get; set; }
         public virtual DbSet<AircraftPosition> Positions { get; set; }
         public virtual DbSet<Flight> Flights { get; set; }
         public virtual DbSet<Airline> Airlines { get; set; }
@@ -120,6 +123,51 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.IncludedBehaviours).IsRequired().HasColumnName("IncludedBehaviours");
 
                 entity.HasIndex(e => e.StartedAtUtc);
+            });
+
+            modelBuilder.Entity<PositionDensitySnapshotEntity>(entity =>
+            {
+                entity.ToTable("POSITION_DENSITY_SNAPSHOT", table =>
+                {
+                    table.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_PositionCount", "PositionCount >= 0");
+                    table.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_MaximumBinCount", "MaximumBinCount >= 0");
+                    table.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_LatitudeBounds", "MaximumLatitude >= MinimumLatitude");
+                    table.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_LongitudeBounds", "MaximumLongitude >= MinimumLongitude");
+                });
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.SessionId).HasColumnName("SessionId");
+                entity.Property(e => e.CapturedAtUtc).IsRequired().HasColumnName("CapturedAtUtc").HasColumnType("DATETIME");
+                entity.Property(e => e.PositionCount).HasColumnName("PositionCount");
+                entity.Property(e => e.MaximumBinCount).HasColumnName("MaximumBinCount");
+                entity.Property(e => e.MinimumLatitude).HasColumnType("REAL").HasColumnName("MinimumLatitude");
+                entity.Property(e => e.MaximumLatitude).HasColumnType("REAL").HasColumnName("MaximumLatitude");
+                entity.Property(e => e.MinimumLongitude).HasColumnType("REAL").HasColumnName("MinimumLongitude");
+                entity.Property(e => e.MaximumLongitude).HasColumnType("REAL").HasColumnName("MaximumLongitude");
+
+                entity.HasIndex(e => new { e.SessionId, e.CapturedAtUtc });
+                entity.HasOne(e => e.Session)
+                    .WithMany(e => e.PositionDensitySnapshots)
+                    .HasForeignKey(e => e.SessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PositionDensitySnapshotCellEntity>(entity =>
+            {
+                entity.ToTable("POSITION_DENSITY_SNAPSHOT_CELL", table =>
+                    table.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_CELL_Count", "Count > 0"));
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.PositionDensitySnapshotId).HasColumnName("PositionDensitySnapshotId");
+                entity.Property(e => e.Latitude).HasColumnType("REAL").HasColumnName("Latitude");
+                entity.Property(e => e.Longitude).HasColumnType("REAL").HasColumnName("Longitude");
+                entity.Property(e => e.Count).HasColumnName("Count");
+
+                entity.HasIndex(e => new { e.PositionDensitySnapshotId, e.Latitude, e.Longitude }).IsUnique();
+                entity.HasOne(e => e.PositionDensitySnapshot)
+                    .WithMany(e => e.Cells)
+                    .HasForeignKey(e => e.PositionDensitySnapshotId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<AircraftPosition>(entity =>

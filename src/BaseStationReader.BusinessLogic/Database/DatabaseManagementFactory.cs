@@ -24,6 +24,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IApiLogManager> _apiLogManager = null;
         private readonly Lazy<IProvenanceManager> _provenanceManager = null;
         private readonly Lazy<IObservationSessionManager> _observationSessionManager = null;
+        private readonly Lazy<IPositionDensitySnapshotManager> _positionDensitySnapshotManager = null;
 
         public ITrackerLogger Logger { get; private set; }
         public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
@@ -42,6 +43,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public IApiLogManager ApiLogManager { get { return _apiLogManager.Value; } }
         public IProvenanceManager ProvenanceManager { get { return _provenanceManager.Value; } }
         public IObservationSessionManager ObservationSessionManager { get { return _observationSessionManager.Value; } }
+        public IPositionDensitySnapshotManager PositionDensitySnapshotManager { get { return _positionDensitySnapshotManager.Value; } }
 
         public DatabaseManagementFactory(
             ITrackerLogger logger,
@@ -67,6 +69,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _apiLogManager = new Lazy<IApiLogManager>(() => new ApiLogManager(context));
             _provenanceManager = new Lazy<IProvenanceManager>(() => new ProvenanceManager(context));
             _observationSessionManager = new Lazy<IObservationSessionManager>(() => new ObservationSessionManager(context));
+            _positionDensitySnapshotManager = new Lazy<IPositionDensitySnapshotManager>(() => new PositionDensitySnapshotManager(context));
         }
 
         /// <summary>
