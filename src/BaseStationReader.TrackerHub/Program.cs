@@ -6,9 +6,11 @@ using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Geometry;
 using Microsoft.EntityFrameworkCore;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.TrackerHub.Logic;
@@ -139,6 +141,8 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
                 // This cache is strictly process memory: it has no database, distributed, or file-backed provider.
                 builder.Services.AddSingleton<ITransientResponseCache, MemoryOnlyTransientResponseCache>();
+                builder.Services.AddSingleton<ITransientReferenceStatusProvider>(provider =>
+                    provider.GetRequiredService<ITransientResponseCache>());
                 // Scoped UI state lives only in one Blazor circuit and has no persistent storage backing.
                 builder.Services.AddScoped<ITrackerHubPageState, TrackerHubPageState>();
                 builder.Services.AddScoped<ILiveAircraftService, LiveAircraftService>();
@@ -146,6 +150,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton(
                     builder.Configuration.GetSection("ApplicationSettings").Get<ExternalApiSettings>() ?? new());
                 builder.Services.AddSingleton(runtime);
+                builder.Services.AddSingleton<ILiveTrackerStatisticsProvider>(runtime);
                 builder.Services.AddSingleton<ITrackingProfileService, TrackingProfileService>();
                 builder.Services.AddSingleton<ITrackingControlService, TrackingControlService>();
                 builder.Services.Configure<RadarOptions>(builder.Configuration.GetSection("WebUi:Radar"));
@@ -153,10 +158,16 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.Configure<ScheduleOptions>(builder.Configuration.GetSection("ApplicationSettings"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
+                builder.Services.AddSingleton<IGeographicCalculator, GeographicCalculator>();
                 builder.Services.AddSingleton<IReceiverPositionProvider>(runtime);
-                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(runtime));
-                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(runtime));
-                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
+                builder.Services.AddSingleton<IFlightProfileBuilder>(provider =>
+                    new FlightProfileBuilder(runtime, provider.GetRequiredService<IGeographicCalculator>()));
+                builder.Services.AddSingleton<IFlightPathBuilder>(provider =>
+                    new FlightPathBuilder(runtime, provider.GetRequiredService<IGeographicCalculator>()));
+                builder.Services.AddSingleton<IRadarProjectionService>(provider =>
+                    new RadarProjectionService(runtime, provider.GetRequiredService<IGeographicCalculator>()));
+                builder.Services.AddSingleton<IPositionDensityAggregator, PositionDensityAggregator>();
+                builder.Services.AddSingleton<IPositionDensitySnapshotMerger, PositionDensitySnapshotMerger>();
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<ITrackingSessionQueryManager, TrackingSessionQueryManager>();
                 builder.Services.AddScoped<ILiveTrackerStatusService, LiveTrackerStatusService>();

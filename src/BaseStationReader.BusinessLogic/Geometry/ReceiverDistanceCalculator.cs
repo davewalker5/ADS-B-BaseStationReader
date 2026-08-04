@@ -2,10 +2,16 @@
 
 namespace BaseStationReader.BusinessLogic.Geometry
 {
-    public class HaversineCalculator : IDistanceCalculator
+    public sealed class ReceiverDistanceCalculator : IDistanceCalculator
     {
-        private const double EARTH_RADIUS = 6378000.0;
         private const double M_PER_NM = 1852.0;
+        private readonly IGeographicCalculator _geographicCalculator;
+
+        public ReceiverDistanceCalculator(IGeographicCalculator geographicCalculator)
+        {
+            // Delegate all spherical calculations to the shared geographic model.
+            _geographicCalculator = geographicCalculator ?? throw new ArgumentNullException(nameof(geographicCalculator));
+        }
 
         public double ReferenceLatitude { get; set; }
         public double ReferenceLongitude { get; set; }
@@ -21,17 +27,8 @@ namespace BaseStationReader.BusinessLogic.Geometry
         /// <returns></returns>
         public double CalculateDistance(double latitude1, double longitude1, double latitude2, double longitude2)
         {
-            var phi1 = latitude1 * Math.PI / 180.0;
-            var phi2 = latitude2 * Math.PI / 180.0;
-
-            var deltaPhi = (latitude2 - latitude1) * Math.PI / 180.0;
-            var deltaLambda = (longitude2 - longitude1) * Math.PI / 180.0;
-
-            var a = Math.Pow(Math.Sin(deltaPhi / 2.0), 2.0) + Math.Cos(phi1) * Math.Cos(phi2) * Math.Pow(Math.Sin(deltaLambda / 2.0), 2.0);
-            var c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-            var d = EARTH_RADIUS * c;
-
-            return d;
+            // Preserve the existing distance-calculator contract while sharing validation and radius semantics.
+            return _geographicCalculator.CalculateDistanceMetres(latitude1, longitude1, latitude2, longitude2);
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
-﻿using BaseStationReader.BusinessLogic.Geometry;
-using BaseStationReader.Entities.Logging;
+﻿using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -7,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Simulator;
+using BaseStationReader.Interfaces.Geometry;
 
 namespace BaseStationReader.BusinessLogic.Simulator
 {
@@ -25,6 +25,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
         private readonly System.Timers.Timer _timer;
         private readonly IAircraftGenerator _aircraftGenerator;
         private readonly IMessageGeneratorWrapper _messageGeneratorWrapper;
+        private readonly IGeographicCalculator _geographicCalculator;
 
         private readonly int _maximumAltitude;
         private readonly int _numberOfAircraft;
@@ -37,7 +38,8 @@ namespace BaseStationReader.BusinessLogic.Simulator
             int maximumAltitude,
             int port,
             int numberOfAircraft,
-            int sendInterval)
+            int sendInterval,
+            IGeographicCalculator geographicCalculator)
         {
             // Initialise the timer
             _timer = new System.Timers.Timer(sendInterval)
@@ -55,6 +57,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
             _messageGeneratorWrapper = generatorWrapper;
             _maximumAltitude = maximumAltitude;
             _numberOfAircraft = numberOfAircraft;
+            _geographicCalculator = geographicCalculator;
         }
 
         /// <summary>
@@ -168,7 +171,7 @@ namespace BaseStationReader.BusinessLogic.Simulator
             foreach (var a in aircraft)
             {
                 // Calculate the updated position
-                (double latitude, double longitude) = CoordinateMathematics.DestinationPoint(
+                (double latitude, double longitude) = _geographicCalculator.CalculateDestinationPoint(
                     (double)a.Latitude.Value,
                     (double)a.Longitude.Value,
                     (double)a.Track.Value,

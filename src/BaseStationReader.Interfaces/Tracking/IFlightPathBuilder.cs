@@ -1,6 +1,6 @@
-using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Entities.History;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.Interfaces.Tracking;
 
 /// <summary>
 /// Prepares persisted positions for renderer-neutral geographic and 3D plotting.

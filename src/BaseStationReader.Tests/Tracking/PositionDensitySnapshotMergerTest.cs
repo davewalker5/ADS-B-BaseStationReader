@@ -1,7 +1,7 @@
 using BaseStationReader.Entities.History;
-using BaseStationReader.TrackerHub.Services;
+using BaseStationReader.BusinessLogic.Tracking;
 
-namespace BaseStationReader.Tests.TrackerHub;
+namespace BaseStationReader.Tests.Tracking;
 
 [TestClass]
 public class PositionDensitySnapshotMergerTest
@@ -16,7 +16,7 @@ public class PositionDensitySnapshotMergerTest
             new PositionDensityBinDto { Latitude = 51.5, Longitude = -0.2, Count = 3 },
             new PositionDensityBinDto { Latitude = 51.7, Longitude = 0.0, Count = 5 });
 
-        var merged = PositionDensitySnapshotMerger.Merge(current, refreshed);
+        var merged = new PositionDensitySnapshotMerger().Merge(current, refreshed);
 
         Assert.IsNotNull(merged);
         Assert.AreEqual(12, merged.PositionCount);
@@ -34,7 +34,7 @@ public class PositionDensitySnapshotMergerTest
         var refreshed = Density(29, 1,
             new PositionDensityBinDto { Latitude = 50.0, Longitude = 1.0, Count = 1 });
 
-        var merged = PositionDensitySnapshotMerger.Merge(current, refreshed);
+        var merged = new PositionDensitySnapshotMerger().Merge(current, refreshed);
 
         Assert.AreSame(refreshed, merged);
         Assert.HasCount(1, merged!.Bins);

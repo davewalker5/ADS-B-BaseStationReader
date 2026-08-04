@@ -1,6 +1,6 @@
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.History;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Entities.Tracking;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +19,7 @@ public class PositionDensityTest
         await AddPositionAsync(factory, firstSession.AircraftId, 51.50m, -0.10m);
         await AddPositionAsync(factory, secondSession.AircraftId, 40.71m, -74.00m);
 
-        var result = await new TrackingSessionQueryManager(factory).GetPositionDensityAsync(firstSession.SessionId);
+        var result = await CreateManager(factory).GetPositionDensityAsync(firstSession.SessionId);
 
         Assert.IsNotNull(result);
         Assert.AreEqual(firstSession.SessionId, result.SessionId);
@@ -34,7 +34,7 @@ public class PositionDensityTest
         var factory = CreateContextFactory();
         var session = await AddSessionWithAircraftAsync(factory, "EMPTY1");
 
-        var result = await new TrackingSessionQueryManager(factory).GetPositionDensityAsync(session.SessionId);
+        var result = await CreateManager(factory).GetPositionDensityAsync(session.SessionId);
 
         Assert.IsNotNull(result);
         Assert.AreEqual(0, result.PositionCount);
@@ -51,7 +51,7 @@ public class PositionDensityTest
         await AddPositionAsync(factory, session.AircraftId, 91m, 0m);
         await AddPositionAsync(factory, session.AircraftId, 0m, 181m);
 
-        var result = await new TrackingSessionQueryManager(factory).GetPositionDensityAsync(session.SessionId);
+        var result = await CreateManager(factory).GetPositionDensityAsync(session.SessionId);
 
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.PositionCount);
@@ -64,7 +64,7 @@ public class PositionDensityTest
         var existing = await AddSessionWithAircraftAsync(factory, "EXISTS");
         await AddPositionAsync(factory, existing.AircraftId, 51.5m, -0.1m);
 
-        var result = await new TrackingSessionQueryManager(factory).GetPositionDensityAsync(existing.SessionId + 100);
+        var result = await CreateManager(factory).GetPositionDensityAsync(existing.SessionId + 100);
 
         Assert.IsNull(result);
     }
@@ -72,7 +72,7 @@ public class PositionDensityTest
     [TestMethod]
     public async Task QueryRejectsInvalidSessionIdentifierTest()
     {
-        var manager = new TrackingSessionQueryManager(CreateContextFactory());
+        var manager = CreateManager(CreateContextFactory());
 
         await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(() => manager.GetPositionDensityAsync(0));
     }
@@ -87,7 +87,7 @@ public class PositionDensityTest
             new(51.6000, -0.2000)
         ];
 
-        var result = PositionDensityAggregator.Aggregate(12, coordinates);
+        var result = new PositionDensityAggregator().Aggregate(12, coordinates);
 
         Assert.AreEqual(3, result.PositionCount);
         Assert.AreEqual(2, result.MaximumBinCount);
@@ -100,14 +100,15 @@ public class PositionDensityTest
     {
         var bounds = new PositionDensityBounds(50d, 52d, -1d, 1d);
         PositionDensityCoordinate[] initialPositions = [new(51.1d, -0.2d), new(51.1d, -0.2d)];
-        var initial = PositionDensityAggregator.Aggregate(15, initialPositions, bounds);
+        var aggregator = new PositionDensityAggregator();
+        var initial = aggregator.Aggregate(15, initialPositions, bounds);
 
         PositionDensityCoordinate[] refreshedPositions =
         [
             .. initialPositions,
             new(51.9d, 0.9d)
         ];
-        var refreshed = PositionDensityAggregator.Aggregate(15, refreshedPositions, bounds);
+        var refreshed = aggregator.Aggregate(15, refreshedPositions, bounds);
 
         var originalBin = initial.Bins.Single();
         var matchingBin = refreshed.Bins.Single(bin =>
@@ -126,6 +127,9 @@ public class PositionDensityTest
             .Options;
         return new InMemoryContextFactory(options);
     }
+
+    private static TrackingSessionQueryManager CreateManager(InMemoryContextFactory factory)
+        => new(factory, new PositionDensityAggregator());
 
     private static async Task<(int SessionId, int AircraftId)> AddSessionWithAircraftAsync(
         InMemoryContextFactory factory,

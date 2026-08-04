@@ -1,31 +1,51 @@
-using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Entities.History;
+using BaseStationReader.Interfaces.Geometry;
+using BaseStationReader.Interfaces.Tracking;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.BusinessLogic.Tracking;
 
 /// <summary>
 /// Reproduces the repeatable data transformations from the flight-path notebook in C#.
 /// </summary>
 public sealed class FlightPathBuilder : IFlightPathBuilder
 {
-    private const double EarthRadiusMetres = 6371000;
     private const double FeetToMetres = 0.3048;
     private const double BoundingBoxPaddingRatio = 0.06;
     private static readonly TimeSpan MaximumSegmentGap = TimeSpan.FromSeconds(90);
     private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
+    private readonly IGeographicCalculator _geographicCalculator;
 
     /// <summary>
     /// Initialises flight-path preparation with optional receiver coordinates.
     /// </summary>
     /// <param name="receiverLatitude">Receiver latitude in degrees.</param>
     /// <param name="receiverLongitude">Receiver longitude in degrees.</param>
-    public FlightPathBuilder(double? receiverLatitude, double? receiverLongitude)
+    public FlightPathBuilder(
+        double? receiverLatitude,
+        double? receiverLongitude,
+        IGeographicCalculator geographicCalculator)
     {
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
         // Receiver coordinates enrich hover data but are not required for path projection.
         _receiverPosition = () => (receiverLatitude, receiverLongitude);
+        _geographicCalculator = geographicCalculator;
     }
 
-    public FlightPathBuilder(IReceiverPositionProvider receiverPositionProvider)
-        => _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
+    /// <summary>
+    /// Initialises flight-path preparation with the current receiver-position provider.
+    /// </summary>
+    /// <param name="receiverPositionProvider">Provides coordinates that can change with the active tracking profile.</param>
+    public FlightPathBuilder(
+        IReceiverPositionProvider receiverPositionProvider,
+        IGeographicCalculator geographicCalculator)
+    {
+        ArgumentNullException.ThrowIfNull(receiverPositionProvider);
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
+
+        // Resolve the position for each build so a newly applied tracking profile is observed immediately.
+        _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
+        _geographicCalculator = geographicCalculator;
+    }
 
     /// <inheritdoc />
     public FlightPathDto Build(
@@ -61,8 +81,9 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             return EmptyPath(trackingRecordId, address, callsign, registration, model, flightNumber, airline, route);
         }
 
-        var referenceLatitudeRadians = DegreesToRadians((double)validPoints[0].Latitude!.Value);
-        var referenceLongitudeRadians = DegreesToRadians((double)validPoints[0].Longitude!.Value);
+        // Use the first valid observation as the origin for the local metric projection.
+        var referenceLatitude = (double)validPoints[0].Latitude!.Value;
+        var referenceLongitude = (double)validPoints[0].Longitude!.Value;
         var segment = 1;
         DateTime? previousTimestamp = null;
         var prepared = new List<FlightPathPointDto>(validPoints.Length);
@@ -77,8 +98,8 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
 
             var latitude = (double)point.Latitude!.Value;
             var longitude = (double)point.Longitude!.Value;
-            var latitudeRadians = DegreesToRadians(latitude);
-            var longitudeRadians = DegreesToRadians(longitude);
+            var localPosition = _geographicCalculator.ProjectToLocalMetres(
+                referenceLatitude, referenceLongitude, latitude, longitude);
             prepared.Add(new FlightPathPointDto
             {
                 Sequence = prepared.Count + 1,
@@ -90,12 +111,13 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
                 AltitudeMetres = (double)point.Altitude.Value * FeetToMetres,
                 DistanceNauticalMiles = point.Distance!.Value,
                 BearingDegrees = CalculateBearing(latitude, longitude),
-                LocalXMetres = (longitudeRadians - referenceLongitudeRadians) * Math.Cos(referenceLatitudeRadians) * EarthRadiusMetres,
-                LocalYMetres = (latitudeRadians - referenceLatitudeRadians) * EarthRadiusMetres
+                LocalXMetres = localPosition.EastMetres,
+                LocalYMetres = localPosition.NorthMetres
             });
             previousTimestamp = point.Timestamp;
         }
 
+        // Add stable padding so flat or very short paths still produce useful renderer bounds.
         var altitudes = prepared.Select(point => point.AltitudeMetres).ToArray();
         var altitudePadding = Math.Max((altitudes.Max() - altitudes.Min()) * 0.1, 250);
         var minimumAltitude = Math.Max(0, altitudes.Min() - altitudePadding);
@@ -105,7 +127,8 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
         var latitudePadding = Math.Max(latitudes.Max() - latitudes.Min(), 0.000001) * BoundingBoxPaddingRatio;
         var longitudePadding = Math.Max(longitudes.Max() - longitudes.Min(), 0.000001) * BoundingBoxPaddingRatio;
 
-        // Return only primitive DTO values so JavaScript never accesses the database or EF entities.
+        // Return only entity-layer DTO values so any presentation or reporting implementation can consume the result.
+        var receiverPosition = _receiverPosition();
         return new FlightPathDto
         {
             TrackingRecordId = trackingRecordId,
@@ -121,8 +144,8 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             South = latitudes.Min() - latitudePadding,
             East = longitudes.Max() + longitudePadding,
             West = longitudes.Min() - longitudePadding,
-            ReceiverLatitude = _receiverPosition().Latitude,
-            ReceiverLongitude = _receiverPosition().Longitude,
+            ReceiverLatitude = receiverPosition.Latitude,
+            ReceiverLongitude = receiverPosition.Longitude,
             MinimumAltitudeMetres = minimumAltitude,
             MaximumAltitudeMetres = maximumAltitude,
             SegmentCount = segment
@@ -134,12 +157,11 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     /// </summary>
     /// <param name="point">Raw persisted position projection.</param>
     /// <returns><see langword="true"/> when the point can be plotted.</returns>
-    private static bool IsValid(FlightProfilePointDto point)
+    private bool IsValid(FlightProfilePointDto point)
     {
         // Reject invalid geographic ranges as well as incomplete nullable telemetry.
-        return point.Timestamp != default &&
-               point.Latitude is >= -90 and <= 90 &&
-               point.Longitude is >= -180 and <= 180 &&
+        return point.Timestamp != default && point.Latitude.HasValue && point.Longitude.HasValue &&
+               _geographicCalculator.IsValidCoordinate((double)point.Latitude.Value, (double)point.Longitude.Value) &&
                point.Altitude.HasValue &&
                point.Distance.HasValue;
     }
@@ -147,6 +169,15 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     /// <summary>
     /// Creates a metadata-preserving result when no positions can be plotted.
     /// </summary>
+    /// <param name="trackingRecordId">Owning tracking-record identifier.</param>
+    /// <param name="address">Aircraft ICAO address.</param>
+    /// <param name="callsign">Aircraft callsign.</param>
+    /// <param name="registration">Aircraft registration.</param>
+    /// <param name="model">Aircraft model.</param>
+    /// <param name="flightNumber">Associated flight number.</param>
+    /// <param name="airline">Associated airline.</param>
+    /// <param name="route">Associated route.</param>
+    /// <returns>An empty path retaining the supplied flight metadata.</returns>
     private static FlightPathDto EmptyPath(
         int trackingRecordId,
         string address,
@@ -174,6 +205,9 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     /// <summary>
     /// Calculates initial bearing from the configured receiver to a path position.
     /// </summary>
+    /// <param name="latitude">Position latitude in degrees.</param>
+    /// <param name="longitude">Position longitude in degrees.</param>
+    /// <returns>Bearing clockwise from true north, or zero when receiver coordinates are unavailable.</returns>
     private double CalculateBearing(double latitude, double longitude)
     {
         // Use zero only when receiver coordinates are absent, matching a non-enriched DTO value.
@@ -183,32 +217,12 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             return 0;
         }
 
-        var receiverLatitude = DegreesToRadians(receiverPosition.Latitude.Value);
-        var positionLatitude = DegreesToRadians(latitude);
-        var longitudeDifference = DegreesToRadians(longitude - receiverPosition.Longitude.Value);
-        var y = Math.Sin(longitudeDifference) * Math.Cos(positionLatitude);
-        var x = Math.Cos(receiverLatitude) * Math.Sin(positionLatitude) -
-                Math.Sin(receiverLatitude) * Math.Cos(positionLatitude) * Math.Cos(longitudeDifference);
+        // Apply the initial great-circle bearing formula using radians.
+        if (!_geographicCalculator.IsValidCoordinate(receiverPosition.Latitude.Value, receiverPosition.Longitude.Value))
+            return 0;
 
-        // Normalise the signed atan2 result into a compass bearing.
-        return (RadiansToDegrees(Math.Atan2(y, x)) + 360) % 360;
-    }
-
-    /// <summary>
-    /// Converts degrees to radians for projection and bearing calculations.
-    /// </summary>
-    private static double DegreesToRadians(double degrees)
-    {
-        // Base trigonometric functions operate on radians.
-        return degrees * Math.PI / 180;
-    }
-
-    /// <summary>
-    /// Converts radians to degrees for the renderer-neutral DTO.
-    /// </summary>
-    private static double RadiansToDegrees(double radians)
-    {
-        // Browser hover text uses conventional bearing degrees.
-        return radians * 180 / Math.PI;
+        // Delegate bearing semantics to the shared geographic calculator.
+        return _geographicCalculator.CalculateInitialBearing(
+            receiverPosition.Latitude.Value, receiverPosition.Longitude.Value, latitude, longitude);
     }
 }

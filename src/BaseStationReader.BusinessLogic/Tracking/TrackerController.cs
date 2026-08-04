@@ -106,7 +106,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             IDistanceCalculator distanceCalculator = null;
             if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
             {
-                distanceCalculator = new HaversineCalculator
+                distanceCalculator = new ReceiverDistanceCalculator(new GeographicCalculator())
                 {
                     ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
                     ReferenceLongitude = _settings.ReceiverLongitude ?? 0

@@ -16,7 +16,8 @@ namespace BaseStationReader.Tests.Tracking
     {
         private ITrackerLogger _logger;
         private IAircraftGenerator _aircraftGenerator;
-        private readonly IDistanceCalculator _distanceCalculator = new HaversineCalculator();
+        private readonly IDistanceCalculator _distanceCalculator =
+            new ReceiverDistanceCalculator(new GeographicCalculator());
         private readonly IAircraftBehaviourAssessor _behaviourAssessor = new SimpleAircraftBehaviourAssessor();
 
         [TestInitialize]
@@ -24,7 +25,8 @@ namespace BaseStationReader.Tests.Tracking
         {
             // Configure the simulated aircraft generator
             _logger = new MockFileLogger();
-            _aircraftGenerator = new AircraftGenerator(_logger, _settings, null);
+            _aircraftGenerator = new AircraftGenerator(
+                _logger, _settings, null, new GeographicCalculator());
         }
 
         [TestMethod]

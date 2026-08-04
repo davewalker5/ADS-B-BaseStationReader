@@ -1,9 +1,9 @@
-using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Entities.History;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.Interfaces.Tracking;
 
 /// <summary>
-/// Prepares ordered position data and reusable summaries independently of chart rendering.
+/// Prepares ordered position data and reusable summaries independently of rendering.
 /// </summary>
 public interface IFlightProfileBuilder
 {
@@ -14,7 +14,7 @@ public interface IFlightProfileBuilder
     /// <param name="address">The aircraft ICAO address.</param>
     /// <param name="callsign">The aircraft callsign, when known.</param>
     /// <param name="points">The raw persisted position projections.</param>
-    /// <returns>A chart-ready flight profile.</returns>
+    /// <returns>A renderer-neutral flight profile.</returns>
     FlightProfileDto Build(
         int trackingRecordId,
         string address,

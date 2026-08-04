@@ -1,11 +1,12 @@
 using BaseStationReader.Entities.History;
+using BaseStationReader.Interfaces.Tracking;
 
-namespace BaseStationReader.BusinessLogic.Database;
+namespace BaseStationReader.BusinessLogic.Tracking;
 
 /// <summary>
 /// Aggregates geographic observations into the 45-column hexagonal grid used by position-density reporting.
 /// </summary>
-public static class PositionDensityAggregator
+public sealed class PositionDensityAggregator : IPositionDensityAggregator
 {
     private const int GridSize = 45;
 
@@ -17,7 +18,7 @@ public static class PositionDensityAggregator
     /// <param name="fixedBounds">Optional stable geographic bounds; live sessions supply these from persisted receiver settings.</param>
     /// <returns>Density bins and geographic bounds, or an empty model when there are no coordinates.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="sessionId"/> is not positive.</exception>
-    public static PositionDensityDto Aggregate(
+    public PositionDensityDto Aggregate(
         int sessionId,
         IReadOnlyCollection<PositionDensityCoordinate> coordinates,
         PositionDensityBounds? fixedBounds = null)

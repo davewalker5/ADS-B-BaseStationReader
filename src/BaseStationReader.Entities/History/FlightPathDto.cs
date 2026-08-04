@@ -1,4 +1,4 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Contains a complete renderer-neutral two- and three-dimensional flight path.

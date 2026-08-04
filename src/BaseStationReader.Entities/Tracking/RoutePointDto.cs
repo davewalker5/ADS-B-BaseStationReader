@@ -1,4 +1,4 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.Tracking;
 
 /// <summary>
 /// Represents one sampled point along a great-circle route.

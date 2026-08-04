@@ -1,6 +1,7 @@
 #nullable enable
 
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.TrackerHub.Models;
 using Microsoft.Extensions.Options;
 

@@ -1,4 +1,4 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.Tracking;
 
 /// <summary>
 /// Contains the airport endpoints and sampled geometry required by the route map.

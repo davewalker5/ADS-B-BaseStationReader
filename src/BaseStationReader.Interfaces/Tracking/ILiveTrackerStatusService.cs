@@ -1,9 +1,9 @@
 #nullable enable
 
 using BaseStationReader.Entities.Hub;
-using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Entities.Tracking;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.Interfaces.Tracking;
 
 /// <summary>
 /// Builds a read-only operational snapshot for the Live Tracker Summary tab.

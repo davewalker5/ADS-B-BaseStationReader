@@ -1,7 +1,7 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
-/// Contains chart-ready position data and summary values for one tracking session.
+/// Contains renderer-neutral position data and summary values for one tracked flight.
 /// </summary>
 public sealed class FlightProfileDto
 {

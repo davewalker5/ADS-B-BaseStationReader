@@ -3,7 +3,9 @@
 using BaseStationReader.Data;
 using BaseStationReader.Entities.History;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Tracking;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database;
@@ -15,15 +17,20 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
 {
     private const int MaximumPageSize = 100;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
+    private readonly IPositionDensityAggregator _positionDensityAggregator;
 
     /// <summary>
     /// Initialises a query service with a factory for short-lived database contexts.
     /// </summary>
     /// <param name="contextFactory">The application database-context factory.</param>
-    public TrackingSessionQueryManager(IDbContextFactory<BaseStationReaderDbContext> contextFactory)
+    /// <param name="positionDensityAggregator">The position-density calculation service.</param>
+    public TrackingSessionQueryManager(
+        IDbContextFactory<BaseStationReaderDbContext> contextFactory,
+        IPositionDensityAggregator positionDensityAggregator)
     {
         // Keep all historical persistence access behind the business-logic query manager.
         _contextFactory = contextFactory;
+        _positionDensityAggregator = positionDensityAggregator;
     }
 
     /// <inheritdoc />
@@ -237,7 +244,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
 
         // Run CPU-bound binning away from a Blazor circuit context after retrieving only the required fields.
         return await Task.Run(
-            () => PositionDensityAggregator.Aggregate(
+            () => _positionDensityAggregator.Aggregate(
                 sessionId,
                 positions.Select(point => new PositionDensityCoordinate(point.Latitude, point.Longitude)).ToArray(),
                 bounds),

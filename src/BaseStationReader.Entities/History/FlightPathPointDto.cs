@@ -1,4 +1,4 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.History;
 
 /// <summary>
 /// Represents one renderer-neutral point in a prepared geographic flight path.

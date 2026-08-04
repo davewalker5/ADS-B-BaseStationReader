@@ -1,7 +1,8 @@
+using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.TrackerHub.Services;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -74,7 +75,8 @@ public class AirportRouteServiceTest
     public async Task RejectInvalidIataTestAsync()
     {
         var contextFactory = new Mock<IDbContextFactory<BaseStationReaderDbContext>>();
-        var service = new AirportRouteService(contextFactory.Object, Mock.Of<ITrackerLogger>());
+        var service = new AirportRouteService(
+            contextFactory.Object, Mock.Of<ITrackerLogger>(), new GeographicCalculator());
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => service.BuildRouteAsync("LH", "JFK"));
@@ -114,6 +116,7 @@ public class AirportRouteServiceTest
         contextFactory
             .Setup(factory => factory.CreateDbContextAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(context);
-        return new AirportRouteService(contextFactory.Object, Mock.Of<ITrackerLogger>());
+        return new AirportRouteService(
+            contextFactory.Object, Mock.Of<ITrackerLogger>(), new GeographicCalculator());
     }
 }
