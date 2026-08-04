@@ -1,7 +1,7 @@
+using BaseStationReader.BusinessLogic.Tracking;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.TrackerHub.Services;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
