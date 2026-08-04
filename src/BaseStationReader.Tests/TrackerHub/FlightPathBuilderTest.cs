@@ -1,5 +1,5 @@
-using BaseStationReader.TrackerHub.Models;
-using BaseStationReader.TrackerHub.Services;
+using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.Tests.TrackerHub;
 
