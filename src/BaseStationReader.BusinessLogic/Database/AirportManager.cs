@@ -66,7 +66,9 @@ namespace BaseStationReader.BusinessLogic.Database
             airport.ICAO = StringCleaner.CleanICAO(airport.ICAO);
             airport.Name = StringCleaner.CleanName(airport.Name);
             if (!await _context.Provenance.AnyAsync(x => x.Id == airport.ProvenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {airport.ProvenanceId} does not exist.");
+            }
 
             var existing = await GetAsync(airport.IATA, airport.ICAO, airport.Name);
             if (existing == null)
@@ -88,15 +90,21 @@ namespace BaseStationReader.BusinessLogic.Database
             var existing = await _context.Airports.FindAsync(airport.Id)
                 ?? throw new InvalidOperationException($"Airport record {airport.Id} does not exist.");
             if (!await _context.Provenance.AnyAsync(x => x.Id == airport.ProvenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {airport.ProvenanceId} does not exist.");
+            }
 
             var cleanIATA = StringCleaner.CleanIATA(airport.IATA);
             var cleanICAO = StringCleaner.CleanICAO(airport.ICAO);
             var cleanName = StringCleaner.CleanName(airport.Name);
             if (await _context.Airports.AnyAsync(x => x.Id != airport.Id && x.IATA == cleanIATA))
+            {
                 throw new InvalidOperationException($"An airport with IATA code '{cleanIATA}' already exists.");
+            }
             if (await _context.Airports.AnyAsync(x => x.Id != airport.Id && x.ICAO == cleanICAO))
+            {
                 throw new InvalidOperationException($"An airport with ICAO code '{cleanICAO}' already exists.");
+            }
 
             existing.IATA = cleanIATA;
             existing.ICAO = cleanICAO;

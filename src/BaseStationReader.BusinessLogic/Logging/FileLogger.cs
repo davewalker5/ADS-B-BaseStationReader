@@ -79,7 +79,10 @@ namespace BaseStationReader.BusinessLogic.Logging
         public void LogMessage(Severity severity, string message, string caller = null)
         {
             // Check the logger is configured
-            if (!_configured) return;
+            if (!_configured)
+            {
+                return;
+            }
 
             // Add the caller to the message
             caller = GetCallerDetails();
@@ -119,7 +122,10 @@ namespace BaseStationReader.BusinessLogic.Logging
         public void LogException(Exception ex, string caller = "")
         {
             // Check the logger is configured
-            if (!_configured) return;
+            if (!_configured)
+            {
+                return;
+            }
 
             // Get the calling method details
             caller = GetCallerDetails();
@@ -135,7 +141,10 @@ namespace BaseStationReader.BusinessLogic.Logging
         public void LogApiConfiguration(ExternalApiSettings settings, string caller = "")
         {
             // Check the logger is configured
-            if (!_configured) return;
+            if (!_configured)
+            {
+                return;
+            }
 
             // Get the calling method details
             caller = GetCallerDetails();
@@ -167,7 +176,10 @@ namespace BaseStationReader.BusinessLogic.Logging
                 // Get the method and declaring type details from the current frame
                 var method = frame.GetMethod();
                 var declaringType = method.DeclaringType;
-                if (declaringType == null) continue;
+                if (declaringType == null)
+                {
+                    continue;
+                }
 
                 // Get the name and namespace for the type
                 var declaringTypeName = declaringType.Name;

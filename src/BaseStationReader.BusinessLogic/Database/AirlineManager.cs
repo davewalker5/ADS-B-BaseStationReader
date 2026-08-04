@@ -116,22 +116,29 @@ namespace BaseStationReader.BusinessLogic.Database
             return airline;
         }
 
+        /// <inheritdoc />
         public async Task<Airline> UpdateAsync(int id, string iata, string icao, string name, int provenanceId)
         {
             var airline = await _context.Airlines.FindAsync(id)
                 ?? throw new InvalidOperationException($"Airline record {id} does not exist.");
             if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             var cleanIATA = StringCleaner.CleanIATA(iata);
             var cleanICAO = StringCleaner.CleanICAO(icao);
             var cleanName = StringCleaner.CleanName(name);
             if (!string.IsNullOrEmpty(cleanIATA) &&
                 await _context.Airlines.AnyAsync(x => x.Id != id && x.IATA == cleanIATA))
+            {
                 throw new InvalidOperationException($"An airline with IATA code '{cleanIATA}' already exists.");
+            }
             if (!string.IsNullOrEmpty(cleanICAO) &&
                 await _context.Airlines.AnyAsync(x => x.Id != id && x.ICAO == cleanICAO))
+            {
                 throw new InvalidOperationException($"An airline with ICAO code '{cleanICAO}' already exists.");
+            }
 
             airline.IATA = cleanIATA;
             airline.ICAO = cleanICAO;
@@ -141,6 +148,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return await GetAsync(x => x.Id == id);
         }
 
+        /// <inheritdoc />
         public async Task DeleteAsync(int id)
         {
             var airline = await _context.Airlines.FindAsync(id)

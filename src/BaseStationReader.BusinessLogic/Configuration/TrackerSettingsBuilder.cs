@@ -30,41 +30,77 @@ namespace BaseStationReader.BusinessLogic.Configuration
             // Environment variables provide container-friendly overrides while command-line values
             // below retain the highest precedence.
             var environmentHost = Environment.GetEnvironmentVariable("ApplicationSettings__Host");
-            if (!string.IsNullOrWhiteSpace(environmentHost)) settings.Host = environmentHost;
+            if (!string.IsNullOrWhiteSpace(environmentHost))
+            {
+                settings.Host = environmentHost;
+            }
 
             var environmentPort = Environment.GetEnvironmentVariable("ApplicationSettings__Port");
-            if (int.TryParse(environmentPort, out var port)) settings.Port = port;
+            if (int.TryParse(environmentPort, out var port))
+            {
+                settings.Port = port;
+            }
 
             // Apply the command line values over the defaults
             values = parser.GetValues(CommandLineOptionType.Host);
-            if (values != null) settings.Host = values[0];
+            if (values != null)
+            {
+                settings.Host = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.Port);
-            if (values != null) settings.Port = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.Port = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.SocketReadTimeout);
-            if (values != null) settings.SocketReadTimeout = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.SocketReadTimeout = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.ApplicationTimeout);
-            if (values != null) settings.ApplicationTimeout = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ApplicationTimeout = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.RestartOnTimeout);
-            if (values != null) settings.RestartOnTimeout = bool.Parse(values[0]);
+            if (values != null)
+            {
+                settings.RestartOnTimeout = bool.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TimeToRecent);
-            if (values != null) settings.TimeToRecent = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.TimeToRecent = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TimeToStale);
-            if (values != null) settings.TimeToStale = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.TimeToStale = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TimeToRemoval);
-            if (values != null) settings.TimeToRemoval = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.TimeToRemoval = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TimeToLock);
-            if (values != null) settings.TimeToLock = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.TimeToLock = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.LogFile);
-            if (values != null) settings.LogFile = values[0];
+            if (values != null)
+            {
+                settings.LogFile = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.MinimumLogLevel);
             if (values != null && Enum.TryParse<Severity>(values[0], out Severity minimumLogLevel))
@@ -73,34 +109,64 @@ namespace BaseStationReader.BusinessLogic.Configuration
             }
 
             values = parser.GetValues(CommandLineOptionType.VerboseLogging);
-            if (values != null) settings.VerboseLogging = bool.Parse(values[0]);
+            if (values != null)
+            {
+                settings.VerboseLogging = bool.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.EnableSqlWriter);
-            if (values != null) settings.EnableSqlWriter = bool.Parse(values[0]);
+            if (values != null)
+            {
+                settings.EnableSqlWriter = bool.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.ClearDown);
-            if (values != null) settings.ClearDown = bool.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ClearDown = bool.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
-            if (values != null) settings.MaximumRows = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.MaximumRows = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.ReceiverLatitude);
-            if (values != null) settings.ReceiverLatitude = double.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ReceiverLatitude = double.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.ReceiverLongitude);
-            if (values != null) settings.ReceiverLongitude = double.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ReceiverLongitude = double.Parse(values[0]);
+            }
             
             values = parser.GetValues(CommandLineOptionType.MaximumTrackedDistance);
-            if (values != null) settings.MaximumTrackedDistance = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.MaximumTrackedDistance = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.MinimumTrackedAltitude);
-            if (values != null) settings.MinimumTrackedAltitude = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.MinimumTrackedAltitude = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.MaximumTrackedAltitude);
-            if (values != null) settings.MaximumTrackedAltitude = int.Parse(values[0]);
+            if (values != null)
+            {
+                settings.MaximumTrackedAltitude = int.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TrackPosition);
-            if (values != null) settings.TrackPosition = bool.Parse(values[0]);
+            if (values != null)
+            {
+                settings.TrackPosition = bool.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.TrackedBehaviours);
             if (values != null)

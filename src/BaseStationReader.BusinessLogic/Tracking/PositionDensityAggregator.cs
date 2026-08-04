@@ -23,9 +23,15 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
         IReadOnlyCollection<PositionDensityCoordinate> coordinates,
         PositionDensityBounds? fixedBounds = null)
     {
-        if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId));
+        if (sessionId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sessionId));
+        }
         var bounds = fixedBounds ?? BoundsFromCoordinates(coordinates);
-        if (coordinates.Count == 0) return EmptyDensity(sessionId, bounds);
+        if (coordinates.Count == 0)
+        {
+            return EmptyDensity(sessionId, bounds);
+        }
 
         var minimumLatitude = bounds.MinimumLatitude;
         var maximumLatitude = bounds.MaximumLatitude;

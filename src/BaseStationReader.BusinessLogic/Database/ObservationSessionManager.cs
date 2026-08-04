@@ -59,7 +59,9 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             var normalisedNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
             if (normalisedNotes?.Length > 4000)
+            {
                 throw new ArgumentException("Session notes cannot exceed 4,000 characters.", nameof(notes));
+            }
 
             var session = await _context.ObservationSessions
                 .SingleOrDefaultAsync(item => item.Id == sessionId, cancellationToken)
@@ -106,18 +108,24 @@ namespace BaseStationReader.BusinessLogic.Database
                 await _context.SaveChangesAsync(cancellationToken);
 
                 if (transaction is not null)
+                {
                     await transaction.CommitAsync(cancellationToken);
+                }
             }
             catch
             {
                 if (transaction is not null)
+                {
                     await transaction.RollbackAsync(cancellationToken);
+                }
                 throw;
             }
             finally
             {
                 if (transaction is not null)
+                {
                     await transaction.DisposeAsync();
+                }
             }
         }
     }

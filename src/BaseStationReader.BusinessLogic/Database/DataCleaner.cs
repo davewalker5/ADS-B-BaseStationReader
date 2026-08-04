@@ -18,7 +18,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Clean airlines
         /// </summary>
         /// <returns></returns>
-        public async Task CleanAirlines()
+        public async Task CleanAirlinesAsync()
         {
             // Iterate over each airline
             foreach (var airline in _context.Airlines)
@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Clean manufacturers
         /// </summary>
         /// <returns></returns>
-        public async Task CleanManufacturers()
+        public async Task CleanManufacturersAsync()
         {
             // Iterate over each manufacturer
             foreach (var manufacturer in _context.Manufacturers)
@@ -54,7 +54,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Clean airlines
         /// </summary>
         /// <returns></returns>
-        public async Task CleanModels()
+        public async Task CleanModelsAsync()
         {
             // Iterate over each airline
             foreach (var model in _context.Models)

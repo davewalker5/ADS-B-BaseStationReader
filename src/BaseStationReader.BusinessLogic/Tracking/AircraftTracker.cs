@@ -143,7 +143,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Retain session-wide distinct identities independently of live-aircraft removal and row reuse.
                 _observedAddresses.TryAdd(msg.Address, 0);
                 if (!string.IsNullOrWhiteSpace(msg.Callsign))
+                {
                     _observedCallsigns.TryAdd(msg.Callsign.Trim(), 0);
+                }
 
                 // Create a new tracked aircraft instance and update it from the message
                 var newTrackedAircraft = new TrackedAircraft() { FirstSeen = DateTime.Now };
@@ -154,7 +156,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var isNew = ReferenceEquals(trackedAircraft, newTrackedAircraft);
 
                 // Count each lifecycle addition even when an ICAO address reappears later in the same session.
-                if (isNew) Interlocked.Increment(ref _aircraftAdded);
+                if (isNew)
+                {
+                    Interlocked.Increment(ref _aircraftAdded);
+                }
 
                 // If it's not a new aircraft, capture the altitude before updating properties from the message
                 decimal? altitude = isNew ? null : trackedAircraft.Altitude;

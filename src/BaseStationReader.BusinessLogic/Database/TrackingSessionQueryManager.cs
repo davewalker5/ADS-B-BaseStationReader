@@ -71,7 +71,10 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
 
         var records = await context.TrackedAircraft
             .AsNoTracking()
@@ -160,7 +163,10 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         ObservationHighlightDto? Highlight(int aircraftId, decimal? altitude = null,
             double? distance = null, TimeSpan? duration = null)
         {
-            if (aircraftId == 0) return null;
+            if (aircraftId == 0)
+            {
+                return null;
+            }
             var record = records.First(item => item.Id == aircraftId);
             return new ObservationHighlightDto
             {
@@ -213,14 +219,20 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         int sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId));
+        if (sessionId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sessionId));
+        }
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var session = await context.ObservationSessions.AsNoTracking()
             .Where(item => item.Id == sessionId)
             .Select(item => new { item.ReceiverLatitude, item.ReceiverLongitude, item.MaximumDistance })
             .SingleOrDefaultAsync(cancellationToken);
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
 
         // Session configuration supplies a fixed viewport, preventing new extrema from moving existing bins.
         var bounds = CreatePositionDensityBounds(
@@ -282,6 +294,9 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             Math.Min(180d, receiverLongitude.Value + longitudeRadius));
     }
 
+    /// <summary>
+    /// Calculates a percentage to one decimal place, returning zero for an empty total.
+    /// </summary>
     private static double Percentage(int resolved, int total)
         => total == 0 ? 0 : Math.Round(resolved * 100d / total, 1);
 

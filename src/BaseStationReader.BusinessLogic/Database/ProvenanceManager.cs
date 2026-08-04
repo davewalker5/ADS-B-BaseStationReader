@@ -13,15 +13,18 @@ namespace BaseStationReader.BusinessLogic.Database
         public ProvenanceManager(BaseStationReaderDbContext context)
             => _context = context;
 
+        /// <inheritdoc />
         public async Task<Provenance> GetAsync(Expression<Func<Provenance, bool>> predicate)
         {
             List<Provenance> records = await ListAsync(predicate);
             return records.FirstOrDefault();
         }
 
+        /// <inheritdoc />
         public async Task<List<Provenance>> ListAsync(Expression<Func<Provenance, bool>> predicate)
             => await _context.Provenance.Where(predicate).ToListAsync();
 
+        /// <inheritdoc />
         public async Task<Provenance> AddAsync(string sourceRef, string source, string sourceUrl,
             string sourceDataset, string sourceVersion, string licence)
         {
@@ -47,6 +50,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return provenance;
         }
 
+        /// <inheritdoc />
         public async Task<Provenance> UpdateAsync(int id, string sourceRef, string source, string sourceUrl,
             string sourceDataset, string sourceVersion, string licence)
         {
@@ -56,7 +60,9 @@ namespace BaseStationReader.BusinessLogic.Database
                 ?? throw new InvalidOperationException($"Provenance record {id} no longer exists.");
 
             if (await _context.Provenance.AnyAsync(x => x.Id != id && x.SourceRef == sourceRef))
+            {
                 throw new InvalidOperationException($"A provenance record with source reference '{sourceRef}' already exists.");
+            }
 
             provenance.SourceRef = sourceRef;
             provenance.Source = source;
@@ -69,6 +75,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return provenance;
         }
 
+        /// <inheritdoc />
         public async Task DeleteAsync(int id)
         {
             var provenance = await _context.Provenance.FirstOrDefaultAsync(x => x.Id == id);
@@ -79,6 +86,9 @@ namespace BaseStationReader.BusinessLogic.Database
             }
         }
 
+        /// <summary>
+        /// Normalises provenance values before comparison or persistence.
+        /// </summary>
         private static void Clean(ref string sourceRef, ref string source, ref string sourceUrl,
             ref string sourceDataset, ref string sourceVersion, ref string licence)
         {

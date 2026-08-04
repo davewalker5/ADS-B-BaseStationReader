@@ -219,7 +219,9 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
 
         // Apply the initial great-circle bearing formula using radians.
         if (!_geographicCalculator.IsValidCoordinate(receiverPosition.Latitude.Value, receiverPosition.Longitude.Value))
+        {
             return 0;
+        }
 
         // Delegate bearing semantics to the shared geographic calculator.
         return _geographicCalculator.CalculateInitialBearing(

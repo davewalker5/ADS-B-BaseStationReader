@@ -18,8 +18,14 @@ public sealed class PositionDensitySnapshotMerger : IPositionDensitySnapshotMerg
     /// <returns>A monotonic snapshot, or the refreshed result when the session has changed.</returns>
     public PositionDensityDto? Merge(PositionDensityDto? current, PositionDensityDto? refreshed)
     {
-        if (refreshed is null) return null;
-        if (current is null || current.SessionId != refreshed.SessionId) return refreshed;
+        if (refreshed is null)
+        {
+            return null;
+        }
+        if (current is null || current.SessionId != refreshed.SessionId)
+        {
+            return refreshed;
+        }
 
         // Stable session bounds make geographic bin centres safe identities across recalculations.
         var bins = current.Bins.ToDictionary(bin => (bin.Latitude, bin.Longitude));

@@ -1,5 +1,5 @@
 using BaseStationReader.BusinessLogic.Database;
-using BaseStationReader.BusinessLogic.Logging;
+using BaseStationReader.BusinessLogic.Import;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.DataExchange;

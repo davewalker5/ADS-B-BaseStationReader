@@ -27,13 +27,15 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly BaseStationReaderDbContext _context;
         private readonly bool _ownsContext;
         private readonly string _sessionNotes;
+        private readonly ITrackerLogger _logger;
+        private readonly ITrackerTcpClient _tcpClient;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
-        private ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
+        private readonly ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
 
         public IEnumerable<TrackedAircraftDto> State
         {
@@ -67,6 +69,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <inheritdoc />
         public long AircraftWithPositionRecords => _writer?.AircraftWithPositionRecords ?? 0;
 
+        /// <summary>
+        /// Initialises a controller; asynchronous tracking dependencies are loaded when tracking starts.
+        /// </summary>
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
@@ -79,67 +84,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _context = context;
             _ownsContext = ownsContext;
             _sessionNotes = string.IsNullOrWhiteSpace(sessionNotes) ? null : sessionNotes.Trim();
+            _logger = logger;
+            _tcpClient = tcpClient;
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
-
-            // Load the current exclusions
-            var excludedAddresses = Task.Run(() => _factory.ExcludedAddressManager.ListAsync(x => true))
-                .Result
-                .Select(x => x.Address)
-                .ToList();
-
-            var excludedCallsigns = Task.Run(() => _factory.ExcludedCallsignManager.ListAsync(x => true))
-                .Result
-                .Select(x => x.Callsign)
-                .ToList();
-
-            // Configure the message reader and message parser
-            var readerSender = new MessageReaderNotificationSender(logger);
-            var reader = new MessageReader(tcpClient, logger, readerSender, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
-            var parsers = new Dictionary<MessageType, IMessageParser>
-            {
-                { MessageType.MSG, new MsgMessageParser() }
-            };
-
-            // Create a distance calculator
-            IDistanceCalculator distanceCalculator = null;
-            if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
-            {
-                distanceCalculator = new ReceiverDistanceCalculator(new GeographicCalculator())
-                {
-                    ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
-                    ReferenceLongitude = _settings.ReceiverLongitude ?? 0
-                };
-            }
 
             // Configure the SQL writer, if enabled
             if (_settings.EnableSqlWriter)
             {
                 _writer = new ContinuousWriter(_factory);
             }
-
-            // Set up the aircraft tracked helpers
-            var assessor = new SimpleAircraftBehaviourAssessor();
-            var propertyUpdater = new AircraftPropertyUpdater(logger, distanceCalculator, assessor);
-            var trackerSender = new AircraftTrackerNotificationSender(
-                logger,
-                _settings.TrackedBehaviours,
-                _settings.MaximumTrackedDistance,
-                _settings.MinimumTrackedAltitude,
-                _settings.MaximumTrackedAltitude);
-
-            // Construct the aircraft tracker
-            _tracker = new AircraftTracker(
-                reader,
-                parsers,
-                propertyUpdater,
-                trackerSender,
-                excludedAddresses,
-                excludedCallsigns,
-                _settings.TimeToRecent,
-                _settings.TimeToStale,
-                _settings.TimeToRemoval);
 
             // Create the controller notification sender
             _sender = new ControllerNotificationSender(logger);
@@ -150,6 +105,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         public async Task StartAsync(CancellationToken token)
         {
+            _tracker ??= await CreateTrackerAsync(token);
+
             // If the queued writer is enabled and clear-down is configured, clear down previous
             // tracking data
             if ((_writer != null) && _settings.ClearDown)
@@ -220,6 +177,63 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 await _writer.FlushQueueAsync();
             }
+        }
+
+        /// <summary>
+        /// Creates the aircraft tracker after asynchronously loading the current exclusion lists.
+        /// </summary>
+        private async Task<IAircraftTracker> CreateTrackerAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            var excludedAddresses = (await _factory.ExcludedAddressManager.ListAsync(x => true))
+                .Select(item => item.Address)
+                .ToList();
+            var excludedCallsigns = (await _factory.ExcludedCallsignManager.ListAsync(x => true))
+                .Select(item => item.Callsign)
+                .ToList();
+
+            var readerSender = new MessageReaderNotificationSender(_logger);
+            var reader = new MessageReader(
+                _tcpClient,
+                _logger,
+                readerSender,
+                _settings.Host,
+                _settings.Port,
+                _settings.SocketReadTimeout);
+            var parsers = new Dictionary<MessageType, IMessageParser>
+            {
+                { MessageType.MSG, new MsgMessageParser() }
+            };
+
+            IDistanceCalculator distanceCalculator = null;
+            if (_settings.ReceiverLatitude != null && _settings.ReceiverLongitude != null)
+            {
+                distanceCalculator = new ReceiverDistanceCalculator(new GeographicCalculator())
+                {
+                    ReferenceLatitude = _settings.ReceiverLatitude.Value,
+                    ReferenceLongitude = _settings.ReceiverLongitude.Value
+                };
+            }
+
+            var assessor = new SimpleAircraftBehaviourAssessor();
+            var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
+            var trackerSender = new AircraftTrackerNotificationSender(
+                _logger,
+                _settings.TrackedBehaviours,
+                _settings.MaximumTrackedDistance,
+                _settings.MinimumTrackedAltitude,
+                _settings.MaximumTrackedAltitude);
+
+            return new AircraftTracker(
+                reader,
+                parsers,
+                propertyUpdater,
+                trackerSender,
+                excludedAddresses,
+                excludedCallsigns,
+                _settings.TimeToRecent,
+                _settings.TimeToStale,
+                _settings.TimeToRemoval);
         }
 
         /// <summary>

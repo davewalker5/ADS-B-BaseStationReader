@@ -32,7 +32,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task CleanAirlinesTestAsync()
         {
-            await _factory.DataCleaner.CleanAirlines();
+            await _factory.DataCleaner.CleanAirlinesAsync();
             var airlines = await _factory.AirlineManager.ListAsync(x => true);
             Assert.AreEqual("BA", airlines[0].IATA);
             Assert.AreEqual("BAW", airlines[0].ICAO);
@@ -42,7 +42,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task CleanManufacturersTestAsync()
         {
-            await _factory.DataCleaner.CleanManufacturers();
+            await _factory.DataCleaner.CleanManufacturersAsync();
             var manufacturers = await _factory.ManufacturerManager.ListAsync(x => true);
             Assert.AreEqual("Hawker Siddeley Aviation Ltd.", manufacturers[0].Name);
         }
@@ -50,7 +50,7 @@ namespace BaseStationReader.Tests.Database
         [TestMethod]
         public async Task CleanModelsTestAsync()
         {
-            await _factory.DataCleaner.CleanModels();
+            await _factory.DataCleaner.CleanModelsAsync();
             var models = await _factory.ModelManager.ListAsync(x => true);
             Assert.AreEqual("ABB", models[0].IATA);
             Assert.AreEqual("A3ST", models[0].ICAO);

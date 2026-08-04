@@ -47,7 +47,9 @@ public sealed class AirportRouteService : IAirportRouteService
         var originCode = NormaliseIata(originIata, "origin");
         var destinationCode = NormaliseIata(destinationIata, "destination");
         if (originCode == destinationCode)
+        {
             throw new ArgumentException("Origin and destination airports must be different.");
+        }
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var manager = new DatabaseManagementFactory(_logger, context, 0).AirportManager;
@@ -67,12 +69,20 @@ public sealed class AirportRouteService : IAirportRouteService
         var destination = airports.FirstOrDefault(airport =>
             string.Equals(airport.Iata, destinationCode, StringComparison.OrdinalIgnoreCase));
         var missing = new List<string>();
-        if (origin is null) missing.Add(originCode);
-        if (destination is null) missing.Add(destinationCode);
+        if (origin is null)
+        {
+            missing.Add(originCode);
+        }
+        if (destination is null)
+        {
+            missing.Add(destinationCode);
+        }
         if (missing.Count > 0)
+        {
             throw new ArgumentException(
                 $"Airport{(missing.Count > 1 ? "s" : string.Empty)} {string.Join(" and ", missing)} " +
                 $"{(missing.Count > 1 ? "do" : "does")} not exist in the airport database.");
+        }
 
         // Reject corrupt reference coordinates before performing spherical calculations.
         ValidateCoordinates(origin);
@@ -112,8 +122,10 @@ public sealed class AirportRouteService : IAirportRouteService
         var normalised = (value ?? string.Empty).Trim().ToUpperInvariant();
         if (normalised.Length != 3 ||
             !normalised.All(character => character is >= 'A' and <= 'Z'))
+        {
             throw new ArgumentException(
                 $"Enter a valid three-letter IATA code for the {fieldName} airport.", fieldName);
+        }
         return normalised;
     }
 
@@ -125,8 +137,10 @@ public sealed class AirportRouteService : IAirportRouteService
     {
         // Spherical interpolation requires finite coordinates inside conventional geographic ranges.
         if (!_geographicCalculator.IsValidCoordinate(airport.Latitude, airport.Longitude))
+        {
             throw new ArgumentException(
                 $"Airport {airport.Iata} does not have valid coordinates in the airport database.");
+        }
     }
 
     /// <summary>
@@ -169,8 +183,14 @@ public sealed class AirportRouteService : IAirportRouteService
         {
             var longitude = points[index].Longitude;
             var previous = result[index - 1];
-            while (longitude - previous > 180) longitude -= 360;
-            while (longitude - previous < -180) longitude += 360;
+            while (longitude - previous > 180)
+            {
+                longitude -= 360;
+            }
+            while (longitude - previous < -180)
+            {
+                longitude += 360;
+            }
             result.Add(longitude);
         }
         return result;
@@ -184,8 +204,14 @@ public sealed class AirportRouteService : IAirportRouteService
     private static double NormaliseLongitude(double longitude)
     {
         // Repeated adjustment supports longitudes produced by an unwrapped route sequence.
-        while (longitude > 180) longitude -= 360;
-        while (longitude < -180) longitude += 360;
+        while (longitude > 180)
+        {
+            longitude -= 360;
+        }
+        while (longitude < -180)
+        {
+            longitude += 360;
+        }
         return longitude;
     }
 

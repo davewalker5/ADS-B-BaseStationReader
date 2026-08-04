@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using BaseStationReader.Interfaces.DataExchange;
 
-namespace BaseStationReader.BusinessLogic.Logging
+namespace BaseStationReader.BusinessLogic.Import
 {
     public abstract class CsvImporter<M, T> : ICsvImporter<M, T>
         where M : ClassMap
