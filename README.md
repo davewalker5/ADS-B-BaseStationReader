@@ -25,7 +25,7 @@ The project currently supports:
 
 - **Session-based aircraft observation** from a BaseStation-compatible TCP message feed
 - **Observation-session preparation** with receiver host and port, tracking-profile selection and optional contextual notes
-- **Live aircraft tracking, receiver-centred radar and session position-density visualisation** within the active observation session
+- **Live aircraft tracking, receiver-centred radar and session position-density visualisation**, with optional persistence of density snapshots for later replay
 - **Read-only session summaries** covering tracking activity, identification coverage and session highlights
 - **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
 - **Local SQLite persistence** of observation sessions, aircraft records and optional position histories
@@ -33,7 +33,7 @@ The project currently supports:
 - **Historical observation browsing** with dedicated session, session-editor and tracking-record views, filtering and record inspection
 - **Historical session management** with notes-only editing and confirmed deletion while no observation session is active
 - **Post-session analysis** available directly from the session browser
-- **Historical reporting suite** implemented using Jupyter notebooks for session, aircraft, flight, position, reference-data and temporal analysis
+- **Historical reporting suite** implemented using Jupyter notebooks for session, aircraft, flight, position-density, reference-data and temporal analysis
 - **Interactive live radar plus 2D and 3D flight-path visualisation**
 - **Tabbed contextual lookup workspace** for aircraft and flights, airport schedules, route visualisation and METAR/TAF weather
 - **Reference-data management and CSV import** for:
@@ -125,7 +125,7 @@ The Live Tracker brings the active observation workflow together in five tabs:
 
 - **Session** — set the receiver host and port, select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
 - **Tracking** — monitor the live aircraft collection, inspect current telemetry, and move directly to Lookup or historical records
-- **Radar** — view currently positioned aircraft by range and bearing from the receiver; this tab is available only while a session is active
+- **Radar** — view currently positioned aircraft by range and bearing from the receiver
 - **Position Density** — view the accumulated geographical distribution of recorded aircraft positions during the current session, with denser areas highlighted spatially
 - **Summary** — review the persisted session context, tracking activity, identification coverage, and notable observations
 
@@ -194,6 +194,7 @@ The reporting suite currently includes:
 - Position & Flight Path Analysis
 - Reference Data Coverage
 - Temporal Activity
+- Position Density Replay
 
 Together these reports help answer questions such as:
 
@@ -203,6 +204,7 @@ Together these reports help answer questions such as:
 - Where are aircraft most commonly observed?
 - How complete is the local aviation reference database?
 - How have observation patterns changed over time?
+- How did the observed position-density pattern develop during a session?
 
 Unlike the integrated UI, which focuses on operational awareness during an active observation session, the reporting suite is intended for historical analysis and exploration across many completed sessions.
 
