@@ -29,6 +29,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly string _sessionNotes;
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTcpClient _tcpClient;
+        private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
@@ -72,13 +73,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <summary>
         /// Initialises a controller; asynchronous tracking dependencies are loaded when tracking starts.
         /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="context"></param>
+        /// <param name="tcpClient"></param>
+        /// <param name="settings"></param>
+        /// <param name="ownsContext"></param>
+        /// <param name="sessionNotes"></param>
+        /// <param name="densityOrchestrator"></param>
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
             ITrackerTcpClient tcpClient,
             TrackerApplicationSettings settings,
             bool ownsContext = false,
-            string sessionNotes = null)
+            string sessionNotes = null,
+            IPositionDensitySnapshotOrchestrator densityOrchestrator = null)
         {
             _settings = settings;
             _context = context;
@@ -86,6 +95,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _sessionNotes = string.IsNullOrWhiteSpace(sessionNotes) ? null : sessionNotes.Trim();
             _logger = logger;
             _tcpClient = tcpClient;
+            _densityOrchestrator = densityOrchestrator;
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
@@ -103,8 +113,16 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <summary>
         /// Start tracking aircraft
         /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task StartAsync(CancellationToken token)
         {
+            if (_settings.TrackPosition && _settings.TrackPositionDensity && _settings.PositionDensityInterval <= 0)
+            {
+                throw new InvalidOperationException("PositionDensityInterval must be greater than zero when position-density tracking is enabled.");
+            }
+
             _tracker ??= await CreateTrackerAsync(token);
 
             // If the queued writer is enabled and clear-down is configured, clear down previous
@@ -130,6 +148,20 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 await _writer.StartAsync(token);
             }
 
+            if (_activeSession is not null && _settings.TrackPosition && _settings.TrackPositionDensity)
+            {
+                // The controller owns the periodic lifecycle so every host follows identical session boundaries.
+                var bounds = PositionDensityBoundsFactory.Create(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude,
+                    _settings.MaximumTrackedDistance);
+                _densityOrchestrator?.Start(
+                    _activeSession.Id,
+                    bounds,
+                    TimeSpan.FromMilliseconds(_settings.PositionDensityInterval),
+                    token);
+            }
+
             try
             {
                 // Start the aircraft tracker
@@ -142,6 +174,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
             finally
             {
+                if (_densityOrchestrator is not null)
+                {
+                    await _densityOrchestrator.StopAsync();
+                }
+
                 // Stop the continuous writer
                 if (_writer != null)
                 {
@@ -345,6 +382,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     _writer.Push(position);
                 }
             }
+
+            // Density input follows the same accepted position events but remains independent of persistence.
+            _densityOrchestrator?.Record(position);
         }
     }
 }

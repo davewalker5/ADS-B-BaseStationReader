@@ -235,7 +235,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         }
 
         // Session configuration supplies a fixed viewport, preventing new extrema from moving existing bins.
-        var bounds = CreatePositionDensityBounds(
+        var bounds = PositionDensityBoundsFactory.Create(
             session.ReceiverLatitude,
             session.ReceiverLongitude,
             session.MaximumDistance);
@@ -261,37 +261,6 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
                 positions.Select(point => new PositionDensityCoordinate(point.Latitude, point.Longitude)).ToArray(),
                 bounds),
             cancellationToken);
-    }
-
-    /// <summary>
-    /// Creates stable geographic density bounds from persisted session receiver settings.
-    /// </summary>
-    /// <param name="receiverLatitude">Persisted receiver latitude.</param>
-    /// <param name="receiverLongitude">Persisted receiver longitude.</param>
-    /// <param name="maximumDistance">Persisted maximum tracking distance in nautical miles.</param>
-    /// <returns>Session-centred bounds, or fixed world bounds when receiver configuration is unavailable.</returns>
-    private static PositionDensityBounds CreatePositionDensityBounds(
-        double? receiverLatitude,
-        double? receiverLongitude,
-        int? maximumDistance)
-    {
-        if (!receiverLatitude.HasValue || !receiverLongitude.HasValue ||
-            !double.IsFinite(receiverLatitude.Value) || !double.IsFinite(receiverLongitude.Value) ||
-            receiverLatitude is < -90 or > 90 || receiverLongitude is < -180 or > 180)
-        {
-            // A fixed world viewport is less detailed but remains stable for legacy sessions without receiver data.
-            return new PositionDensityBounds(-90d, 90d, -180d, 180d);
-        }
-
-        var range = maximumDistance is > 0 ? maximumDistance.Value : 250d;
-        var latitudeRadius = range / 60d;
-        var longitudeScale = Math.Max(Math.Cos(receiverLatitude.Value * Math.PI / 180d), 0.01d);
-        var longitudeRadius = Math.Min(range / (60d * longitudeScale), 180d);
-        return new PositionDensityBounds(
-            Math.Max(-90d, receiverLatitude.Value - latitudeRadius),
-            Math.Min(90d, receiverLatitude.Value + latitudeRadius),
-            Math.Max(-180d, receiverLongitude.Value - longitudeRadius),
-            Math.Min(180d, receiverLongitude.Value + longitudeRadius));
     }
 
     /// <summary>

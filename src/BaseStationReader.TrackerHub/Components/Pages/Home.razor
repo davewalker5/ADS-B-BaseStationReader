@@ -986,7 +986,6 @@
         if (!requestedSessionId.HasValue)
         {
             // Never infer the latest session here: the plot must follow the page's explicit session identity.
-            PositionDensitySnapshots.Clear();
             _densityError = null;
             _densityLoading = false;
             return;
@@ -1039,7 +1038,6 @@
         // Increment before cancellation so even a provider that ignores cancellation cannot publish stale results.
         Interlocked.Increment(ref _densityRequestVersion);
         _densityCancellation?.Cancel();
-        PositionDensitySnapshots.Clear();
         _densityError = null;
         _densityLoading = false;
     }

@@ -119,13 +119,19 @@ namespace BaseStationReader.TrackerHub
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Initialise the tracker wrapper
+                var positionDensitySnapshotStateManager = new PositionDensitySnapshotStateManager(
+                    new PositionDensitySnapshotMerger());
+                var positionDensitySnapshotOrchestrator = new PositionDensitySnapshotOrchestrator(
+                    new PositionDensityAggregator(),
+                    positionDensitySnapshotStateManager);
                 var runtime = new TrackingRuntime(_settings, (settings, notes) => new TrackerController(
                     _logger,
                     new BaseStationReaderDbContext(contextOptions),
                     new TrackerTcpClient(),
                     settings,
                     ownsContext: true,
-                    sessionNotes: notes));
+                    sessionNotes: notes,
+                    densityOrchestrator: positionDensitySnapshotOrchestrator));
                 _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file
@@ -168,7 +174,8 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddSingleton<IPositionDensityAggregator, PositionDensityAggregator>();
                 builder.Services.AddSingleton<IPositionDensitySnapshotMerger, PositionDensitySnapshotMerger>();
                 // Snapshot state is process memory only and survives recreation of the Live Tracker page component.
-                builder.Services.AddSingleton<IPositionDensitySnapshotStateManager, PositionDensitySnapshotStateManager>();
+                builder.Services.AddSingleton<IPositionDensitySnapshotStateManager>(positionDensitySnapshotStateManager);
+                builder.Services.AddSingleton<IPositionDensitySnapshotOrchestrator>(positionDensitySnapshotOrchestrator);
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<ITrackingSessionQueryManager, TrackingSessionQueryManager>();
                 builder.Services.AddScoped<ILiveTrackerStatusService, LiveTrackerStatusService>();
