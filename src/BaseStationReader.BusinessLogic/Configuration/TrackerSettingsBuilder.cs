@@ -168,6 +168,18 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.TrackPosition = bool.Parse(values[0]);
             }
 
+            values = parser.GetValues(CommandLineOptionType.TrackPositionDensity);
+            if (values != null)
+            {
+                settings.TrackPositionDensity = bool.Parse(values[0]);
+            }
+
+            values = parser.GetValues(CommandLineOptionType.PositionDensityInterval);
+            if (values != null)
+            {
+                settings.PositionDensityInterval = int.Parse(values[0]);
+            }
+
             values = parser.GetValues(CommandLineOptionType.TrackedBehaviours);
             if (values != null)
             {
