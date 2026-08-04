@@ -28,8 +28,8 @@ public class AirportScheduleLookupServiceTest
             FlightIATA = "BA123", Callsign = string.Empty, AirlineIATA = "BA", AirlineICAO = "BAW"
         };
 
-        Assert.IsTrue(FlightMappingEligibility.IsEligible(complete));
-        Assert.IsFalse(FlightMappingEligibility.IsEligible(incomplete));
+        Assert.IsTrue(FlightScheduleCompleteness.IsComplete(complete));
+        Assert.IsFalse(FlightScheduleCompleteness.IsComplete(incomplete));
     }
 
     /// <summary>

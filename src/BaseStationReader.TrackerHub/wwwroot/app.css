@@ -412,9 +412,9 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .schedule-table-wrap { max-height: 560px; overflow: auto; }
 .schedule-table-wrap tbody tr { cursor: default; }
 .schedule-table-wrap tbody tr.schedule-incomplete { color: var(--muted); }
-.schedule-eligibility { display: inline-block; padding: 4px 7px; border: 1px solid; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-.schedule-eligibility.eligible { color: var(--green); background: rgba(79,218,161,.08); border-color: rgba(79,218,161,.3); }
-.schedule-eligibility.incomplete { color: var(--amber); background: rgba(248,189,89,.07); border-color: rgba(248,189,89,.28); }
+.schedule-completeness { display: inline-block; padding: 4px 7px; border: 1px solid; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.schedule-completeness.complete { color: var(--green); background: rgba(79,218,161,.08); border-color: rgba(79,218,161,.3); }
+.schedule-completeness.incomplete { color: var(--amber); background: rgba(248,189,89,.07); border-color: rgba(248,189,89,.28); }
 .schedule-route-unavailable { color: var(--muted); }
 .schedule-pagination { justify-content: flex-end; }
 .schedule-pagination .page-size { margin-left: 12px; }

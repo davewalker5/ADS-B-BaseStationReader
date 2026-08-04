@@ -84,7 +84,7 @@
                 <h2>Airport Schedule</h2>
             </div>
             <div class="schedule-result-actions">
-                <span>@_mappings.Count flights · @EligibleCount complete</span>
+                <span>@_mappings.Count flights · @CompleteCount complete</span>
                 <label class="checkbox schedule-incomplete-toggle">
                     <input type="checkbox" checked="@_showIncomplete" @onchange="ChangeIncompleteVisibility" />
                     Show incomplete
@@ -113,8 +113,8 @@
                 <tbody>
                     @foreach (var mapping in PageMappings)
                     {
-                        var eligible = FlightMappingEligibility.IsEligible(mapping);
-                        <tr class="@(eligible ? "schedule-eligible" : "schedule-incomplete")">
+                        var complete = FlightScheduleCompleteness.IsComplete(mapping);
+                        <tr class="@(complete ? "schedule-complete" : "schedule-incomplete")">
                             <td class="mono"><strong>@Display(mapping.Callsign)</strong></td>
                             <td>@Display(mapping.FlightIATA)</td>
                             <td>@Display(mapping.AirlineIATA)</td>
@@ -144,8 +144,8 @@
                                 }
                             </td>
                             <td><span class="status-pill">@mapping.AirportType</span></td>
-                            <td><span class="schedule-eligibility @(eligible ? "eligible" : "incomplete")">
-                                @(eligible ? "Complete" : "Incomplete")
+                            <td><span class="schedule-completeness @(complete ? "complete" : "incomplete")">
+                                @(complete ? "Complete" : "Incomplete")
                             </span></td>
                             <td>
                                 @if (CanPlotRoute(mapping))
@@ -195,11 +195,11 @@
     private bool _showIncomplete;
     private int _page = 1;
     private int _pageSize = 50;
-    private int EligibleCount => _mappings.Count(FlightMappingEligibility.IsEligible);
+    private int CompleteCount => _mappings.Count(FlightScheduleCompleteness.IsComplete);
     private IEnumerable<FlightScheduleEntry> VisibleMappings => _showIncomplete
         ? _mappings
-        : _mappings.Where(FlightMappingEligibility.IsEligible);
-    private int VisibleCount => _showIncomplete ? _mappings.Count : EligibleCount;
+        : _mappings.Where(FlightScheduleCompleteness.IsComplete);
+    private int VisibleCount => _showIncomplete ? _mappings.Count : CompleteCount;
     private int PageCount => Math.Max(1, (int)Math.Ceiling(VisibleCount / (double)_pageSize));
     private int PageStart => VisibleCount == 0 ? 0 : ((_page - 1) * _pageSize) + 1;
     private int PageEnd => Math.Min(_page * _pageSize, VisibleCount);
