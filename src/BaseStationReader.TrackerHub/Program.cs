@@ -131,7 +131,8 @@ namespace BaseStationReader.TrackerHub
                     settings,
                     ownsContext: true,
                     sessionNotes: notes,
-                    densityOrchestrator: positionDensitySnapshotOrchestrator));
+                    densityOrchestrator: positionDensitySnapshotOrchestrator,
+                    densitySnapshotMapper: new PositionDensitySnapshotMapper()));
                 _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file

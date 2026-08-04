@@ -16,6 +16,7 @@ using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Events;
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -30,6 +31,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTcpClient _tcpClient;
         private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
+        private readonly IPositionDensitySnapshotMapper _densitySnapshotMapper;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
@@ -80,6 +82,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="ownsContext"></param>
         /// <param name="sessionNotes"></param>
         /// <param name="densityOrchestrator"></param>
+        /// <param name="densitySnapshotMapper"></param>
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
@@ -87,7 +90,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             TrackerApplicationSettings settings,
             bool ownsContext = false,
             string sessionNotes = null,
-            IPositionDensitySnapshotOrchestrator densityOrchestrator = null)
+            IPositionDensitySnapshotOrchestrator densityOrchestrator = null,
+            IPositionDensitySnapshotMapper densitySnapshotMapper = null)
         {
             _settings = settings;
             _context = context;
@@ -96,6 +100,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _logger = logger;
             _tcpClient = tcpClient;
             _densityOrchestrator = densityOrchestrator;
+            _densitySnapshotMapper = densitySnapshotMapper;
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
@@ -159,6 +164,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     _activeSession.Id,
                     bounds,
                     TimeSpan.FromMilliseconds(_settings.PositionDensityInterval),
+                    QueuePositionDensitySnapshot,
                     token);
             }
 
@@ -174,27 +180,32 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
             finally
             {
-                if (_densityOrchestrator is not null)
+                try
                 {
-                    await _densityOrchestrator.StopAsync();
+                    if (_densityOrchestrator is not null)
+                    {
+                        await _densityOrchestrator.StopAsync();
+                    }
                 }
-
-                // Stop the continuous writer
-                if (_writer != null)
+                finally
                 {
-                    await _writer.StopAsync();
-                    await _writer.DisposeAsync();
-                }
+                    // Always drain and dispose persistence even if snapshot generation itself failed.
+                    if (_writer != null)
+                    {
+                        await _writer.StopAsync();
+                        await _writer.DisposeAsync();
+                    }
 
-                // Detach the aircraft tracking event handlers
-                _tracker.AircraftEvent -= OnAircraftEvent;
+                    // Detach the aircraft tracking event handlers
+                    _tracker.AircraftEvent -= OnAircraftEvent;
 
-                // A stopped controller must not associate any later events with the completed tracking run.
-                _activeSession = null;
+                    // A stopped controller must not associate any later events with the completed tracking run.
+                    _activeSession = null;
 
-                if (_ownsContext)
-                {
-                    await _context.DisposeAsync();
+                    if (_ownsContext)
+                    {
+                        await _context.DisposeAsync();
+                    }
                 }
             }
         }
@@ -385,6 +396,22 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
             // Density input follows the same accepted position events but remains independent of persistence.
             _densityOrchestrator?.Record(position);
+        }
+
+        /// <summary>
+        /// Maps and queues a regenerated snapshot behind previously accepted position writes.
+        /// </summary>
+        /// <param name="snapshot"></param>
+        /// <param name="capturedAtUtc"></param>
+        private void QueuePositionDensitySnapshot(PositionDensity snapshot, DateTime capturedAtUtc)
+        {
+            if (_writer is null || _densitySnapshotMapper is null)
+            {
+                return;
+            }
+
+            // Mapping creates an independent immutable request before it crosses the asynchronous queue boundary.
+            _writer.Push(_densitySnapshotMapper.Map(snapshot, capturedAtUtc));
         }
     }
 }

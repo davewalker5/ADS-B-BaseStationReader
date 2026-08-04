@@ -16,9 +16,15 @@ public interface IPositionDensitySnapshotOrchestrator
     /// <param name="sessionId"></param>
     /// <param name="bounds"></param>
     /// <param name="interval"></param>
+    /// <param name="snapshotGenerated"></param>
     /// <param name="cancellationToken"></param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    void Start(int sessionId, PositionDensityBounds bounds, TimeSpan interval, CancellationToken cancellationToken);
+    void Start(
+        int sessionId,
+        PositionDensityBounds bounds,
+        TimeSpan interval,
+        Action<PositionDensity, DateTime> snapshotGenerated,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Adds one valid observed position to the current snapshot input.

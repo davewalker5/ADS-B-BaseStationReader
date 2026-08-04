@@ -70,7 +70,8 @@ namespace BaseStationReader.Terminal
                     context,
                     tcpClient,
                     _settings,
-                    densityOrchestrator: densityOrchestrator);
+                    densityOrchestrator: densityOrchestrator,
+                    densitySnapshotMapper: new PositionDensitySnapshotMapper());
 
                 var cancelled = false;
                 do

@@ -18,6 +18,7 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
     private ConcurrentQueue<PositionDensityCoordinate> _coordinates = new();
     private CancellationTokenSource? _cancellation;
     private Task? _runTask;
+    private Action<PositionDensity, DateTime>? _snapshotGenerated;
     private int _sessionId;
     private PositionDensityBounds _bounds;
 
@@ -42,6 +43,7 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
         int sessionId,
         PositionDensityBounds bounds,
         TimeSpan interval,
+        Action<PositionDensity, DateTime> snapshotGenerated,
         CancellationToken cancellationToken)
     {
         if (sessionId <= 0)
@@ -52,6 +54,7 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
         {
             throw new ArgumentOutOfRangeException(nameof(interval));
         }
+        ArgumentNullException.ThrowIfNull(snapshotGenerated);
 
         lock (_sync)
         {
@@ -65,6 +68,7 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
             _stateManager.Clear();
             _sessionId = sessionId;
             _bounds = bounds;
+            _snapshotGenerated = snapshotGenerated;
             _cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             _runTask = RunAsync(interval, _cancellation.Token);
         }
@@ -122,7 +126,11 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
         finally
         {
             cancellation.Dispose();
-            _coordinates = new ConcurrentQueue<PositionDensityCoordinate>();
+            lock (_sync)
+            {
+                _snapshotGenerated = null;
+                _coordinates = new ConcurrentQueue<PositionDensityCoordinate>();
+            }
         }
     }
 
@@ -140,7 +148,10 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
             // Snapshot the concurrent input before CPU-bound aggregation to keep recording non-blocking.
             var coordinates = _coordinates.ToArray();
             var density = _aggregator.Aggregate(_sessionId, coordinates, _bounds);
-            _stateManager.Merge(density);
+            var snapshot = _stateManager.Merge(density);
+
+            // Notify the active controller synchronously so its FIFO writer preserves the capture boundary.
+            _snapshotGenerated?.Invoke(snapshot, DateTime.UtcNow);
         }
     }
 }

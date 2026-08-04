@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.History;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Database;
 
@@ -38,7 +39,8 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             // To stop the queue growing and consuming memory, entries are discarded if the timer
             // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if ((entity is TrackedAircraft) || (entity is AircraftPosition))
+            if ((entity is TrackedAircraft) || (entity is AircraftPosition) ||
+                (entity is PositionDensitySnapshotEntity))
             {
                 _queue.Enqueue(entity);
                 if (Interlocked.Increment(ref _pending) == 1)
@@ -65,6 +67,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
                 // Clear the queue
                 _queue.Clear();
+                Interlocked.Exchange(ref _pending, 0);
 
                 // Each writer run belongs to one observation session, so begin its successful-write count at zero.
                 Interlocked.Exchange(ref _positionRecordsWritten, 0);
@@ -107,6 +110,9 @@ namespace BaseStationReader.BusinessLogic.Database
             {
                 // Wait for the runner to wind down
                 await toAwait.ConfigureAwait(false);
+
+                // Cancellation can stop the loop with queued work remaining, so finish it serially before disposal.
+                await FlushQueueAsync().ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -132,12 +138,12 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             _factory.Logger.LogMessage(Severity.Info, $"Flushing {_queue.Count} queued entries");
 
-            // Process pending tracked aircraft and position updates
-            await ProcessPendingAsync<TrackedAircraft>();
-            await ProcessPendingAsync<AircraftPosition>();
-
-            // Clear the queue
-            _queue.Clear();
+            // Drain in original FIFO order so snapshots remain behind the positions they represent.
+            while (_queue.TryDequeue(out var item))
+            {
+                await ProcessAsync(item).ConfigureAwait(false);
+                Interlocked.Decrement(ref _pending);
+            }
         }
 
         /// <summary>
@@ -237,30 +243,17 @@ namespace BaseStationReader.BusinessLogic.Database
                     await WriteAircraftPositionAsync(position);
                 }
 
+                if (item is PositionDensitySnapshotEntity snapshot)
+                {
+                    await WritePositionDensitySnapshotAsync(snapshot);
+                }
+
             }
             catch (Exception ex)
             {
                 // Log and sink the exception. The writer needs to continue or the application will
                 // stop writing to the database
                 _factory.Logger.LogException(ex);
-            }
-        }
-
-        /// <summary>
-        /// Process all pending requests of type T
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        private async Task ProcessPendingAsync<T>()
-        {
-            // Extract a list of requests from the queue
-            var requests = _queue.OfType<T>();
-            _factory.Logger.LogMessage(Severity.Info, $"Processing {requests.Count()} queued entries of type {typeof(T).Name}");
-
-            // Iterate over and process the requests
-            foreach (var request in requests)
-            {
-                await ProcessAsync(request);
             }
         }
 
@@ -310,6 +303,18 @@ namespace BaseStationReader.BusinessLogic.Database
             Interlocked.Increment(ref _positionRecordsWritten);
             _positionAircraft.TryAdd(position.Address, 0);
 
+            return true;
+        }
+
+        /// <summary>
+        /// Writes one complete queued position-density snapshot atomically.
+        /// </summary>
+        /// <param name="snapshot"></param>
+        /// <returns></returns>
+        private async Task<bool> WritePositionDensitySnapshotAsync(PositionDensitySnapshotEntity snapshot)
+        {
+            // The snapshot manager owns the transaction spanning the header and every populated cell.
+            await _factory.PositionDensitySnapshotManager.AddAsync(snapshot);
             return true;
         }
 

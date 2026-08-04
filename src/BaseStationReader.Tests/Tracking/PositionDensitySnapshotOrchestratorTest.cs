@@ -24,6 +24,7 @@ public sealed class PositionDensitySnapshotOrchestratorTest
             42,
             new PositionDensityBounds(50d, 52d, -1d, 1d),
             TimeSpan.FromMilliseconds(20),
+            (_, _) => { },
             cancellation.Token);
         orchestrator.Record(new AircraftPosition { Latitude = 51.1m, Longitude = -0.2m });
         orchestrator.Record(new AircraftPosition { Latitude = 51.1m, Longitude = -0.2m });
@@ -52,6 +53,7 @@ public sealed class PositionDensitySnapshotOrchestratorTest
             42,
             new PositionDensityBounds(50d, 52d, -1d, 1d),
             TimeSpan.FromMilliseconds(20),
+            (_, _) => { },
             cancellation.Token);
         orchestrator.Record(new AircraftPosition { Latitude = 91m, Longitude = 0m });
 
