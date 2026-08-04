@@ -24,21 +24,21 @@ public sealed class TrackingSessionQueryService(
     }
 
     /// <inheritdoc />
-    public Task<ObservationSessionSummaryDto?> GetObservationSessionSummaryAsync(int sessionId, CancellationToken cancellationToken = default)
+    public Task<ObservationSessionSummary?> GetObservationSessionSummaryAsync(int sessionId, CancellationToken cancellationToken = default)
     {
         // Forward the renderer-neutral aggregate produced by business logic.
         return manager.GetObservationSessionSummaryAsync(sessionId, cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task<PositionDensityDto?> GetPositionDensityAsync(int sessionId, CancellationToken cancellationToken = default)
+    public Task<PositionDensity?> GetPositionDensityAsync(int sessionId, CancellationToken cancellationToken = default)
     {
         // Keep the UI adapter free of persistence and chart-library concerns.
         return manager.GetPositionDensityAsync(sessionId, cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<ObservationSessionOption>> ListSessionsAsync(CancellationToken cancellationToken = default)
     {
         // Apply the UI-configured history window at the manager boundary.
         return manager.ListSessionsAsync(options.Value.SessionHistoryDays, cancellationToken);
@@ -52,21 +52,21 @@ public sealed class TrackingSessionQueryService(
     }
 
     /// <inheritdoc />
-    public Task<PagedResult<TrackingSessionSummaryDto>> SearchAsync(TrackingSessionFilter filter, CancellationToken cancellationToken = default)
+    public Task<PagedResult<TrackingSessionSummary>> SearchAsync(TrackingSessionFilter filter, CancellationToken cancellationToken = default)
     {
         // Business logic owns the bounded multi-table historical search.
         return manager.SearchAsync(filter, cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task<TrackingSessionDetailDto?> GetAsync(int trackingRecordId, CancellationToken cancellationToken = default)
+    public Task<TrackingSessionDetail?> GetAsync(int trackingRecordId, CancellationToken cancellationToken = default)
     {
         // Return the business-logic detail projection unchanged.
         return manager.GetAsync(trackingRecordId, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<FlightProfileDto?> GetFlightProfileAsync(int trackingRecordId, CancellationToken cancellationToken = default)
+    public async Task<FlightProfile?> GetFlightProfileAsync(int trackingRecordId, CancellationToken cancellationToken = default)
     {
         // Query renderer-neutral points before applying chart-specific preparation in the UI layer.
         var data = await manager.GetProfileDataAsync(trackingRecordId, cancellationToken);
@@ -76,13 +76,19 @@ public sealed class TrackingSessionQueryService(
     }
 
     /// <inheritdoc />
-    public async Task<FlightPathDto?> GetFlightPathAsync(int trackingRecordId, CancellationToken cancellationToken = default)
+    public async Task<FlightPath?> GetFlightPathAsync(int trackingRecordId, CancellationToken cancellationToken = default)
     {
         // Combine business-logic detail and position reads before applying map-specific preparation.
         var detail = await manager.GetAsync(trackingRecordId, cancellationToken);
-        if (detail is null) return null;
+        if (detail is null)
+        {
+            return null;
+        }
         var data = await manager.GetProfileDataAsync(trackingRecordId, cancellationToken);
-        if (data is null) return null;
+        if (data is null)
+        {
+            return null;
+        }
 
         var flightNumber = !string.IsNullOrWhiteSpace(detail.FlightIata) ? detail.FlightIata : detail.FlightIcao;
         var route = string.IsNullOrWhiteSpace(detail.Embarkation) && string.IsNullOrWhiteSpace(detail.Destination)

@@ -5,7 +5,7 @@ namespace BaseStationReader.Entities.Tracking;
 /// <summary>
 /// Describes the read-only operational state of the current observation session.
 /// </summary>
-public sealed record LiveTrackerStatusDto
+public sealed record LiveTrackerStatus
 {
     public bool IsRunning { get; init; }
     public DateTime? StartedAtUtc { get; init; }

@@ -79,16 +79,21 @@ namespace BaseStationReader.BusinessLogic.Database
             return manufacturer;
         }
 
+        /// <inheritdoc />
         public async Task<Manufacturer> UpdateAsync(int id, string name, int provenanceId)
         {
             var manufacturer = await _context.Manufacturers.FindAsync(id)
                 ?? throw new InvalidOperationException($"Manufacturer record {id} does not exist.");
             if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             var cleanName = StringCleaner.CleanName(name);
             if (await _context.Manufacturers.AnyAsync(x => x.Id != id && x.Name == cleanName))
+            {
                 throw new InvalidOperationException($"A manufacturer named '{cleanName}' already exists.");
+            }
 
             manufacturer.Name = cleanName;
             manufacturer.ProvenanceId = provenanceId;
@@ -96,6 +101,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return await GetAsync(x => x.Id == id);
         }
 
+        /// <inheritdoc />
         public async Task DeleteAsync(int id)
         {
             var manufacturer = await _context.Manufacturers.FindAsync(id)

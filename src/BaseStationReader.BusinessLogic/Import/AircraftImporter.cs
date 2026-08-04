@@ -4,7 +4,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.DataExchange;
 
-namespace BaseStationReader.BusinessLogic.Logging
+namespace BaseStationReader.BusinessLogic.Import
 {
     public class AircraftImporter : CsvImporter<AircraftMappingProfile, Aircraft>, IAircraftImporter
     {
@@ -36,16 +36,6 @@ namespace BaseStationReader.BusinessLogic.Logging
                 aircraft.RemoveAll(x => string.IsNullOrEmpty(x.ModelICAO) && string.IsNullOrEmpty(x.ModelIATA));
                 Logger.LogMessage(Severity.Info, $"Aircraft with no model IATA/ICAO code removed : {aircraft.Count} aircraft remaining");
 
-                // Now identify the model for each one
-                foreach (var a in aircraft)
-                {
-                    var model = Task.Run(() => _factory.ModelManager.GetAsync(a.ModelIATA, a.ModelICAO, a.Model?.Name)).Result;
-                    a.ModelId = model?.Id ?? 0;
-                }
-
-                // Identify instances where the model doesn't exist and remove them
-                aircraft.RemoveAll(x => x.ModelId == 0);
-                Logger.LogMessage(Severity.Info, $"Aircraft with no model removed : {aircraft.Count} aircraft remaining");
             }
 
             return aircraft;
@@ -60,6 +50,17 @@ namespace BaseStationReader.BusinessLogic.Logging
         {
             if (aircraft?.Any() == true)
             {
+                // Resolve model references asynchronously as part of the asynchronous import workflow.
+                foreach (var item in aircraft)
+                {
+                    var model = await _factory.ModelManager.GetAsync(
+                        item.ModelIATA,
+                        item.ModelICAO,
+                        item.Model?.Name);
+                    item.ModelId = model?.Id ?? 0;
+                }
+
+                aircraft = aircraft.Where(item => item.ModelId > 0).ToList();
                 Logger.LogMessage(Severity.Info, $"Saving {aircraft.Count()} aircraft to the database");
 
                 var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
@@ -71,7 +72,9 @@ namespace BaseStationReader.BusinessLogic.Logging
                     .ToList();
 
                 if (missing.Count > 0)
+                {
                     throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+                }
 
                 foreach (var a in aircraft)
                 {

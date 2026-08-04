@@ -8,7 +8,7 @@
     private readonly string _elementId = $"route-map-{Guid.NewGuid():N}";
     private IJSObjectReference? _module;
 
-    [Parameter, EditorRequired] public RoutePlotDto Route { get; set; } = null!;
+    [Parameter, EditorRequired] public RoutePlot Route { get; set; } = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -19,7 +19,10 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_module is null) return;
+        if (_module is null)
+        {
+            return;
+        }
         await _module.InvokeVoidAsync("disposeRouteMap", _elementId);
         await _module.DisposeAsync();
     }

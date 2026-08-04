@@ -3,7 +3,7 @@ namespace BaseStationReader.Entities.History;
 /// <summary>
 /// Contains a complete renderer-neutral two- and three-dimensional flight path.
 /// </summary>
-public sealed class FlightPathDto
+public sealed class FlightPath
 {
     public int TrackingRecordId { get; init; }
     public string Address { get; init; } = string.Empty;
@@ -13,7 +13,7 @@ public sealed class FlightPathDto
     public string FlightNumber { get; init; } = string.Empty;
     public string Airline { get; init; } = string.Empty;
     public string Route { get; init; } = string.Empty;
-    public IReadOnlyList<FlightPathPointDto> Points { get; init; } = [];
+    public IReadOnlyList<FlightPathPoint> Points { get; init; } = [];
     public double? North { get; init; }
     public double? South { get; init; }
     public double? East { get; init; }

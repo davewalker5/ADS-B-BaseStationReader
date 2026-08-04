@@ -48,7 +48,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     }
 
     /// <inheritdoc />
-    public FlightPathDto Build(
+    public FlightPath Build(
         int trackingRecordId,
         string address,
         string callsign,
@@ -57,7 +57,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
         string flightNumber,
         string airline,
         string route,
-        IEnumerable<FlightProfilePointDto> points)
+        IEnumerable<FlightProfilePoint> points)
     {
         ArgumentNullException.ThrowIfNull(points);
 
@@ -86,7 +86,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
         var referenceLongitude = (double)validPoints[0].Longitude!.Value;
         var segment = 1;
         DateTime? previousTimestamp = null;
-        var prepared = new List<FlightPathPointDto>(validPoints.Length);
+        var prepared = new List<FlightPathPoint>(validPoints.Length);
 
         foreach (var point in validPoints)
         {
@@ -100,7 +100,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             var longitude = (double)point.Longitude!.Value;
             var localPosition = _geographicCalculator.ProjectToLocalMetres(
                 referenceLatitude, referenceLongitude, latitude, longitude);
-            prepared.Add(new FlightPathPointDto
+            prepared.Add(new FlightPathPoint
             {
                 Sequence = prepared.Count + 1,
                 Segment = segment,
@@ -129,7 +129,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
 
         // Return only entity-layer DTO values so any presentation or reporting implementation can consume the result.
         var receiverPosition = _receiverPosition();
-        return new FlightPathDto
+        return new FlightPath
         {
             TrackingRecordId = trackingRecordId,
             Address = address,
@@ -157,7 +157,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     /// </summary>
     /// <param name="point">Raw persisted position projection.</param>
     /// <returns><see langword="true"/> when the point can be plotted.</returns>
-    private bool IsValid(FlightProfilePointDto point)
+    private bool IsValid(FlightProfilePoint point)
     {
         // Reject invalid geographic ranges as well as incomplete nullable telemetry.
         return point.Timestamp != default && point.Latitude.HasValue && point.Longitude.HasValue &&
@@ -178,7 +178,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
     /// <param name="airline">Associated airline.</param>
     /// <param name="route">Associated route.</param>
     /// <returns>An empty path retaining the supplied flight metadata.</returns>
-    private static FlightPathDto EmptyPath(
+    private static FlightPath EmptyPath(
         int trackingRecordId,
         string address,
         string callsign,
@@ -189,7 +189,7 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
         string route)
     {
         // Keeping metadata lets the UI explain which record lacks sufficient coordinates.
-        return new FlightPathDto
+        return new FlightPath
         {
             TrackingRecordId = trackingRecordId,
             Address = address,
@@ -219,7 +219,9 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
 
         // Apply the initial great-circle bearing formula using radians.
         if (!_geographicCalculator.IsValidCoordinate(receiverPosition.Latitude.Value, receiverPosition.Longitude.Value))
+        {
             return 0;
+        }
 
         // Delegate bearing semantics to the shared geographic calculator.
         return _geographicCalculator.CalculateInitialBearing(

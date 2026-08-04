@@ -58,7 +58,9 @@ namespace BaseStationReader.BusinessLogic.Database
             string destination = "")
         {
             if (string.IsNullOrWhiteSpace(callsign))
+            {
                 throw new ArgumentException("A callsign is required.", nameof(callsign));
+            }
 
             callsign = callsign.Trim().ToUpperInvariant();
 
@@ -83,11 +85,17 @@ namespace BaseStationReader.BusinessLogic.Database
             }
 
             if (!await _context.Airlines.AnyAsync(x => x.Id == airlineId))
+            {
                 throw new InvalidOperationException($"Airline record {airlineId} does not exist.");
+            }
             if (!await _context.Airports.AnyAsync(x => x.Id == originAirportId))
+            {
                 throw new InvalidOperationException($"Origin airport record {originAirportId} does not exist.");
+            }
             if (!await _context.Airports.AnyAsync(x => x.Id == destinationAirportId))
+            {
                 throw new InvalidOperationException($"Destination airport record {destinationAirportId} does not exist.");
+            }
 
             // Callsign is the stable local identifier used to resolve tracked flights.
             var flight = await GetAsync(x => x.Callsign == callsign);
@@ -114,6 +122,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return flight;
         }
 
+        /// <inheritdoc />
         public async Task<Flight> UpdateAsync(
             int id,
             string iata,
@@ -125,7 +134,9 @@ namespace BaseStationReader.BusinessLogic.Database
             int provenanceId)
         {
             if (string.IsNullOrWhiteSpace(callsign))
+            {
                 throw new ArgumentException("A callsign is required.", nameof(callsign));
+            }
 
             callsign = callsign.Trim().ToUpperInvariant();
             iata = iata?.Trim().ToUpperInvariant() ?? "";
@@ -133,15 +144,25 @@ namespace BaseStationReader.BusinessLogic.Database
             var flight = await _context.Flights.FindAsync(id)
                 ?? throw new InvalidOperationException($"Flight record {id} does not exist.");
             if (await _context.Flights.AnyAsync(x => x.Id != id && x.Callsign == callsign))
+            {
                 throw new InvalidOperationException($"A flight with callsign '{callsign}' already exists.");
+            }
             if (!await _context.Airlines.AnyAsync(x => x.Id == airlineId))
+            {
                 throw new InvalidOperationException($"Airline record {airlineId} does not exist.");
+            }
             if (!await _context.Airports.AnyAsync(x => x.Id == originAirportId))
+            {
                 throw new InvalidOperationException($"Origin airport record {originAirportId} does not exist.");
+            }
             if (!await _context.Airports.AnyAsync(x => x.Id == destinationAirportId))
+            {
                 throw new InvalidOperationException($"Destination airport record {destinationAirportId} does not exist.");
+            }
             if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             flight.IATA = iata;
             flight.ICAO = icao;
@@ -154,6 +175,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return await GetAsync(x => x.Id == id);
         }
 
+        /// <inheritdoc />
         public async Task DeleteAsync(int id)
         {
             var flight = await _context.Flights.FindAsync(id)

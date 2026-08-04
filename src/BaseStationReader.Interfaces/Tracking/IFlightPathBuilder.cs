@@ -20,7 +20,7 @@ public interface IFlightPathBuilder
     /// <param name="route">Associated route.</param>
     /// <param name="points">Raw persisted positions.</param>
     /// <returns>A renderer-neutral flight path.</returns>
-    FlightPathDto Build(
+    FlightPath Build(
         int trackingRecordId,
         string address,
         string callsign,
@@ -29,5 +29,5 @@ public interface IFlightPathBuilder
         string flightNumber,
         string airline,
         string route,
-        IEnumerable<FlightProfilePointDto> points);
+        IEnumerable<FlightProfilePoint> points);
 }

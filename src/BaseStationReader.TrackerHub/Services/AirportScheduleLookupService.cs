@@ -79,7 +79,10 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
         var to = date.Add(ParseTime(_scheduleOptions.ScheduleEndTime, TimeSpan.FromHours(21)));
 
         // Keep malformed or overly broad configuration within the same constraints as interactive changes.
-        if (to <= from || to - from > MaximumRange) to = from.Add(MaximumRange);
+        if (to <= from || to - from > MaximumRange)
+        {
+            to = from.Add(MaximumRange);
+        }
         return (from, to);
     }
 
@@ -92,13 +95,19 @@ public sealed class AirportScheduleLookupService : IAirportScheduleLookupService
         CancellationToken cancellationToken = default)
     {
         if (!GetServices().Contains(serviceType))
+        {
             throw new ArgumentException($"{serviceType} is not configured for schedule lookups.", nameof(serviceType));
+        }
 
         var normalisedIata = (iata ?? string.Empty).Trim().ToUpperInvariant();
         if (normalisedIata.Length != 3 || !normalisedIata.All(character => character is >= 'A' and <= 'Z'))
+        {
             throw new ArgumentException("Select an airport with a three-letter IATA code.", nameof(iata));
+        }
         if (to <= from || to - from > MaximumRange)
+        {
             throw new ArgumentException("The schedule range must be greater than zero and no more than 12 hours.", nameof(to));
+        }
 
         // Exact normalized schedule inputs share a short-lived in-process object; no cache data is persisted.
         var cacheKey = $"schedule:{serviceType}:{normalisedIata}:{from.Ticks}:{to.Ticks}";

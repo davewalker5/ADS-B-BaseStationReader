@@ -4,7 +4,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.DataExchange;
 
-namespace BaseStationReader.BusinessLogic.Logging
+namespace BaseStationReader.BusinessLogic.Import
 {
     public class FlightImporter : CsvImporter<FlightMappingProfile, Flight>, IFlightImporter
     {
@@ -13,6 +13,7 @@ namespace BaseStationReader.BusinessLogic.Logging
         public FlightImporter(IDatabaseManagementFactory factory) : base(factory.Logger)
             => _factory = factory;
 
+        /// <inheritdoc />
         public override List<Flight> Read(string filePath)
         {
             var flights = base.Read(filePath);
@@ -44,6 +45,7 @@ namespace BaseStationReader.BusinessLogic.Logging
             return flights;
         }
 
+        /// <inheritdoc />
         public override async Task SaveAsync(IEnumerable<Flight> flights)
         {
             var rows = flights?.ToList() ?? [];
@@ -70,7 +72,9 @@ namespace BaseStationReader.BusinessLogic.Logging
             foreach (var row in rows)
             {
                 if (!provenance.TryGetValue(row.ProvenanceRef, out var source))
+                {
                     throw new InvalidOperationException($"Provenance record not found: {row.ProvenanceRef}");
+                }
 
                 var origin = Resolve(row.OriginICAO, row.OriginIATA, airportsByIcao, airportsByIata,
                     "Origin airport", row.Callsign);
@@ -79,11 +83,17 @@ namespace BaseStationReader.BusinessLogic.Logging
                 var airline = Resolve(row.AirlineICAO, row.AirlineIATA, airlinesByIcao, airlinesByIata,
                     "Airline", row.Callsign);
                 if (origin is null)
+                {
                     throw new InvalidOperationException($"An origin airport is required for flight '{row.Callsign}'.");
+                }
                 if (destination is null)
+                {
                     throw new InvalidOperationException($"A destination airport is required for flight '{row.Callsign}'.");
+                }
                 if (airline is null)
+                {
                     throw new InvalidOperationException($"An airline is required for flight '{row.Callsign}'.");
+                }
                 resolved.Add((row, origin, destination, airline, source));
             }
 
@@ -102,18 +112,27 @@ namespace BaseStationReader.BusinessLogic.Logging
             }
         }
 
+        /// <summary>
+        /// Normalises an imported aviation code and removes configured placeholder values.
+        /// </summary>
         private string CleanCode(string value)
         {
             var cleaned = value?.Trim() ?? "";
             return Replacements.Contains(cleaned) ? "" : cleaned.ToUpperInvariant();
         }
 
+        /// <summary>
+        /// Indexes records by a case-insensitive external code.
+        /// </summary>
         private static Dictionary<string, T> IndexBy<T>(IEnumerable<T> records, Func<T, string> selector)
             => records
                 .Where(x => !string.IsNullOrWhiteSpace(selector(x)))
                 .GroupBy(x => selector(x).Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// Resolves an imported reference by ICAO code and then by IATA code.
+        /// </summary>
         private static T Resolve<T>(
             string icao,
             string iata,
@@ -124,19 +143,28 @@ namespace BaseStationReader.BusinessLogic.Logging
         {
             if (!string.IsNullOrWhiteSpace(icao))
             {
-                if (byIcao.TryGetValue(icao, out var match)) return match;
+                if (byIcao.TryGetValue(icao, out var match))
+                {
+                    return match;
+                }
                 throw new InvalidOperationException($"{label} ICAO '{icao}' was not found for flight '{callsign}'.");
             }
 
             if (!string.IsNullOrWhiteSpace(iata))
             {
-                if (byIata.TryGetValue(iata, out var match)) return match;
+                if (byIata.TryGetValue(iata, out var match))
+                {
+                    return match;
+                }
                 throw new InvalidOperationException($"{label} IATA '{iata}' was not found for flight '{callsign}'.");
             }
 
             return null;
         }
 
+        /// <summary>
+        /// Returns the preferred display code for an airport.
+        /// </summary>
         private static string PreferredAirportCode(Airport airport)
             => airport is null ? "" : !string.IsNullOrWhiteSpace(airport.IATA) ? airport.IATA : airport.ICAO;
     }

@@ -77,9 +77,13 @@ public sealed class GeographicCalculator : IGeographicCalculator
     {
         ValidateCoordinate(latitude, longitude, "origin");
         if (!double.IsFinite(bearing))
+        {
             throw new ArgumentOutOfRangeException(nameof(bearing), "Bearing must be finite.");
+        }
         if (!double.IsFinite(distanceMetres) || distanceMetres < 0d)
+        {
             throw new ArgumentOutOfRangeException(nameof(distanceMetres), "Distance must be finite and non-negative.");
+        }
 
         // Apply the direct great-circle solution from the supplied origin and initial bearing.
         var latitudeRadians = ToRadians(latitude);
@@ -109,12 +113,17 @@ public sealed class GeographicCalculator : IGeographicCalculator
         ValidateCoordinate(fromLatitude, fromLongitude, "origin");
         ValidateCoordinate(toLatitude, toLongitude, "destination");
         if (!double.IsFinite(fraction) || fraction is < 0d or > 1d)
+        {
             throw new ArgumentOutOfRangeException(nameof(fraction), "Interpolation fraction must be between zero and one.");
+        }
 
         var start = ToUnitVector(fromLatitude, fromLongitude);
         var end = ToUnitVector(toLatitude, toLongitude);
         var angle = CalculateAngularDistance(fromLatitude, fromLongitude, toLatitude, toLongitude);
-        if (angle < 1e-10d) return (fromLatitude, fromLongitude);
+        if (angle < 1e-10d)
+        {
+            return (fromLatitude, fromLongitude);
+        }
 
         // Spherical linear interpolation follows the shortest surface route between the endpoints.
         var denominator = Math.Sin(angle);
@@ -151,7 +160,9 @@ public sealed class GeographicCalculator : IGeographicCalculator
     {
         // Centralise validation so every calculation applies identical coordinate semantics.
         if (!IsValidCoordinate(latitude, longitude))
+        {
             throw new ArgumentOutOfRangeException(parameterName, "Latitude must be between -90 and 90 and longitude between -180 and 180.");
+        }
     }
 
     /// <summary>Converts a geographic coordinate into a Cartesian unit vector.</summary>

@@ -22,6 +22,8 @@
     "MinimumTrackedAltitude": null,
     "MaximumTrackedAltitude": null,
     "TrackPosition": true,
+    "TrackPositionDensity": true,
+    "PositionDensityInterval": 300000,
     "TrackedBehaviours": [
       "Climbing",
       "Descending",

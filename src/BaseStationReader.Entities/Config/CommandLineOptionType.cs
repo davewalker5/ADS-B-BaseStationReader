@@ -47,6 +47,7 @@
         MinimumTrackedAltitude,
         NumberOfAircraft,
         Port,
+        PositionDensityInterval,
         Profile,
         ReceiverLatitude,
         ReceiverLongitude,
@@ -61,6 +62,7 @@
         TimeToStale,
         TrackedBehaviours,
         TrackPosition,
+        TrackPositionDensity,
         VerboseLogging,
         WeatherApi
     }

@@ -198,14 +198,20 @@
     private void Edit(Model model) => _editModel = Copy(model);
     private void SelectFromKeyboard(KeyboardEventArgs args, Model model)
     {
-        if (args.Key is "Enter" or " ") Edit(model);
+        if (args.Key is "Enter" or " ")
+        {
+            Edit(model);
+        }
     }
 
     private void Clear() => _editModel = new();
 
     private async Task SaveAsync()
     {
-        if (!CanEdit) return;
+        if (!CanEdit)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -215,7 +221,9 @@
             if (string.IsNullOrWhiteSpace(_filterManufacturerName) &&
                 string.IsNullOrWhiteSpace(_filterModelName) &&
                 string.IsNullOrWhiteSpace(_filterModelIcao))
+            {
                 _filterModelName = saved.Name;
+            }
             await FindAsync();
             _success = isNew ? "Model record added." : "Model record updated.";
         }
@@ -225,21 +233,30 @@
 
     private void ConfirmDelete(Model model)
     {
-        if (_saving || TrackingControl.IsTracking) return;
+        if (_saving || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteModel = Copy(model);
         _deleteError = null;
     }
 
     private void CloseDelete()
     {
-        if (_saving) return;
+        if (_saving)
+        {
+            return;
+        }
         _deleteModel = null;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        if (_deleteModel is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -254,7 +271,10 @@
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private static Model Copy(Model source) => new()

@@ -18,21 +18,21 @@
 
 <div class="reference-tabs" role="tablist" aria-label="Reference data">
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Import)"
-            class="@(_activeTab == ReferenceTab.Import ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Import)">Import</button>
+            class="@(_activeTab == ReferenceTab.Import ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Import)">Import</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Provenance)"
-            class="@(_activeTab == ReferenceTab.Provenance ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Provenance)">Provenance</button>
+            class="@(_activeTab == ReferenceTab.Provenance ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Provenance)">Provenance</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Aircraft)"
-            class="@(_activeTab == ReferenceTab.Aircraft ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Aircraft)">Aircraft</button>
+            class="@(_activeTab == ReferenceTab.Aircraft ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Aircraft)">Aircraft</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Airlines)"
-            class="@(_activeTab == ReferenceTab.Airlines ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Airlines)">Airlines</button>
+            class="@(_activeTab == ReferenceTab.Airlines ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Airlines)">Airlines</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Airports)"
-            class="@(_activeTab == ReferenceTab.Airports ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Airports)">Airports</button>
+            class="@(_activeTab == ReferenceTab.Airports ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Airports)">Airports</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Flights)"
-            class="@(_activeTab == ReferenceTab.Flights ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Flights)">Flights</button>
+            class="@(_activeTab == ReferenceTab.Flights ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Flights)">Flights</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Manufacturers)"
-            class="@(_activeTab == ReferenceTab.Manufacturers ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Manufacturers)">Manufacturers</button>
+            class="@(_activeTab == ReferenceTab.Manufacturers ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Manufacturers)">Manufacturers</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Models)"
-            class="@(_activeTab == ReferenceTab.Models ? "active" : null)" @onclick="() => SelectTab(ReferenceTab.Models)">Models</button>
+            class="@(_activeTab == ReferenceTab.Models ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Models)">Models</button>
 </div>
 
 @if (_activeTab == ReferenceTab.Import)
@@ -340,16 +340,25 @@ else
         string.Equals(Path.GetExtension(_file.Name), ".csv", StringComparison.OrdinalIgnoreCase);
     private ImportOption SelectedOption => ImportOptions.First(option => option.Type == _importType);
 
-    private async Task SelectTab(ReferenceTab tab)
+    private async Task SelectTabAsync(ReferenceTab tab)
     {
         _activeTab = tab;
         _error = null;
         _success = null;
-        if (tab == ReferenceTab.Provenance && _provenance.Count == 0) await LoadProvenanceAsync();
+        if (tab == ReferenceTab.Provenance && _provenance.Count == 0)
+        {
+            await LoadProvenanceAsync();
+        }
         if (tab == ReferenceTab.Aircraft)
         {
-            if (_provenance.Count == 0) await LoadProvenanceAsync();
-            if (_models.Count == 0) _models = (await AircraftService.ListModelsAsync()).OrderBy(x => x.Name).ToList();
+            if (_provenance.Count == 0)
+            {
+                await LoadProvenanceAsync();
+            }
+            if (_models.Count == 0)
+            {
+                _models = (await AircraftService.ListModelsAsync()).OrderBy(x => x.Name).ToList();
+            }
         }
     }
 
@@ -364,7 +373,10 @@ else
     private void Edit(Provenance record) => _editModel = Copy(record);
     private void SelectRowFromKeyboard(KeyboardEventArgs args, Provenance record)
     {
-        if (args.Key is "Enter" or " ") Edit(record);
+        if (args.Key is "Enter" or " ")
+        {
+            Edit(record);
+        }
     }
 
     private void Clear()
@@ -391,12 +403,18 @@ else
 
     private async Task DeleteAsync(Provenance record)
     {
-        if (!await JS.InvokeAsync<bool>("confirm", $"Delete provenance record '{record.SourceRef}'?")) return;
+        if (!await JS.InvokeAsync<bool>("confirm", $"Delete provenance record '{record.SourceRef}'?"))
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
             await ProvenanceService.DeleteAsync(record.Id);
-            if (_editModel.Id == record.Id) Clear();
+            if (_editModel.Id == record.Id)
+            {
+                Clear();
+            }
             await LoadProvenanceAsync();
             _success = "Provenance record deleted.";
         }
@@ -435,12 +453,18 @@ else
     }
     private void SelectAircraftFromKeyboard(KeyboardEventArgs args, Aircraft record)
     {
-        if (args.Key is "Enter" or " ") EditAircraft(record);
+        if (args.Key is "Enter" or " ")
+        {
+            EditAircraft(record);
+        }
     }
 
     private async Task SaveAircraftAsync()
     {
-        if (!CanEditAircraft) return;
+        if (!CanEditAircraft)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -448,7 +472,9 @@ else
             var saved = await AircraftService.SaveAsync(_aircraftEditModel);
             if (string.IsNullOrWhiteSpace(_aircraftAddress) &&
                 string.IsNullOrWhiteSpace(_aircraftRegistration))
+            {
                 _aircraftAddress = saved.Address;
+            }
             await FindAircraftAsync();
             _success = isNew ? "Aircraft record added." : "Aircraft record updated.";
         }
@@ -458,21 +484,30 @@ else
 
     private void ConfirmDeleteAircraft(Aircraft aircraft)
     {
-        if (_saving || TrackingControl.IsTracking) return;
+        if (_saving || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteAircraft = Copy(aircraft);
         _aircraftDeleteError = null;
     }
 
     private void CloseDeleteAircraft()
     {
-        if (_saving) return;
+        if (_saving)
+        {
+            return;
+        }
         _deleteAircraft = null;
         _aircraftDeleteError = null;
     }
 
     private async Task DeleteAircraftAsync()
     {
-        if (_deleteAircraft is null || TrackingControl.IsTracking) return;
+        if (_deleteAircraft is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -487,7 +522,10 @@ else
 
     private void HandleDeleteAircraftKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDeleteAircraft();
+        if (args.Key == "Escape")
+        {
+            CloseDeleteAircraft();
+        }
     }
 
     private void SelectManufacturer(ChangeEventArgs args)
@@ -495,7 +533,9 @@ else
         _selectedManufacturerId = int.TryParse(args.Value?.ToString(), out var id) ? id : 0;
         if (!_models.Any(x => x.Id == _aircraftEditModel.ModelId &&
                              x.ManufacturerId == _selectedManufacturerId))
+        {
             _aircraftEditModel.ModelId = 0;
+        }
     }
 
     private void ClearAircraftSelection()
@@ -514,7 +554,10 @@ else
 
     private async Task ImportAsync()
     {
-        if (!CanImport || _file is null) return;
+        if (!CanImport || _file is null)
+        {
+            return;
+        }
         _importing = true; _error = null; _success = null;
         try
         {

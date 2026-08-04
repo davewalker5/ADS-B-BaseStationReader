@@ -97,7 +97,9 @@ namespace BaseStationReader.BusinessLogic.Database
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
             }
             if (!await _context.Manufacturers.AnyAsync(x => x.Id == manufacturerId))
+            {
                 throw new InvalidOperationException($"Manufacturer record {manufacturerId} does not exist.");
+            }
 
             // Look for a matching record
             var model = await GetAsync(cleanIATA, cleanICAO, name);
@@ -121,6 +123,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return model;
         }
 
+        /// <inheritdoc />
         public async Task<Model> UpdateAsync(
             int id,
             string iata,
@@ -132,23 +135,33 @@ namespace BaseStationReader.BusinessLogic.Database
             var model = await _context.Models.FindAsync(id)
                 ?? throw new InvalidOperationException($"Model record {id} does not exist.");
             if (!await _context.Manufacturers.AnyAsync(x => x.Id == manufacturerId))
+            {
                 throw new InvalidOperationException($"Manufacturer record {manufacturerId} does not exist.");
+            }
             if (!await _context.Provenance.AnyAsync(x => x.Id == provenanceId))
+            {
                 throw new InvalidOperationException($"Provenance record {provenanceId} does not exist.");
+            }
 
             var cleanIATA = string.IsNullOrWhiteSpace(iata) ? null : StringCleaner.CleanIATA(iata);
             var cleanICAO = string.IsNullOrWhiteSpace(icao) ? null : StringCleaner.CleanICAO(icao);
             var cleanName = name?.Trim() ?? "";
             if (cleanICAO is not null &&
                 await _context.Models.AnyAsync(x => x.Id != id && x.ICAO == cleanICAO))
+            {
                 throw new InvalidOperationException($"An aircraft model with ICAO code '{cleanICAO}' already exists.");
+            }
             if (cleanIATA is not null &&
                 await _context.Models.AnyAsync(x => x.Id != id && x.IATA == cleanIATA))
+            {
                 throw new InvalidOperationException($"An aircraft model with IATA code '{cleanIATA}' already exists.");
+            }
             if (await _context.Models.AnyAsync(x =>
                     x.Id != id && x.ManufacturerId == manufacturerId && x.Name == cleanName))
+            {
                 throw new InvalidOperationException(
                     $"A model named '{cleanName}' already exists for the selected manufacturer.");
+            }
 
             model.IATA = cleanIATA;
             model.ICAO = cleanICAO;
@@ -159,6 +172,7 @@ namespace BaseStationReader.BusinessLogic.Database
             return await GetAsync(x => x.Id == id);
         }
 
+        /// <inheritdoc />
         public async Task DeleteAsync(int id)
         {
             var model = await _context.Models.FindAsync(id)

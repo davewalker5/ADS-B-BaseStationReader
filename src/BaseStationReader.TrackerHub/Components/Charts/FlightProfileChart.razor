@@ -65,7 +65,7 @@
     private IReadOnlyList<AxisTick> _xTicks = [];
     private IReadOnlyList<AxisTick> _yTicks = [];
 
-    [Parameter, EditorRequired] public FlightProfileDto Profile { get; set; } = new();
+    [Parameter, EditorRequired] public FlightProfile Profile { get; set; } = new();
     [Parameter] public FlightProfileChartMode Mode { get; set; }
     [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
     [Parameter] public string Description { get; set; } = string.Empty;
@@ -240,7 +240,7 @@
 
     private sealed class ChartPoint
     {
-        public FlightProfilePointDto Point { get; init; } = new();
+        public FlightProfilePoint Point { get; init; } = new();
         public double XPosition { get; init; }
         public double YPosition { get; init; }
         public bool IsFirst { get; init; }

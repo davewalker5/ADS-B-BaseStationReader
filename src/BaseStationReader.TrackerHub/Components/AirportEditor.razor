@@ -176,14 +176,20 @@
     private void Edit(Airport airport) => _editModel = Copy(airport);
     private void SelectFromKeyboard(KeyboardEventArgs args, Airport airport)
     {
-        if (args.Key is "Enter" or " ") Edit(airport);
+        if (args.Key is "Enter" or " ")
+        {
+            Edit(airport);
+        }
     }
 
     private void Clear() => _editModel = new();
 
     private async Task SaveAsync()
     {
-        if (!CanEdit) return;
+        if (!CanEdit)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -204,21 +210,30 @@
 
     private void ConfirmDelete(Airport airport)
     {
-        if (_saving || TrackingControl.IsTracking) return;
+        if (_saving || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteModel = Copy(airport);
         _deleteError = null;
     }
 
     private void CloseDelete()
     {
-        if (_saving) return;
+        if (_saving)
+        {
+            return;
+        }
         _deleteModel = null;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        if (_deleteModel is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -233,7 +248,10 @@
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private static Airport Copy(Airport source) => new()

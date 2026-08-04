@@ -6,7 +6,7 @@ using BaseStationReader.Interfaces.Hub;
 using BaseStationReader.Interfaces.Logging;
 using Microsoft.AspNetCore.SignalR;
 
-namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
+namespace BaseStationReader.TrackerHub.Logic
 {
     public class EventBridge : BackgroundService, IEventBridge
     {
@@ -36,6 +36,7 @@ namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
         public ValueTask PublishAsync(AircraftNotificationEventArgs e, CancellationToken token = default)
             => _channel.Writer.WriteAsync(e, token);
 
+        /// <inheritdoc />
         public ValueTask PublishResetAsync(TrackingOptions options, CancellationToken token = default)
             => _channel.Writer.WriteAsync(options, token);
 

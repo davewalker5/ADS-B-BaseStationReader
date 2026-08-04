@@ -2,7 +2,7 @@ using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Hub;
 using Microsoft.AspNetCore.SignalR;
 
-namespace BaseStationReader.BusinessLogic.TrackerHub.Logic
+namespace BaseStationReader.TrackerHub.Logic
 {
     public class AircraftHub : Hub
     {

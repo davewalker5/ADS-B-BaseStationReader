@@ -161,20 +161,29 @@
     private void Edit(Manufacturer manufacturer) => _editModel = Copy(manufacturer);
     private void SelectFromKeyboard(KeyboardEventArgs args, Manufacturer manufacturer)
     {
-        if (args.Key is "Enter" or " ") Edit(manufacturer);
+        if (args.Key is "Enter" or " ")
+        {
+            Edit(manufacturer);
+        }
     }
 
     private void Clear() => _editModel = new();
 
     private async Task SaveAsync()
     {
-        if (!CanEdit) return;
+        if (!CanEdit)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
             var isNew = _editModel.Id == 0;
             var saved = await ManufacturerService.SaveAsync(_editModel);
-            if (string.IsNullOrWhiteSpace(_name)) _name = saved.Name;
+            if (string.IsNullOrWhiteSpace(_name))
+            {
+                _name = saved.Name;
+            }
             await FindAsync();
             _success = isNew ? "Manufacturer record added." : "Manufacturer record updated.";
         }
@@ -184,21 +193,30 @@
 
     private void ConfirmDelete(Manufacturer manufacturer)
     {
-        if (_saving || TrackingControl.IsTracking) return;
+        if (_saving || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteModel = Copy(manufacturer);
         _deleteError = null;
     }
 
     private void CloseDelete()
     {
-        if (_saving) return;
+        if (_saving)
+        {
+            return;
+        }
         _deleteModel = null;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        if (_deleteModel is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -213,7 +231,10 @@
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private static Manufacturer Copy(Manufacturer source) => new()

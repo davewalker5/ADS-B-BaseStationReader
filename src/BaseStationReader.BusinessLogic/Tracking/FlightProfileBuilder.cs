@@ -46,11 +46,11 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
     }
 
     /// <inheritdoc />
-    public FlightProfileDto Build(
+    public FlightProfile Build(
         int trackingRecordId,
         string address,
         string callsign,
-        IEnumerable<FlightProfilePointDto> points)
+        IEnumerable<FlightProfilePoint> points)
     {
         ArgumentNullException.ThrowIfNull(points);
 
@@ -59,7 +59,7 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
             .Select((point, sourceIndex) => new { Point = point, SourceIndex = sourceIndex })
             .OrderBy(item => item.Point.Timestamp)
             .ThenBy(item => item.SourceIndex)
-            .Select((item, sequence) => new FlightProfilePointDto
+            .Select((item, sequence) => new FlightProfilePoint
             {
                 Sequence = sequence + 1,
                 Timestamp = item.Point.Timestamp,
@@ -76,7 +76,7 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
         var distancePoints = ordered.Where(point => point.Distance.HasValue).ToArray();
 
         // Return only entity-layer DTOs so any presentation or reporting implementation can consume the result.
-        return new FlightProfileDto
+        return new FlightProfile
         {
             TrackingRecordId = trackingRecordId,
             Address = address,

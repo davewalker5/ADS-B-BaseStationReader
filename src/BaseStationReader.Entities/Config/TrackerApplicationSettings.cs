@@ -29,6 +29,8 @@ namespace BaseStationReader.Entities.Config
         public int? MinimumTrackedAltitude { get; set; }
         public int? MaximumTrackedAltitude { get; set; }
         public bool TrackPosition { get; set; }
+        public bool TrackPositionDensity { get; set; }
+        public int PositionDensityInterval { get; set; }
         public int AircraftNotificationInterval { get; set; }
         public string TrackingProfile { get; set; }
         public string TrackingProfileName { get; set; }

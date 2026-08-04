@@ -13,12 +13,14 @@ public sealed class ModelReferenceService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IModelReferenceService
 {
+    /// <inheritdoc />
     public async Task<List<Manufacturer>> ListManufacturersAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         return await new DatabaseManagementFactory(logger, context, 0).ManufacturerManager.ListAsync(x => true);
     }
 
+    /// <inheritdoc />
     public async Task<List<Model>> FindAsync(
         string? manufacturerName,
         string? modelName,
@@ -36,6 +38,7 @@ public sealed class ModelReferenceService(
                 (cleanIcao == "" || (x.ICAO != null && x.ICAO.ToUpper().Contains(cleanIcao))));
     }
 
+    /// <inheritdoc />
     public async Task<Model> SaveAsync(Model model, CancellationToken cancellationToken = default)
     {
         Model? saved = null;
@@ -53,6 +56,7 @@ public sealed class ModelReferenceService(
         return saved!;
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

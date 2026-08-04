@@ -56,7 +56,7 @@ else
 @code {
 #nullable enable
     [Parameter] public int Id { get; set; }
-    private TrackingSessionDetailDto? _record;
+    private TrackingSessionDetail? _record;
     private bool _loading = true;
     private string? _error;
 
@@ -85,7 +85,7 @@ else
     /// <summary>
     /// Renders a compact read-only position summary.
     /// </summary>
-    private static RenderFragment PositionContent(PositionSummaryDto? position) => builder =>
+    private static RenderFragment PositionContent(PositionSummary? position) => builder =>
     {
         // Build simple text content because position history charting belongs to later releases.
         builder.OpenElement(0, "p");

@@ -20,7 +20,7 @@ public sealed class LiveTrackerStatusService(
     ITrackerLogger logger) : ILiveTrackerStatusService
 {
     /// <inheritdoc />
-    public async Task<LiveTrackerStatusDto?> GetAsync(
+    public async Task<LiveTrackerStatus?> GetAsync(
         int? sessionId,
         IReadOnlyCollection<TrackedAircraftDto> aircraft,
         bool isRunning,
@@ -28,7 +28,10 @@ public sealed class LiveTrackerStatusService(
     {
         // A materialised snapshot keeps every calculation internally consistent while live updates continue.
         var liveAircraft = aircraft.ToArray();
-        if (!sessionId.HasValue) return null;
+        if (!sessionId.HasValue)
+        {
+            return null;
+        }
 
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var databaseFactory = new DatabaseManagementFactory(logger, context, 0);
@@ -36,7 +39,10 @@ public sealed class LiveTrackerStatusService(
         // Resolve session metadata through business logic before combining it with live in-memory state.
         var session = await databaseFactory.ObservationSessionManager
             .GetAsync(sessionId.Value, cancellationToken);
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
 
         // Normalise current identities to match the uppercase reference-data keys used by imports.
         var addresses = liveAircraft.Select(item => item.Address.Trim().ToUpperInvariant()).Distinct().ToArray();
@@ -67,7 +73,7 @@ public sealed class LiveTrackerStatusService(
         var transient = transientStatus.GetReferenceLookupStatus();
 
         // Combine persisted session identity, live statistics, and resolution counts into one reusable snapshot.
-        return new LiveTrackerStatusDto
+        return new LiveTrackerStatus
         {
             IsRunning = isRunning,
             StartedAtUtc = session.StartedAtUtc,

@@ -23,5 +23,6 @@ namespace BaseStationReader.Interfaces.Database
         IApiLogManager ApiLogManager { get; }
         IProvenanceManager ProvenanceManager { get; }
         IObservationSessionManager ObservationSessionManager { get; }
+        IPositionDensitySnapshotManager PositionDensitySnapshotManager { get; }
     }
 }

@@ -38,7 +38,7 @@ public sealed class AirportRouteService : IAirportRouteService
     }
 
     /// <inheritdoc />
-    public async Task<RoutePlotDto> BuildRouteAsync(
+    public async Task<RoutePlot> BuildRouteAsync(
         string originIata,
         string destinationIata,
         CancellationToken cancellationToken = default)
@@ -47,7 +47,9 @@ public sealed class AirportRouteService : IAirportRouteService
         var originCode = NormaliseIata(originIata, "origin");
         var destinationCode = NormaliseIata(destinationIata, "destination");
         if (originCode == destinationCode)
+        {
             throw new ArgumentException("Origin and destination airports must be different.");
+        }
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var manager = new DatabaseManagementFactory(_logger, context, 0).AirportManager;
@@ -57,7 +59,7 @@ public sealed class AirportRouteService : IAirportRouteService
             airport => airport.IATA == originCode || airport.IATA == destinationCode);
         cancellationToken.ThrowIfCancellationRequested();
         var airports = airportRecords
-            .Select(airport => new RouteAirportDto(
+            .Select(airport => new RouteAirport(
                 airport.Name, airport.IATA, airport.Latitude, airport.Longitude))
             .ToList();
 
@@ -67,12 +69,20 @@ public sealed class AirportRouteService : IAirportRouteService
         var destination = airports.FirstOrDefault(airport =>
             string.Equals(airport.Iata, destinationCode, StringComparison.OrdinalIgnoreCase));
         var missing = new List<string>();
-        if (origin is null) missing.Add(originCode);
-        if (destination is null) missing.Add(destinationCode);
+        if (origin is null)
+        {
+            missing.Add(originCode);
+        }
+        if (destination is null)
+        {
+            missing.Add(destinationCode);
+        }
         if (missing.Count > 0)
+        {
             throw new ArgumentException(
                 $"Airport{(missing.Count > 1 ? "s" : string.Empty)} {string.Join(" and ", missing)} " +
                 $"{(missing.Count > 1 ? "do" : "does")} not exist in the airport database.");
+        }
 
         // Reject corrupt reference coordinates before performing spherical calculations.
         ValidateCoordinates(origin);
@@ -87,7 +97,7 @@ public sealed class AirportRouteService : IAirportRouteService
         var maximumLongitude = unwrappedLongitudes.Max();
 
         // Return renderer-neutral route geometry that can be consumed by maps, reports, or APIs.
-        return new RoutePlotDto
+        return new RoutePlot
         {
             Origin = origin,
             Destination = destination,
@@ -112,8 +122,10 @@ public sealed class AirportRouteService : IAirportRouteService
         var normalised = (value ?? string.Empty).Trim().ToUpperInvariant();
         if (normalised.Length != 3 ||
             !normalised.All(character => character is >= 'A' and <= 'Z'))
+        {
             throw new ArgumentException(
                 $"Enter a valid three-letter IATA code for the {fieldName} airport.", fieldName);
+        }
         return normalised;
     }
 
@@ -121,12 +133,14 @@ public sealed class AirportRouteService : IAirportRouteService
     /// Validates the geographic coordinates associated with an airport.
     /// </summary>
     /// <param name="airport">The route endpoint to validate.</param>
-    private void ValidateCoordinates(RouteAirportDto airport)
+    private void ValidateCoordinates(RouteAirport airport)
     {
         // Spherical interpolation requires finite coordinates inside conventional geographic ranges.
         if (!_geographicCalculator.IsValidCoordinate(airport.Latitude, airport.Longitude))
+        {
             throw new ArgumentException(
                 $"Airport {airport.Iata} does not have valid coordinates in the airport database.");
+        }
     }
 
     /// <summary>
@@ -135,14 +149,14 @@ public sealed class AirportRouteService : IAirportRouteService
     /// <param name="origin">The route origin.</param>
     /// <param name="destination">The route destination.</param>
     /// <returns>Sampled geographic points and the route's angular distance in radians.</returns>
-    private (IReadOnlyList<RoutePointDto> Points, double AngularDistance) BuildGreatCircle(
-        RouteAirportDto origin,
-        RouteAirportDto destination)
+    private (IReadOnlyList<RoutePoint> Points, double AngularDistance) BuildGreatCircle(
+        RouteAirport origin,
+        RouteAirport destination)
     {
         // Calculate distance once, then sample each fraction through the shared spherical implementation.
         var angle = _geographicCalculator.CalculateAngularDistance(
             origin.Latitude, origin.Longitude, destination.Latitude, destination.Longitude);
-        var points = new List<RoutePointDto>(RouteSegments + 1);
+        var points = new List<RoutePoint>(RouteSegments + 1);
 
         // Include both endpoints by producing one more point than the configured segment count.
         for (var index = 0; index <= RouteSegments; index++)
@@ -150,7 +164,7 @@ public sealed class AirportRouteService : IAirportRouteService
             var fraction = index / (double)RouteSegments;
             var point = _geographicCalculator.InterpolateGreatCircle(
                 origin.Latitude, origin.Longitude, destination.Latitude, destination.Longitude, fraction);
-            points.Add(new RoutePointDto(point.Latitude, point.Longitude));
+            points.Add(new RoutePoint(point.Latitude, point.Longitude));
         }
 
         return (points, angle);
@@ -161,7 +175,7 @@ public sealed class AirportRouteService : IAirportRouteService
     /// </summary>
     /// <param name="points">The sampled route points.</param>
     /// <returns>Longitudes adjusted to avoid artificial 360-degree jumps.</returns>
-    private static IReadOnlyList<double> UnwrapLongitudes(IReadOnlyList<RoutePointDto> points)
+    private static IReadOnlyList<double> UnwrapLongitudes(IReadOnlyList<RoutePoint> points)
     {
         // Retain the first longitude as the reference for each subsequent shortest adjustment.
         var result = new List<double>(points.Count) { points[0].Longitude };
@@ -169,8 +183,14 @@ public sealed class AirportRouteService : IAirportRouteService
         {
             var longitude = points[index].Longitude;
             var previous = result[index - 1];
-            while (longitude - previous > 180) longitude -= 360;
-            while (longitude - previous < -180) longitude += 360;
+            while (longitude - previous > 180)
+            {
+                longitude -= 360;
+            }
+            while (longitude - previous < -180)
+            {
+                longitude += 360;
+            }
             result.Add(longitude);
         }
         return result;
@@ -184,8 +204,14 @@ public sealed class AirportRouteService : IAirportRouteService
     private static double NormaliseLongitude(double longitude)
     {
         // Repeated adjustment supports longitudes produced by an unwrapped route sequence.
-        while (longitude > 180) longitude -= 360;
-        while (longitude < -180) longitude += 360;
+        while (longitude > 180)
+        {
+            longitude -= 360;
+        }
+        while (longitude < -180)
+        {
+            longitude += 360;
+        }
         return longitude;
     }
 

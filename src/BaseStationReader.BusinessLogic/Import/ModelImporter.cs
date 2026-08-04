@@ -4,7 +4,7 @@ using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.DataExchange;
 
-namespace BaseStationReader.BusinessLogic.Logging
+namespace BaseStationReader.BusinessLogic.Import
 {
     public class ModelImporter : CsvImporter<ModelMappingProfile, Model>, IModelImporter
     {
@@ -37,25 +37,20 @@ namespace BaseStationReader.BusinessLogic.Logging
 
                 foreach (var model in models)
                 {
-                    if (string.IsNullOrWhiteSpace(model.IATA)) model.IATA = null;
-                    if (string.IsNullOrWhiteSpace(model.ICAO)) model.ICAO = null;
+                    if (string.IsNullOrWhiteSpace(model.IATA))
+                    {
+                        model.IATA = null;
+                    }
+                    if (string.IsNullOrWhiteSpace(model.ICAO))
+                    {
+                        model.ICAO = null;
+                    }
                 }
 
                 // Identify instances where there's no IATA or ICAO code and remove them
                 models.RemoveAll(x => string.IsNullOrEmpty(x.ICAO) && string.IsNullOrEmpty(x.IATA));
                 Logger.LogMessage(Severity.Info, $"Models with no IATA/ICAO code removed : {models.Count} models remaining");
 
-                // Populate the manufacturer ID on each model
-                var manufacturers = Task.Run(() => _factory.ManufacturerManager.ListAsync(x => true)).Result;
-                foreach (var model in models)
-                {
-                    var manufacturer = manufacturers.FirstOrDefault(x => x.Name.Equals(model.ManufacturerName, StringComparison.OrdinalIgnoreCase));
-                    model.ManufacturerId = manufacturer != null ? manufacturer.Id : 0;
-                }
-
-                // Remove any models for which the manufacturer hasn't been identified
-                models.RemoveAll(x => x.ManufacturerId == 0);
-                Logger.LogMessage(Severity.Info, $"Models with no manufacturer removed : {models.Count} models remaining");
             }
 
             return models;
@@ -70,6 +65,16 @@ namespace BaseStationReader.BusinessLogic.Logging
         {
             if (models?.Any() == true)
             {
+                // Resolve manufacturer references asynchronously as part of the asynchronous import workflow.
+                var manufacturers = await _factory.ManufacturerManager.ListAsync(x => true);
+                foreach (var model in models)
+                {
+                    var manufacturer = manufacturers.FirstOrDefault(x =>
+                        x.Name.Equals(model.ManufacturerName, StringComparison.OrdinalIgnoreCase));
+                    model.ManufacturerId = manufacturer?.Id ?? 0;
+                }
+
+                models = models.Where(model => model.ManufacturerId > 0).ToList();
                 Logger.LogMessage(Severity.Info, $"Saving {models.Count()} models to the database");
 
                 var provenanceRecords = await _factory.ProvenanceManager.ListAsync(x => true);
@@ -81,7 +86,9 @@ namespace BaseStationReader.BusinessLogic.Logging
                     .ToList();
 
                 if (missing.Count > 0)
+                {
                     throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+                }
 
                 foreach (var model in models)
                 {

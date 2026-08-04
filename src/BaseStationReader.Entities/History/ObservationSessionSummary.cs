@@ -3,7 +3,7 @@
 namespace BaseStationReader.Entities.History;
 
 /// <summary>A read-only aggregate of one persisted observation session.</summary>
-public sealed class ObservationSessionSummaryDto
+public sealed class ObservationSessionSummary
 {
     public int SessionId { get; init; }
     public DateTime StartedAtUtc { get; init; }
@@ -28,18 +28,8 @@ public sealed class ObservationSessionSummaryDto
     public int UnidentifiedAircraft { get; init; }
     public double AircraftResolutionPercentage { get; init; }
     public double FlightResolutionPercentage { get; init; }
-    public ObservationHighlightDto? LowestAltitude { get; init; }
-    public ObservationHighlightDto? HighestAltitude { get; init; }
-    public ObservationHighlightDto? FurthestAircraft { get; init; }
-    public ObservationHighlightDto? LongestObservedAircraft { get; init; }
-}
-
-/// <summary>Identifies the aircraft and value behind a session highlight.</summary>
-public sealed class ObservationHighlightDto
-{
-    public string Address { get; init; } = string.Empty;
-    public string Callsign { get; init; } = string.Empty;
-    public decimal? Altitude { get; init; }
-    public double? Distance { get; init; }
-    public TimeSpan? Duration { get; init; }
+    public ObservationHighlight? LowestAltitude { get; init; }
+    public ObservationHighlight? HighestAltitude { get; init; }
+    public ObservationHighlight? FurthestAircraft { get; init; }
+    public ObservationHighlight? LongestObservedAircraft { get; init; }
 }

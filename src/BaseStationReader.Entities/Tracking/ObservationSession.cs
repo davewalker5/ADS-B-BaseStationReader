@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.Entities.Tracking
 {
@@ -38,5 +39,7 @@ namespace BaseStationReader.Entities.Tracking
         public string IncludedBehaviours { get; set; } = "";
 
         public ICollection<TrackedAircraft> TrackedAircraft { get; set; } = [];
+
+        public ICollection<PositionDensitySnapshotEntity> PositionDensitySnapshots { get; set; } = [];
     }
 }

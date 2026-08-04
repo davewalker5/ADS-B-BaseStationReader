@@ -64,7 +64,10 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
     public IReadOnlyList<ApiServiceType> GetServices(ApiEndpointType endpointType)
     {
         // Only METAR and TAF are meaningful choices for this feature.
-        if (endpointType is not (ApiEndpointType.METAR or ApiEndpointType.TAF)) return [];
+        if (endpointType is not (ApiEndpointType.METAR or ApiEndpointType.TAF))
+        {
+            return [];
+        }
 
         // Configuration is the source of truth, so services without the selected endpoint are hidden.
         return _settings.ApiServices
@@ -84,13 +87,19 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
     {
         // Validate all UI-provided values again at the service boundary.
         if (endpointType is not (ApiEndpointType.METAR or ApiEndpointType.TAF))
+        {
             throw new ArgumentException("Select current weather or weather forecast.", nameof(endpointType));
+        }
         if (!GetServices(endpointType).Contains(serviceType))
+        {
             throw new ArgumentException($"{serviceType} is not configured for {endpointType} lookups.", nameof(serviceType));
+        }
 
         var normalisedIcao = (icao ?? string.Empty).Trim().ToUpperInvariant();
         if (normalisedIcao.Length != 4 || !normalisedIcao.All(character => character is >= 'A' and <= 'Z'))
+        {
             throw new ArgumentException("Enter a four-letter airport ICAO code.", nameof(icao));
+        }
 
         // Weather expires quickly, and the cache retains objects in process memory only—never in a file or database.
         var cacheKey = $"weather:{endpointType}:{serviceType}:{normalisedIcao}";
@@ -125,7 +134,10 @@ public sealed class AirportWeatherLookupService : IAirportWeatherLookupService
             ? await wrapper.LookupCurrentAirportWeatherAsync(normalisedIcao)
             : await wrapper.LookupAirportWeatherForecastAsync(normalisedIcao);
 
-        if (reports is null) return [];
+        if (reports is null)
+        {
+            return [];
+        }
 
         // Materialise the API response once and pair each raw report with its decoded output.
         return reports

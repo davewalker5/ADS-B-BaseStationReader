@@ -13,6 +13,7 @@ public sealed class ManufacturerReferenceService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IManufacturerReferenceService
 {
+    /// <inheritdoc />
     public async Task<List<Manufacturer>> FindAsync(
         string? name,
         CancellationToken cancellationToken = default)
@@ -23,6 +24,7 @@ public sealed class ManufacturerReferenceService(
             .ListAsync(x => cleanName == "" || x.Name.ToUpper().Contains(cleanName));
     }
 
+    /// <inheritdoc />
     public async Task<Manufacturer> SaveAsync(
         Manufacturer manufacturer,
         CancellationToken cancellationToken = default)
@@ -39,6 +41,7 @@ public sealed class ManufacturerReferenceService(
         return saved!;
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

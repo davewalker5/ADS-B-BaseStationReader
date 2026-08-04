@@ -120,6 +120,22 @@ public class PositionDensityTest
         Assert.AreEqual(initial.MaximumLongitude, refreshed.MaximumLongitude);
     }
 
+    /// <summary>
+    /// Verifies out-of-viewport observations cannot create cell centres beyond persisted bounds.
+    /// </summary>
+    [TestMethod]
+    public void FixedBoundsClampEdgeCellCentresTest()
+    {
+        var bounds = new PositionDensityBounds(50d, 52d, -1d, 1d);
+        PositionDensityCoordinate[] coordinates = [new(50.08d, 10d)];
+
+        var result = new PositionDensityAggregator().Aggregate(15, coordinates, bounds);
+
+        Assert.HasCount(1, result.Bins);
+        Assert.IsLessThanOrEqualTo(bounds.MaximumLongitude, result.Bins[0].Longitude);
+        Assert.IsGreaterThanOrEqualTo(bounds.MinimumLongitude, result.Bins[0].Longitude);
+    }
+
     private static InMemoryContextFactory CreateContextFactory()
     {
         var options = new DbContextOptionsBuilder<BaseStationReaderDbContext>()

@@ -145,7 +145,10 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (SessionId == _loadedSessionId && !_loading) return;
+        if (SessionId == _loadedSessionId && !_loading)
+        {
+            return;
+        }
         _loadedSessionId = SessionId;
         _loading = true;
         _message = null;
@@ -164,7 +167,10 @@ else
 
     private async Task SaveAsync()
     {
-        if (_session is null || TrackingControl.IsTracking) return;
+        if (_session is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true;
         _message = null;
         try
@@ -188,21 +194,30 @@ else
 
     private void ConfirmDelete()
     {
-        if (_session is null || TrackingControl.IsTracking) return;
+        if (_session is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteError = null;
         _showDeleteConfirmation = true;
     }
 
     private void CloseDelete()
     {
-        if (_deleting) return;
+        if (_deleting)
+        {
+            return;
+        }
         _showDeleteConfirmation = false;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_session is null || TrackingControl.IsTracking) return;
+        if (_session is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleting = true;
         _deleteError = null;
         try
@@ -219,7 +234,10 @@ else
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private static string FormatDateTime(DateTime value)

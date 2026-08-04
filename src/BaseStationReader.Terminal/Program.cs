@@ -61,7 +61,17 @@ namespace BaseStationReader.Terminal
 
                 // Initialise the tracker wrapper
                 var tcpClient = new TrackerTcpClient();
-                _controller = new TrackerController(_logger, context, tcpClient, _settings);
+                var densityStateManager = new PositionDensitySnapshotStateManager(new PositionDensitySnapshotMerger());
+                var densityOrchestrator = new PositionDensitySnapshotOrchestrator(
+                    new PositionDensityAggregator(),
+                    densityStateManager);
+                _controller = new TrackerController(
+                    _logger,
+                    context,
+                    tcpClient,
+                    _settings,
+                    densityOrchestrator: densityOrchestrator,
+                    densitySnapshotMapper: new PositionDensitySnapshotMapper());
 
                 var cancelled = false;
                 do

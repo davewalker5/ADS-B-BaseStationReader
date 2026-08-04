@@ -46,7 +46,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <inheritdoc />
-    public async Task<ObservationSessionSummaryDto?> GetObservationSessionSummaryAsync(
+    public async Task<ObservationSessionSummary?> GetObservationSessionSummaryAsync(
         int sessionId,
         CancellationToken cancellationToken = default)
     {
@@ -71,7 +71,10 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
 
         var records = await context.TrackedAircraft
             .AsNoTracking()
@@ -157,12 +160,15 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         var distinctAircraft = addresses.Length;
         var identifiedAircraft = identifiedAddresses.Count;
 
-        ObservationHighlightDto? Highlight(int aircraftId, decimal? altitude = null,
+        ObservationHighlight? Highlight(int aircraftId, decimal? altitude = null,
             double? distance = null, TimeSpan? duration = null)
         {
-            if (aircraftId == 0) return null;
+            if (aircraftId == 0)
+            {
+                return null;
+            }
             var record = records.First(item => item.Id == aircraftId);
-            return new ObservationHighlightDto
+            return new ObservationHighlight
             {
                 Address = record.Address,
                 Callsign = record.Callsign?.Trim() ?? string.Empty,
@@ -172,7 +178,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             };
         }
 
-        return new ObservationSessionSummaryDto
+        return new ObservationSessionSummary
         {
             SessionId = session.Id,
             StartedAtUtc = session.StartedAtUtc,
@@ -209,21 +215,27 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <inheritdoc />
-    public async Task<PositionDensityDto?> GetPositionDensityAsync(
+    public async Task<PositionDensity?> GetPositionDensityAsync(
         int sessionId,
         CancellationToken cancellationToken = default)
     {
-        if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId));
+        if (sessionId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sessionId));
+        }
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var session = await context.ObservationSessions.AsNoTracking()
             .Where(item => item.Id == sessionId)
             .Select(item => new { item.ReceiverLatitude, item.ReceiverLongitude, item.MaximumDistance })
             .SingleOrDefaultAsync(cancellationToken);
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
 
         // Session configuration supplies a fixed viewport, preventing new extrema from moving existing bins.
-        var bounds = CreatePositionDensityBounds(
+        var bounds = PositionDensityBoundsFactory.Create(
             session.ReceiverLatitude,
             session.ReceiverLongitude,
             session.MaximumDistance);
@@ -252,41 +264,13 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <summary>
-    /// Creates stable geographic density bounds from persisted session receiver settings.
+    /// Calculates a percentage to one decimal place, returning zero for an empty total.
     /// </summary>
-    /// <param name="receiverLatitude">Persisted receiver latitude.</param>
-    /// <param name="receiverLongitude">Persisted receiver longitude.</param>
-    /// <param name="maximumDistance">Persisted maximum tracking distance in nautical miles.</param>
-    /// <returns>Session-centred bounds, or fixed world bounds when receiver configuration is unavailable.</returns>
-    private static PositionDensityBounds CreatePositionDensityBounds(
-        double? receiverLatitude,
-        double? receiverLongitude,
-        int? maximumDistance)
-    {
-        if (!receiverLatitude.HasValue || !receiverLongitude.HasValue ||
-            !double.IsFinite(receiverLatitude.Value) || !double.IsFinite(receiverLongitude.Value) ||
-            receiverLatitude is < -90 or > 90 || receiverLongitude is < -180 or > 180)
-        {
-            // A fixed world viewport is less detailed but remains stable for legacy sessions without receiver data.
-            return new PositionDensityBounds(-90d, 90d, -180d, 180d);
-        }
-
-        var range = maximumDistance is > 0 ? maximumDistance.Value : 250d;
-        var latitudeRadius = range / 60d;
-        var longitudeScale = Math.Max(Math.Cos(receiverLatitude.Value * Math.PI / 180d), 0.01d);
-        var longitudeRadius = Math.Min(range / (60d * longitudeScale), 180d);
-        return new PositionDensityBounds(
-            Math.Max(-90d, receiverLatitude.Value - latitudeRadius),
-            Math.Min(90d, receiverLatitude.Value + latitudeRadius),
-            Math.Max(-180d, receiverLongitude.Value - longitudeRadius),
-            Math.Min(180d, receiverLongitude.Value + longitudeRadius));
-    }
-
     private static double Percentage(int resolved, int total)
         => total == 0 ? 0 : Math.Round(resolved * 100d / total, 1);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+    public async Task<IReadOnlyList<ObservationSessionOption>> ListSessionsAsync(
         int historyDays,
         CancellationToken cancellationToken = default)
     {
@@ -299,7 +283,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .Where(session => session.StartedAtUtc >= earliestSession)
             .OrderByDescending(session => session.StartedAtUtc)
             .ThenByDescending(session => session.Id)
-            .Select(session => new ObservationSessionOptionDto
+            .Select(session => new ObservationSessionOption
             {
                 Id = session.Id,
                 ProfileName = session.ProfileName,
@@ -372,7 +356,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <inheritdoc />
-    public async Task<PagedResult<TrackingSessionSummaryDto>> SearchAsync(
+    public async Task<PagedResult<TrackingSessionSummary>> SearchAsync(
         TrackingSessionFilter filter,
         CancellationToken cancellationToken = default)
     {
@@ -538,7 +522,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
                 .OrderBy(position => position.Timestamp)
                 .ToArray();
 
-            return new TrackingSessionSummaryDto
+            return new TrackingSessionSummary
             {
                 Id = record.Id,
                 Address = record.Address,
@@ -557,7 +541,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             };
         }).ToArray();
 
-        return new PagedResult<TrackingSessionSummaryDto>
+        return new PagedResult<TrackingSessionSummary>
         {
             Items = items,
             Page = page,
@@ -567,7 +551,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <inheritdoc />
-    public async Task<TrackingSessionDetailDto?> GetAsync(
+    public async Task<TrackingSessionDetail?> GetAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default)
     {
@@ -606,7 +590,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .AsNoTracking()
             .Where(position => position.AircraftId == trackingRecordId)
             .OrderBy(position => position.Timestamp)
-            .Select(position => new PositionSummaryDto
+            .Select(position => new PositionSummary
             {
                 Timestamp = position.Timestamp,
                 Latitude = position.Latitude,
@@ -640,7 +624,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             AirlineName = sighting.Flight.Airline == null ? string.Empty : sighting.Flight.Airline.Name
         };
 
-        return new TrackingSessionDetailDto
+        return new TrackingSessionDetail
         {
             Id = record.Id,
             Address = record.Address,
@@ -679,7 +663,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
     }
 
     /// <inheritdoc />
-    public async Task<TrackingProfileDataDto?> GetProfileDataAsync(
+    public async Task<TrackingProfileData?> GetProfileDataAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default)
     {
@@ -702,7 +686,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .Where(position => position.AircraftId == trackingRecordId)
             .OrderBy(position => position.Timestamp)
             .ThenBy(position => position.Id)
-            .Select(position => new FlightProfilePointDto
+            .Select(position => new FlightProfilePoint
             {
                 Timestamp = position.Timestamp,
                 Latitude = position.Latitude,
@@ -713,7 +697,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .ToListAsync(cancellationToken);
 
         // Return renderer-neutral data so UI-specific chart and map preparation stays in TrackerHub.
-        return new TrackingProfileDataDto
+        return new TrackingProfileData
         {
             Id = record.Id,
             Address = record.Address,

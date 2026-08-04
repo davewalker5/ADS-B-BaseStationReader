@@ -172,14 +172,20 @@
     private void Edit(Airline airline) => _editModel = Copy(airline);
     private void SelectFromKeyboard(KeyboardEventArgs args, Airline airline)
     {
-        if (args.Key is "Enter" or " ") Edit(airline);
+        if (args.Key is "Enter" or " ")
+        {
+            Edit(airline);
+        }
     }
 
     private void Clear() => _editModel = new();
 
     private async Task SaveAsync()
     {
-        if (!CanEdit) return;
+        if (!CanEdit)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -189,9 +195,18 @@
                 string.IsNullOrWhiteSpace(_icao) &&
                 string.IsNullOrWhiteSpace(_name))
             {
-                if (!string.IsNullOrWhiteSpace(saved.ICAO)) _icao = saved.ICAO;
-                else if (!string.IsNullOrWhiteSpace(saved.IATA)) _iata = saved.IATA;
-                else _name = saved.Name;
+                if (!string.IsNullOrWhiteSpace(saved.ICAO))
+                {
+                    _icao = saved.ICAO;
+                }
+                else if (!string.IsNullOrWhiteSpace(saved.IATA))
+                {
+                    _iata = saved.IATA;
+                }
+                else
+                {
+                    _name = saved.Name;
+                }
             }
             await FindAsync();
             _success = isNew ? "Airline record added." : "Airline record updated.";
@@ -202,21 +217,30 @@
 
     private void ConfirmDelete(Airline airline)
     {
-        if (_saving || TrackingControl.IsTracking) return;
+        if (_saving || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteModel = Copy(airline);
         _deleteError = null;
     }
 
     private void CloseDelete()
     {
-        if (_saving) return;
+        if (_saving)
+        {
+            return;
+        }
         _deleteModel = null;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_deleteModel is null || TrackingControl.IsTracking) return;
+        if (_deleteModel is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _saving = true; _error = null; _success = null;
         try
         {
@@ -231,7 +255,10 @@
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private static Airline Copy(Airline source) => new()

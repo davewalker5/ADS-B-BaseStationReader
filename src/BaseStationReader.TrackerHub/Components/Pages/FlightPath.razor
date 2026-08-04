@@ -47,7 +47,7 @@ else
 @code {
 #nullable enable
     [Parameter] public int Id { get; set; }
-    private FlightPathDto? _path;
+    private Entities.History.FlightPath? _path;
     private FlightPathColourMode _colourMode = FlightPathColourMode.Altitude;
     private bool _loading = true;
     private string? _error;

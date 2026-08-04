@@ -57,7 +57,7 @@
     private IReadOnlyList<AxisTick> _latitudeTicks = [];
     private IReadOnlyList<AxisTick> _longitudeTicks = [];
 
-    [Parameter, EditorRequired] public PositionDensityDto Density { get; set; } = new();
+    [Parameter, EditorRequired] public PositionDensity Density { get; set; } = new();
 
     /// <summary>
     /// Rebuilds responsive SVG geometry whenever a recalculation supplies a new density model.
@@ -136,10 +136,22 @@
     {
         // Log scaling keeps low-density structure visible when a small number of bins dominate.
         var fraction = maximum <= 1 ? 1d : Math.Log(count + 1d) / Math.Log(maximum + 1d);
-        if (fraction.CompareTo(0.2d) < 0) return "#365c8d";
-        if (fraction.CompareTo(0.4d) < 0) return "#277f8e";
-        if (fraction.CompareTo(0.6d) < 0) return "#1fa187";
-        if (fraction.CompareTo(0.8d) < 0) return "#73d055";
+        if (fraction.CompareTo(0.2d) < 0)
+        {
+            return "#365c8d";
+        }
+        if (fraction.CompareTo(0.4d) < 0)
+        {
+            return "#277f8e";
+        }
+        if (fraction.CompareTo(0.6d) < 0)
+        {
+            return "#1fa187";
+        }
+        if (fraction.CompareTo(0.8d) < 0)
+        {
+            return "#73d055";
+        }
         return "#fde725";
     }
 

@@ -27,12 +27,18 @@ public sealed class TrackingProfileService : ITrackingProfileService
         _bridge = bridge;
     }
 
+    /// <summary>
+    /// Resolves the configured profile directory against the solution or application content root.
+    /// </summary>
     internal static string ResolveProfilesPath(string? configuredPath, string contentRootPath)
     {
         var path = string.IsNullOrWhiteSpace(configuredPath)
             ? Path.Combine("data", "tracking-profiles")
             : configuredPath;
-        if (Path.IsPathRooted(path)) return Path.GetFullPath(path);
+        if (Path.IsPathRooted(path))
+        {
+            return Path.GetFullPath(path);
+        }
 
         // During local development locate the solution/project root; published containers fall back
         // to the application's content root (normally /opt/adsbtracker).
@@ -42,13 +48,16 @@ public sealed class TrackingProfileService : ITrackingProfileService
             while (directory is not null)
             {
                 if (directory.EnumerateFiles("*.sln").Any())
+                {
                     return Path.GetFullPath(path, directory.FullName);
+                }
                 directory = directory.Parent;
             }
         }
         return Path.GetFullPath(path, contentRootPath);
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<TrackingProfileOption> List()
     {
         var profiles = Directory.Exists(_profilesPath)
@@ -72,6 +81,7 @@ public sealed class TrackingProfileService : ITrackingProfileService
         return profiles;
     }
 
+    /// <inheritdoc />
     public async Task ApplyAsync(string fileName, CancellationToken cancellationToken = default)
     {
         if (fileName == DefaultProfileValue)
@@ -85,14 +95,18 @@ public sealed class TrackingProfileService : ITrackingProfileService
         }
 
         if (string.IsNullOrWhiteSpace(fileName) || Path.GetFileName(fileName) != fileName)
+        {
             throw new ArgumentException("Select a tracking profile from the configured folder.", nameof(fileName));
+        }
         var path = Path.GetFullPath(Path.Combine(_profilesPath, fileName));
         var relativePath = Path.GetRelativePath(_profilesPath, path);
         if (relativePath == ".." ||
             relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
             Path.IsPathRooted(relativePath) ||
             !File.Exists(path))
+        {
             throw new FileNotFoundException("The selected tracking profile is no longer available.", fileName);
+        }
         var profile = _reader.Read(path) ?? throw new InvalidDataException("The selected tracking profile is empty.");
         var settings = Clone(_baseSettings);
         ApplyProfile(settings, fileName, profile);
@@ -115,6 +129,9 @@ public sealed class TrackingProfileService : ITrackingProfileService
         catch (UnauthorizedAccessException) { }
     }
 
+    /// <summary>
+    /// Applies persisted tracking-profile values to an application settings instance.
+    /// </summary>
     internal static void ApplyProfile(TrackerApplicationSettings settings, string fileName, TrackingProfile profile)
     {
         settings.TrackingProfile = fileName;
@@ -128,6 +145,9 @@ public sealed class TrackingProfileService : ITrackingProfileService
         settings.TrackedBehaviours = [.. profile.TrackedBehaviours];
     }
 
+    /// <summary>
+    /// Creates an independent copy of tracker application settings.
+    /// </summary>
     internal static TrackerApplicationSettings Clone(TrackerApplicationSettings source) => new()
     {
         MinimumLogLevel = source.MinimumLogLevel, Host = source.Host, Port = source.Port,
@@ -139,7 +159,9 @@ public sealed class TrackingProfileService : ITrackingProfileService
         ReceiverLongitude = source.ReceiverLongitude, ReceiverElevation = source.ReceiverElevation,
         MaximumTrackedDistance = source.MaximumTrackedDistance,
         MinimumTrackedAltitude = source.MinimumTrackedAltitude, MaximumTrackedAltitude = source.MaximumTrackedAltitude,
-        TrackPosition = source.TrackPosition, AircraftNotificationInterval = source.AircraftNotificationInterval,
+        TrackPosition = source.TrackPosition, TrackPositionDensity = source.TrackPositionDensity,
+        PositionDensityInterval = source.PositionDensityInterval,
+        AircraftNotificationInterval = source.AircraftNotificationInterval,
         TrackingProfile = source.TrackingProfile, TrackingProfileName = source.TrackingProfileName,
         DefaultProfileName = source.DefaultProfileName,
         Columns = [.. source.Columns], TrackedBehaviours = [.. source.TrackedBehaviours]

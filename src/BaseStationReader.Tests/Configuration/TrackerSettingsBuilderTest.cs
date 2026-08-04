@@ -248,6 +248,24 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
+        public void OverrideTrackPositionDensityTest()
+        {
+            string[] args = ["--track-position-density", "false"];
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.IsFalse(settings.TrackPositionDensity);
+        }
+
+        [TestMethod]
+        public void OverridePositionDensityIntervalTest()
+        {
+            string[] args = ["--position-density-interval", "60000"];
+            _parser.Parse(args);
+            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+            Assert.AreEqual(60000, settings.PositionDensityInterval);
+        }
+
+        [TestMethod]
         public void SpecifyTrackingProfileTest()
         {
             var args = new string[] { "--tracking-profile", "LHR-Landing.json" };

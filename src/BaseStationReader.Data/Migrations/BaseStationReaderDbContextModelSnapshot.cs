@@ -365,7 +365,98 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasIndex("FlightId");
 
+                    b.ToTable((string)null);
+
                     b.ToView("SIGHTING", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotCellEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Count");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("Latitude");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("Longitude");
+
+                    b.Property<int>("PositionDensitySnapshotId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("PositionDensitySnapshotId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PositionDensitySnapshotId", "Latitude", "Longitude")
+                        .IsUnique();
+
+                    b.ToTable("POSITION_DENSITY_SNAPSHOT_CELL", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_CELL_Count", "Count > 0");
+                        });
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("CapturedAtUtc")
+                        .HasColumnType("DATETIME")
+                        .HasColumnName("CapturedAtUtc");
+
+                    b.Property<int>("MaximumBinCount")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("MaximumBinCount");
+
+                    b.Property<double>("MaximumLatitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("MaximumLatitude");
+
+                    b.Property<double>("MaximumLongitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("MaximumLongitude");
+
+                    b.Property<double>("MinimumLatitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("MinimumLatitude");
+
+                    b.Property<double>("MinimumLongitude")
+                        .HasColumnType("REAL")
+                        .HasColumnName("MinimumLongitude");
+
+                    b.Property<int>("PositionCount")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("PositionCount");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("SessionId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId", "CapturedAtUtc");
+
+                    b.ToTable("POSITION_DENSITY_SNAPSHOT", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_LatitudeBounds", "MaximumLatitude >= MinimumLatitude");
+
+                            t.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_LongitudeBounds", "MaximumLongitude >= MinimumLongitude");
+
+                            t.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_MaximumBinCount", "MaximumBinCount >= 0");
+
+                            t.HasCheckConstraint("CK_POSITION_DENSITY_SNAPSHOT_PositionCount", "PositionCount >= 0");
+                        });
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
@@ -688,16 +779,40 @@ namespace BaseStationReader.Data.Migrations
                     b.HasOne("BaseStationReader.Entities.Api.Aircraft", "Aircraft")
                         .WithMany()
                         .HasForeignKey("AircraftId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BaseStationReader.Entities.Api.Flight", "Flight")
                         .WithMany()
                         .HasForeignKey("FlightId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Aircraft");
 
                     b.Navigation("Flight");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotCellEntity", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.History.PositionDensitySnapshotEntity", "PositionDensitySnapshot")
+                        .WithMany("Cells")
+                        .HasForeignKey("PositionDensitySnapshotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PositionDensitySnapshot");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotEntity", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.Tracking.ObservationSession", "Session")
+                        .WithMany("PositionDensitySnapshots")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.AircraftPosition", b =>
@@ -721,8 +836,15 @@ namespace BaseStationReader.Data.Migrations
                     b.Navigation("Session");
                 });
 
+            modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotEntity", b =>
+                {
+                    b.Navigation("Cells");
+                });
+
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.ObservationSession", b =>
                 {
+                    b.Navigation("PositionDensitySnapshots");
+
                     b.Navigation("TrackedAircraft");
                 });
 #pragma warning restore 612, 618

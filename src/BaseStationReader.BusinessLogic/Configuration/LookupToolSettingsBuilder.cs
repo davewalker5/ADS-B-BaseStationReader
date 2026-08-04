@@ -18,7 +18,10 @@ namespace BaseStationReader.BusinessLogic.Configuration
             var settings = base.Read(configJsonPath);
 
             var values = parser.GetValues(CommandLineOptionType.LogFile);
-            if (values != null) settings.LogFile = values[0];
+            if (values != null)
+            {
+                settings.LogFile = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.MinimumLogLevel);
             if (values != null && Enum.TryParse<Severity>(values[0], out Severity minimumLogLevel))
@@ -27,19 +30,34 @@ namespace BaseStationReader.BusinessLogic.Configuration
             }
 
             values = parser.GetValues(CommandLineOptionType.AircraftApi);
-            if (values != null) settings.AircraftApi = values[0];
+            if (values != null)
+            {
+                settings.AircraftApi = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.FlightApi);
-            if (values != null) settings.FlightApi = values[0];
+            if (values != null)
+            {
+                settings.FlightApi = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.WeatherApi);
-            if (values != null) settings.WeatherApi = values[0];
+            if (values != null)
+            {
+                settings.WeatherApi = values[0];
+            }
 
             values = parser.GetValues(CommandLineOptionType.ReceiverLatitude);
-            if (values != null) settings.ReceiverLatitude = double.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ReceiverLatitude = double.Parse(values[0]);
+            }
 
             values = parser.GetValues(CommandLineOptionType.ReceiverLongitude);
-            if (values != null) settings.ReceiverLongitude = double.Parse(values[0]);
+            if (values != null)
+            {
+                settings.ReceiverLongitude = double.Parse(values[0]);
+            }
 
             return settings;
         }

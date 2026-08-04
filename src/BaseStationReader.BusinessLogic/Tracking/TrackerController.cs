@@ -16,6 +16,7 @@ using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Events;
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -27,13 +28,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly BaseStationReaderDbContext _context;
         private readonly bool _ownsContext;
         private readonly string _sessionNotes;
+        private readonly ITrackerLogger _logger;
+        private readonly ITrackerTcpClient _tcpClient;
+        private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
+        private readonly IPositionDensitySnapshotMapper _densitySnapshotMapper;
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
-        private ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
+        private readonly ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
 
         public IEnumerable<TrackedAircraftDto> State
         {
@@ -67,79 +72,44 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <inheritdoc />
         public long AircraftWithPositionRecords => _writer?.AircraftWithPositionRecords ?? 0;
 
+        /// <summary>
+        /// Initialises a controller; asynchronous tracking dependencies are loaded when tracking starts.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="context"></param>
+        /// <param name="tcpClient"></param>
+        /// <param name="settings"></param>
+        /// <param name="ownsContext"></param>
+        /// <param name="sessionNotes"></param>
+        /// <param name="densityOrchestrator"></param>
+        /// <param name="densitySnapshotMapper"></param>
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
             ITrackerTcpClient tcpClient,
             TrackerApplicationSettings settings,
             bool ownsContext = false,
-            string sessionNotes = null)
+            string sessionNotes = null,
+            IPositionDensitySnapshotOrchestrator densityOrchestrator = null,
+            IPositionDensitySnapshotMapper densitySnapshotMapper = null)
         {
             _settings = settings;
             _context = context;
             _ownsContext = ownsContext;
             _sessionNotes = string.IsNullOrWhiteSpace(sessionNotes) ? null : sessionNotes.Trim();
+            _logger = logger;
+            _tcpClient = tcpClient;
+            _densityOrchestrator = densityOrchestrator;
+            _densitySnapshotMapper = densitySnapshotMapper;
 
             // Configure the database management classes
             _factory = new DatabaseManagementFactory(logger, context, _settings.TimeToLock);
-
-            // Load the current exclusions
-            var excludedAddresses = Task.Run(() => _factory.ExcludedAddressManager.ListAsync(x => true))
-                .Result
-                .Select(x => x.Address)
-                .ToList();
-
-            var excludedCallsigns = Task.Run(() => _factory.ExcludedCallsignManager.ListAsync(x => true))
-                .Result
-                .Select(x => x.Callsign)
-                .ToList();
-
-            // Configure the message reader and message parser
-            var readerSender = new MessageReaderNotificationSender(logger);
-            var reader = new MessageReader(tcpClient, logger, readerSender, _settings.Host, _settings.Port, _settings.SocketReadTimeout);
-            var parsers = new Dictionary<MessageType, IMessageParser>
-            {
-                { MessageType.MSG, new MsgMessageParser() }
-            };
-
-            // Create a distance calculator
-            IDistanceCalculator distanceCalculator = null;
-            if ((_settings.ReceiverLatitude != null) && (_settings.ReceiverLongitude != null))
-            {
-                distanceCalculator = new ReceiverDistanceCalculator(new GeographicCalculator())
-                {
-                    ReferenceLatitude = _settings.ReceiverLatitude ?? 0,
-                    ReferenceLongitude = _settings.ReceiverLongitude ?? 0
-                };
-            }
 
             // Configure the SQL writer, if enabled
             if (_settings.EnableSqlWriter)
             {
                 _writer = new ContinuousWriter(_factory);
             }
-
-            // Set up the aircraft tracked helpers
-            var assessor = new SimpleAircraftBehaviourAssessor();
-            var propertyUpdater = new AircraftPropertyUpdater(logger, distanceCalculator, assessor);
-            var trackerSender = new AircraftTrackerNotificationSender(
-                logger,
-                _settings.TrackedBehaviours,
-                _settings.MaximumTrackedDistance,
-                _settings.MinimumTrackedAltitude,
-                _settings.MaximumTrackedAltitude);
-
-            // Construct the aircraft tracker
-            _tracker = new AircraftTracker(
-                reader,
-                parsers,
-                propertyUpdater,
-                trackerSender,
-                excludedAddresses,
-                excludedCallsigns,
-                _settings.TimeToRecent,
-                _settings.TimeToStale,
-                _settings.TimeToRemoval);
 
             // Create the controller notification sender
             _sender = new ControllerNotificationSender(logger);
@@ -148,8 +118,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <summary>
         /// Start tracking aircraft
         /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task StartAsync(CancellationToken token)
         {
+            if (_settings.TrackPosition && _settings.TrackPositionDensity && _settings.PositionDensityInterval <= 0)
+            {
+                throw new InvalidOperationException("PositionDensityInterval must be greater than zero when position-density tracking is enabled.");
+            }
+
+            _tracker ??= await CreateTrackerAsync(token);
+
             // If the queued writer is enabled and clear-down is configured, clear down previous
             // tracking data
             if ((_writer != null) && _settings.ClearDown)
@@ -173,6 +153,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 await _writer.StartAsync(token);
             }
 
+            if (_activeSession is not null && _settings.TrackPosition && _settings.TrackPositionDensity)
+            {
+                // The controller owns the periodic lifecycle so every host follows identical session boundaries.
+                var bounds = PositionDensityBoundsFactory.Create(
+                    _settings.ReceiverLatitude,
+                    _settings.ReceiverLongitude,
+                    _settings.MaximumTrackedDistance);
+                _densityOrchestrator?.Start(
+                    _activeSession.Id,
+                    bounds,
+                    TimeSpan.FromMilliseconds(_settings.PositionDensityInterval),
+                    QueuePositionDensitySnapshot,
+                    token);
+            }
+
             try
             {
                 // Start the aircraft tracker
@@ -185,22 +180,32 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
             finally
             {
-                // Stop the continuous writer
-                if (_writer != null)
+                try
                 {
-                    await _writer.StopAsync();
-                    await _writer.DisposeAsync();
+                    if (_densityOrchestrator is not null)
+                    {
+                        await _densityOrchestrator.StopAsync();
+                    }
                 }
-
-                // Detach the aircraft tracking event handlers
-                _tracker.AircraftEvent -= OnAircraftEvent;
-
-                // A stopped controller must not associate any later events with the completed tracking run.
-                _activeSession = null;
-
-                if (_ownsContext)
+                finally
                 {
-                    await _context.DisposeAsync();
+                    // Always drain and dispose persistence even if snapshot generation itself failed.
+                    if (_writer != null)
+                    {
+                        await _writer.StopAsync();
+                        await _writer.DisposeAsync();
+                    }
+
+                    // Detach the aircraft tracking event handlers
+                    _tracker.AircraftEvent -= OnAircraftEvent;
+
+                    // A stopped controller must not associate any later events with the completed tracking run.
+                    _activeSession = null;
+
+                    if (_ownsContext)
+                    {
+                        await _context.DisposeAsync();
+                    }
                 }
             }
         }
@@ -220,6 +225,63 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 await _writer.FlushQueueAsync();
             }
+        }
+
+        /// <summary>
+        /// Creates the aircraft tracker after asynchronously loading the current exclusion lists.
+        /// </summary>
+        private async Task<IAircraftTracker> CreateTrackerAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            var excludedAddresses = (await _factory.ExcludedAddressManager.ListAsync(x => true))
+                .Select(item => item.Address)
+                .ToList();
+            var excludedCallsigns = (await _factory.ExcludedCallsignManager.ListAsync(x => true))
+                .Select(item => item.Callsign)
+                .ToList();
+
+            var readerSender = new MessageReaderNotificationSender(_logger);
+            var reader = new MessageReader(
+                _tcpClient,
+                _logger,
+                readerSender,
+                _settings.Host,
+                _settings.Port,
+                _settings.SocketReadTimeout);
+            var parsers = new Dictionary<MessageType, IMessageParser>
+            {
+                { MessageType.MSG, new MsgMessageParser() }
+            };
+
+            IDistanceCalculator distanceCalculator = null;
+            if (_settings.ReceiverLatitude != null && _settings.ReceiverLongitude != null)
+            {
+                distanceCalculator = new ReceiverDistanceCalculator(new GeographicCalculator())
+                {
+                    ReferenceLatitude = _settings.ReceiverLatitude.Value,
+                    ReferenceLongitude = _settings.ReceiverLongitude.Value
+                };
+            }
+
+            var assessor = new SimpleAircraftBehaviourAssessor();
+            var propertyUpdater = new AircraftPropertyUpdater(_logger, distanceCalculator, assessor);
+            var trackerSender = new AircraftTrackerNotificationSender(
+                _logger,
+                _settings.TrackedBehaviours,
+                _settings.MaximumTrackedDistance,
+                _settings.MinimumTrackedAltitude,
+                _settings.MaximumTrackedAltitude);
+
+            return new AircraftTracker(
+                reader,
+                parsers,
+                propertyUpdater,
+                trackerSender,
+                excludedAddresses,
+                excludedCallsigns,
+                _settings.TimeToRecent,
+                _settings.TimeToStale,
+                _settings.TimeToRemoval);
         }
 
         /// <summary>
@@ -331,6 +393,25 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     _writer.Push(position);
                 }
             }
+
+            // Density input follows the same accepted position events but remains independent of persistence.
+            _densityOrchestrator?.Record(position);
+        }
+
+        /// <summary>
+        /// Maps and queues a regenerated snapshot behind previously accepted position writes.
+        /// </summary>
+        /// <param name="snapshot"></param>
+        /// <param name="capturedAtUtc"></param>
+        private void QueuePositionDensitySnapshot(PositionDensity snapshot, DateTime capturedAtUtc)
+        {
+            if (_writer is null || _densitySnapshotMapper is null)
+            {
+                return;
+            }
+
+            // Mapping creates an independent immutable request before it crosses the asynchronous queue boundary.
+            _writer.Push(_densitySnapshotMapper.Map(snapshot, capturedAtUtc));
         }
     }
 }

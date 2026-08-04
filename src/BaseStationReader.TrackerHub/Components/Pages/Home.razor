@@ -6,7 +6,7 @@
 @inject ITrackingSessionQueryService SessionQueries
 @inject ILiveTrackerStatusService LiveStatus
 @inject ITrackerHubPageState PageState
-@inject IPositionDensitySnapshotMerger PositionDensitySnapshotMerger
+@inject IPositionDensitySnapshotStateManager PositionDensitySnapshots
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -29,31 +29,31 @@
 <div class="session-tabs" role="tablist" aria-label="Observation session">
     <button class="@TabClass(SessionTab.Preparation)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Preparation)"
-            @onclick="() => SelectTab(SessionTab.Preparation)">
+            @onclick="() => SelectTabAsync(SessionTab.Preparation)">
         Session
     </button>
     <button class="@TabClass(SessionTab.Tracking)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Tracking)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Tracking)">
+            @onclick="() => SelectTabAsync(SessionTab.Tracking)">
         Tracking
     </button>
     <button class="@TabClass(SessionTab.Radar)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Radar)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Radar)">
+            @onclick="() => SelectTabAsync(SessionTab.Radar)">
         Radar
     </button>
     <button class="@TabClass(SessionTab.PositionDensity)" role="tab"
             aria-selected="@(_activeTab == SessionTab.PositionDensity)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.PositionDensity)">
+            @onclick="() => SelectTabAsync(SessionTab.PositionDensity)">
         Position Density
     </button>
     <button class="@TabClass(SessionTab.Summary)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Summary)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Summary)">
+            @onclick="() => SelectTabAsync(SessionTab.Summary)">
         Summary
     </button>
 </div>
@@ -112,13 +112,13 @@
         {
             <div class="alert" role="alert"><strong>Position density unavailable</strong><span>@_densityError</span></div>
         }
-        else if (_density is null)
+        else if (CurrentPositionDensity is not { } density)
         {
             <div class="summary-empty" role="status">
                 @(_densityLoading ? "Calculating position density…" : "No current session is available.")
             </div>
         }
-        else if (_density.PositionCount == 0)
+        else if (density.PositionCount == 0)
         {
             <div class="summary-empty" role="status">
                 @(_densityLoading ? "Recalculating position density…" : "No recorded position data is available for this session yet.")
@@ -126,7 +126,7 @@
         }
         else
         {
-            <PositionDensityChart Density="_density" />
+            <PositionDensityChart Density="density" />
             @if (_densityLoading)
             {
                 <p class="density-refresh-status" role="status">Recalculating with the latest persisted positions…</p>
@@ -571,16 +571,18 @@
     private bool _sessionStarted;
     private bool _summaryLoading;
     private int? _sessionId;
-    private ObservationSessionSummaryDto? _summary;
+    private ObservationSessionSummary? _summary;
     private string? _summaryError;
-    private LiveTrackerStatusDto? _status;
-    private PositionDensityDto? _density;
+    private LiveTrackerStatus? _status;
     private string? _densityError;
     private bool _densityLoading;
     private long _densityRequestVersion;
     private CancellationTokenSource? _densityCancellation;
     private double _maximumRadarRange;
     private IReadOnlyList<TrackedAircraftDto> _completedAircraft = [];
+
+    private PositionDensity? CurrentPositionDensity
+        => _sessionId.HasValue ? PositionDensitySnapshots.GetSnapshot(_sessionId.Value) : null;
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "tab")]
@@ -718,7 +720,10 @@
             _sessionStarted = true;
             _sessionId = completedSession.SessionId;
             _completedAircraft = completedSession.Aircraft.Select(CloneAircraft).ToArray();
-            if (completedSession.MaximumRadarRange > 0) _maximumRadarRange = completedSession.MaximumRadarRange;
+            if (completedSession.MaximumRadarRange > 0)
+            {
+                _maximumRadarRange = completedSession.MaximumRadarRange;
+            }
             _activeTab = RequestedTab?.Equals("radar", StringComparison.OrdinalIgnoreCase) == true
                 ? SessionTab.Radar
                 : ParseCompletedSessionTab(completedSession.ActiveTab);
@@ -766,7 +771,10 @@
     private async Task OnProfileChangedAsync(ChangeEventArgs args)
     {
         _selectedProfile = args.Value?.ToString() ?? TrackingProfileService.DefaultProfileValue;
-        if (string.IsNullOrWhiteSpace(_selectedProfile)) return;
+        if (string.IsNullOrWhiteSpace(_selectedProfile))
+        {
+            return;
+        }
         _applyingProfile = true;
         _profileMessage = null;
         try
@@ -875,7 +883,10 @@
     /// </summary>
     private void SaveCompletedSessionState()
     {
-        if (TrackingControl.IsTracking || !_sessionId.HasValue) return;
+        if (TrackingControl.IsTracking || !_sessionId.HasValue)
+        {
+            return;
+        }
 
         // Scoped page state survives component navigation but is never written to browser or persistent storage.
         PageState.CompletedLiveTracker = new CompletedLiveTrackerPageState
@@ -916,7 +927,10 @@
         for (var attempt = 0; attempt < 40; attempt++)
         {
             var sessionId = await SessionQueries.GetLatestSessionIdAsync();
-            if (sessionId.HasValue && sessionId != previousSessionId) return sessionId;
+            if (sessionId.HasValue && sessionId != previousSessionId)
+            {
+                return sessionId;
+            }
             await Task.Delay(25);
         }
         return null;
@@ -934,12 +948,18 @@
     /// <summary>
     /// Activates an available session tab and refreshes data-backed tabs on demand.
     /// </summary>
-    private async Task SelectTab(SessionTab tab)
+    private async Task SelectTabAsync(SessionTab tab)
     {
         // Every results tab remains available for the represented active or completed session.
-        if ((tab == SessionTab.Tracking || tab == SessionTab.Radar || tab == SessionTab.Summary || tab == SessionTab.PositionDensity) && !_sessionStarted) return;
+        if ((tab == SessionTab.Tracking || tab == SessionTab.Radar || tab == SessionTab.Summary || tab == SessionTab.PositionDensity) && !_sessionStarted)
+        {
+            return;
+        }
         _activeTab = tab;
-        if (!TrackingControl.IsTracking) SaveCompletedSessionState();
+        if (!TrackingControl.IsTracking)
+        {
+            SaveCompletedSessionState();
+        }
         if (tab == SessionTab.PositionDensity)
         {
             // Every tab entry performs a complete scoped retrieval and recalculation, even within one session.
@@ -966,7 +986,6 @@
         if (!requestedSessionId.HasValue)
         {
             // Never infer the latest session here: the plot must follow the page's explicit session identity.
-            _density = null;
             _densityError = null;
             _densityLoading = false;
             return;
@@ -981,8 +1000,14 @@
                 cancellation.Token);
 
             // A superseded request or session change must not replace the current plot with stale data.
-            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
-            _density = PositionDensitySnapshotMerger.Merge(_density, result);
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId)
+            {
+                return;
+            }
+            if (result is not null)
+            {
+                PositionDensitySnapshots.Merge(result);
+            }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
@@ -990,12 +1015,18 @@
         }
         catch (Exception exception)
         {
-            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId)
+            {
+                return;
+            }
             _densityError = exception.Message;
         }
         finally
         {
-            if (requestVersion == _densityRequestVersion) _densityLoading = false;
+            if (requestVersion == _densityRequestVersion)
+            {
+                _densityLoading = false;
+            }
         }
     }
 
@@ -1007,7 +1038,6 @@
         // Increment before cancellation so even a provider that ignores cancellation cannot publish stale results.
         Interlocked.Increment(ref _densityRequestVersion);
         _densityCancellation?.Cancel();
-        _density = null;
         _densityError = null;
         _densityLoading = false;
     }
@@ -1016,7 +1046,10 @@
 
     private async Task LoadSummaryAsync()
     {
-        if (!_sessionStarted || _summaryLoading) return;
+        if (!_sessionStarted || _summaryLoading)
+        {
+            return;
+        }
         _summaryLoading = true;
         _summaryError = null;
         _status = null;
@@ -1049,7 +1082,10 @@
     private void PrepareNewSession()
     {
         // Reset both persisted-summary and operational-status views before accepting new session details.
-        if (TrackingControl.IsTracking) return;
+        if (TrackingControl.IsTracking)
+        {
+            return;
+        }
         _sessionStarted = false;
         _sessionId = null;
         _summary = null;
@@ -1066,8 +1102,8 @@
     /// Combines persisted Summary measures with operational tracking counters.
     /// </summary>
     private static IReadOnlyList<StatusMetric> SummaryTrackingMetrics(
-        ObservationSessionSummaryDto summary,
-        LiveTrackerStatusDto? status)
+        ObservationSessionSummary summary,
+        LiveTrackerStatus? status)
     {
         // Prefer the monotonic operational value for the overlapping position-record measure.
         var metrics = new List<StatusMetric>();
@@ -1092,7 +1128,7 @@
     /// <summary>
     /// Returns the operational tracking metrics shown in the Summary tab.
     /// </summary>
-    private static IReadOnlyList<StatusMetric> TrackingStatusMetrics(LiveTrackerStatusDto status)
+    private static IReadOnlyList<StatusMetric> TrackingStatusMetrics(LiveTrackerStatus status)
     {
         // Keep the display restricted to counters already recorded by the live tracking workflow.
         return
@@ -1108,7 +1144,7 @@
     /// <summary>
     /// Returns local aircraft reference resolution metrics.
     /// </summary>
-    private static IReadOnlyList<StatusMetric> LocalIdentificationMetrics(LiveTrackerStatusDto status)
+    private static IReadOnlyList<StatusMetric> LocalIdentificationMetrics(LiveTrackerStatus status)
     {
         // Split every current ICAO identity into mutually exclusive resolved and unresolved groups.
         return [new("Aircraft locally resolved", status.AircraftLocallyResolved), new("Aircraft unresolved", status.AircraftUnresolved)];
@@ -1117,7 +1153,7 @@
     /// <summary>
     /// Returns local flight mapping resolution metrics.
     /// </summary>
-    private static IReadOnlyList<StatusMetric> FlightIdentificationMetrics(LiveTrackerStatusDto status)
+    private static IReadOnlyList<StatusMetric> FlightIdentificationMetrics(LiveTrackerStatus status)
     {
         // Keep missing callsigns separate because they cannot participate in flight mapping.
         return
@@ -1131,13 +1167,13 @@
     /// <summary>
     /// Returns successful API resolutions still present in the transient cache.
     /// </summary>
-    private static IReadOnlyList<StatusMetric> TransientLookupMetrics(LiveTrackerStatusDto status)
+    private static IReadOnlyList<StatusMetric> TransientLookupMetrics(LiveTrackerStatus status)
     {
         // These values describe process-memory results only and never imply local persistence.
         return [new("Aircraft transiently resolved", status.AircraftTransientlyResolved), new("Flights transiently resolved", status.FlightsTransientlyResolved)];
     }
 
-    private static IEnumerable<(string Label, ObservationHighlightDto? Item, string Value)> Highlights(ObservationSessionSummaryDto summary) =>
+    private static IEnumerable<(string Label, ObservationHighlight? Item, string Value)> Highlights(ObservationSessionSummary summary) =>
     [
         ("Lowest altitude", summary.LowestAltitude, FormatHighlightAltitude(summary.LowestAltitude)),
         ("Highest altitude", summary.HighestAltitude, FormatHighlightAltitude(summary.HighestAltitude)),
@@ -1145,7 +1181,7 @@
         ("Longest observed", summary.LongestObservedAircraft, FormatHighlightDuration(summary.LongestObservedAircraft))
     ];
 
-    private static string DisplayAircraft(ObservationHighlightDto item)
+    private static string DisplayAircraft(ObservationHighlight item)
         => string.IsNullOrWhiteSpace(item.Callsign) ? item.Address : $"{item.Callsign} · {item.Address}";
 
     private static string FormatUtcTimestamp(DateTime value)
@@ -1159,13 +1195,13 @@
             ? $"{(int)duration.TotalHours}h {duration.Minutes}m {duration.Seconds}s"
             : duration.TotalMinutes >= 1 ? $"{duration.Minutes}m {duration.Seconds}s" : $"{Math.Max(0, duration.Seconds)}s";
 
-    private static string FormatLocation(ObservationSessionSummaryDto summary)
+    private static string FormatLocation(ObservationSessionSummary summary)
         => summary.ReceiverLatitude.HasValue && summary.ReceiverLongitude.HasValue
             ? $"{summary.ReceiverLatitude:F6}, {summary.ReceiverLongitude:F6}" +
               (summary.ReceiverElevation.HasValue ? $" · {summary.ReceiverElevation:N0} ft" : string.Empty)
             : "Not configured";
 
-    private static string FormatLimits(ObservationSessionSummaryDto summary)
+    private static string FormatLimits(ObservationSessionSummary summary)
     {
         var altitude = summary.MinimumAltitudeLimit.HasValue || summary.MaximumAltitudeLimit.HasValue
             ? $"{summary.MinimumAltitudeLimit?.ToString("N0") ?? "Any"}–{summary.MaximumAltitudeLimit?.ToString("N0") ?? "Any"} ft"
@@ -1176,13 +1212,13 @@
         return $"{altitude} · {distance}";
     }
 
-    private static string FormatHighlightAltitude(ObservationHighlightDto? item)
+    private static string FormatHighlightAltitude(ObservationHighlight? item)
         => item?.Altitude is decimal value ? $"{value:N0} ft" : "—";
 
-    private static string FormatHighlightDistance(ObservationHighlightDto? item)
+    private static string FormatHighlightDistance(ObservationHighlight? item)
         => item?.Distance is double value ? $"{value:N1} nm" : "—";
 
-    private static string FormatHighlightDuration(ObservationHighlightDto? item)
+    private static string FormatHighlightDuration(ObservationHighlight? item)
         => item?.Duration is TimeSpan value ? FormatDuration(value) : "—";
 
     /// <summary>

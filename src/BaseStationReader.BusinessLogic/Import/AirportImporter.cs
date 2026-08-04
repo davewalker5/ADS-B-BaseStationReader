@@ -4,7 +4,7 @@ using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.DataExchange;
 
-namespace BaseStationReader.BusinessLogic.Logging
+namespace BaseStationReader.BusinessLogic.Import
 {
     public class AirportImporter : CsvImporter<AirportMappingProfile, Airport>, IAirportImporter
     {
@@ -60,7 +60,9 @@ namespace BaseStationReader.BusinessLogic.Logging
                     .ToList();
 
                 if (missing.Count > 0)
+                {
                     throw new InvalidOperationException($"Provenance record(s) not found: {string.Join(", ", missing)}");
+                }
 
                 foreach (var airport in airports)
                 {

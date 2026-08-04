@@ -1,5 +1,5 @@
 using BaseStationReader.BusinessLogic.Configuration;
-using BaseStationReader.BusinessLogic.Logging;
+using BaseStationReader.BusinessLogic.Import;
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;

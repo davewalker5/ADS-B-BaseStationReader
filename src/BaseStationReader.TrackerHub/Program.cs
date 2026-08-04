@@ -14,7 +14,6 @@ using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.TrackerHub.Logic;
-using BaseStationReader.BusinessLogic.TrackerHub.Logic;
 using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
 using System.Runtime.Loader;
@@ -120,13 +119,20 @@ namespace BaseStationReader.TrackerHub
                 _logger.LogMessage(Severity.Debug, "Latest database migrations have been applied");
 
                 // Initialise the tracker wrapper
+                var positionDensitySnapshotStateManager = new PositionDensitySnapshotStateManager(
+                    new PositionDensitySnapshotMerger());
+                var positionDensitySnapshotOrchestrator = new PositionDensitySnapshotOrchestrator(
+                    new PositionDensityAggregator(),
+                    positionDensitySnapshotStateManager);
                 var runtime = new TrackingRuntime(_settings, (settings, notes) => new TrackerController(
                     _logger,
                     new BaseStationReaderDbContext(contextOptions),
                     new TrackerTcpClient(),
                     settings,
                     ownsContext: true,
-                    sessionNotes: notes));
+                    sessionNotes: notes,
+                    densityOrchestrator: positionDensitySnapshotOrchestrator,
+                    densitySnapshotMapper: new PositionDensitySnapshotMapper()));
                 _controller = runtime;
 
                 // Bind Kestrel options from the applicatiokn settings file
@@ -168,6 +174,9 @@ namespace BaseStationReader.TrackerHub
                     new RadarProjectionService(runtime, provider.GetRequiredService<IGeographicCalculator>()));
                 builder.Services.AddSingleton<IPositionDensityAggregator, PositionDensityAggregator>();
                 builder.Services.AddSingleton<IPositionDensitySnapshotMerger, PositionDensitySnapshotMerger>();
+                // Snapshot state is process memory only and survives recreation of the Live Tracker page component.
+                builder.Services.AddSingleton<IPositionDensitySnapshotStateManager>(positionDensitySnapshotStateManager);
+                builder.Services.AddSingleton<IPositionDensitySnapshotOrchestrator>(positionDensitySnapshotOrchestrator);
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();
                 builder.Services.AddScoped<ITrackingSessionQueryManager, TrackingSessionQueryManager>();
                 builder.Services.AddScoped<ILiveTrackerStatusService, LiveTrackerStatusService>();
@@ -247,19 +256,28 @@ namespace BaseStationReader.TrackerHub
                 {
                     // Shut down gracefully rather than immediately killing the process
                     e.Cancel = true;
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 };
 
                 // Cancel on SIGTERM / docker stop
                 AssemblyLoadContext.Default.Unloading += _ =>
                 {
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 };
 
                 // Cancel on app lifetime stop signals (e.g., triggered by Kestrel or hosting)
                 app.Lifetime.ApplicationStopping.Register(() =>
                 {
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 });
 
                 // Treat Ctrl-C as a cancel signal, not a keypress
@@ -419,12 +437,28 @@ namespace BaseStationReader.TrackerHub
 
             // Log and signal the event
             _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} event for aircraft {e.Aircraft.Address}");
-            _ = Task.Run(() => _bridge.PublishAsync(e));
+            _ = PublishAircraftEventAsync(e);
 
             if (e.NotificationType == AircraftNotificationType.Removed)
             {
                 // Remove the aircraft details from the cache
                 _ = _trackerIndexManager.RemoveAircraft(e.Aircraft.Address);
+            }
+        }
+
+        /// <summary>
+        /// Publishes an aircraft event without blocking the synchronous event source.
+        /// </summary>
+        private static async Task PublishAircraftEventAsync(AircraftNotificationEventArgs e)
+        {
+            try
+            {
+                await _bridge.PublishAsync(e);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogMessage(Severity.Error, "Failed to publish an aircraft event.");
+                _logger.LogException(exception);
             }
         }
 

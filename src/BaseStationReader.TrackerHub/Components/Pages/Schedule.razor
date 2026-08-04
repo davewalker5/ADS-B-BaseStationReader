@@ -230,7 +230,10 @@
                 : _iata;
             _from = saved.From;
             _to = saved.To;
-            if (CanLookup) await LookupAsync();
+            if (CanLookup)
+            {
+                await LookupAsync();
+            }
         }
     }
 
@@ -241,7 +244,9 @@
     {
         _from = ParseDateTime(args.Value);
         if (_from.HasValue && (!_to.HasValue || _to <= _from || _to - _from > MaximumRange))
+        {
             _to = _from.Value.Add(MaximumRange);
+        }
         ClearMessages();
     }
 
@@ -252,7 +257,9 @@
     {
         _to = ParseDateTime(args.Value);
         if (_to.HasValue && (!_from.HasValue || _to <= _from || _to - _from > MaximumRange))
+        {
             _from = _to.Value.Subtract(MaximumRange);
+        }
         ClearMessages();
     }
 
@@ -261,7 +268,10 @@
     /// </summary>
     private async Task LookupAsync()
     {
-        if (!CanLookup) return;
+        if (!CanLookup)
+        {
+            return;
+        }
         _loading = true;
         _searched = true;
         _error = null;
@@ -301,7 +311,9 @@
     private void ChangePageSize(ChangeEventArgs args)
     {
         if (int.TryParse(args.Value?.ToString(), out var size) && PageSizes.Contains(size))
+        {
             _pageSize = size;
+        }
         _page = 1;
     }
 

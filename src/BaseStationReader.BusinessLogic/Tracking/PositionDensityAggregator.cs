@@ -18,14 +18,20 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
     /// <param name="fixedBounds">Optional stable geographic bounds; live sessions supply these from persisted receiver settings.</param>
     /// <returns>Density bins and geographic bounds, or an empty model when there are no coordinates.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="sessionId"/> is not positive.</exception>
-    public PositionDensityDto Aggregate(
+    public PositionDensity Aggregate(
         int sessionId,
         IReadOnlyCollection<PositionDensityCoordinate> coordinates,
         PositionDensityBounds? fixedBounds = null)
     {
-        if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId));
+        if (sessionId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sessionId));
+        }
         var bounds = fixedBounds ?? BoundsFromCoordinates(coordinates);
-        if (coordinates.Count == 0) return EmptyDensity(sessionId, bounds);
+        if (coordinates.Count == 0)
+        {
+            return EmptyDensity(sessionId, bounds);
+        }
 
         var minimumLatitude = bounds.MinimumLatitude;
         var maximumLatitude = bounds.MaximumLatitude;
@@ -50,9 +56,12 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
         }
 
         var bins = counts
-            .Select(item => new PositionDensityBinDto
+            .Select(item => new PositionDensityBin
             {
-                Longitude = minimumLongitude + ((item.Key.Column + (item.Key.Row % 2 == 0 ? 0d : 0.5d)) / GridSize * longitudeSpan),
+                Longitude = Math.Clamp(
+                    minimumLongitude + ((item.Key.Column + (item.Key.Row % 2 == 0 ? 0d : 0.5d)) / GridSize * longitudeSpan),
+                    minimumLongitude,
+                    maximumLongitude),
                 Latitude = minimumLatitude + ((double)item.Key.Row / rowCount * latitudeSpan),
                 Count = item.Value
             })
@@ -60,7 +69,7 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
             .ThenBy(bin => bin.Longitude)
             .ToArray();
 
-        return new PositionDensityDto
+        return new PositionDensity
         {
             SessionId = sessionId,
             PositionCount = coordinates.Count,
@@ -96,10 +105,10 @@ public sealed class PositionDensityAggregator : IPositionDensityAggregator
     /// <param name="sessionId">The represented session identifier.</param>
     /// <param name="bounds">Stable session boundaries.</param>
     /// <returns>An empty density model.</returns>
-    private static PositionDensityDto EmptyDensity(int sessionId, PositionDensityBounds bounds)
+    private static PositionDensity EmptyDensity(int sessionId, PositionDensityBounds bounds)
     {
         // Retaining bounds means the first recorded position does not cause the chart viewport to change.
-        return new PositionDensityDto
+        return new PositionDensity
         {
             SessionId = sessionId,
             MinimumLatitude = bounds.MinimumLatitude,

@@ -30,6 +30,8 @@ namespace BaseStationReader.Tests.Configuration
             Assert.IsNull(settings.MinimumTrackedAltitude);
             Assert.IsNull(settings.MaximumTrackedAltitude);
             Assert.IsTrue(settings.TrackPosition);
+            Assert.IsTrue(settings.TrackPositionDensity);
+            Assert.AreEqual(300000, settings.PositionDensityInterval);
 
             foreach (var behaviour in Enum.GetValues<AircraftBehaviour>())
             {
