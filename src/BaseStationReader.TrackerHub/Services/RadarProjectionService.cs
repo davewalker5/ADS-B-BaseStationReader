@@ -1,6 +1,7 @@
 #nullable enable
 
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.TrackerHub.Models;
 
 namespace BaseStationReader.TrackerHub.Services;

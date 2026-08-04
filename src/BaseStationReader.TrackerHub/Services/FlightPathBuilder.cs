@@ -1,4 +1,5 @@
 using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.TrackerHub.Services;
 
