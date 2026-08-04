@@ -17,6 +17,7 @@ public sealed class ProvenanceService : IProvenanceService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<List<Provenance>> ListAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
@@ -24,6 +25,7 @@ public sealed class ProvenanceService : IProvenanceService
         return await factory.ProvenanceManager.ListAsync(x => true);
     }
 
+    /// <inheritdoc />
     public async Task<Provenance> SaveAsync(Provenance provenance, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
@@ -35,6 +37,7 @@ public sealed class ProvenanceService : IProvenanceService
                 provenance.SourceUrl, provenance.SourceDataset, provenance.SourceVersion, provenance.Licence);
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);

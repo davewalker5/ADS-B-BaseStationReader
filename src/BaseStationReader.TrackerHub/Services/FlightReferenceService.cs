@@ -13,6 +13,7 @@ public sealed class FlightReferenceService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IFlightReferenceService
 {
+    /// <inheritdoc />
     public async Task<List<Flight>> FindAsync(
         string? callsign,
         string? iata,
@@ -29,18 +30,21 @@ public sealed class FlightReferenceService(
             (cleanIcao == "" || x.ICAO.ToUpper().Contains(cleanIcao)));
     }
 
+    /// <inheritdoc />
     public async Task<List<Airline>> ListAirlinesAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         return await new DatabaseManagementFactory(logger, context, 0).AirlineManager.ListAsync(x => true);
     }
 
+    /// <inheritdoc />
     public async Task<List<Airport>> ListAirportsAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         return await new DatabaseManagementFactory(logger, context, 0).AirportManager.ListAsync(x => true);
     }
 
+    /// <inheritdoc />
     public async Task<Flight> SaveAsync(Flight flight, CancellationToken cancellationToken = default)
     {
         Flight? saved = null;
@@ -59,6 +63,7 @@ public sealed class FlightReferenceService(
         return saved!;
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

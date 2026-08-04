@@ -408,33 +408,48 @@
 
     private void ShowNotes(ObservationSessionDto session)
     {
-        if (!string.IsNullOrWhiteSpace(session.Notes)) _notesSession = session;
+        if (!string.IsNullOrWhiteSpace(session.Notes))
+        {
+            _notesSession = session;
+        }
     }
 
     private void CloseNotes() => _notesSession = null;
 
     private void HandleNotesKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseNotes();
+        if (args.Key == "Escape")
+        {
+            CloseNotes();
+        }
     }
 
     private void ConfirmDelete(ObservationSessionDto session)
     {
-        if (TrackingControl.IsTracking) return;
+        if (TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleteSession = session;
         _deleteError = null;
     }
 
     private void CloseDelete()
     {
-        if (_deleting) return;
+        if (_deleting)
+        {
+            return;
+        }
         _deleteSession = null;
         _deleteError = null;
     }
 
     private async Task DeleteAsync()
     {
-        if (_deleteSession is null || TrackingControl.IsTracking) return;
+        if (_deleteSession is null || TrackingControl.IsTracking)
+        {
+            return;
+        }
         _deleting = true;
         _deleteError = null;
         try
@@ -456,7 +471,10 @@
 
     private void HandleDeleteKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseDelete();
+        if (args.Key == "Escape")
+        {
+            CloseDelete();
+        }
     }
 
     private async Task ShowAnalysisAsync(ObservationSessionDto session)
@@ -469,18 +487,30 @@
         try
         {
             var analysis = await QueryService.GetObservationSessionSummaryAsync(requestedSessionId);
-            if (_analysisSessionId != requestedSessionId) return;
+            if (_analysisSessionId != requestedSessionId)
+            {
+                return;
+            }
             _analysis = analysis;
-            if (_analysis is null) _analysisError = "The selected session could not be found.";
+            if (_analysis is null)
+            {
+                _analysisError = "The selected session could not be found.";
+            }
         }
         catch (Exception exception)
         {
-            if (_analysisSessionId != requestedSessionId) return;
+            if (_analysisSessionId != requestedSessionId)
+            {
+                return;
+            }
             _analysisError = exception.Message;
         }
         finally
         {
-            if (_analysisSessionId == requestedSessionId) _analysisLoading = false;
+            if (_analysisSessionId == requestedSessionId)
+            {
+                _analysisLoading = false;
+            }
         }
     }
 
@@ -494,7 +524,10 @@
 
     private void HandleAnalysisKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Escape") CloseAnalysis();
+        if (args.Key == "Escape")
+        {
+            CloseAnalysis();
+        }
     }
 
     private static IEnumerable<(string Label, int Value)> ObservationMetrics(ObservationSessionSummaryDto summary) =>

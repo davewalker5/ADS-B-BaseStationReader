@@ -31,9 +31,14 @@ public sealed class DataImportService : IDataImportService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(csvStream);
-        if (!csvStream.CanRead) throw new ArgumentException("The uploaded file cannot be read.", nameof(csvStream));
+        if (!csvStream.CanRead)
+        {
+            throw new ArgumentException("The uploaded file cannot be read.", nameof(csvStream));
+        }
         if (!string.Equals(Path.GetExtension(fileName), ".csv", StringComparison.OrdinalIgnoreCase))
+        {
             throw new ArgumentException("Select a CSV file.", nameof(fileName));
+        }
 
         var temporaryPath = Path.Combine(Path.GetTempPath(), $"adsb-import-{Guid.NewGuid():N}.csv");
         try
@@ -82,7 +87,10 @@ public sealed class DataImportService : IDataImportService
         }
         finally
         {
-            if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
         }
     }
 }

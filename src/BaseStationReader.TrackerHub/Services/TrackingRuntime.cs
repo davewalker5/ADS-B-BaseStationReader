@@ -51,6 +51,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         get { lock (_stateLock) return (_settings.ReceiverLatitude, _settings.ReceiverLongitude); }
     }
 
+    /// <inheritdoc />
     public async Task StartAsync(CancellationToken token)
     {
         _applicationToken = token;
@@ -67,19 +68,28 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         _started = false;
     }
 
+    /// <summary>
+    /// Starts a replaceable tracker controller for a new observation session.
+    /// </summary>
     public async Task StartTrackingAsync(string receiverHost, int receiverPort, string? notes = null,
         CancellationToken token = default)
     {
         if (string.IsNullOrWhiteSpace(receiverHost))
+        {
             throw new ArgumentException("Receiver host is required.", nameof(receiverHost));
+        }
         if (receiverPort is < 1 or > 65535)
+        {
             throw new ArgumentOutOfRangeException(nameof(receiverPort), "Receiver port must be between 1 and 65535.");
+        }
 
         await _gate.WaitAsync(token);
         try
         {
             if (!_started)
+            {
                 throw new InvalidOperationException("The tracking runtime is not ready.");
+            }
             if (!IsTracking)
             {
                 lock (_stateLock)
@@ -93,6 +103,9 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         finally { _gate.Release(); }
     }
 
+    /// <summary>
+    /// Stops the active tracker controller, if present.
+    /// </summary>
     public async Task StopTrackingAsync(CancellationToken token = default)
     {
         await _gate.WaitAsync(token);
@@ -100,18 +113,26 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         finally { _gate.Release(); }
     }
 
+    /// <summary>
+    /// Replaces the effective tracker settings while no session is active.
+    /// </summary>
     public async Task ApplyAsync(TrackerApplicationSettings settings, CancellationToken token = default)
     {
         await _gate.WaitAsync(token);
         try
         {
             if (IsTracking)
+            {
                 throw new InvalidOperationException("The tracking profile cannot be changed during an active session.");
+            }
             lock (_stateLock) _settings = settings;
         }
         finally { _gate.Release(); }
     }
 
+    /// <summary>
+    /// Executes a database-editing action while serialising it against tracking state changes.
+    /// </summary>
     internal async Task ExecuteWhileIdleAsync(Func<Task> action, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(action);
@@ -119,17 +140,23 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         try
         {
             if (IsTracking)
+            {
                 throw new InvalidOperationException("Sessions cannot be edited while a tracking session is active.");
+            }
             await action();
         }
         finally { _gate.Release(); }
     }
 
+    /// <inheritdoc />
     public async Task FlushQueueAsync()
     {
         ITrackerController? controller;
         lock (_stateLock) controller = _controller;
-        if (controller is not null) await controller.FlushQueueAsync();
+        if (controller is not null)
+        {
+            await controller.FlushQueueAsync();
+        }
     }
 
     /// <summary>
@@ -139,7 +166,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private void StartController(string? notes = null)
     {
         // A new controller represents a new observation session, so reset the retained final count.
-        if (_applicationToken.IsCancellationRequested) return;
+        if (_applicationToken.IsCancellationRequested)
+        {
+            return;
+        }
         var controller = _factory(_settings, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
@@ -176,7 +206,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             cancellation = _controllerCancellation;
             task = _controllerTask;
         }
-        if (controller is null) return;
+        if (controller is null)
+        {
+            return;
+        }
         cancellation!.Cancel();
         try { if (task is not null) await task; }
         catch (OperationCanceledException) { }

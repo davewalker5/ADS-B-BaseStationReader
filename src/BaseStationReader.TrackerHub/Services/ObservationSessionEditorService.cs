@@ -14,6 +14,7 @@ public sealed class ObservationSessionEditorService(
     ITrackerLogger logger) : IObservationSessionEditorService
 {
     /// <inheritdoc />
+    /// <inheritdoc />
     public async Task<ObservationSessionDto?> GetAsync(
         int sessionId,
         CancellationToken cancellationToken = default)
@@ -23,7 +24,10 @@ public sealed class ObservationSessionEditorService(
 
         // Retrieve the session through business logic before shaping it for the editor UI.
         var session = await manager.GetAsync(sessionId, cancellationToken);
-        if (session is null) return null;
+        if (session is null)
+        {
+            return null;
+        }
         return new ObservationSessionDto
         {
             SessionId = session.Id,
@@ -42,6 +46,7 @@ public sealed class ObservationSessionEditorService(
         };
     }
 
+    /// <inheritdoc />
     public async Task SaveNotesAsync(
         int sessionId,
         string? notes,
@@ -56,6 +61,7 @@ public sealed class ObservationSessionEditorService(
         }, cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int sessionId, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

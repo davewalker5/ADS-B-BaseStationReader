@@ -118,7 +118,10 @@
 
     private async Task PlotAsync()
     {
-        if (!CanPlot) return;
+        if (!CanPlot)
+        {
+            return;
+        }
 
         _loading = true;
         _warning = null;

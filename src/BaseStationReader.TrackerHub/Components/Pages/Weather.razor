@@ -164,7 +164,10 @@
         _handledIata = requestedIata;
         if (string.IsNullOrEmpty(requestedIata))
         {
-            if (PageState.Weather is not { } saved) return;
+            if (PageState.Weather is not { } saved)
+            {
+                return;
+            }
 
             // Restore only scoped in-process values when no explicit schedule link supplied an airport.
             _endpointType = saved.Endpoint;
@@ -174,7 +177,10 @@
                 string.Equals(airport.ICAO, saved.Icao, StringComparison.OrdinalIgnoreCase))
                 ? saved.Icao
                 : string.Empty;
-            if (CanLookup) await LookupAsync();
+            if (CanLookup)
+            {
+                await LookupAsync();
+            }
             return;
         }
 
@@ -239,7 +245,10 @@
     /// </summary>
     private async Task LookupAsync()
     {
-        if (!CanLookup) return;
+        if (!CanLookup)
+        {
+            return;
+        }
 
         _loading = true;
         _searched = true;

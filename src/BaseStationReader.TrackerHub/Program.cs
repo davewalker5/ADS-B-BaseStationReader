@@ -14,7 +14,6 @@ using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.TrackerHub.Logic;
-using BaseStationReader.BusinessLogic.TrackerHub.Logic;
 using Microsoft.AspNetCore.StaticFiles;
 using BaseStationReader.Interfaces.Hub;
 using System.Runtime.Loader;
@@ -247,19 +246,28 @@ namespace BaseStationReader.TrackerHub
                 {
                     // Shut down gracefully rather than immediately killing the process
                     e.Cancel = true;
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 };
 
                 // Cancel on SIGTERM / docker stop
                 AssemblyLoadContext.Default.Unloading += _ =>
                 {
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 };
 
                 // Cancel on app lifetime stop signals (e.g., triggered by Kestrel or hosting)
                 app.Lifetime.ApplicationStopping.Register(() =>
                 {
-                    if (!source.IsCancellationRequested) source.Cancel();
+                    if (!source.IsCancellationRequested)
+                    {
+                        source.Cancel();
+                    }
                 });
 
                 // Treat Ctrl-C as a cancel signal, not a keypress
@@ -419,12 +427,28 @@ namespace BaseStationReader.TrackerHub
 
             // Log and signal the event
             _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} event for aircraft {e.Aircraft.Address}");
-            _ = Task.Run(() => _bridge.PublishAsync(e));
+            _ = PublishAircraftEventAsync(e);
 
             if (e.NotificationType == AircraftNotificationType.Removed)
             {
                 // Remove the aircraft details from the cache
                 _ = _trackerIndexManager.RemoveAircraft(e.Aircraft.Address);
+            }
+        }
+
+        /// <summary>
+        /// Publishes an aircraft event without blocking the synchronous event source.
+        /// </summary>
+        private static async Task PublishAircraftEventAsync(AircraftNotificationEventArgs e)
+        {
+            try
+            {
+                await _bridge.PublishAsync(e);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogMessage(Severity.Error, "Failed to publish an aircraft event.");
+                _logger.LogException(exception);
             }
         }
 

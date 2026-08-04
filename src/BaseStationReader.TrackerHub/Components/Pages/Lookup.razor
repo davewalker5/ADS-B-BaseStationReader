@@ -133,7 +133,10 @@
     protected override async Task OnParametersSetAsync()
     {
         var navigationKey = $"{Address?.Trim()}\u001f{Callsign?.Trim()}";
-        if (string.Equals(navigationKey, _handledNavigationKey, StringComparison.Ordinal)) return;
+        if (string.Equals(navigationKey, _handledNavigationKey, StringComparison.Ordinal))
+        {
+            return;
+        }
         _handledNavigationKey = navigationKey;
 
         if (!string.IsNullOrWhiteSpace(Address) || !string.IsNullOrWhiteSpace(Callsign))
@@ -166,7 +169,10 @@
     /// </summary>
     private async Task LookupAsync()
     {
-        if (!CanLookup) return;
+        if (!CanLookup)
+        {
+            return;
+        }
         _loading = true;
         _searched = true;
         _error = null;

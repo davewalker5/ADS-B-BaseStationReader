@@ -29,31 +29,31 @@
 <div class="session-tabs" role="tablist" aria-label="Observation session">
     <button class="@TabClass(SessionTab.Preparation)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Preparation)"
-            @onclick="() => SelectTab(SessionTab.Preparation)">
+            @onclick="() => SelectTabAsync(SessionTab.Preparation)">
         Session
     </button>
     <button class="@TabClass(SessionTab.Tracking)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Tracking)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Tracking)">
+            @onclick="() => SelectTabAsync(SessionTab.Tracking)">
         Tracking
     </button>
     <button class="@TabClass(SessionTab.Radar)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Radar)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Radar)">
+            @onclick="() => SelectTabAsync(SessionTab.Radar)">
         Radar
     </button>
     <button class="@TabClass(SessionTab.PositionDensity)" role="tab"
             aria-selected="@(_activeTab == SessionTab.PositionDensity)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.PositionDensity)">
+            @onclick="() => SelectTabAsync(SessionTab.PositionDensity)">
         Position Density
     </button>
     <button class="@TabClass(SessionTab.Summary)" role="tab"
             aria-selected="@(_activeTab == SessionTab.Summary)"
             disabled="@(!_sessionStarted)"
-            @onclick="() => SelectTab(SessionTab.Summary)">
+            @onclick="() => SelectTabAsync(SessionTab.Summary)">
         Summary
     </button>
 </div>
@@ -718,7 +718,10 @@
             _sessionStarted = true;
             _sessionId = completedSession.SessionId;
             _completedAircraft = completedSession.Aircraft.Select(CloneAircraft).ToArray();
-            if (completedSession.MaximumRadarRange > 0) _maximumRadarRange = completedSession.MaximumRadarRange;
+            if (completedSession.MaximumRadarRange > 0)
+            {
+                _maximumRadarRange = completedSession.MaximumRadarRange;
+            }
             _activeTab = RequestedTab?.Equals("radar", StringComparison.OrdinalIgnoreCase) == true
                 ? SessionTab.Radar
                 : ParseCompletedSessionTab(completedSession.ActiveTab);
@@ -766,7 +769,10 @@
     private async Task OnProfileChangedAsync(ChangeEventArgs args)
     {
         _selectedProfile = args.Value?.ToString() ?? TrackingProfileService.DefaultProfileValue;
-        if (string.IsNullOrWhiteSpace(_selectedProfile)) return;
+        if (string.IsNullOrWhiteSpace(_selectedProfile))
+        {
+            return;
+        }
         _applyingProfile = true;
         _profileMessage = null;
         try
@@ -875,7 +881,10 @@
     /// </summary>
     private void SaveCompletedSessionState()
     {
-        if (TrackingControl.IsTracking || !_sessionId.HasValue) return;
+        if (TrackingControl.IsTracking || !_sessionId.HasValue)
+        {
+            return;
+        }
 
         // Scoped page state survives component navigation but is never written to browser or persistent storage.
         PageState.CompletedLiveTracker = new CompletedLiveTrackerPageState
@@ -916,7 +925,10 @@
         for (var attempt = 0; attempt < 40; attempt++)
         {
             var sessionId = await SessionQueries.GetLatestSessionIdAsync();
-            if (sessionId.HasValue && sessionId != previousSessionId) return sessionId;
+            if (sessionId.HasValue && sessionId != previousSessionId)
+            {
+                return sessionId;
+            }
             await Task.Delay(25);
         }
         return null;
@@ -934,12 +946,18 @@
     /// <summary>
     /// Activates an available session tab and refreshes data-backed tabs on demand.
     /// </summary>
-    private async Task SelectTab(SessionTab tab)
+    private async Task SelectTabAsync(SessionTab tab)
     {
         // Every results tab remains available for the represented active or completed session.
-        if ((tab == SessionTab.Tracking || tab == SessionTab.Radar || tab == SessionTab.Summary || tab == SessionTab.PositionDensity) && !_sessionStarted) return;
+        if ((tab == SessionTab.Tracking || tab == SessionTab.Radar || tab == SessionTab.Summary || tab == SessionTab.PositionDensity) && !_sessionStarted)
+        {
+            return;
+        }
         _activeTab = tab;
-        if (!TrackingControl.IsTracking) SaveCompletedSessionState();
+        if (!TrackingControl.IsTracking)
+        {
+            SaveCompletedSessionState();
+        }
         if (tab == SessionTab.PositionDensity)
         {
             // Every tab entry performs a complete scoped retrieval and recalculation, even within one session.
@@ -981,7 +999,10 @@
                 cancellation.Token);
 
             // A superseded request or session change must not replace the current plot with stale data.
-            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId)
+            {
+                return;
+            }
             _density = PositionDensitySnapshotMerger.Merge(_density, result);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
@@ -990,12 +1011,18 @@
         }
         catch (Exception exception)
         {
-            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId) return;
+            if (requestVersion != _densityRequestVersion || requestedSessionId != _sessionId)
+            {
+                return;
+            }
             _densityError = exception.Message;
         }
         finally
         {
-            if (requestVersion == _densityRequestVersion) _densityLoading = false;
+            if (requestVersion == _densityRequestVersion)
+            {
+                _densityLoading = false;
+            }
         }
     }
 
@@ -1016,7 +1043,10 @@
 
     private async Task LoadSummaryAsync()
     {
-        if (!_sessionStarted || _summaryLoading) return;
+        if (!_sessionStarted || _summaryLoading)
+        {
+            return;
+        }
         _summaryLoading = true;
         _summaryError = null;
         _status = null;
@@ -1049,7 +1079,10 @@
     private void PrepareNewSession()
     {
         // Reset both persisted-summary and operational-status views before accepting new session details.
-        if (TrackingControl.IsTracking) return;
+        if (TrackingControl.IsTracking)
+        {
+            return;
+        }
         _sessionStarted = false;
         _sessionId = null;
         _summary = null;

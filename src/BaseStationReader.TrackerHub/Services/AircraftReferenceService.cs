@@ -13,6 +13,7 @@ public sealed class AircraftReferenceService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IAircraftReferenceService
 {
+    /// <inheritdoc />
     public async Task<List<Aircraft>> FindAsync(
         string? address,
         string? registration,
@@ -27,12 +28,14 @@ public sealed class AircraftReferenceService(
             (cleanRegistration == "" || x.Registration.ToUpper().Contains(cleanRegistration)));
     }
 
+    /// <inheritdoc />
     public async Task<List<Model>> ListModelsAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         return await new DatabaseManagementFactory(logger, context, 0).ModelManager.ListAsync(x => true);
     }
 
+    /// <inheritdoc />
     public async Task<Aircraft> SaveAsync(Aircraft aircraft, CancellationToken cancellationToken = default)
     {
         Aircraft? saved = null;
@@ -60,6 +63,7 @@ public sealed class AircraftReferenceService(
         return saved!;
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

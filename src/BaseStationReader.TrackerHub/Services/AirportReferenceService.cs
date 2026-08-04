@@ -13,6 +13,7 @@ public sealed class AirportReferenceService(
     TrackingRuntime runtime,
     ITrackerLogger logger) : IAirportReferenceService
 {
+    /// <inheritdoc />
     public async Task<List<Airport>> FindAsync(
         string? iata,
         string? icao,
@@ -29,6 +30,7 @@ public sealed class AirportReferenceService(
             (cleanName == "" || x.Name.ToUpper().Contains(cleanName)));
     }
 
+    /// <inheritdoc />
     public async Task<Airport> SaveAsync(Airport airport, CancellationToken cancellationToken = default)
     {
         Airport? saved = null;
@@ -43,6 +45,7 @@ public sealed class AirportReferenceService(
         return saved!;
     }
 
+    /// <inheritdoc />
     public Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

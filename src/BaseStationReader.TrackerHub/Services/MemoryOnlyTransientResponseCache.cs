@@ -69,7 +69,9 @@ public sealed class MemoryOnlyTransientResponseCache : ITransientResponseCache, 
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentNullException.ThrowIfNull(factory);
         if (lifetime <= TimeSpan.Zero)
+        {
             throw new ArgumentOutOfRangeException(nameof(lifetime), "Cache lifetime must be greater than zero.");
+        }
 
         if (_cache.TryGetValue(key, out T? cached) && cached is not null)
         {

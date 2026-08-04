@@ -80,9 +80,15 @@ public sealed class TrackingSessionQueryService(
     {
         // Combine business-logic detail and position reads before applying map-specific preparation.
         var detail = await manager.GetAsync(trackingRecordId, cancellationToken);
-        if (detail is null) return null;
+        if (detail is null)
+        {
+            return null;
+        }
         var data = await manager.GetProfileDataAsync(trackingRecordId, cancellationToken);
-        if (data is null) return null;
+        if (data is null)
+        {
+            return null;
+        }
 
         var flightNumber = !string.IsNullOrWhiteSpace(detail.FlightIata) ? detail.FlightIata : detail.FlightIcao;
         var route = string.IsNullOrWhiteSpace(detail.Embarkation) && string.IsNullOrWhiteSpace(detail.Destination)

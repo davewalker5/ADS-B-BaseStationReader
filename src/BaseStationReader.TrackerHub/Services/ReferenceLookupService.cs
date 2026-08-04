@@ -44,7 +44,10 @@ public sealed class ReferenceLookupService : IReferenceLookupService
     /// <inheritdoc />
     public IReadOnlyList<ApiServiceType> GetServices(ApiEndpointType endpointType)
     {
-        if (endpointType is not (ApiEndpointType.Aircraft or ApiEndpointType.Flights)) return [];
+        if (endpointType is not (ApiEndpointType.Aircraft or ApiEndpointType.Flights))
+        {
+            return [];
+        }
 
         return _settings.ApiServices
             .Where(service => service.ApiEndpoints?.Any(endpoint => endpoint.EndpointType == endpointType) == true)
@@ -68,13 +71,21 @@ public sealed class ReferenceLookupService : IReferenceLookupService
         var lookupFlight = normalisedCallsign.Length > 0;
 
         if (!lookupAircraft && !lookupFlight)
+        {
             throw new ArgumentException("Enter an aircraft address, a flight callsign, or both.");
+        }
         if (lookupAircraft && (normalisedAddress.Length != 6 || !normalisedAddress.All(Uri.IsHexDigit)))
+        {
             throw new ArgumentException("Enter a six-character hexadecimal aircraft address.", nameof(address));
+        }
         if (lookupAircraft && !GetServices(ApiEndpointType.Aircraft).Contains(aircraftService))
+        {
             throw new ArgumentException($"{aircraftService} is not configured for aircraft lookups.", nameof(aircraftService));
+        }
         if (lookupFlight && !GetServices(ApiEndpointType.Flights).Contains(flightService))
+        {
             throw new ArgumentException($"{flightService} is not configured for flight lookups.", nameof(flightService));
+        }
 
         // The normalized inputs identify equivalent requests without serializing or persisting any response data.
         var cacheKey = $"reference:{aircraftService}:{flightService}:{normalisedAddress}:{normalisedCallsign}";
