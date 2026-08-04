@@ -1,6 +1,7 @@
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Tracking;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ public sealed class AirportRouteService : IAirportRouteService
     private const double EarthRadiusNauticalMiles = 3440.065;
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
+    private readonly IGeographicCalculator _geographicCalculator;
 
     /// <summary>
     /// Initialises route plotting with local database and logging dependencies.
@@ -24,11 +26,15 @@ public sealed class AirportRouteService : IAirportRouteService
     /// <param name="logger">The logger supplied to the database management factory.</param>
     public AirportRouteService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        ITrackerLogger logger)
+        ITrackerLogger logger,
+        IGeographicCalculator geographicCalculator)
     {
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
+
         // Retain injected dependencies for the read-only route lookup performed on demand.
         _contextFactory = contextFactory;
         _logger = logger;
+        _geographicCalculator = geographicCalculator;
     }
 
     /// <inheritdoc />
@@ -115,11 +121,10 @@ public sealed class AirportRouteService : IAirportRouteService
     /// Validates the geographic coordinates associated with an airport.
     /// </summary>
     /// <param name="airport">The route endpoint to validate.</param>
-    private static void ValidateCoordinates(RouteAirportDto airport)
+    private void ValidateCoordinates(RouteAirportDto airport)
     {
         // Spherical interpolation requires finite coordinates inside conventional geographic ranges.
-        if (!double.IsFinite(airport.Latitude) || airport.Latitude is < -90 or > 90 ||
-            !double.IsFinite(airport.Longitude) || airport.Longitude is < -180 or > 180)
+        if (!_geographicCalculator.IsValidCoordinate(airport.Latitude, airport.Longitude))
             throw new ArgumentException(
                 $"Airport {airport.Iata} does not have valid coordinates in the airport database.");
     }
@@ -130,62 +135,25 @@ public sealed class AirportRouteService : IAirportRouteService
     /// <param name="origin">The route origin.</param>
     /// <param name="destination">The route destination.</param>
     /// <returns>Sampled geographic points and the route's angular distance in radians.</returns>
-    private static (IReadOnlyList<RoutePointDto> Points, double AngularDistance) BuildGreatCircle(
+    private (IReadOnlyList<RoutePointDto> Points, double AngularDistance) BuildGreatCircle(
         RouteAirportDto origin,
         RouteAirportDto destination)
     {
-        // Unit vectors permit stable spherical interpolation without a map projection dependency.
-        var start = ToUnitVector(origin.Latitude, origin.Longitude);
-        var end = ToUnitVector(destination.Latitude, destination.Longitude);
-        var dot = Math.Clamp(start.X * end.X + start.Y * end.Y + start.Z * end.Z, -1, 1);
-        var angle = Math.Acos(dot);
+        // Calculate distance once, then sample each fraction through the shared spherical implementation.
+        var angle = _geographicCalculator.CalculateAngularDistance(
+            origin.Latitude, origin.Longitude, destination.Latitude, destination.Longitude);
         var points = new List<RoutePointDto>(RouteSegments + 1);
 
         // Include both endpoints by producing one more point than the configured segment count.
         for (var index = 0; index <= RouteSegments; index++)
         {
             var fraction = index / (double)RouteSegments;
-            double x;
-            double y;
-            double z;
-            if (angle < 1e-10)
-            {
-                (x, y, z) = start;
-            }
-            else
-            {
-                var denominator = Math.Sin(angle);
-                var startWeight = Math.Sin((1 - fraction) * angle) / denominator;
-                var endWeight = Math.Sin(fraction * angle) / denominator;
-                x = startWeight * start.X + endWeight * end.X;
-                y = startWeight * start.Y + endWeight * end.Y;
-                z = startWeight * start.Z + endWeight * end.Z;
-            }
-
-            points.Add(new RoutePointDto(
-                RadiansToDegrees(Math.Atan2(z, Math.Sqrt(x * x + y * y))),
-                RadiansToDegrees(Math.Atan2(y, x))));
+            var point = _geographicCalculator.InterpolateGreatCircle(
+                origin.Latitude, origin.Longitude, destination.Latitude, destination.Longitude, fraction);
+            points.Add(new RoutePointDto(point.Latitude, point.Longitude));
         }
 
         return (points, angle);
-    }
-
-    /// <summary>
-    /// Converts a geographic coordinate into a three-dimensional unit vector.
-    /// </summary>
-    /// <param name="latitude">Latitude in degrees.</param>
-    /// <param name="longitude">Longitude in degrees.</param>
-    /// <returns>The corresponding Cartesian unit vector.</returns>
-    private static (double X, double Y, double Z) ToUnitVector(double latitude, double longitude)
-    {
-        // Convert degrees before applying the standard spherical-to-Cartesian transform.
-        var latitudeRadians = DegreesToRadians(latitude);
-        var longitudeRadians = DegreesToRadians(longitude);
-        var latitudeCosine = Math.Cos(latitudeRadians);
-        return (
-            latitudeCosine * Math.Cos(longitudeRadians),
-            latitudeCosine * Math.Sin(longitudeRadians),
-            Math.Sin(latitudeRadians));
     }
 
     /// <summary>
@@ -221,25 +189,4 @@ public sealed class AirportRouteService : IAirportRouteService
         return longitude;
     }
 
-    /// <summary>
-    /// Converts an angle from degrees to radians.
-    /// </summary>
-    /// <param name="degrees">Angle in degrees.</param>
-    /// <returns>The equivalent angle in radians.</returns>
-    private static double DegreesToRadians(double degrees)
-    {
-        // Trigonometric functions in the base class library consume radians.
-        return degrees * Math.PI / 180;
-    }
-
-    /// <summary>
-    /// Converts an angle from radians to degrees.
-    /// </summary>
-    /// <param name="radians">Angle in radians.</param>
-    /// <returns>The equivalent angle in degrees.</returns>
-    private static double RadiansToDegrees(double radians)
-    {
-        // Route DTOs expose conventional geographic degrees to their consumers.
-        return radians * 180 / Math.PI;
-    }
 }

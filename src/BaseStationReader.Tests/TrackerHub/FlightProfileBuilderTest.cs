@@ -1,4 +1,5 @@
 using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.Tests.TrackerHub;
@@ -12,7 +13,7 @@ public class FlightProfileBuilderTest
     [TestMethod]
     public void BuildOrdersAndSummarisesProfile()
     {
-        var builder = new FlightProfileBuilder(null, null);
+        var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
         var start = new DateTime(2026, 7, 17, 10, 0, 0, DateTimeKind.Utc);
         FlightProfilePointDto[] points =
         [
@@ -43,7 +44,7 @@ public class FlightProfileBuilderTest
     [TestMethod]
     public void BuildHandlesMissingTelemetry()
     {
-        var builder = new FlightProfileBuilder(null, null);
+        var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
         var points = new[] { new FlightProfilePointDto { Timestamp = DateTime.UtcNow } };
 
         // Prepare a point with no altitude, distance, or coordinates.
@@ -64,7 +65,7 @@ public class FlightProfileBuilderTest
     [TestMethod]
     public void BuildCalculatesBearingFromReceiver()
     {
-        var builder = new FlightProfileBuilder(51.4700, -0.4543);
+        var builder = new FlightProfileBuilder(51.4700, -0.4543, new GeographicCalculator());
         var points = new[]
         {
             new FlightProfilePointDto

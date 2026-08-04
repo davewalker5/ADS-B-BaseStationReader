@@ -1,4 +1,5 @@
 using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.History;
 
 namespace BaseStationReader.Tests.TrackerHub;
@@ -12,7 +13,7 @@ public class FlightPathBuilderTest
     [TestMethod]
     public void BuildProjectsAndSummarisesPath()
     {
-        var builder = new FlightPathBuilder(51.47, -0.454);
+        var builder = new FlightPathBuilder(51.47, -0.454, new GeographicCalculator());
         var timestamp = new DateTime(2026, 7, 17, 12, 0, 0, DateTimeKind.Utc);
         FlightProfilePointDto[] points =
         [
@@ -41,7 +42,7 @@ public class FlightPathBuilderTest
     [TestMethod]
     public void BuildDeduplicatesAndSegmentsPath()
     {
-        var builder = new FlightPathBuilder(null, null);
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
         var timestamp = DateTime.UtcNow;
         var duplicate = new FlightProfilePointDto { Timestamp = timestamp, Latitude = 51m, Longitude = -1m, Altitude = 5000, Distance = 10 };
         FlightProfilePointDto[] points =
@@ -66,7 +67,7 @@ public class FlightPathBuilderTest
     [TestMethod]
     public void BuildRejectsInvalidPositions()
     {
-        var builder = new FlightPathBuilder(null, null);
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
         FlightProfilePointDto[] points =
         [
             new() { Timestamp = DateTime.UtcNow, Latitude = null, Longitude = -1, Altitude = 1000, Distance = 2 },

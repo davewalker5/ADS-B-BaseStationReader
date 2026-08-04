@@ -1,4 +1,5 @@
 using BaseStationReader.Entities.History;
+using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.BusinessLogic.Tracking;
@@ -9,28 +10,39 @@ namespace BaseStationReader.BusinessLogic.Tracking;
 public sealed class FlightProfileBuilder : IFlightProfileBuilder
 {
     private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
+    private readonly IGeographicCalculator _geographicCalculator;
 
     /// <summary>
     /// Initialises profile preparation with fixed receiver coordinates.
     /// </summary>
     /// <param name="receiverLatitude">Receiver latitude in degrees.</param>
     /// <param name="receiverLongitude">Receiver longitude in degrees.</param>
-    public FlightProfileBuilder(double? receiverLatitude, double? receiverLongitude)
+    public FlightProfileBuilder(
+        double? receiverLatitude,
+        double? receiverLongitude,
+        IGeographicCalculator geographicCalculator)
     {
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
+
         // Bearing enrichment is optional because older configurations may omit receiver coordinates.
         _receiverPosition = () => (receiverLatitude, receiverLongitude);
+        _geographicCalculator = geographicCalculator;
     }
 
     /// <summary>
     /// Initialises profile preparation with the current receiver-position provider.
     /// </summary>
     /// <param name="receiverPositionProvider">Provides coordinates that can change with the active tracking profile.</param>
-    public FlightProfileBuilder(IReceiverPositionProvider receiverPositionProvider)
+    public FlightProfileBuilder(
+        IReceiverPositionProvider receiverPositionProvider,
+        IGeographicCalculator geographicCalculator)
     {
         ArgumentNullException.ThrowIfNull(receiverPositionProvider);
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
 
         // Resolve the position for each build so a newly applied tracking profile is observed immediately.
         _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
+        _geographicCalculator = geographicCalculator;
     }
 
     /// <inheritdoc />
@@ -92,42 +104,18 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
         // All four coordinates are required for a meaningful great-circle bearing.
         var receiverPosition = _receiverPosition();
         if (!receiverPosition.Latitude.HasValue || !receiverPosition.Longitude.HasValue ||
-            !latitude.HasValue || !longitude.HasValue)
+            !latitude.HasValue || !longitude.HasValue ||
+            !_geographicCalculator.IsValidCoordinate(receiverPosition.Latitude.Value, receiverPosition.Longitude.Value) ||
+            !_geographicCalculator.IsValidCoordinate((double)latitude.Value, (double)longitude.Value))
         {
             return null;
         }
 
-        // Apply the initial great-circle bearing formula using radians.
-        var receiverLatitude = DegreesToRadians(receiverPosition.Latitude.Value);
-        var positionLatitude = DegreesToRadians((double)latitude.Value);
-        var longitudeDifference = DegreesToRadians((double)longitude.Value - receiverPosition.Longitude.Value);
-        var y = Math.Sin(longitudeDifference) * Math.Cos(positionLatitude);
-        var x = Math.Cos(receiverLatitude) * Math.Sin(positionLatitude) -
-                Math.Sin(receiverLatitude) * Math.Cos(positionLatitude) * Math.Cos(longitudeDifference);
-
-        // Normalise atan2's signed result into the conventional zero-to-360-degree range.
-        return (RadiansToDegrees(Math.Atan2(y, x)) + 360) % 360;
-    }
-
-    /// <summary>
-    /// Converts an angle from degrees to radians.
-    /// </summary>
-    /// <param name="degrees">Angle in degrees.</param>
-    /// <returns>The equivalent angle in radians.</returns>
-    private static double DegreesToRadians(double degrees)
-    {
-        // Trigonometric functions in the base class library consume radians.
-        return degrees * Math.PI / 180;
-    }
-
-    /// <summary>
-    /// Converts an angle from radians to degrees.
-    /// </summary>
-    /// <param name="radians">Angle in radians.</param>
-    /// <returns>The equivalent angle in degrees.</returns>
-    private static double RadiansToDegrees(double radians)
-    {
-        // Convert the calculated bearing back into conventional display-independent degrees.
-        return radians * 180 / Math.PI;
+        // Delegate bearing semantics to the shared geographic calculator.
+        return _geographicCalculator.CalculateInitialBearing(
+            receiverPosition.Latitude.Value,
+            receiverPosition.Longitude.Value,
+            (double)latitude.Value,
+            (double)longitude.Value);
     }
 }

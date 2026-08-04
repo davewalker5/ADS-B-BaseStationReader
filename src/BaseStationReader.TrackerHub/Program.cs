@@ -6,9 +6,11 @@ using BaseStationReader.BusinessLogic.Configuration;
 using BaseStationReader.BusinessLogic.Logging;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Tracking;
+using BaseStationReader.BusinessLogic.Geometry;
 using Microsoft.EntityFrameworkCore;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
+using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.BusinessLogic.Messages;
 using BaseStationReader.TrackerHub.Logic;
@@ -156,10 +158,14 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.Configure<ScheduleOptions>(builder.Configuration.GetSection("ApplicationSettings"));
                 builder.Services.AddPooledDbContextFactory<BaseStationReaderDbContext>(options =>
                     options.UseSqlite(connectionString));
+                builder.Services.AddSingleton<IGeographicCalculator, GeographicCalculator>();
                 builder.Services.AddSingleton<IReceiverPositionProvider>(runtime);
-                builder.Services.AddSingleton<IFlightProfileBuilder>(new FlightProfileBuilder(runtime));
-                builder.Services.AddSingleton<IFlightPathBuilder>(new FlightPathBuilder(runtime));
-                builder.Services.AddSingleton<IRadarProjectionService>(new RadarProjectionService(runtime));
+                builder.Services.AddSingleton<IFlightProfileBuilder>(provider =>
+                    new FlightProfileBuilder(runtime, provider.GetRequiredService<IGeographicCalculator>()));
+                builder.Services.AddSingleton<IFlightPathBuilder>(provider =>
+                    new FlightPathBuilder(runtime, provider.GetRequiredService<IGeographicCalculator>()));
+                builder.Services.AddSingleton<IRadarProjectionService>(provider =>
+                    new RadarProjectionService(runtime, provider.GetRequiredService<IGeographicCalculator>()));
                 builder.Services.AddSingleton<IPositionDensityAggregator, PositionDensityAggregator>();
                 builder.Services.AddSingleton<IPositionDensitySnapshotMerger, PositionDensitySnapshotMerger>();
                 builder.Services.AddScoped<ITrackingSessionQueryService, TrackingSessionQueryService>();

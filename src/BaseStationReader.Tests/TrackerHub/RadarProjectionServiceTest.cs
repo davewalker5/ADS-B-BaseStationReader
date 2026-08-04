@@ -1,3 +1,4 @@
+using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.Entities.Hub;
 using BaseStationReader.TrackerHub.Services;
 
@@ -12,7 +13,7 @@ public class RadarProjectionServiceTest
     [TestMethod]
     public void ProjectConvertsBearingAndRangeToRadarCoordinates()
     {
-        var service = new RadarProjectionService(0, 0);
+        var service = new RadarProjectionService(0, 0, new GeographicCalculator());
         var north = Aircraft("NORTH1", 0.1m, 0m, 25);
         var east = Aircraft("EAST01", 0m, 0.1m, 25);
 
@@ -34,7 +35,7 @@ public class RadarProjectionServiceTest
     [TestMethod]
     public void ProjectRejectsIncompletePositionData()
     {
-        var service = new RadarProjectionService(51.47, -0.45);
+        var service = new RadarProjectionService(51.47, -0.45, new GeographicCalculator());
         var aircraft = Aircraft("EMPTY1", null, null, 10);
 
         // The radar must not place an incomplete target at the receiver origin.
@@ -50,7 +51,7 @@ public class RadarProjectionServiceTest
     [TestMethod]
     public void ProjectCoordinatesRescalesExistingTrailPoint()
     {
-        var service = new RadarProjectionService(0, 0);
+        var service = new RadarProjectionService(0, 0, new GeographicCalculator());
 
         // The same eastbound point should halve its screen radius when maximum range doubles.
         var shortRange = service.ProjectCoordinates(25, 90, 50);

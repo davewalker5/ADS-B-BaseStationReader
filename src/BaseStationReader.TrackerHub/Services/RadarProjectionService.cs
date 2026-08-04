@@ -1,6 +1,7 @@
 #nullable enable
 
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.TrackerHub.Models;
 
@@ -12,32 +13,53 @@ namespace BaseStationReader.TrackerHub.Services;
 public sealed class RadarProjectionService : IRadarProjectionService
 {
     private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
+    private readonly IGeographicCalculator _geographicCalculator;
 
     /// <summary>
     /// Initialises radar projection around the configured receiver.
     /// </summary>
     /// <param name="receiverLatitude">Receiver latitude in degrees.</param>
     /// <param name="receiverLongitude">Receiver longitude in degrees.</param>
-    public RadarProjectionService(double? receiverLatitude, double? receiverLongitude)
+    public RadarProjectionService(
+        double? receiverLatitude,
+        double? receiverLongitude,
+        IGeographicCalculator geographicCalculator)
     {
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
+
         _receiverPosition = () => (receiverLatitude, receiverLongitude);
+        _geographicCalculator = geographicCalculator;
     }
 
-    public RadarProjectionService(IReceiverPositionProvider receiverPositionProvider)
-        => _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
+    /// <summary>
+    /// Initialises radar projection with a dynamic receiver-position provider.
+    /// </summary>
+    public RadarProjectionService(
+        IReceiverPositionProvider receiverPositionProvider,
+        IGeographicCalculator geographicCalculator)
+    {
+        ArgumentNullException.ThrowIfNull(receiverPositionProvider);
+        ArgumentNullException.ThrowIfNull(geographicCalculator);
+
+        // Resolve receiver coordinates for each projection so active profile changes are honoured.
+        _receiverPosition = () => receiverPositionProvider.ReceiverPosition;
+        _geographicCalculator = geographicCalculator;
+    }
 
     /// <inheritdoc />
     public RadarPointDto? Project(TrackedAircraftDto aircraft, double maximumRange)
     {
         var receiverPosition = _receiverPosition();
         if (maximumRange <= 0 || aircraft.Distance is null || aircraft.Latitude is null || aircraft.Longitude is null ||
-            receiverPosition.Latitude is null || receiverPosition.Longitude is null)
+            receiverPosition.Latitude is null || receiverPosition.Longitude is null ||
+            !_geographicCalculator.IsValidCoordinate(receiverPosition.Latitude.Value, receiverPosition.Longitude.Value) ||
+            !_geographicCalculator.IsValidCoordinate((double)aircraft.Latitude.Value, (double)aircraft.Longitude.Value))
         {
             // Distance and both endpoints are required to place a target reliably.
             return null;
         }
 
-        var bearing = CalculateBearing(
+        var bearing = _geographicCalculator.CalculateInitialBearing(
             receiverPosition.Latitude.Value,
             receiverPosition.Longitude.Value,
             (double)aircraft.Latitude.Value,
@@ -80,34 +102,4 @@ public sealed class RadarProjectionService : IRadarProjectionService
         return (radius * Math.Sin(angle), -radius * Math.Cos(angle));
     }
 
-    /// <summary>
-    /// Calculates the initial great-circle bearing between two coordinates.
-    /// </summary>
-    /// <param name="fromLatitude">Starting latitude in degrees.</param>
-    /// <param name="fromLongitude">Starting longitude in degrees.</param>
-    /// <param name="toLatitude">Destination latitude in degrees.</param>
-    /// <param name="toLongitude">Destination longitude in degrees.</param>
-    /// <returns>Bearing clockwise from true north in the range zero to 360 degrees.</returns>
-    private static double CalculateBearing(double fromLatitude, double fromLongitude, double toLatitude, double toLongitude)
-    {
-        var fromLat = DegreesToRadians(fromLatitude);
-        var toLat = DegreesToRadians(toLatitude);
-        var deltaLongitude = DegreesToRadians(toLongitude - fromLongitude);
-
-        // Use the standard initial-bearing formula so projection remains correct over realistic receiver ranges.
-        var y = Math.Sin(deltaLongitude) * Math.Cos(toLat);
-        var x = Math.Cos(fromLat) * Math.Sin(toLat) - Math.Sin(fromLat) * Math.Cos(toLat) * Math.Cos(deltaLongitude);
-        return (Math.Atan2(y, x) * 180d / Math.PI + 360d) % 360d;
-    }
-
-    /// <summary>
-    /// Converts degrees to radians for trigonometric calculations.
-    /// </summary>
-    /// <param name="degrees">Angle in degrees.</param>
-    /// <returns>The equivalent angle in radians.</returns>
-    private static double DegreesToRadians(double degrees)
-    {
-        // Keeping conversion local makes the bearing calculation explicit and independently testable.
-        return degrees * Math.PI / 180d;
-    }
 }
