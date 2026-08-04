@@ -7,6 +7,8 @@ namespace BaseStationReader.BusinessLogic.Tracking;
 /// </summary>
 public static class PositionDensityBoundsFactory
 {
+    private const double DefaultMaximumDistance = 50d;
+
     /// <summary>
     /// Creates session-centred bounds from receiver settings.
     /// </summary>
@@ -27,7 +29,7 @@ public static class PositionDensityBoundsFactory
             return new PositionDensityBounds(-90d, 90d, -180d, 180d);
         }
 
-        var range = maximumDistance is > 0 ? maximumDistance.Value : 250d;
+        var range = maximumDistance is > 0 ? maximumDistance.Value : DefaultMaximumDistance;
         var latitudeRadius = range / 60d;
         var longitudeScale = Math.Max(Math.Cos(receiverLatitude.Value * Math.PI / 180d), 0.01d);
         var longitudeRadius = Math.Min(range / (60d * longitudeScale), 180d);
