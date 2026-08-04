@@ -3,19 +3,20 @@
 using BaseStationReader.Data;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
-using BaseStationReader.TrackerHub.Models;
+using BaseStationReader.Interfaces.Tracking;
 using Microsoft.EntityFrameworkCore;
 
-namespace BaseStationReader.TrackerHub.Services;
+namespace BaseStationReader.BusinessLogic.Tracking;
 
 /// <summary>
 /// Combines live aircraft, persisted session observations, local references, and transient cache state.
 /// </summary>
 public sealed class LiveTrackerStatusService(
     IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-    ITransientResponseCache cache,
-    TrackingRuntime runtime,
+    ITransientReferenceStatusProvider transientStatus,
+    ILiveTrackerStatisticsProvider statistics,
     ITrackerLogger logger) : ILiveTrackerStatusService
 {
     /// <inheritdoc />
@@ -62,8 +63,10 @@ public sealed class LiveTrackerStatusService(
             .Select(item => item.Callsign)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Count();
-        var transient = cache.GetReferenceLookupStatus();
+        // Read process-memory resolution counts through a narrow contract without depending on cache implementation.
+        var transient = transientStatus.GetReferenceLookupStatus();
 
+        // Combine persisted session identity, live statistics, and resolution counts into one reusable snapshot.
         return new LiveTrackerStatusDto
         {
             IsRunning = isRunning,
@@ -71,13 +74,13 @@ public sealed class LiveTrackerStatusService(
             ProfileName = session.ProfileName,
             Notes = session.Notes,
             CurrentlyTracked = liveAircraft.Length,
-            AircraftAdded = runtime.AircraftAdded,
-            AircraftRemoved = runtime.AircraftRemoved,
-            PositionRecords = runtime.PositionRecordsWritten,
-            MessagesProcessed = runtime.MessagesProcessed,
-            DistinctAircraft = runtime.DistinctAircraft,
-            DistinctCallsigns = runtime.DistinctCallsigns,
-            AircraftWithPositionRecords = runtime.AircraftWithPositionRecords,
+            AircraftAdded = statistics.AircraftAdded,
+            AircraftRemoved = statistics.AircraftRemoved,
+            PositionRecords = statistics.PositionRecordsWritten,
+            MessagesProcessed = statistics.MessagesProcessed,
+            DistinctAircraft = statistics.DistinctAircraft,
+            DistinctCallsigns = statistics.DistinctCallsigns,
+            AircraftWithPositionRecords = statistics.AircraftWithPositionRecords,
             AircraftLocallyResolved = localAddresses,
             AircraftUnresolved = Math.Max(0, addresses.Length - localAddresses),
             FlightsLocallyResolved = localCallsigns,

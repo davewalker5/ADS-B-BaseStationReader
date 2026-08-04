@@ -1,4 +1,4 @@
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.Tracking;
 
 /// <summary>
 /// Summarises successful API reference results still held in the process-only cache.

@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
+using BaseStationReader.Entities.Tracking;
 using BaseStationReader.TrackerHub.Models;
 
 namespace BaseStationReader.TrackerHub.Services;

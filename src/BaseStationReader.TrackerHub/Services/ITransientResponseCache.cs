@@ -1,17 +1,13 @@
+using BaseStationReader.Interfaces.Tracking;
+
 namespace BaseStationReader.TrackerHub.Services;
 
 /// <summary>
 /// Caches transient lookup responses in the current process only.
 /// Implementations must never serialize or persist request or response data to a database or file.
 /// </summary>
-public interface ITransientResponseCache
+public interface ITransientResponseCache : ITransientReferenceStatusProvider
 {
-    /// <summary>
-    /// Summarises successful reference lookups that remain in the process-only cache.
-    /// </summary>
-    /// <returns>Counts of distinct transient aircraft and flight results.</returns>
-    Models.TransientLookupStatus GetReferenceLookupStatus();
-
     /// <summary>
     /// Returns an in-memory response or creates and temporarily retains one.
     /// </summary>

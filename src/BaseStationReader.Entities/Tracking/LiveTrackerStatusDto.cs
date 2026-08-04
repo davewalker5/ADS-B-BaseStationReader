@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace BaseStationReader.TrackerHub.Models;
+namespace BaseStationReader.Entities.Tracking;
 
 /// <summary>
 /// Describes the read-only operational state of the current observation session.

@@ -8,7 +8,7 @@ using BaseStationReader.Interfaces.Tracking;
 namespace BaseStationReader.TrackerHub.Services;
 
 /// <summary>Stable facade around the controller that may be replaced when a profile changes.</summary>
-public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvider
+public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvider, ILiveTrackerStatisticsProvider
 {
     private readonly Func<TrackerApplicationSettings, string?, ITrackerController> _factory;
     private readonly SemaphoreSlim _gate = new(1, 1);
