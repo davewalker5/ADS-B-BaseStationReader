@@ -12,5 +12,5 @@ public interface IPositionDensitySnapshotMerger
     /// <summary>
     /// Merges a refreshed calculation without allowing occupied cells or recorded counts to disappear.
     /// </summary>
-    PositionDensityDto? Merge(PositionDensityDto? current, PositionDensityDto? refreshed);
+    PositionDensity? Merge(PositionDensity? current, PositionDensity? refreshed);
 }

@@ -10,7 +10,7 @@ public interface IPositionDensityAggregator
     /// <summary>
     /// Builds renderer-neutral density bins for a single observation session.
     /// </summary>
-    PositionDensityDto Aggregate(
+    PositionDensity Aggregate(
         int sessionId,
         IReadOnlyCollection<PositionDensityCoordinate> coordinates,
         PositionDensityBounds? fixedBounds = null);

@@ -301,12 +301,12 @@
 @code {
 #nullable enable
     private ObservationSessionFilter _filter = new();
-    private IReadOnlyList<ObservationSessionOptionDto> _sessions = [];
+    private IReadOnlyList<ObservationSessionOption> _sessions = [];
     private PagedResult<ObservationSessionDto> _result = new() { Page = 1, PageSize = 25 };
     private bool _loading;
     private string? _error;
     private ObservationSessionDto? _notesSession;
-    private ObservationSessionSummaryDto? _analysis;
+    private ObservationSessionSummary? _analysis;
     private string? _analysisError;
     private bool _analysisLoading;
     private int? _analysisSessionId;
@@ -382,7 +382,7 @@
         }
     }
 
-    private static string FormatSessionOption(ObservationSessionOptionDto session)
+    private static string FormatSessionOption(ObservationSessionOption session)
         => $"{session.ProfileName} - {DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime():dd-MMM-yyyy - HH:mm:ss}";
 
     private static string FormatDateTime(DateTime value)
@@ -530,7 +530,7 @@
         }
     }
 
-    private static IEnumerable<(string Label, int Value)> ObservationMetrics(ObservationSessionSummaryDto summary) =>
+    private static IEnumerable<(string Label, int Value)> ObservationMetrics(ObservationSessionSummary summary) =>
     [
         ("Observation records", summary.ObservationRecords),
         ("Distinct aircraft", summary.DistinctAircraft),
@@ -539,14 +539,14 @@
         ("Position records", summary.PositionRecords)
     ];
 
-    private static IEnumerable<(string Label, int Value, string? Detail)> IdentificationMetrics(ObservationSessionSummaryDto summary) =>
+    private static IEnumerable<(string Label, int Value, string? Detail)> IdentificationMetrics(ObservationSessionSummary summary) =>
     [
         ("Aircraft identified", summary.IdentifiedAircraft, $"{summary.AircraftResolutionPercentage:N1}% resolved"),
         ("Flights resolved", summary.ResolvedFlights, $"{summary.FlightResolutionPercentage:N1}% resolved"),
         ("Unidentified aircraft", summary.UnidentifiedAircraft, null)
     ];
 
-    private static IEnumerable<(string Label, ObservationHighlightDto? Item, string Value)> Highlights(ObservationSessionSummaryDto summary) =>
+    private static IEnumerable<(string Label, ObservationHighlight? Item, string Value)> Highlights(ObservationSessionSummary summary) =>
     [
         ("Lowest altitude", summary.LowestAltitude, FormatHighlightAltitude(summary.LowestAltitude)),
         ("Highest altitude", summary.HighestAltitude, FormatHighlightAltitude(summary.HighestAltitude)),
@@ -562,13 +562,13 @@
             ? $"{(int)value.TotalHours}h {value.Minutes}m {value.Seconds}s"
             : value.TotalMinutes >= 1 ? $"{value.Minutes}m {value.Seconds}s" : $"{Math.Max(0, value.Seconds)}s";
 
-    private static string FormatLocation(ObservationSessionSummaryDto summary)
+    private static string FormatLocation(ObservationSessionSummary summary)
         => summary.ReceiverLatitude.HasValue && summary.ReceiverLongitude.HasValue
             ? $"{summary.ReceiverLatitude:F6}, {summary.ReceiverLongitude:F6}" +
               (summary.ReceiverElevation.HasValue ? $" · {summary.ReceiverElevation:N0} ft" : string.Empty)
             : "Not configured";
 
-    private static string FormatLimits(ObservationSessionSummaryDto summary)
+    private static string FormatLimits(ObservationSessionSummary summary)
     {
         var altitude = summary.MinimumAltitudeLimit.HasValue || summary.MaximumAltitudeLimit.HasValue
             ? $"{summary.MinimumAltitudeLimit?.ToString("N0") ?? "Any"}–{summary.MaximumAltitudeLimit?.ToString("N0") ?? "Any"} ft"
@@ -579,15 +579,15 @@
         return $"{altitude} · {distance}";
     }
 
-    private static string FormatHighlightAltitude(ObservationHighlightDto? item)
+    private static string FormatHighlightAltitude(ObservationHighlight? item)
         => item?.Altitude is decimal value ? $"{value:N0} ft" : "—";
 
-    private static string FormatHighlightDistance(ObservationHighlightDto? item)
+    private static string FormatHighlightDistance(ObservationHighlight? item)
         => item?.Distance is double value ? $"{value:N1} nm" : "—";
 
-    private static string FormatHighlightDuration(ObservationHighlightDto? item)
+    private static string FormatHighlightDuration(ObservationHighlight? item)
         => item?.Duration is TimeSpan value ? FormatDuration(value) : "—";
 
-    private static string DisplayAircraft(ObservationHighlightDto item)
+    private static string DisplayAircraft(ObservationHighlight item)
         => string.IsNullOrWhiteSpace(item.Callsign) ? item.Address : $"{item.Callsign} · {item.Address}";
 }

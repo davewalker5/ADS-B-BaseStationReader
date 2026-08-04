@@ -77,7 +77,7 @@
 
     private string _originIata = string.Empty;
     private string _destinationIata = string.Empty;
-    private RoutePlotDto? _route;
+    private RoutePlot? _route;
     private string? _warning;
     private bool _loading;
     private bool _parametersHandled;
@@ -150,7 +150,7 @@
     private static bool IsIata(string value)
         => value.Length == 3 && value.All(character => character is >= 'A' and <= 'Z');
 
-    private static string FormatCoordinates(RouteAirportDto airport)
+    private static string FormatCoordinates(RouteAirport airport)
         => $"{Math.Abs(airport.Latitude):0.0000}°{(airport.Latitude >= 0 ? "N" : "S")}, " +
            $"{Math.Abs(airport.Longitude):0.0000}°{(airport.Longitude >= 0 ? "E" : "W")}";
 }

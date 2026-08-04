@@ -1,13 +1,15 @@
 namespace BaseStationReader.Entities.History;
 
 /// <summary>
-/// Represents a single position at the boundary of a tracking session.
+/// Represents one chronologically ordered point in a historical flight profile.
 /// </summary>
-public sealed class PositionSummaryDto
+public sealed class FlightProfilePoint
 {
+    public int Sequence { get; init; }
     public DateTime Timestamp { get; init; }
     public decimal? Latitude { get; init; }
     public decimal? Longitude { get; init; }
     public decimal? Altitude { get; init; }
     public double? Distance { get; init; }
+    public double? Bearing { get; init; }
 }

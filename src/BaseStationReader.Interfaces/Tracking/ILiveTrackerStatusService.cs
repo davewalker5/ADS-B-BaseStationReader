@@ -18,7 +18,7 @@ public interface ILiveTrackerStatusService
     /// <param name="isRunning">Whether tracking is currently active.</param>
     /// <param name="cancellationToken">Cancels the database reads.</param>
     /// <returns>The operational status snapshot, or <see langword="null"/> before a session exists.</returns>
-    Task<LiveTrackerStatusDto?> GetAsync(
+    Task<LiveTrackerStatus?> GetAsync(
         int? sessionId,
         IReadOnlyCollection<TrackedAircraftDto> aircraft,
         bool isRunning,

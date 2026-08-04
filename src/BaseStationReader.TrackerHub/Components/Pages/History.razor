@@ -109,8 +109,8 @@
     public int? SessionId { get; set; }
 
     private TrackingSessionFilter _filter = new();
-    private IReadOnlyList<ObservationSessionOptionDto> _sessions = [];
-    private PagedResult<TrackingSessionSummaryDto> _result = new() { Page = 1, PageSize = 10 };
+    private IReadOnlyList<ObservationSessionOption> _sessions = [];
+    private PagedResult<TrackingSessionSummary> _result = new() { Page = 1, PageSize = 10 };
     private bool _loading;
     private string? _error;
     private bool _parametersHandled;
@@ -238,7 +238,7 @@
     /// <summary>
     /// Formats a session for the historical database selector.
     /// </summary>
-    private static string FormatSession(ObservationSessionOptionDto session)
+    private static string FormatSession(ObservationSessionOption session)
     {
         return $"{session.ProfileName} - {session.StartedAtUtc.ToLocalTime():dd-MMM-yyyy - HH:mm:ss}";
     }

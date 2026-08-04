@@ -7,7 +7,7 @@ namespace BaseStationReader.Entities.History;
 /// <summary>
 /// Contains the read-only historical detail for one tracking record.
 /// </summary>
-public sealed class TrackingSessionDetailDto
+public sealed class TrackingSessionDetail
 {
     public int Id { get; init; }
     public string Address { get; init; } = string.Empty;
@@ -29,8 +29,8 @@ public sealed class TrackingSessionDetailDto
     public decimal? MaximumAltitude { get; init; }
     public double? MinimumDistance { get; init; }
     public double? MaximumDistance { get; init; }
-    public PositionSummaryDto? FirstPosition { get; init; }
-    public PositionSummaryDto? FinalPosition { get; init; }
+    public PositionSummary? FirstPosition { get; init; }
+    public PositionSummary? FinalPosition { get; init; }
     public string Registration { get; init; } = string.Empty;
     public int? Manufactured { get; init; }
     public int? AircraftAge { get; init; }

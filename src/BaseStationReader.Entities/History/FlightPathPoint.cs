@@ -3,7 +3,7 @@ namespace BaseStationReader.Entities.History;
 /// <summary>
 /// Represents one renderer-neutral point in a prepared geographic flight path.
 /// </summary>
-public sealed class FlightPathPointDto
+public sealed class FlightPathPoint
 {
     public int Sequence { get; init; }
     public int Segment { get; init; }

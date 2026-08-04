@@ -15,9 +15,9 @@ public interface IFlightProfileBuilder
     /// <param name="callsign">The aircraft callsign, when known.</param>
     /// <param name="points">The raw persisted position projections.</param>
     /// <returns>A renderer-neutral flight profile.</returns>
-    FlightProfileDto Build(
+    FlightProfile Build(
         int trackingRecordId,
         string address,
         string callsign,
-        IEnumerable<FlightProfilePointDto> points);
+        IEnumerable<FlightProfilePoint> points);
 }

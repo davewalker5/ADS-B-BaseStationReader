@@ -20,7 +20,7 @@ public sealed class LiveTrackerStatusService(
     ITrackerLogger logger) : ILiveTrackerStatusService
 {
     /// <inheritdoc />
-    public async Task<LiveTrackerStatusDto?> GetAsync(
+    public async Task<LiveTrackerStatus?> GetAsync(
         int? sessionId,
         IReadOnlyCollection<TrackedAircraftDto> aircraft,
         bool isRunning,
@@ -73,7 +73,7 @@ public sealed class LiveTrackerStatusService(
         var transient = transientStatus.GetReferenceLookupStatus();
 
         // Combine persisted session identity, live statistics, and resolution counts into one reusable snapshot.
-        return new LiveTrackerStatusDto
+        return new LiveTrackerStatus
         {
             IsRunning = isRunning,
             StartedAtUtc = session.StartedAtUtc,

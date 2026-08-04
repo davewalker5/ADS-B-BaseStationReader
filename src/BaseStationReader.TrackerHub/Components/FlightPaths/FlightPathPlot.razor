@@ -36,7 +36,7 @@
     private string _sceneElementId => $"{_instanceId}-scene";
     private string _sceneLoadingElementId => $"{_instanceId}-scene-loading";
 
-    [Parameter, EditorRequired] public FlightPathDto Path { get; set; } = new();
+    [Parameter, EditorRequired] public FlightPath Path { get; set; } = new();
     [Parameter] public FlightPathColourMode ColourMode { get; set; } = FlightPathColourMode.Altitude;
     [Parameter] public string? GroundImageUrl { get; set; }
 

@@ -15,7 +15,7 @@ public class FlightProfileBuilderTest
     {
         var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
         var start = new DateTime(2026, 7, 17, 10, 0, 0, DateTimeKind.Utc);
-        FlightProfilePointDto[] points =
+        FlightProfilePoint[] points =
         [
             new() { Timestamp = start.AddMinutes(2), Altitude = 3000, Distance = 8 },
             new() { Timestamp = start, Altitude = 1000, Distance = 12 },
@@ -45,7 +45,7 @@ public class FlightProfileBuilderTest
     public void BuildHandlesMissingTelemetry()
     {
         var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
-        var points = new[] { new FlightProfilePointDto { Timestamp = DateTime.UtcNow } };
+        var points = new[] { new FlightProfilePoint { Timestamp = DateTime.UtcNow } };
 
         // Prepare a point with no altitude, distance, or coordinates.
         var profile = builder.Build(7, "000001", string.Empty, points);
@@ -68,7 +68,7 @@ public class FlightProfileBuilderTest
         var builder = new FlightProfileBuilder(51.4700, -0.4543, new GeographicCalculator());
         var points = new[]
         {
-            new FlightProfilePointDto
+            new FlightProfilePoint
             {
                 Timestamp = DateTime.UtcNow,
                 Latitude = 51.5000m,

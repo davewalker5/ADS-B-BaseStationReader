@@ -15,7 +15,7 @@ public class FlightPathBuilderTest
     {
         var builder = new FlightPathBuilder(51.47, -0.454, new GeographicCalculator());
         var timestamp = new DateTime(2026, 7, 17, 12, 0, 0, DateTimeKind.Utc);
-        FlightProfilePointDto[] points =
+        FlightProfilePoint[] points =
         [
             new() { Timestamp = timestamp, Latitude = 51.47m, Longitude = -0.454m, Altitude = 1000, Distance = 4 },
             new() { Timestamp = timestamp.AddSeconds(30), Latitude = 51.48m, Longitude = -0.444m, Altitude = 2000, Distance = 5 }
@@ -44,8 +44,8 @@ public class FlightPathBuilderTest
     {
         var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
         var timestamp = DateTime.UtcNow;
-        var duplicate = new FlightProfilePointDto { Timestamp = timestamp, Latitude = 51m, Longitude = -1m, Altitude = 5000, Distance = 10 };
-        FlightProfilePointDto[] points =
+        var duplicate = new FlightProfilePoint { Timestamp = timestamp, Latitude = 51m, Longitude = -1m, Altitude = 5000, Distance = 10 };
+        FlightProfilePoint[] points =
         [
             duplicate,
             duplicate,
@@ -68,7 +68,7 @@ public class FlightPathBuilderTest
     public void BuildRejectsInvalidPositions()
     {
         var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
-        FlightProfilePointDto[] points =
+        FlightProfilePoint[] points =
         [
             new() { Timestamp = DateTime.UtcNow, Latitude = null, Longitude = -1, Altitude = 1000, Distance = 2 },
             new() { Timestamp = DateTime.UtcNow, Latitude = 91, Longitude = -1, Altitude = 1000, Distance = 2 }

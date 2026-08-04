@@ -13,7 +13,7 @@ public interface ITrackingSessionQueryService
     Task<int?> GetLatestSessionIdAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Builds a read-only summary from data persisted for one observation session.</summary>
-    Task<ObservationSessionSummaryDto?> GetObservationSessionSummaryAsync(
+    Task<ObservationSessionSummary?> GetObservationSessionSummaryAsync(
         int sessionId,
         CancellationToken cancellationToken = default);
 
@@ -23,7 +23,7 @@ public interface ITrackingSessionQueryService
     /// <param name="sessionId">The required current-session identifier.</param>
     /// <param name="cancellationToken">Cancels a superseded calculation.</param>
     /// <returns>The density model, or <see langword="null"/> if the session is unavailable.</returns>
-    Task<PositionDensityDto?> GetPositionDensityAsync(
+    Task<PositionDensity?> GetPositionDensityAsync(
         int sessionId,
         CancellationToken cancellationToken = default);
 
@@ -32,7 +32,7 @@ public interface ITrackingSessionQueryService
     /// </summary>
     /// <param name="cancellationToken">Cancels the database query.</param>
     /// <returns>Available sessions ordered from newest to oldest.</returns>
-    Task<IReadOnlyList<ObservationSessionOptionDto>> ListSessionsAsync(
+    Task<IReadOnlyList<ObservationSessionOption>> ListSessionsAsync(
         CancellationToken cancellationToken = default);
 
     /// <summary>Searches persisted observation sessions by session start date.</summary>
@@ -46,7 +46,7 @@ public interface ITrackingSessionQueryService
     /// <param name="filter">The requested search and page criteria.</param>
     /// <param name="cancellationToken">Cancels the database query.</param>
     /// <returns>One page of tracking-session summaries.</returns>
-    Task<PagedResult<TrackingSessionSummaryDto>> SearchAsync(
+    Task<PagedResult<TrackingSessionSummary>> SearchAsync(
         TrackingSessionFilter filter,
         CancellationToken cancellationToken = default);
 
@@ -56,7 +56,7 @@ public interface ITrackingSessionQueryService
     /// <param name="trackingRecordId">The tracking record identifier.</param>
     /// <param name="cancellationToken">Cancels the database query.</param>
     /// <returns>The detail, or <see langword="null"/> when the record does not exist.</returns>
-    Task<TrackingSessionDetailDto?> GetAsync(
+    Task<TrackingSessionDetail?> GetAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default);
 
@@ -66,7 +66,7 @@ public interface ITrackingSessionQueryService
     /// <param name="trackingRecordId">The tracking record identifier.</param>
     /// <param name="cancellationToken">Cancels the database query.</param>
     /// <returns>The flight profile, or <see langword="null"/> when the record does not exist.</returns>
-    Task<FlightProfileDto?> GetFlightProfileAsync(
+    Task<FlightProfile?> GetFlightProfileAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default);
 
@@ -76,7 +76,7 @@ public interface ITrackingSessionQueryService
     /// <param name="trackingRecordId">The tracking record identifier.</param>
     /// <param name="cancellationToken">Cancels the database query.</param>
     /// <returns>The flight path, or <see langword="null"/> when the record does not exist.</returns>
-    Task<FlightPathDto?> GetFlightPathAsync(
+    Task<FlightPath?> GetFlightPathAsync(
         int trackingRecordId,
         CancellationToken cancellationToken = default);
 }

@@ -5,7 +5,7 @@ namespace BaseStationReader.Entities.History;
 /// <summary>
 /// Represents one tracking record in the historical result list.
 /// </summary>
-public sealed class TrackingSessionSummaryDto
+public sealed class TrackingSessionSummary
 {
     public int Id { get; init; }
     public string Address { get; init; } = string.Empty;

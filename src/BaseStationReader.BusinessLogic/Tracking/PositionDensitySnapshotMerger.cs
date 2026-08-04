@@ -16,7 +16,7 @@ public sealed class PositionDensitySnapshotMerger : IPositionDensitySnapshotMerg
     /// <param name="current">The density snapshot already displayed for the current session.</param>
     /// <param name="refreshed">The latest complete persisted-position calculation.</param>
     /// <returns>A monotonic snapshot, or the refreshed result when the session has changed.</returns>
-    public PositionDensityDto? Merge(PositionDensityDto? current, PositionDensityDto? refreshed)
+    public PositionDensity? Merge(PositionDensity? current, PositionDensity? refreshed)
     {
         if (refreshed is null)
         {
@@ -42,7 +42,7 @@ public sealed class PositionDensitySnapshotMerger : IPositionDensitySnapshotMerg
             .OrderBy(bin => bin.Latitude)
             .ThenBy(bin => bin.Longitude)
             .ToArray();
-        return new PositionDensityDto
+        return new PositionDensity
         {
             SessionId = refreshed.SessionId,
             PositionCount = Math.Max(current.PositionCount, refreshed.PositionCount),

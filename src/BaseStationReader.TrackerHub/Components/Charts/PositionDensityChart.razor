@@ -57,7 +57,7 @@
     private IReadOnlyList<AxisTick> _latitudeTicks = [];
     private IReadOnlyList<AxisTick> _longitudeTicks = [];
 
-    [Parameter, EditorRequired] public PositionDensityDto Density { get; set; } = new();
+    [Parameter, EditorRequired] public PositionDensity Density { get; set; } = new();
 
     /// <summary>
     /// Rebuilds responsive SVG geometry whenever a recalculation supplies a new density model.
