@@ -10,14 +10,20 @@ namespace BaseStationReader.BusinessLogic.Database
     internal class TrackedAircraftWriter : ITrackedAircraftWriter
     {
         private readonly BaseStationReaderDbContext _context;
-        private readonly PropertyInfo[] _aircraftProperties = typeof(TrackedAircraft)
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(x => x.Name != "Id")
-            .ToArray();
+        private readonly PropertyInfo[] _aircraftProperties;
 
         public TrackedAircraftWriter(BaseStationReaderDbContext context)
         {
             _context = context;
+            // EF's mapped-property metadata contains scalar columns only. In particular, it excludes the
+            // Session navigation property, whose null value would otherwise clear SessionId during updates.
+            _aircraftProperties = context.Model.FindEntityType(typeof(TrackedAircraft))!
+                .GetProperties()
+                .Where(property => property.Name != nameof(TrackedAircraft.Id))
+                .Select(property => property.PropertyInfo)
+                .Where(property => property is not null)
+                .Cast<PropertyInfo>()
+                .ToArray();
         }
 
         /// <summary>

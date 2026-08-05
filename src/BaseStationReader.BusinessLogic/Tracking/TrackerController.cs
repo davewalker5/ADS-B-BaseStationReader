@@ -371,8 +371,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="position"></param>
         private void HandleAircraftEvent(TrackedAircraft aircraft, AircraftPosition position)
         {
-            // Associate the aircraft with the session that was active when this tracking run began.
-            aircraft.SessionId = _activeSession?.Id;
+            // Every observation belongs to the session created before tracking starts. Treat a missing session
+            // as an invalid lifecycle state rather than allowing unscoped data into the persistence queue.
+            var sessionId = _activeSession?.Id
+                ?? throw new InvalidOperationException("Aircraft observations cannot be queued without an active session.");
+            aircraft.SessionId = sessionId;
+            if (position != null)
+            {
+                // Positions are captured before this event reaches the session-aware controller, so add the
+                // in-memory routing value here before the position crosses the asynchronous writer boundary.
+                position.SessionId = sessionId;
+            }
 
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
             var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);

@@ -21,10 +21,24 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="address"></param>
         /// <returns></returns>
         public async Task<TrackedAircraft> GetActiveAircraftAsync(string address)
+            => await GetActiveAircraftAsync(address, null, matchSession: false);
+
+        /// <summary>
+        /// Get the active aircraft with the specified address in the specified observation session.
+        /// </summary>
+        public async Task<TrackedAircraft> GetActiveAircraftAsync(string address, int sessionId)
+            => await GetActiveAircraftAsync(address, sessionId, matchSession: true);
+
+        private async Task<TrackedAircraft> GetActiveAircraftAsync(
+            string address,
+            int? sessionId,
+            bool matchSession)
         {
             // Get the aircraft. This method is guaranteed to return the most recent record for a given aircraft
             // address
-            TrackedAircraft aircraft = await _writer.GetAsync(x => x.Address == address);
+            TrackedAircraft aircraft = matchSession
+                ? await _writer.GetAsync(x => x.Address == address && x.SessionId == sessionId)
+                : await _writer.GetAsync(x => x.Address == address);
 
             // If the last seen date has exceeded the time to lock timeout, this record should no longer be active
             if (aircraft != null && (DateTime.Now - aircraft.LastSeen).TotalMilliseconds >= _timeToLock)
