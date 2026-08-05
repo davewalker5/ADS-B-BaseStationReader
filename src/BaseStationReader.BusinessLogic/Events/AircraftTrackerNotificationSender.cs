@@ -1,4 +1,5 @@
 using BaseStationReader.Entities.Events;
+using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.Interfaces.Events;
@@ -42,10 +43,19 @@ namespace BaseStationReader.BusinessLogic.Events
             AircraftNotificationType type,
             EventHandler<AircraftNotificationEventArgs> handlers)
         {
-            if (CheckTrackingCriteria(aircraft))
+            var meetsTrackingCriteria = CheckTrackingCriteria(aircraft);
+            Logger.LogMessage(Severity.Verbose,
+                $"Sending {type} message for aircraft {aircraft.Address} {aircraft.Behaviour}");
+
+            // Every detected aircraft must reach the controller for session persistence. The criteria flag lets
+            // the controller keep position history and live tracking restricted to qualifying observations.
+            NotifySubscribers(sender, handlers, new AircraftNotificationEventArgs
             {
-                base.SendAircraftNotification(aircraft, previousPosition, sender, type, handlers);
-            }
+                Aircraft = aircraft,
+                Position = previousPosition,
+                NotificationType = type,
+                MeetsTrackingCriteria = meetsTrackingCriteria
+            });
         }
 
         /// <summary>
