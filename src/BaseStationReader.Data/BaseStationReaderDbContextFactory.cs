@@ -11,16 +11,24 @@ namespace BaseStationReader.Data
         private const string DefaultSettingsFile = "appsettings.json";
 
         /// <summary>
-        /// Create a context for the real database 
+        /// Creates a context for the real database using the default settings file.
         /// </summary>
-        /// <param name="args"></param>
-        /// <param name="defaultConfigFile"></param>
-        /// <returns></returns>
+        /// <param name="args">Design-time arguments.</param>
+        /// <returns>Configured database context.</returns>
         [ExcludeFromCodeCoverage]
         public BaseStationReaderDbContext CreateDbContext(string[] args)
+            => CreateDbContext(DefaultSettingsFile);
+
+        /// <summary>
+        /// Creates a context using a specified application settings file.
+        /// </summary>
+        /// <param name="configFile">Application settings file containing the database connection string.</param>
+        /// <returns>Configured database context.</returns>
+        [ExcludeFromCodeCoverage]
+        public BaseStationReaderDbContext CreateDbContext(string configFile)
         {
             // Get the path to the configuration file
-            var configPath = ConfigFileResolver.ResolveConfigFilePath(DefaultSettingsFile);
+            var configPath = ConfigFileResolver.ResolveConfigFilePath(configFile);
 
             // Construct a configuration object that contains the key/value pairs from the settings file
             // at the root of the main applicatoin
