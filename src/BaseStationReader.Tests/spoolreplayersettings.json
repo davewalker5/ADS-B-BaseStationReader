@@ -1,0 +1,12 @@
+{
+  "ApplicationSettings": {
+    "LogFile": "Replay-Test.log",
+    "MinimumLogLevel": "Warning",
+    "VerboseLogging": false,
+    "SpoolFolder": "test-spool",
+    "TimeToLock": 12345
+  },
+  "ConnectionStrings": {
+    "BaseStationReaderDB": "Data Source=test.db"
+  }
+}

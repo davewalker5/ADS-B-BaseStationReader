@@ -20,6 +20,7 @@
     <None Remove="trackersettings.json" />
     <None Remove="alternatesettings.json" />
     <None Remove="lookupsettings.json" />
+    <None Remove="spoolreplayersettings.json" />
     <None Remove="LHR-Landing.json" />
     <None Remove="airlines.csv" />
     <None Remove="empty_airlines.csv" />
@@ -47,6 +48,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="lookupsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="spoolreplayersettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="LHR-Landing.json">
@@ -115,6 +119,7 @@
     <ProjectReference Include="..\BaseStationReader.BusinessLogic\BaseStationReader.BusinessLogic.csproj" />
     <ProjectReference Include="..\BaseStationReader.Api\BaseStationReader.Api.csproj" />
     <ProjectReference Include="..\BaseStationReader.Terminal\BaseStationReader.Terminal.csproj" />
+    <ProjectReference Include="..\BaseStationReader.SpoolReplayer\BaseStationReader.SpoolReplayer.csproj" />
     <ProjectReference Include="..\BaseStationReader.TrackerHub\BaseStationReader.TrackerHub.csproj" />
   </ItemGroup>
 

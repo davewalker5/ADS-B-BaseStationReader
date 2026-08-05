@@ -56,6 +56,7 @@
         SendInterval,
         SettingsFile,
         SocketReadTimeout,
+        SpoolFolder,
         TAF,
         TimeToLock,
         TimeToRecent,
