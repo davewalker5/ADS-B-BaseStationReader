@@ -23,6 +23,7 @@ namespace BaseStationReader.Tests.Database
         {
             var session = new ObservationSession
             {
+                Name = "Morning watch",
                 StartedAtUtc = DateTime.UtcNow,
                 ProfileName = "Test profile",
                 Host = "receiver.local",
@@ -44,6 +45,26 @@ namespace BaseStationReader.Tests.Database
         {
             await Assert.ThrowsExactlyAsync<ArgumentNullException>(
                 () => _manager.AddAsync(null));
+        }
+
+        [TestMethod]
+        public async Task AddRejectsMissingOrLongNameTestAsync()
+        {
+            var missing = new ObservationSession();
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => _manager.AddAsync(missing));
+
+            var tooLong = new ObservationSession { Name = new string('x', 101) };
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => _manager.AddAsync(tooLong));
+        }
+
+        [TestMethod]
+        public async Task AddAllowsDuplicateNamesTestAsync()
+        {
+            var first = await AddSessionAsync();
+            var second = await AddSessionAsync();
+
+            Assert.AreEqual(first.Name, second.Name);
+            Assert.HasCount(2, _context.ObservationSessions);
         }
 
         /// <summary>
@@ -69,8 +90,9 @@ namespace BaseStationReader.Tests.Database
         {
             var session = await AddSessionAsync();
 
-            await _manager.UpdateAsync(session.Id, "  Updated notes  ");
+            await _manager.UpdateAsync(session.Id, "Updated name", "  Updated notes  ");
 
+            Assert.AreEqual("Updated name", _context.ObservationSessions.Single().Name);
             Assert.AreEqual("Updated notes", _context.ObservationSessions.Single().Notes);
         }
 
@@ -79,7 +101,7 @@ namespace BaseStationReader.Tests.Database
         {
             var session = await AddSessionAsync();
 
-            await _manager.UpdateAsync(session.Id, "  ");
+            await _manager.UpdateAsync(session.Id, session.Name, "  ");
 
             Assert.IsNull(_context.ObservationSessions.Single().Notes);
         }
@@ -90,20 +112,21 @@ namespace BaseStationReader.Tests.Database
             var session = await AddSessionAsync();
 
             await Assert.ThrowsExactlyAsync<ArgumentException>(
-                () => _manager.UpdateAsync(session.Id, new string('x', 4001)));
+                () => _manager.UpdateAsync(session.Id, session.Name, new string('x', 4001)));
         }
 
         [TestMethod]
         public async Task UpdateMissingSessionTestAsync()
         {
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-                () => _manager.UpdateAsync(999, "Updated notes"));
+                () => _manager.UpdateAsync(999, "Updated name", "Updated notes"));
         }
 
         private async Task<ObservationSession> AddSessionAsync()
         {
             var session = new ObservationSession
             {
+                Name = "Original name",
                 StartedAtUtc = DateTime.UtcNow,
                 ProfileName = "Test profile",
                 Host = "receiver.local",

@@ -21,11 +21,12 @@ public class ObservationSessionEditorServiceTest
         var runtime = CreateRuntime();
         var service = new ObservationSessionEditorService(factory, runtime, new MockFileLogger());
 
-        await service.SaveNotesAsync(sessionId, "  Updated notes  ");
+        await service.SaveAsync(sessionId, "  Updated name  ", "  Updated notes  ");
 
         var saved = await service.GetAsync(sessionId);
         Assert.IsNotNull(saved);
         Assert.AreEqual("Updated notes", saved.Notes);
+        Assert.AreEqual("Updated name", saved.Name);
         Assert.AreEqual("receiver.local", saved.Host);
         Assert.AreEqual(30003, saved.Port);
         Assert.AreEqual("Test profile", saved.ProfileName);
@@ -39,11 +40,11 @@ public class ObservationSessionEditorServiceTest
         var runtime = CreateRuntime();
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
-        await runtime.StartTrackingAsync("receiver.local", 30003);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Active session");
         var service = new ObservationSessionEditorService(factory, runtime, new MockFileLogger());
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-            () => service.SaveNotesAsync(sessionId, "Changed while active"));
+            () => service.SaveAsync(sessionId, "Changed name", "Changed while active"));
 
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
@@ -92,7 +93,7 @@ public class ObservationSessionEditorServiceTest
         var runtime = CreateRuntime();
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
-        await runtime.StartTrackingAsync("receiver.local", 30003);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Active session");
         var service = new ObservationSessionEditorService(factory, runtime, new MockFileLogger());
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => service.DeleteAsync(sessionId));
@@ -103,7 +104,7 @@ public class ObservationSessionEditorServiceTest
 
     private static TrackingRuntime CreateRuntime() => new(
         new TrackerApplicationSettings { Host = "receiver.local", Port = 30003, TrackedBehaviours = [] },
-        (settings, _) => new WaitingController(settings));
+        (settings, _, _) => new WaitingController(settings));
 
     private static InMemoryContextFactory CreateContextFactory()
     {
@@ -118,6 +119,7 @@ public class ObservationSessionEditorServiceTest
         await using var context = factory.CreateDbContext();
         var session = new ObservationSession
         {
+            Name = "Test session",
             StartedAtUtc = DateTime.UtcNow,
             ProfileName = "Test profile",
             Host = "receiver.local",

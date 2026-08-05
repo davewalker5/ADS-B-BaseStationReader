@@ -10,11 +10,27 @@ namespace BaseStationReader.Tests.TrackerHub;
 public class TrackingRuntimeTest
 {
     [TestMethod]
+    public async Task StartRejectsInvalidSessionNameTest()
+    {
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _, _) => new FakeController(settings));
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            () => runtime.StartTrackingAsync("receiver.local", 30003, " "));
+        await Assert.ThrowsExactlyAsync<ArgumentException>(
+            () => runtime.StartTrackingAsync("receiver.local", 30003, new string('x', 101)));
+
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
     public async Task ApplyRejectsProfileChangeDuringActiveSessionTest()
     {
         var controllers = new List<FakeController>();
         var initial = Settings("Initial.json");
-        var runtime = new TrackingRuntime(initial, (settings, _) =>
+        var runtime = new TrackingRuntime(initial, (settings, _, _) =>
         {
             var controller = new FakeController(settings);
             controllers.Add(controller);
@@ -22,7 +38,7 @@ public class TrackingRuntimeTest
         });
         using var cancellation = new CancellationTokenSource();
         var runtimeTask = runtime.StartAsync(cancellation.Token);
-        await runtime.StartTrackingAsync("initial.receiver", 30003);
+        await runtime.StartTrackingAsync("initial.receiver", 30003, "Initial session");
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
@@ -41,7 +57,7 @@ public class TrackingRuntimeTest
     public async Task RuntimeWaitsForSessionStartAndAllowsManualControlTest()
     {
         var controllers = new List<FakeController>();
-        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _) =>
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _, _) =>
         {
             var controller = new FakeController(settings);
             controllers.Add(controller);
@@ -54,7 +70,7 @@ public class TrackingRuntimeTest
         Assert.IsEmpty(controllers);
         Assert.IsFalse(runtime.IsTracking);
 
-        await runtime.StartTrackingAsync("first.receiver", 30003);
+        await runtime.StartTrackingAsync("first.receiver", 30003, "First session");
         await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
         Assert.IsTrue(runtime.IsTracking);
 
@@ -62,7 +78,7 @@ public class TrackingRuntimeTest
         Assert.IsFalse(runtime.IsTracking);
         Assert.IsTrue(controllers[0].Stopped);
 
-        await runtime.StartTrackingAsync("second.receiver", 30004);
+        await runtime.StartTrackingAsync("second.receiver", 30004, "Second session");
         await WaitUntilAsync(() => controllers.Count == 2 && controllers[1].Started);
         Assert.AreEqual("second.receiver", runtime.TrackingOptions.ReceiverHost);
         Assert.AreEqual(30004, runtime.TrackingOptions.ReceiverPort);

@@ -187,6 +187,12 @@
                 </div>
             </div>
 
+            <label class="session-field" for="session-name">
+                <span>Session name</span>
+                <input id="session-name" @bind="_sessionName" maxlength="100" required
+                       disabled="@_sessionStarted" placeholder="A short name for this session" />
+            </label>
+
             <label class="session-field" for="tracking-profile">
                 <span>Tracking profile</span>
                 <select id="tracking-profile" value="@_selectedProfile" @onchange="OnProfileChangedAsync"
@@ -233,7 +239,7 @@
 
             <div class="session-actions">
                 <button class="primary-button" @onclick="StartTrackingAsync"
-                        disabled="@(_controlsBusy || _applyingProfile || _sessionStarted)">
+                        disabled="@(_controlsBusy || _applyingProfile || _sessionStarted || string.IsNullOrWhiteSpace(_sessionName))">
                     @(_controlsBusy ? "Starting…" : "Start Session")
                 </button>
                 @if (_profileMessage is not null)
@@ -564,6 +570,7 @@
     private bool _profileError;
     private bool _applyingProfile;
     private bool _controlsBusy;
+    private string _sessionName = string.Empty;
     private string _sessionNotes = string.Empty;
     private string _receiverHost = string.Empty;
     private int _receiverPort;
@@ -812,7 +819,7 @@
             if (start)
             {
                 previousSessionId = await SessionQueries.GetLatestSessionIdAsync();
-                await TrackingControl.StartAsync(_receiverHost, _receiverPort, _sessionNotes);
+                await TrackingControl.StartAsync(_receiverHost, _receiverPort, _sessionName, _sessionNotes);
             }
             else
             {
@@ -1093,6 +1100,7 @@
         _status = null;
         _completedAircraft = [];
         PageState.CompletedLiveTracker = null;
+        _sessionName = string.Empty;
         _sessionNotes = string.Empty;
         _profileMessage = null;
         _activeTab = SessionTab.Preparation;

@@ -38,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Database
             CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(session);
+            session.Name = NormaliseName(session.Name);
 
             await _context.ObservationSessions.AddAsync(session, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
@@ -47,6 +48,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Update the properties of an observation session
         /// </summary>
         /// <param name="sessionId"></param>
+        /// <param name="name"></param>
         /// <param name="notes"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -54,9 +56,11 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <exception cref="InvalidOperationException"></exception>
         public async Task UpdateAsync(
             int sessionId,
+            string name,
             string? notes,
             CancellationToken cancellationToken = default)
         {
+            var normalisedName = NormaliseName(name);
             var normalisedNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
             if (normalisedNotes?.Length > 4000)
             {
@@ -67,8 +71,23 @@ namespace BaseStationReader.BusinessLogic.Database
                 .SingleOrDefaultAsync(item => item.Id == sessionId, cancellationToken)
                 ?? throw new InvalidOperationException("The selected session could not be found.");
 
+            session.Name = normalisedName;
             session.Notes = normalisedNotes;
             await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        private static string NormaliseName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Session name is required.", nameof(name));
+            }
+            var normalised = name.Trim();
+            if (normalised.Length > 100)
+            {
+                throw new ArgumentException("Session name cannot exceed 100 characters.", nameof(name));
+            }
+            return normalised;
         }
 
         /// <summary>

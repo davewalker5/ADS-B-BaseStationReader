@@ -6,6 +6,7 @@ namespace BaseStationReader.Entities.History;
 public sealed class ObservationSessionSummary
 {
     public int SessionId { get; init; }
+    public string Name { get; init; } = string.Empty;
     public DateTime StartedAtUtc { get; init; }
     public DateTime? LastActivity { get; init; }
     public TimeSpan ObservedDuration { get; init; }

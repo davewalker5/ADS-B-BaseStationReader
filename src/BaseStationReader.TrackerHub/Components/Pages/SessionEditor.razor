@@ -36,10 +36,16 @@ else
             <div class="session-form-heading">
                 <div>
                     <h2>Edit session</h2>
-                    <p>Update the notes recorded with this tracking run. Other session parameters are fixed.</p>
+                    <p>Update the name and notes recorded with this tracking run. Other session parameters are fixed.</p>
                 </div>
                 <span class="read-only-badge"><span>●</span> Session parameters fixed</span>
             </div>
+
+            <label class="session-field" for="editor-session-name">
+                <span>Session name</span>
+                <input id="editor-session-name" @bind="_name" maxlength="100" required
+                       disabled="@(_saving || TrackingControl.IsTracking)" />
+            </label>
 
             <label class="session-field" for="editor-tracking-profile">
                 <span>Tracking profile</span>
@@ -133,6 +139,7 @@ else
     public int? SessionId { get; set; }
 
     private ObservationSessionDto? _session;
+    private string _name = string.Empty;
     private string _notes = string.Empty;
     private bool _loading = true;
     private bool _saving;
@@ -157,6 +164,7 @@ else
             _session = !TrackingControl.IsTracking && SessionId.HasValue
                 ? await Editor.GetAsync(SessionId.Value)
                 : null;
+            _name = _session?.Name ?? string.Empty;
             _notes = _session?.Notes ?? string.Empty;
         }
         finally
@@ -175,7 +183,9 @@ else
         _message = null;
         try
         {
-            await Editor.SaveNotesAsync(_session.SessionId, _notes);
+            await Editor.SaveAsync(_session.SessionId, _name, _notes);
+            _session.Name = _name.Trim();
+            _name = _session.Name;
             _session.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
             _notes = _session.Notes ?? string.Empty;
             _saveError = false;

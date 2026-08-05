@@ -32,6 +32,7 @@ public sealed class PositionDensitySnapshotManagerTest
         await _context.Database.EnsureCreatedAsync();
         var session = new ObservationSession
         {
+            Name = "Snapshot test",
             StartedAtUtc = DateTime.UtcNow,
             ProfileName = "Snapshot test",
             Host = "receiver.local",

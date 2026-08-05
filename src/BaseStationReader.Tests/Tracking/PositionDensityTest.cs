@@ -154,6 +154,7 @@ public class PositionDensityTest
         await using var context = factory.CreateDbContext();
         var session = new ObservationSession
         {
+            Name = "Density test",
             StartedAtUtc = DateTime.UtcNow,
             ProfileName = "Density test",
             Host = "receiver.local",

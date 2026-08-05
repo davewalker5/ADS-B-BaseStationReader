@@ -28,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly BaseStationReaderDbContext _context;
         private readonly bool _ownsContext;
         private readonly string _sessionNotes;
+        private readonly string _sessionName;
         private readonly ITrackerLogger _logger;
         private readonly ITrackerTcpClient _tcpClient;
         private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
@@ -81,6 +82,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="settings"></param>
         /// <param name="ownsContext"></param>
         /// <param name="sessionNotes"></param>
+        /// <param name="sessionName"></param>
         /// <param name="densityOrchestrator"></param>
         /// <param name="densitySnapshotMapper"></param>
         public TrackerController(
@@ -90,6 +92,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             TrackerApplicationSettings settings,
             bool ownsContext = false,
             string sessionNotes = null,
+            string sessionName = null,
             IPositionDensitySnapshotOrchestrator densityOrchestrator = null,
             IPositionDensitySnapshotMapper densitySnapshotMapper = null)
         {
@@ -97,6 +100,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _context = context;
             _ownsContext = ownsContext;
             _sessionNotes = string.IsNullOrWhiteSpace(sessionNotes) ? null : sessionNotes.Trim();
+            _sessionName = string.IsNullOrWhiteSpace(sessionName) ? null : sessionName.Trim();
             _logger = logger;
             _tcpClient = tcpClient;
             _densityOrchestrator = densityOrchestrator;
@@ -295,9 +299,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 ? _settings.DefaultProfileName
                 : _settings.TrackingProfileName;
 
+            var startedAtUtc = DateTime.UtcNow;
             return new ObservationSession
             {
-                StartedAtUtc = DateTime.UtcNow,
+                Name = _sessionName ?? startedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                StartedAtUtc = startedAtUtc,
                 ProfileName = profileName,
                 Notes = _sessionNotes,
                 Host = _settings.Host,
