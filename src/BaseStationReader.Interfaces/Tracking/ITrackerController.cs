@@ -20,16 +20,6 @@ namespace BaseStationReader.Interfaces.Tracking
         /// </summary>
         long PositionRecordsWritten => 0;
 
-        /// <summary>
-        /// Gets the number of aircraft added to tracking during the current session.
-        /// </summary>
-        long AircraftAdded => 0;
-
-        /// <summary>
-        /// Gets the number of aircraft removed from tracking during the current session.
-        /// </summary>
-        long AircraftRemoved => 0;
-
         /// <summary>Gets the number of distinct ICAO addresses observed during the current session.</summary>
         long DistinctAircraft => 0;
 

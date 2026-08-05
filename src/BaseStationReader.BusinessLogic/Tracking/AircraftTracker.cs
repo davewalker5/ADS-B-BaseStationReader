@@ -24,8 +24,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly int _staleMs;
         private readonly int _removedMs;
         private long _messagesProcessed;
-        private long _aircraftAdded;
-        private long _aircraftRemoved;
         private readonly ConcurrentDictionary<string, byte> _observedAddresses = new(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, byte> _observedCallsigns = new(StringComparer.OrdinalIgnoreCase);
 
@@ -35,11 +33,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public long MessagesProcessed => Interlocked.Read(ref _messagesProcessed);
 
         /// <inheritdoc />
-        public long AircraftAdded => Interlocked.Read(ref _aircraftAdded);
-
-        /// <inheritdoc />
-        public long AircraftRemoved => Interlocked.Read(ref _aircraftRemoved);
-
         /// <inheritdoc />
         public long DistinctAircraft => _observedAddresses.Count;
 
@@ -155,12 +148,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var trackedAircraft = _aircraft.GetOrAdd(msg.Address, _ => newTrackedAircraft);
                 var isNew = ReferenceEquals(trackedAircraft, newTrackedAircraft);
 
-                // Count each lifecycle addition even when an ICAO address reappears later in the same session.
-                if (isNew)
-                {
-                    Interlocked.Increment(ref _aircraftAdded);
-                }
-
                 // If it's not a new aircraft, capture the altitude before updating properties from the message
                 decimal? altitude = isNew ? null : trackedAircraft.Altitude;
 
@@ -197,8 +184,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 {
                     if (_aircraft.Remove(aircraft.Address, out _))
                     {
-                        // Count only successful removals so concurrent timer ticks cannot duplicate the metric.
-                        Interlocked.Increment(ref _aircraftRemoved);
                         _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Removed, AircraftEvent);
                     }
                 }

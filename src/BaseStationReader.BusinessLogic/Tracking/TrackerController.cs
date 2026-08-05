@@ -59,11 +59,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public long PositionRecordsWritten => _writer?.PositionRecordsWritten ?? 0;
 
         /// <inheritdoc />
-        public long AircraftAdded => _tracker?.AircraftAdded ?? 0;
-
-        /// <inheritdoc />
-        public long AircraftRemoved => _tracker?.AircraftRemoved ?? 0;
-
         /// <inheritdoc />
         public long DistinctAircraft => _tracker?.DistinctAircraft ?? 0;
 

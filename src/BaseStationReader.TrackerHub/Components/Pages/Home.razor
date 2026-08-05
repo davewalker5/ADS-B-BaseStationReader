@@ -1125,34 +1125,20 @@
         if (status is null)
         {
             // Retain persisted distinct and position totals if operational state is temporarily unavailable.
-            metrics.Add(new StatusMetric("Distinct aircraft", summary.DistinctAircraft));
-            metrics.Add(new StatusMetric("Distinct callsigns", summary.DistinctCallsigns));
-            metrics.Add(new StatusMetric("Aircraft with positions", summary.AircraftWithPositionHistory));
+            metrics.Add(new StatusMetric("Aircraft", summary.DistinctAircraft));
+            metrics.Add(new StatusMetric("With positions", summary.AircraftWithPositionHistory));
             metrics.Add(new StatusMetric("Position records", summary.PositionRecords));
+            metrics.Add(new StatusMetric("Callsigns", summary.DistinctCallsigns));
             return metrics;
         }
 
-        metrics.Add(new StatusMetric("Distinct aircraft", status.DistinctAircraft));
-        metrics.Add(new StatusMetric("Distinct callsigns", status.DistinctCallsigns));
-        metrics.Add(new StatusMetric("Aircraft with positions", status.AircraftWithPositionRecords));
-        metrics.AddRange(TrackingStatusMetrics(status));
+        metrics.Add(new StatusMetric("Aircraft", status.DistinctAircraft));
+        metrics.Add(new StatusMetric("Currently tracked", status.CurrentlyTracked));
+        metrics.Add(new StatusMetric("With positions", status.AircraftWithPositionRecords));
+        metrics.Add(new StatusMetric("Position records", status.PositionRecords));
+        metrics.Add(new StatusMetric("Callsigns", status.DistinctCallsigns));
+        metrics.Add(new StatusMetric("Messages processed", status.MessagesProcessed));
         return metrics;
-    }
-
-    /// <summary>
-    /// Returns the operational tracking metrics shown in the Summary tab.
-    /// </summary>
-    private static IReadOnlyList<StatusMetric> TrackingStatusMetrics(LiveTrackerStatus status)
-    {
-        // Keep the display restricted to counters already recorded by the live tracking workflow.
-        return
-        [
-            new("Currently tracked", status.CurrentlyTracked),
-            new("Added this session", status.AircraftAdded),
-            new("Removed this session", status.AircraftRemoved),
-            new("Position records", status.PositionRecords),
-            new("Messages processed", status.MessagesProcessed)
-        ];
     }
 
     /// <summary>
