@@ -29,7 +29,7 @@ public sealed class ContinuousWriterPositionTest
         await context.SaveChangesAsync();
 
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
-        await using IContinuousWriter writer = new ContinuousWriter(factory);
+        await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
 
         writer.Push(new AircraftPosition
@@ -71,7 +71,7 @@ public sealed class ContinuousWriterPositionTest
         await context.SaveChangesAsync();
 
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
-        await using IContinuousWriter writer = new ContinuousWriter(factory);
+        await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
 
         writer.Push(new AircraftPosition
@@ -103,7 +103,7 @@ public sealed class ContinuousWriterPositionTest
         await context.SaveChangesAsync();
 
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
-        await using IContinuousWriter writer = new ContinuousWriter(factory);
+        await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
         writer.Push(CreateAircraft("406A3D", secondSession.Id, DateTime.Now));
         writer.Push(CreateAircraft("406A3D", secondSession.Id, DateTime.Now.AddSeconds(1)));

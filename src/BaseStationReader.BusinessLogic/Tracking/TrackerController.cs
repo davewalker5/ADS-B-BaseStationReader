@@ -8,6 +8,7 @@ using BaseStationReader.Entities.Tracking;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Geometry;
 using BaseStationReader.BusinessLogic.Messages;
+using BaseStationReader.BusinessLogic.Spool;
 using System.Collections.Concurrent;
 using BaseStationReader.Interfaces.Database;
 using BaseStationReader.Interfaces.Logging;
@@ -15,8 +16,10 @@ using BaseStationReader.Interfaces.Messages;
 using BaseStationReader.BusinessLogic.Events;
 using BaseStationReader.Interfaces.Geometry;
 using BaseStationReader.Interfaces.Events;
+using BaseStationReader.Interfaces.Spool;
 using BaseStationReader.Entities.Hub;
 using BaseStationReader.Entities.History;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Tracking
 {
@@ -80,6 +83,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <param name="sessionName"></param>
         /// <param name="densityOrchestrator"></param>
         /// <param name="densitySnapshotMapper"></param>
+        /// <param name="spoolQueue">Optional persistent queue supplied by the composition root.</param>
         public TrackerController(
             ITrackerLogger logger,
             BaseStationReaderDbContext context,
@@ -89,7 +93,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             string sessionNotes = null,
             string sessionName = null,
             IPositionDensitySnapshotOrchestrator densityOrchestrator = null,
-            IPositionDensitySnapshotMapper densitySnapshotMapper = null)
+            IPositionDensitySnapshotMapper densitySnapshotMapper = null,
+            ISpoolQueue spoolQueue = null)
         {
             _settings = settings;
             _context = context;
@@ -107,7 +112,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Configure the SQL writer, if enabled
             if (_settings.EnableSqlWriter)
             {
-                _writer = new ContinuousWriter(_factory);
+                if (spoolQueue is null)
+                {
+                    var connectionString = context.Database.GetConnectionString()
+                        ?? throw new InvalidOperationException("The database connection string is required for the writer spool.");
+                    var spoolFolder = SpoolFolderResolver.Resolve(connectionString, _settings.SpoolFolder);
+                    spoolQueue = new SpoolQueueManager(spoolFolder);
+                }
+
+                _writer = new ContinuousWriter(
+                    _factory,
+                    spoolQueue,
+                    _settings.FlushOnStop);
             }
 
             // Create the controller notification sender

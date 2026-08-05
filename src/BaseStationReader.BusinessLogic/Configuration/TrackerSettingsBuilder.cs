@@ -120,6 +120,12 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.EnableSqlWriter = bool.Parse(values[0]);
             }
 
+            values = parser.GetValues(CommandLineOptionType.FlushOnStop);
+            if (values != null)
+            {
+                settings.FlushOnStop = bool.Parse(values[0]);
+            }
+
             values = parser.GetValues(CommandLineOptionType.ClearDown);
             if (values != null)
             {

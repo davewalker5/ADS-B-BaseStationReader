@@ -1,24 +1,27 @@
 using System.Collections.Concurrent;
-using BaseStationReader.Entities.Logging;
 using BaseStationReader.Entities.History;
+using BaseStationReader.Entities.Logging;
+using BaseStationReader.Entities.Spool;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Spool;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
     public class ContinuousWriter : IContinuousWriter
     {
-        private readonly ConcurrentQueue<object> _queue = new();
+        private readonly ISpoolQueue _queue;
         private readonly SemaphoreSlim _signal = new(0, 1);
         private readonly IDatabaseManagementFactory _factory;
+        private readonly bool _flushOnStop;
         private readonly object _gate = new();
         private CancellationTokenSource _source;
         private Task _runTask = null;
-        private int _pending = 0;
+        private volatile bool _accepting;
         private long _positionRecordsWritten;
         private readonly ConcurrentDictionary<string, byte> _positionAircraft = new(StringComparer.OrdinalIgnoreCase);
 
-        public int QueueSize { get => _queue.Count; }
+        public int QueueSize => _queue.Count;
 
         /// <inheritdoc />
         public long PositionRecordsWritten => Interlocked.Read(ref _positionRecordsWritten);
@@ -26,27 +29,32 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <inheritdoc />
         public long AircraftWithPositionRecords => _positionAircraft.Count;
 
-        public ContinuousWriter(IDatabaseManagementFactory factory)
+        /// <summary>
+        /// Initialises a continuous writer over a persistent spool.
+        /// </summary>
+        /// <param name="factory">Database management factory.</param>
+        /// <param name="queue">Persistent writer queue.</param>
+        /// <param name="flushOnStop">Whether stopping should attempt every pending write.</param>
+        public ContinuousWriter(
+            IDatabaseManagementFactory factory,
+            ISpoolQueue queue,
+            bool flushOnStop = true)
         {
             _factory = factory;
+            _queue = queue;
+            _flushOnStop = flushOnStop;
         }
 
         /// <summary>
         /// Push an object into the queue to be processed
         /// </summary>
-        /// <param name="aircraft"></param>
+        /// <param name="entity"></param>
         public void Push(object entity)
         {
-            // To stop the queue growing and consuming memory, entries are discarded if the timer
-            // hasn't been started. Also, check the object being pushed is a valid tracking entity
-            if ((entity is TrackedAircraft) || (entity is AircraftPosition) ||
-                (entity is PositionDensitySnapshotEntity))
+            if (_accepting && entity is TrackedAircraft or AircraftPosition or PositionDensitySnapshotEntity)
             {
                 _queue.Enqueue(entity);
-                if (Interlocked.Increment(ref _pending) == 1)
-                {
-                    TryRelease();
-                }
+                TryRelease();
             }
         }
 
@@ -65,10 +73,6 @@ namespace BaseStationReader.BusinessLogic.Database
                     return Task.CompletedTask;
                 }
 
-                // Clear the queue
-                _queue.Clear();
-                Interlocked.Exchange(ref _pending, 0);
-
                 // Each writer run belongs to one observation session, so begin its successful-write count at zero.
                 Interlocked.Exchange(ref _positionRecordsWritten, 0);
                 _positionAircraft.Clear();
@@ -76,9 +80,15 @@ namespace BaseStationReader.BusinessLogic.Database
                 // Create a cancellation token source linked to the token passed in. This ensures that
                 // cancelling the token that's passed in will cancel this one, too
                 _source = CancellationTokenSource.CreateLinkedTokenSource(token);
+                _accepting = true;
 
                 // Keep a reference to the task that runs the continuous writer, so we can observe any faults
                 _runTask = RunAsync(_source.Token);
+                if (_queue.Count > 0)
+                {
+                    TryRelease();
+                }
+
                 return Task.CompletedTask;
             }
         }
@@ -101,6 +111,7 @@ namespace BaseStationReader.BusinessLogic.Database
             {
                 // Cancel the internal, linked token, release the semaphore and make a copy of the run task
                 // that can safely be awaited (otherwise, it's mutable and could be nulled mid-await)
+                _accepting = false;
                 _source.Cancel();
                 TryRelease();
                 toAwait = _runTask;
@@ -111,8 +122,10 @@ namespace BaseStationReader.BusinessLogic.Database
                 // Wait for the runner to wind down
                 await toAwait.ConfigureAwait(false);
 
-                // Cancellation can stop the loop with queued work remaining, so finish it serially before disposal.
-                await FlushQueueAsync().ConfigureAwait(false);
+                if (_flushOnStop)
+                {
+                    await FlushQueueAsync().ConfigureAwait(false);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -139,10 +152,8 @@ namespace BaseStationReader.BusinessLogic.Database
             _factory.Logger.LogMessage(Severity.Info, $"Flushing {_queue.Count} queued entries");
 
             // Drain in original FIFO order so snapshots remain behind the positions they represent.
-            while (_queue.TryDequeue(out var item))
+            while (await ProcessNextAsync().ConfigureAwait(false))
             {
-                await ProcessAsync(item).ConfigureAwait(false);
-                Interlocked.Decrement(ref _pending);
             }
         }
 
@@ -155,7 +166,7 @@ namespace BaseStationReader.BusinessLogic.Database
             // Wait for the loop to stop then dispose the Semaphore
             await StopAsync().ConfigureAwait(false);
             _signal.Dispose();
-            await Task.CompletedTask;
+            _queue.Dispose();
         }
 
         /// <summary>
@@ -191,19 +202,10 @@ namespace BaseStationReader.BusinessLogic.Database
                     // Sleep until at least one item is added to the queue
                     await _signal.WaitAsync(token);
 
-                    // Drain everything that’s currently queued in strictly serial order, waiting until there's
-                    // nothing remaining before breaking out of the loop
-                    do
+                    // Process one record at a time so cancellation can leave the remaining FIFO on disk.
+                    while (!token.IsCancellationRequested && await ProcessNextAsync().ConfigureAwait(false))
                     {
-                        // Dequeue the next item
-                        while (_queue.TryDequeue(out var item))
-                        {
-                            // Process it
-                            await ProcessAsync(item).ConfigureAwait(false);
-                            Interlocked.Decrement(ref _pending);
-                        }
                     }
-                    while (Volatile.Read(ref _pending) > 0);
                 }
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
                 {
@@ -225,11 +227,11 @@ namespace BaseStationReader.BusinessLogic.Database
         }
 
         /// <summary>
-        /// Process an iterm from the queue
+        /// Processes an item from the queue.
         /// </summary>
         /// <param name="item"></param>
-        /// <returns></returns>
-        private async Task ProcessAsync(object item)
+        /// <returns>Whether the database attempt succeeded.</returns>
+        private async Task<bool> ProcessAsync(object item)
         {
             try
             {
@@ -248,14 +250,74 @@ namespace BaseStationReader.BusinessLogic.Database
                     await WritePositionDensitySnapshotAsync(snapshot);
                 }
 
+                return true;
             }
             catch (Exception ex)
             {
                 // Log and sink the exception. The writer needs to continue or the application will
                 // stop writing to the database
                 _factory.Logger.LogException(ex);
+                return false;
             }
         }
+
+        /// <summary>
+        /// Processes and acknowledges the next queued record.
+        /// </summary>
+        /// <returns>Whether a record was available.</returns>
+        private async Task<bool> ProcessNextAsync()
+        {
+            ISpoolQueueItem queued;
+            try
+            {
+                queued = _queue.TryDequeue();
+            }
+            catch (InvalidDataException ex)
+            {
+                // The queue manager has discarded the unreadable head record so the FIFO can continue.
+                _factory.Logger.LogMessage(Severity.Error, ex.Message);
+                _factory.Logger.LogException(ex);
+                return true;
+            }
+
+            if (queued is null)
+            {
+                return false;
+            }
+
+            using (queued)
+            {
+                var record = queued.Record;
+                var succeeded = await ProcessAsync(GetEntity(record)).ConfigureAwait(false);
+
+                // A completed database attempt is removed even when it failed; disposal without completion
+                // is reserved for interruption before the attempt reaches an outcome.
+                queued.Complete();
+
+                if (!succeeded)
+                {
+                    _factory.Logger.LogMessage(
+                        Severity.Warning,
+                        $"Discarded failed spool record {record.Id} ({record.EntityType})");
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns the entity selected by a spool record discriminator.
+        /// </summary>
+        /// <param name="record">Persisted spool record.</param>
+        /// <returns>Entity to write.</returns>
+        private static object GetEntity(SpoolQueueRecord record)
+            => record.EntityType switch
+            {
+                SpoolEntityType.TrackedAircraft => record.TrackedAircraft!,
+                SpoolEntityType.AircraftPosition => record.AircraftPosition!,
+                SpoolEntityType.PositionDensitySnapshot => record.PositionDensitySnapshot!,
+                _ => throw new InvalidDataException($"Unsupported spool entity type: {record.EntityType}.")
+            };
 
         /// <summary>
         /// Write a queued aircraft to the database

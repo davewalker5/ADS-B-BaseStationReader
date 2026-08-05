@@ -6,7 +6,9 @@ namespace BaseStationReader.BusinessLogic.Configuration
 {
     public class TrackerCommandLineParser : CommandLineParser
     {
-        public TrackerCommandLineParser(IHelpGenerator generator) : base(generator)
+        public TrackerCommandLineParser(
+            IHelpGenerator generator,
+            bool includeFlushOnStop = false) : base(generator)
         {
             Add(CommandLineOptionType.Help, false, "--help", "-h", "Show command line help", 0, 0);
             Add(CommandLineOptionType.ApplicationTimeout, false, "--app-timeout", "-a", "Timeout (ms) after which the application will quit of no messages are recieved", 1, 1);
@@ -36,6 +38,11 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.PositionDensityInterval, false, "--position-density-interval", "-pdi", "Interval, in ms, at which position-density snapshots are recorded", 1, 1);
             Add(CommandLineOptionType.AircraftNotificationInterval, false, "--aircraft-interval", "-ai", "Interval, in ms, at which aircraft notifications are sent to the UI", 1, 1);
             Add(CommandLineOptionType.VerboseLogging, false, "--verbose", "-v", "Enable verbose logging at debug log level", 1, 1);
+
+            if (includeFlushOnStop)
+            {
+                Add(CommandLineOptionType.FlushOnStop, false, "--flush-on-stop", "-fos", "Attempt all spooled writes when tracking stops", 1, 1);
+            }
         }
     }
 }
