@@ -12,8 +12,6 @@ public sealed record LiveTrackerStatus
     public string? ProfileName { get; init; }
     public string? Notes { get; init; }
     public int CurrentlyTracked { get; init; }
-    public long AircraftAdded { get; init; }
-    public long AircraftRemoved { get; init; }
     public long PositionRecords { get; init; }
     public long MessagesProcessed { get; init; }
     public long DistinctAircraft { get; init; }

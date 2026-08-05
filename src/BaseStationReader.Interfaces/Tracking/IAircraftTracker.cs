@@ -11,16 +11,6 @@ namespace BaseStationReader.Interfaces.Tracking
         /// </summary>
         long MessagesProcessed => 0;
 
-        /// <summary>
-        /// Gets the number of aircraft addition events raised during this tracker run.
-        /// </summary>
-        long AircraftAdded => 0;
-
-        /// <summary>
-        /// Gets the number of aircraft removal events raised during this tracker run.
-        /// </summary>
-        long AircraftRemoved => 0;
-
         /// <summary>Gets the number of distinct ICAO addresses observed during this tracker run.</summary>
         long DistinctAircraft => 0;
 

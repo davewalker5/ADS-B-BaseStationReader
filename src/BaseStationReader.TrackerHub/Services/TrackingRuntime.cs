@@ -21,8 +21,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private bool _started;
     private long _lastMessagesProcessed;
     private long _lastPositionRecordsWritten;
-    private long _lastAircraftAdded;
-    private long _lastAircraftRemoved;
     private long _lastDistinctAircraft;
     private long _lastDistinctCallsigns;
     private long _lastAircraftWithPositionRecords;
@@ -40,8 +38,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
     public long MessagesProcessed { get { lock (_stateLock) return _controller?.MessagesProcessed ?? _lastMessagesProcessed; } }
     public long PositionRecordsWritten { get { lock (_stateLock) return _controller?.PositionRecordsWritten ?? _lastPositionRecordsWritten; } }
-    public long AircraftAdded { get { lock (_stateLock) return _controller?.AircraftAdded ?? _lastAircraftAdded; } }
-    public long AircraftRemoved { get { lock (_stateLock) return _controller?.AircraftRemoved ?? _lastAircraftRemoved; } }
     public long DistinctAircraft { get { lock (_stateLock) return _controller?.DistinctAircraft ?? _lastDistinctAircraft; } }
     public long DistinctCallsigns { get { lock (_stateLock) return _controller?.DistinctCallsigns ?? _lastDistinctCallsigns; } }
     public long AircraftWithPositionRecords { get { lock (_stateLock) return _controller?.AircraftWithPositionRecords ?? _lastAircraftWithPositionRecords; } }
@@ -181,8 +177,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         {
             _lastMessagesProcessed = 0;
             _lastPositionRecordsWritten = 0;
-            _lastAircraftAdded = 0;
-            _lastAircraftRemoved = 0;
             _lastDistinctAircraft = 0;
             _lastDistinctCallsigns = 0;
             _lastAircraftWithPositionRecords = 0;
@@ -224,8 +218,6 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             // Preserve the completed session total after releasing its controller.
             _lastMessagesProcessed = controller.MessagesProcessed;
             _lastPositionRecordsWritten = controller.PositionRecordsWritten;
-            _lastAircraftAdded = controller.AircraftAdded;
-            _lastAircraftRemoved = controller.AircraftRemoved;
             _lastDistinctAircraft = controller.DistinctAircraft;
             _lastDistinctCallsigns = controller.DistinctCallsigns;
             _lastAircraftWithPositionRecords = controller.AircraftWithPositionRecords;

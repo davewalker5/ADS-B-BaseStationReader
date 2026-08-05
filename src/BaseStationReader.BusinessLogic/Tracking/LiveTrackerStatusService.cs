@@ -80,8 +80,6 @@ public sealed class LiveTrackerStatusService(
             ProfileName = session.ProfileName,
             Notes = session.Notes,
             CurrentlyTracked = liveAircraft.Length,
-            AircraftAdded = statistics.AircraftAdded,
-            AircraftRemoved = statistics.AircraftRemoved,
             PositionRecords = statistics.PositionRecordsWritten,
             MessagesProcessed = statistics.MessagesProcessed,
             DistinctAircraft = statistics.DistinctAircraft,
