@@ -10,13 +10,21 @@ namespace BaseStationReader.BusinessLogic.Database
     internal class PositionWriter : IPositionWriter
     {
         private readonly BaseStationReaderDbContext _context;
-        private readonly PropertyInfo[] _positionProperties = typeof(AircraftPosition)
-            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(x => x.Name != "Id")
-            .ToArray();
+        private readonly PropertyInfo[] _positionProperties;
 
         public PositionWriter(BaseStationReaderDbContext context)
-            => _context = context;
+        {
+            _context = context;
+            // Copy database columns only; queue-only SessionId and the Aircraft navigation are deliberately
+            // excluded so relationship fix-up cannot alter the selected AircraftId.
+            _positionProperties = context.Model.FindEntityType(typeof(AircraftPosition))!
+                .GetProperties()
+                .Where(property => property.Name != nameof(AircraftPosition.Id))
+                .Select(property => property.PropertyInfo)
+                .Where(property => property is not null)
+                .Cast<PropertyInfo>()
+                .ToArray();
+        }
 
         /// <summary>
         /// Get the first position record matching the specified criteria

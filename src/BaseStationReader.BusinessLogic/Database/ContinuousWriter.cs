@@ -264,9 +264,17 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task<bool> WriteTrackedAircraftAsync(TrackedAircraft aircraft)
         {
+            if (aircraft.SessionId is not > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Aircraft {aircraft.Address} cannot be persisted without an observation session.");
+            }
+
             // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
             // ID so that record will be updated rather than a new one created
-            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(aircraft.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
+                aircraft.Address,
+                aircraft.SessionId.Value);
             if (activeAircraft != null)
             {
                 aircraft.Id = activeAircraft.Id;
@@ -286,12 +294,18 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         private async Task<bool> WriteAircraftPositionAsync(AircraftPosition position)
         {
+            if (position.SessionId is not > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Position for aircraft {position.Address} cannot be persisted without an observation session.");
+            }
+
             // Find the associated tracked aircraft. Aircraft are queued before their associated positions
             // and as it's a FIFO queue this should always return a valid aircraft. If the aircraft isn't
             // found, ignore the position record
             var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
                 position.Address,
-                position.SessionId);
+                position.SessionId.Value);
             if (activeAircraft == null)
             {
                 return true;
