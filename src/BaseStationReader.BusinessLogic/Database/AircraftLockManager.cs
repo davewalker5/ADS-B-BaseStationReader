@@ -26,7 +26,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <summary>
         /// Get the active aircraft with the specified address in the specified observation session.
         /// </summary>
-        public async Task<TrackedAircraft> GetActiveAircraftAsync(string address, int? sessionId)
+        public async Task<TrackedAircraft> GetActiveAircraftAsync(string address, int sessionId)
             => await GetActiveAircraftAsync(address, sessionId, matchSession: true);
 
         private async Task<TrackedAircraft> GetActiveAircraftAsync(
