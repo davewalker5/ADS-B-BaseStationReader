@@ -373,6 +373,12 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             // Associate the aircraft with the session that was active when this tracking run began.
             aircraft.SessionId = _activeSession?.Id;
+            if (position != null)
+            {
+                // Positions are captured before this event reaches the session-aware controller, so add the
+                // in-memory routing value here before the position crosses the asynchronous writer boundary.
+                position.SessionId = aircraft.SessionId;
+            }
 
             // If the aircraft isn't already in the collection, add it. Otherwise, update its entry
             var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);

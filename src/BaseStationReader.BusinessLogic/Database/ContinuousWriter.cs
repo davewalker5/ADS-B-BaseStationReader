@@ -289,7 +289,9 @@ namespace BaseStationReader.BusinessLogic.Database
             // Find the associated tracked aircraft. Aircraft are queued before their associated positions
             // and as it's a FIFO queue this should always return a valid aircraft. If the aircraft isn't
             // found, ignore the position record
-            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(position.Address);
+            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
+                position.Address,
+                position.SessionId);
             if (activeAircraft == null)
             {
                 return true;
