@@ -165,6 +165,17 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
+        public void OverrideFlushOnStopTest()
+        {
+            ICommandLineParser parser = new TrackerCommandLineParser(null, includeFlushOnStop: true);
+            parser.Parse(["--flush-on-stop", "false"]);
+
+            var settings = _builder.BuildSettings(parser, _reader, "trackersettings.json");
+
+            Assert.IsFalse(settings.FlushOnStop);
+        }
+
+        [TestMethod]
         public void OverrideMaximumRowsTest()
         {
             var args = new string[] { "--max-rows", "0" };

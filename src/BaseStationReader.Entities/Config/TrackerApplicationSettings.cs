@@ -20,6 +20,8 @@ namespace BaseStationReader.Entities.Config
         public string LogFile { get; set; } = "";
         public bool VerboseLogging { get; set; }
         public bool EnableSqlWriter { get; set; }
+        public bool FlushOnStop { get; set; } = true;
+        public string SpoolFolder { get; set; } = "spool";
         public bool ClearDown { get; set; }
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }

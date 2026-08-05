@@ -63,7 +63,8 @@ namespace BaseStationReader.Tests.Tracking
             // Construct the tracker controller itself
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
             _controller = new TrackerController(_logger, _context, tcpClient, _settings,
-                sessionNotes: "Clear skies; testing session context.");
+                sessionNotes: "Clear skies; testing session context.",
+                spoolQueue: new TemporarySpoolQueue());
         }
 
         [TestMethod]

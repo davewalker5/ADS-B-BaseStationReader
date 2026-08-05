@@ -19,7 +19,7 @@ namespace BaseStationReader.Terminal
 {
     public static class Program
     {
-        private static TrackerCommandLineParser _parser = new(new HelpTabulator());
+        private static TrackerCommandLineParser _parser = new(new HelpTabulator(), includeFlushOnStop: true);
         private static ITrackerTableManager _tableManager = null;
         private static ITrackerLogger _logger = null;
         private static ITrackerController _controller = null;

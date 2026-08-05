@@ -29,7 +29,7 @@ public sealed class ContinuousWriterPositionDensityTest
         context.ObservationSessions.Add(session);
         await context.SaveChangesAsync();
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
-        await using IContinuousWriter writer = new ContinuousWriter(factory);
+        await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
 
         writer.Push(CreateSnapshot(session.Id));
