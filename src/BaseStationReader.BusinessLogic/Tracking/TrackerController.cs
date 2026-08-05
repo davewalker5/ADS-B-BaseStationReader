@@ -327,23 +327,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             var isRemoval = e.NotificationType == AircraftNotificationType.Removed;
 
-            // Persist the first observation even when it does not qualify for live tracking or position history.
-            // Do not consume the live notification interval: the next qualifying message must remain immediate.
-            if (!isRemoval && !e.MeetsTrackingCriteria)
-            {
-                if (e.Aircraft.SessionId is null)
-                {
-                    HandleAircraftEvent(e.Aircraft, null, includeInTrackedState: false);
-                }
-                return;
-            }
-
             if (ShouldNotify(e.Aircraft))
             {
                 e.Aircraft.LastNotified = DateTime.Now;
-                var includeInTrackedState = isRemoval || e.MeetsTrackingCriteria;
                 var position = e.MeetsTrackingCriteria ? e.Position : null;
-                HandleAircraftEvent(e.Aircraft, position, includeInTrackedState);
+                HandleAircraftEvent(e.Aircraft, position);
 
                 // HandleAircraftEvent persists the final state, but removed aircraft must not remain
                 // in the authoritative live snapshot exposed by the Tracker Hub.
@@ -352,10 +340,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
                 }
 
-                if (includeInTrackedState)
-                {
-                    _sender.SendAircraftNotification(e.Aircraft, position, this, e.NotificationType, AircraftEvent);
-                }
+                _sender.SendAircraftNotification(e.Aircraft, position, this, e.NotificationType, AircraftEvent);
             }
         }
 
@@ -384,10 +369,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// </summary>
         /// <param name="aircraft"></param>
         /// <param name="position"></param>
-        private void HandleAircraftEvent(
-            TrackedAircraft aircraft,
-            AircraftPosition position,
-            bool includeInTrackedState = true)
+        private void HandleAircraftEvent(TrackedAircraft aircraft, AircraftPosition position)
         {
             // Every observation belongs to the session created before tracking starts. Treat a missing session
             // as an invalid lifecycle state rather than allowing unscoped data into the persistence queue.
@@ -401,18 +383,16 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 position.SessionId = sessionId;
             }
 
-            if (includeInTrackedState)
+            // The live table represents every detected aircraft; position criteria affect only the optional
+            // position queued alongside it.
+            var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);
+            if (!existingAircraft)
             {
-                // If the aircraft isn't already in the collection, add it. Otherwise, update its entry.
-                var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);
-                if (!existingAircraft)
-                {
-                    _trackedAircraft[aircraft.Address] = (TrackedAircraft)aircraft.Clone();
-                }
-                else
-                {
-                    _trackedAircraft[aircraft.Address] = aircraft;
-                }
+                _trackedAircraft[aircraft.Address] = (TrackedAircraft)aircraft.Clone();
+            }
+            else
+            {
+                _trackedAircraft[aircraft.Address] = aircraft;
             }
 
             // Push the aircraft and its position to the SQL writer, if enabled
