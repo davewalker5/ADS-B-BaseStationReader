@@ -476,6 +476,7 @@
                     <th class="numeric"><button @onclick="() => SortBy(SortColumn.Altitude)">Altitude @SortIndicator(SortColumn.Altitude)</button></th>
                     <th class="numeric">V/S</th>
                     <th class="numeric">Speed</th>
+                    <th class="numeric">Lat/Lng</th>
                     <th class="numeric">Heading</th>
                     <th class="numeric"><button @onclick="() => SortBy(SortColumn.Distance)">Distance @SortIndicator(SortColumn.Distance)</button></th>
                     <th class="numeric">Messages</th>
@@ -486,7 +487,7 @@
             <tbody>
                 @if (!FilteredAircraft.Any())
                 {
-                    <tr><td colspan="11" class="table-empty">@EmptyMessage</td></tr>
+                    <tr><td colspan="12" class="table-empty">@EmptyMessage</td></tr>
                 }
                 else
                 {
@@ -508,6 +509,7 @@
                             <td class="numeric">@FormatNumber(aircraft.Altitude, "N0", " ft")</td>
                             <td class="numeric behaviour">@BehaviourIndicator(aircraft.Behaviour) @FormatNumber(aircraft.VerticalRate, "N0", " fpm")</td>
                             <td class="numeric">@FormatNumber(aircraft.GroundSpeed, "N0", " kt")</td>
+                            <td class="numeric mono">@FormatAircraftPosition(aircraft)</td>
                             <td class="numeric">@FormatNumber(aircraft.Track, "N0", "°")</td>
                             <td class="numeric">
                                 @if (aircraft.Distance.HasValue)
@@ -668,6 +670,10 @@
         => TrackingControl.IsTracking ? LiveAircraft.Aircraft : _completedAircraft;
     private int PositionedAircraftCount => DisplayedAircraft.Count(aircraft =>
         aircraft.Latitude.HasValue && aircraft.Longitude.HasValue);
+    private static string FormatAircraftPosition(TrackedAircraftDto aircraft)
+        => aircraft.Latitude.HasValue && aircraft.Longitude.HasValue
+            ? $"{aircraft.Latitude:F5}, {aircraft.Longitude:F5}"
+            : "—";
     private static string FormatCoordinate(double? coordinate)
         => coordinate?.ToString("F6") ?? "Not configured";
 
