@@ -109,6 +109,7 @@ namespace BaseStationReader.Data
                 entity.ToTable("SESSION");
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100).HasColumnName("Name");
                 entity.Property(e => e.StartedAtUtc).IsRequired().HasColumnName("StartedAtUtc").HasColumnType("DATETIME");
                 entity.Property(e => e.ProfileName).IsRequired().HasColumnName("ProfileName");
                 entity.Property(e => e.Notes).HasColumnName("Notes");

@@ -535,6 +535,12 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("IncludedBehaviours");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Name");
+
                     b.Property<int?>("MaximumAltitude")
                         .HasColumnType("INTEGER")
                         .HasColumnName("MaximumAltitude");

@@ -58,6 +58,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .Select(item => new
             {
                 item.Id,
+                item.Name,
                 item.StartedAtUtc,
                 item.ProfileName,
                 item.Notes,
@@ -181,6 +182,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         return new ObservationSessionSummary
         {
             SessionId = session.Id,
+            Name = session.Name,
             StartedAtUtc = session.StartedAtUtc,
             LastActivity = lastActivity,
             ObservedDuration = lastActivity.HasValue
@@ -286,6 +288,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .Select(session => new ObservationSessionOption
             {
                 Id = session.Id,
+                Name = session.Name,
                 ProfileName = session.ProfileName,
                 StartedAtUtc = session.StartedAtUtc
             })
@@ -331,6 +334,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             .Select(session => new ObservationSessionDto
             {
                 SessionId = session.Id,
+                Name = session.Name,
                 StartedAtUtc = session.StartedAtUtc,
                 ProfileName = session.ProfileName,
                 Notes = session.Notes,

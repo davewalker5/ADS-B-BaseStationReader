@@ -124,13 +124,14 @@ namespace BaseStationReader.TrackerHub
                 var positionDensitySnapshotOrchestrator = new PositionDensitySnapshotOrchestrator(
                     new PositionDensityAggregator(),
                     positionDensitySnapshotStateManager);
-                var runtime = new TrackingRuntime(_settings, (settings, notes) => new TrackerController(
+                var runtime = new TrackingRuntime(_settings, (settings, sessionName, notes) => new TrackerController(
                     _logger,
                     new BaseStationReaderDbContext(contextOptions),
                     new TrackerTcpClient(),
                     settings,
                     ownsContext: true,
                     sessionNotes: notes,
+                    sessionName: sessionName,
                     densityOrchestrator: positionDensitySnapshotOrchestrator,
                     densitySnapshotMapper: new PositionDensitySnapshotMapper()));
                 _controller = runtime;

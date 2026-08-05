@@ -19,6 +19,7 @@ public sealed class ContinuousWriterPositionDensityTest
         await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
         var session = new ObservationSession
         {
+            Name = "Density writer test",
             StartedAtUtc = DateTime.UtcNow,
             ProfileName = "Density writer test",
             Host = "receiver.local",

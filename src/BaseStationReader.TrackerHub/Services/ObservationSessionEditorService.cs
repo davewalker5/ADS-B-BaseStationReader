@@ -31,6 +31,7 @@ public sealed class ObservationSessionEditorService(
         return new ObservationSessionDto
         {
             SessionId = session.Id,
+            Name = session.Name,
             StartedAtUtc = session.StartedAtUtc,
             ProfileName = session.ProfileName,
             Notes = session.Notes,
@@ -47,8 +48,9 @@ public sealed class ObservationSessionEditorService(
     }
 
     /// <inheritdoc />
-    public async Task SaveNotesAsync(
+    public async Task SaveAsync(
         int sessionId,
+        string name,
         string? notes,
         CancellationToken cancellationToken = default)
     {
@@ -57,7 +59,7 @@ public sealed class ObservationSessionEditorService(
         {
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             var manager = new DatabaseManagementFactory(logger, context, 0).ObservationSessionManager;
-            await manager.UpdateAsync(sessionId, notes, cancellationToken);
+            await manager.UpdateAsync(sessionId, name, notes, cancellationToken);
         }, cancellationToken);
     }
 

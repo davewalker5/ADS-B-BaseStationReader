@@ -10,7 +10,7 @@ namespace BaseStationReader.TrackerHub.Services;
 /// <summary>Stable facade around the controller that may be replaced when a profile changes.</summary>
 public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvider, ILiveTrackerStatisticsProvider
 {
-    private readonly Func<TrackerApplicationSettings, string?, ITrackerController> _factory;
+    private readonly Func<TrackerApplicationSettings, string?, string?, ITrackerController> _factory;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _stateLock = new();
     private TrackerApplicationSettings _settings;
@@ -28,7 +28,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private long _lastAircraftWithPositionRecords;
 
     public TrackingRuntime(TrackerApplicationSettings settings,
-        Func<TrackerApplicationSettings, string?, ITrackerController> factory)
+        Func<TrackerApplicationSettings, string?, string?, ITrackerController> factory)
     {
         _settings = settings;
         _factory = factory;
@@ -71,7 +71,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     /// <summary>
     /// Starts a replaceable tracker controller for a new observation session.
     /// </summary>
-    public async Task StartTrackingAsync(string receiverHost, int receiverPort, string? notes = null,
+    public async Task StartTrackingAsync(string receiverHost, int receiverPort, string sessionName, string? notes = null,
         CancellationToken token = default)
     {
         if (string.IsNullOrWhiteSpace(receiverHost))
@@ -81,6 +81,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         if (receiverPort is < 1 or > 65535)
         {
             throw new ArgumentOutOfRangeException(nameof(receiverPort), "Receiver port must be between 1 and 65535.");
+        }
+        if (string.IsNullOrWhiteSpace(sessionName) || sessionName.Trim().Length > 100)
+        {
+            throw new ArgumentException("Session name is required and cannot exceed 100 characters.", nameof(sessionName));
         }
 
         await _gate.WaitAsync(token);
@@ -97,7 +101,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
                     _settings.Host = receiverHost.Trim();
                     _settings.Port = receiverPort;
                 }
-                StartController(notes);
+                StartController(sessionName.Trim(), notes);
             }
         }
         finally { _gate.Release(); }
@@ -163,14 +167,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     /// Creates and starts the replaceable controller for a new observation session.
     /// </summary>
     /// <param name="notes">Optional notes recorded with the new session.</param>
-    private void StartController(string? notes = null)
+    private void StartController(string sessionName, string? notes = null)
     {
         // A new controller represents a new observation session, so reset the retained final count.
         if (_applicationToken.IsCancellationRequested)
         {
             return;
         }
-        var controller = _factory(_settings, notes);
+        var controller = _factory(_settings, sessionName, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)

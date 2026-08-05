@@ -9,6 +9,7 @@ public sealed class ObservationSessionDto
 {
     /// <summary>Internal key used for actions; it is never rendered as a table field.</summary>
     public int SessionId { get; set; }
+    public string Name { get; set; } = string.Empty;
     public DateTime StartedAtUtc { get; set; }
     public string ProfileName { get; set; } = string.Empty;
     public string? Notes { get; set; }

@@ -17,7 +17,7 @@ namespace BaseStationReader.Interfaces.Database
             CancellationToken cancellationToken = default);
 
         Task AddAsync(ObservationSession session, CancellationToken cancellationToken = default);
-        Task UpdateAsync(int sessionId, string? notes, CancellationToken cancellationToken = default);
+        Task UpdateAsync(int sessionId, string name, string? notes, CancellationToken cancellationToken = default);
         Task DeleteAsync(int sessionId, CancellationToken cancellationToken = default);
     }
 }

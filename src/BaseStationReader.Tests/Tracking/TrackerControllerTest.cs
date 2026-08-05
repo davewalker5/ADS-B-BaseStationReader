@@ -117,6 +117,7 @@ namespace BaseStationReader.Tests.Tracking
             // The run creates one immutable profile snapshot and links every persisted observation to it.
             var session = _context.ObservationSessions.Single();
             Assert.AreEqual("Test Default Profile", session.ProfileName);
+            Assert.AreEqual(session.StartedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"), session.Name);
             Assert.AreEqual("Clear skies; testing session context.", session.Notes);
             Assert.AreEqual(_settings.Host, session.Host);
             Assert.AreEqual(_settings.Port, session.Port);

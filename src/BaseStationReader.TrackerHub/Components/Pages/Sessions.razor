@@ -59,6 +59,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Name</th>
                     <th>Started</th>
                     <th>Profile</th>
                     <th>Receiver host</th>
@@ -80,17 +81,18 @@
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="16" class="table-empty">Loading sessions…</td></tr>
+                    <tr><td colspan="17" class="table-empty">Loading sessions…</td></tr>
                 }
                 else if (_result.Items.Count == 0)
                 {
-                    <tr><td colspan="16" class="table-empty">No sessions match these filters.</td></tr>
+                    <tr><td colspan="17" class="table-empty">No sessions match these filters.</td></tr>
                 }
                 else
                 {
                     @foreach (var session in _result.Items)
                     {
                         <tr>
+                            <td>@session.Name</td>
                             <td>@FormatDateTime(session.StartedAtUtc)</td>
                             <td>@Display(session.ProfileName)</td>
                             <td class="mono">@Display(session.Host)</td>
@@ -383,7 +385,7 @@
     }
 
     private static string FormatSessionOption(ObservationSessionOption session)
-        => $"{session.ProfileName} - {DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime():dd-MMM-yyyy - HH:mm:ss}";
+        => $"{session.Name} - {DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime():dd-MMM-yyyy - HH:mm:ss}";
 
     private static string FormatDateTime(DateTime value)
         => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime().ToString("dd MMM yyyy HH:mm:ss");
