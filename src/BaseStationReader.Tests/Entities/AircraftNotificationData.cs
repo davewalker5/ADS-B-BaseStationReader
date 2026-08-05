@@ -8,5 +8,6 @@ namespace BaseStationReader.Tests.Entities
         public TrackedAircraft Aircraft { get; set; }
         public AircraftPosition Position { get; set; }
         public AircraftNotificationType NotificationType { get; set; }
+        public bool MeetsTrackingCriteria { get; set; } = true;
     }
 }

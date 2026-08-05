@@ -84,7 +84,7 @@ namespace BaseStationReader.Tests.Tracking
             var sender = new AircraftTrackerNotificationSender(_logger, behaviours, null, 40000, null);
             sender.SendAircraftNotification(_aircraft, null, this, AircraftNotificationType.Updated, OnAircraftNotification);
             await Task.Delay(DelayMs);
-            Assert.IsEmpty(_notifications);
+            AssertNotificationFailedTrackingCriteria();
         }
 
         [TestMethod]
@@ -94,7 +94,7 @@ namespace BaseStationReader.Tests.Tracking
             var sender = new AircraftTrackerNotificationSender(_logger, behaviours, null, null, 25000);
             sender.SendAircraftNotification(_aircraft, null, this, AircraftNotificationType.Updated, OnAircraftNotification);
             await Task.Delay(DelayMs);
-            Assert.IsEmpty(_notifications);
+            AssertNotificationFailedTrackingCriteria();
         }
 
         [TestMethod]
@@ -104,7 +104,7 @@ namespace BaseStationReader.Tests.Tracking
             var sender = new AircraftTrackerNotificationSender(_logger, behaviours, 10, null, null);
             sender.SendAircraftNotification(_aircraft, null, this, AircraftNotificationType.Updated, OnAircraftNotification);
             await Task.Delay(DelayMs);
-            Assert.IsEmpty(_notifications);
+            AssertNotificationFailedTrackingCriteria();
         }
 
         [TestMethod]
@@ -114,7 +114,7 @@ namespace BaseStationReader.Tests.Tracking
             var sender = new AircraftTrackerNotificationSender(_logger, [AircraftBehaviour.Climbing, AircraftBehaviour.Descending], null, null, null);
             sender.SendAircraftNotification(_aircraft, null, this, AircraftNotificationType.Updated, OnAircraftNotification);
             await Task.Delay(DelayMs);
-            Assert.IsEmpty(_notifications);
+            AssertNotificationFailedTrackingCriteria();
         }
 
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
@@ -123,8 +123,15 @@ namespace BaseStationReader.Tests.Tracking
             {
                 Aircraft = e.Aircraft,
                 Position = e.Position,
-                NotificationType = e.NotificationType
+                NotificationType = e.NotificationType,
+                MeetsTrackingCriteria = e.MeetsTrackingCriteria
             });
+        }
+
+        private void AssertNotificationFailedTrackingCriteria()
+        {
+            Assert.HasCount(1, _notifications);
+            Assert.IsFalse(_notifications[0].MeetsTrackingCriteria);
         }
 
         private void AssertCorrectNotificationSent(AircraftNotificationType type, bool expectPosition)

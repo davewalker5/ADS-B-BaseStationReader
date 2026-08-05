@@ -130,6 +130,29 @@ namespace BaseStationReader.Tests.Tracking
             Assert.IsTrue(_context.TrackedAircraft.All(x => x.SessionId == session.Id));
         }
 
+        [TestMethod]
+        public async Task PersistsDetectedAircraftWithoutQualifyingPositionsTest()
+        {
+            // Exclude every behaviour from position tracking while retaining the receiver observation itself.
+            _settings.TrackedBehaviours = [];
+            using var source = new CancellationTokenSource(MessageReaderIntervalMs * 3);
+
+            try
+            {
+                await _controller.StartAsync(source.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when the bounded test session ends.
+            }
+
+            var session = _context.ObservationSessions.Single();
+            var aircraft = _context.TrackedAircraft.Single();
+            Assert.AreEqual(session.Id, aircraft.SessionId);
+            Assert.AreEqual("3965A3", aircraft.Address);
+            Assert.IsEmpty(_context.Positions);
+        }
+
         private void OnAircraftNotification(object sender, AircraftNotificationEventArgs e)
         {
             _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} notification");
