@@ -37,6 +37,13 @@ namespace BaseStationReader.Entities.Tracking
         public TrackedAircraft Aircraft { get; set; }
 
         /// <summary>
+        /// Identifies the observation session while this position is waiting to be persisted.
+        /// The session is persisted through the position's parent aircraft, not on the position itself.
+        /// </summary>
+        [NotMapped]
+        public int? SessionId { get; set; }
+
+        /// <summary>
         /// Create an aircraft position from a tracked aircraft
         /// </summary>
         /// <param name="aircraft"></param>
@@ -49,7 +56,8 @@ namespace BaseStationReader.Entities.Tracking
                 Distance = aircraft.Distance,
                 Latitude = aircraft.Latitude,
                 Longitude = aircraft.Longitude,
-                Timestamp = aircraft.LastSeen
+                Timestamp = aircraft.LastSeen,
+                SessionId = aircraft.SessionId
             };
     }
 }
