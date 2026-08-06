@@ -69,9 +69,6 @@
             <strong>@EffectiveProfileName</strong>
         </div>
         <div class="density-session-actions">
-            <button class="secondary-button" @onclick="LoadPositionDensityAsync" disabled="@_densityLoading">
-                @(_densityLoading ? "Recalculating…" : "Refresh")
-            </button>
             @if (TrackingControl.IsTracking)
             {
                 <button class="secondary-button" @onclick="StopTrackingAsync" disabled="@_controlsBusy">
