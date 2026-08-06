@@ -10,8 +10,13 @@ public sealed class TrackingControlService(TrackingRuntime runtime, IEventBridge
     public async Task StartAsync(string receiverHost, int receiverPort, string sessionName, string notes = null,
         CancellationToken cancellationToken = default)
     {
-        await runtime.StartTrackingAsync(receiverHost, receiverPort, sessionName, notes, cancellationToken);
-        await bridge.PublishResetAsync(runtime.TrackingOptions, cancellationToken);
+        await runtime.StartTrackingAsync(
+            receiverHost,
+            receiverPort,
+            sessionName,
+            notes,
+            cancellationToken,
+            bridge.PublishResetAsync);
     }
 
     /// <inheritdoc />
