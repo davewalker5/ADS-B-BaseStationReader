@@ -241,15 +241,6 @@ namespace BaseStationReader.Tests.Configuration
         }
 
         [TestMethod]
-        public void OverrideClearDownTest()
-        {
-            var args = new string[] { "--cleardown", "true" };
-            _parser.Parse(args);
-            var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
-            Assert.IsTrue(settings.ClearDown);
-        }
-
-        [TestMethod]
         public void OverrideTrackPositionTest()
         {
             var args = new string[] { "--track-position", "false" };

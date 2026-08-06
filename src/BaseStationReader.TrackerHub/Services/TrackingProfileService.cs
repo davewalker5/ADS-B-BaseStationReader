@@ -155,7 +155,7 @@ public sealed class TrackingProfileService : ITrackingProfileService
         RestartOnTimeout = source.RestartOnTimeout, TimeToRecent = source.TimeToRecent,
         TimeToStale = source.TimeToStale, TimeToRemoval = source.TimeToRemoval, TimeToLock = source.TimeToLock,
         LogFile = source.LogFile, VerboseLogging = source.VerboseLogging, EnableSqlWriter = source.EnableSqlWriter,
-        ClearDown = source.ClearDown, MaximumRows = source.MaximumRows, ReceiverLatitude = source.ReceiverLatitude,
+        MaximumRows = source.MaximumRows, ReceiverLatitude = source.ReceiverLatitude,
         ReceiverLongitude = source.ReceiverLongitude, ReceiverElevation = source.ReceiverElevation,
         MaximumTrackedDistance = source.MaximumTrackedDistance,
         MinimumTrackedAltitude = source.MinimumTrackedAltitude, MaximumTrackedAltitude = source.MaximumTrackedAltitude,

@@ -36,8 +36,7 @@ namespace BaseStationReader.Tests.Tracking
             TrackPosition = true,
             TimeToRecent = TrackerRecentMs,
             TimeToStale = TrackerStaleMs,
-            TimeToRemoval = TrackerRemovedMs,
-            ClearDown = false
+            TimeToRemoval = TrackerRemovedMs
         };
 
         private ITrackerLogger _logger = new MockFileLogger();

@@ -21,7 +21,6 @@ namespace BaseStationReader.Tests.Configuration
             Assert.AreEqual(Severity.Info, settings.MinimumLogLevel);
             Assert.IsFalse(settings.VerboseLogging);
             Assert.IsTrue(settings.EnableSqlWriter);
-            Assert.IsFalse(settings.ClearDown);
             Assert.AreEqual(0, settings.MaximumRows);
             Assert.AreEqual("51.47", settings.ReceiverLatitude?.ToString("#.##"));
             Assert.AreEqual("-.45", settings.ReceiverLongitude?.ToString("#.##"));
