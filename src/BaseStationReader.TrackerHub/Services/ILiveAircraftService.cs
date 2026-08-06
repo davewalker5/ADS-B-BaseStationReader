@@ -21,6 +21,11 @@ public interface ILiveAircraftService : IAsyncDisposable
     Task StartAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Replaces local state with the tracker's authoritative current snapshot.
+    /// </summary>
+    Task RefreshAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Stops the live connection.
     /// </summary>
     Task StopAsync(CancellationToken cancellationToken = default);

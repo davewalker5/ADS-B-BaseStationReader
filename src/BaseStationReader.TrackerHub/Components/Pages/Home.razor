@@ -840,6 +840,9 @@
             {
                 _sessionStarted = true;
                 _sessionId = await WaitForNewSessionIdAsync(previousSessionId);
+                // Match the reliable page-reload path by replacing any startup-transition events with
+                // one authoritative snapshot after the new observation session becomes visible.
+                await LiveAircraft.RefreshAsync();
                 _summary = null;
                 _completedAircraft = [];
                 PageState.CompletedLiveTracker = null;
