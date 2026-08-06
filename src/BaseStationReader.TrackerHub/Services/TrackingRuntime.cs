@@ -188,7 +188,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             _lastAircraftWithPositionRecords = 0;
             _controller = controller;
             _controllerCancellation = cancellation;
-            _controllerTask = controller.StartAsync(cancellation.Token);
+            // A session can be started from a Blazor circuit. Run the long-lived controller outside
+            // that circuit's synchronization context so message processing cannot monopolise the UI
+            // dispatcher and delay renders until the page is manually reloaded.
+            _controllerTask = Task.Run(() => controller.StartAsync(cancellation.Token), CancellationToken.None);
         }
     }
 
