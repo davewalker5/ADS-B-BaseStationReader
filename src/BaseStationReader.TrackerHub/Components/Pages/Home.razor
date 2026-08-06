@@ -577,7 +577,9 @@
         <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="flush-progress-title" tabindex="0">
             <header><div><p class="eyebrow">Stopping session</p><h2 id="flush-progress-title">Flushing queued entries</h2></div></header>
             <div class="queue-flush-progress" role="status" aria-live="polite">
-                <progress max="@Math.Max(1, _flushProgress?.InitialCount ?? _pendingQueueCount)" value="@(_flushProgress?.ProcessedCount ?? 0)"></progress>
+                <progress class="queue-flush-progress-bar"
+                          max="@Math.Max(1, _flushProgress?.InitialCount ?? _pendingQueueCount)"
+                          value="@(_flushProgress?.ProcessedCount ?? 0)"></progress>
                 <p>@FlushProgressLabel</p>
             </div>
             <div class="confirmation-actions">
