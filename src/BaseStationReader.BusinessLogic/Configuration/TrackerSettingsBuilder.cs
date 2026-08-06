@@ -126,12 +126,6 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.FlushOnStop = bool.Parse(values[0]);
             }
 
-            values = parser.GetValues(CommandLineOptionType.ClearDown);
-            if (values != null)
-            {
-                settings.ClearDown = bool.Parse(values[0]);
-            }
-
             values = parser.GetValues(CommandLineOptionType.MaximumRows);
             if (values != null)
             {

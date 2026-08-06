@@ -9,7 +9,6 @@
         Aircraft,
         AircraftApi,
         ApplicationTimeout,
-        ClearDown,
         EnableSqlWriter,
         AirportSchedule,
         Flight,

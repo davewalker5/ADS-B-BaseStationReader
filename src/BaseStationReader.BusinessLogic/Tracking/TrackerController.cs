@@ -145,13 +145,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
             _tracker ??= await CreateTrackerAsync(token);
 
-            // If the queued writer is enabled and clear-down is configured, clear down previous
-            // tracking data
-            if ((_writer != null) && _settings.ClearDown)
-            {
-                await _factory.Context<BaseStationReaderDbContext>()?.ClearDown();
-            }
-
             // Persist the session before tracking begins so every subsequent aircraft record can refer to it.
             if (_writer != null)
             {
