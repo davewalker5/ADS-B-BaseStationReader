@@ -11,7 +11,7 @@ namespace BaseStationReader.BusinessLogic.Events
             => Logger = logger;
 
         /// <summary>
-        /// Fire-and-forget notification of subscribers to an event
+        /// Notify subscribers in registration order on the publishing path
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sender"></param>
@@ -28,8 +28,8 @@ namespace BaseStationReader.BusinessLogic.Events
                 {
                     try
                     {
-                        // Fire-and-forget subscriber notification
-                        _ = Task.Run(() => ((EventHandler<T>)handler)?.Invoke(sender, eventArgs));
+                        // Keep message ordering deterministic and apply backpressure to high-rate feeds.
+                        ((EventHandler<T>)handler)?.Invoke(sender, eventArgs);
                     }
                     catch (Exception ex)
                     {

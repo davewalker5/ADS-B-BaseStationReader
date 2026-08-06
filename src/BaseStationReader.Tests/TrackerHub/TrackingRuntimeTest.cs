@@ -90,6 +90,34 @@ public class TrackingRuntimeTest
         Assert.IsTrue(controllers[1].Stopped);
     }
 
+    [TestMethod]
+    public async Task SessionResetCompletesBeforeControllerCanStartTest()
+    {
+        var order = new List<string>();
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _, _) =>
+            new OrderingController(settings, order));
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+
+        await runtime.StartTrackingAsync(
+            "receiver.local",
+            30003,
+            "Ordered session",
+            beforeStart: (options, _) =>
+            {
+                order.Add($"reset:{options.ReceiverHost}:{options.ReceiverPort}");
+                return ValueTask.CompletedTask;
+            });
+        await WaitUntilAsync(() => order.Contains("controller"));
+
+        CollectionAssert.AreEqual(
+            new[] { "reset:receiver.local:30003", "controller" },
+            order);
+
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
     private static TrackerApplicationSettings Settings(string profile) => new()
     {
         TrackingProfile = profile,
@@ -120,6 +148,25 @@ public class TrackingRuntimeTest
             try { await Task.Delay(Timeout.InfiniteTimeSpan, token); }
             catch (OperationCanceledException) when (token.IsCancellationRequested) { }
             Stopped = true;
+        }
+
+        public Task FlushQueueAsync() => Task.CompletedTask;
+    }
+
+    private sealed class OrderingController(
+        TrackerApplicationSettings settings,
+        List<string> order) : ITrackerController
+    {
+        public event EventHandler<AircraftNotificationEventArgs> AircraftEvent { add { } remove { } }
+        public IEnumerable<TrackedAircraftDto> State => [];
+        public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(settings);
+        public int QueueSize => 0;
+
+        public async Task StartAsync(CancellationToken token)
+        {
+            order.Add("controller");
+            try { await Task.Delay(Timeout.InfiniteTimeSpan, token); }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         }
 
         public Task FlushQueueAsync() => Task.CompletedTask;

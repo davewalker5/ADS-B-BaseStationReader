@@ -305,19 +305,13 @@ namespace BaseStationReader.TrackerHub
                     // Expected on cancellation
                 }
 
-                // Process all pending requests in the queued writer queue
-                if (_settings.EnableSqlWriter)
-                {
-                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates ...");
-                    await _controller.FlushQueueAsync();
-                }
             }
         }
         
         /// <summary>
         /// Run the main event loop for the cancellation keypress and tracker controller
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="source"></param>
         /// <returns></returns>
         static async Task RunMainAsync(CancellationToken token)
         {
@@ -331,7 +325,7 @@ namespace BaseStationReader.TrackerHub
                 using (var trackerLoopTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token))
                 {
                     // Run the tracker loop - this will return 
-                    restart = await RunTrackerEventLoopAsync(trackerLoopTokenSource.Token).ConfigureAwait(false)
+                    restart = await RunTrackerEventLoopAsync(trackerLoopTokenSource).ConfigureAwait(false)
                             && _settings.RestartOnTimeout
                             && !token.IsCancellationRequested;
                 }
@@ -354,8 +348,10 @@ namespace BaseStationReader.TrackerHub
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private static async Task<bool> RunTrackerEventLoopAsync(CancellationToken token)
+        private static async Task<bool> RunTrackerEventLoopAsync(CancellationTokenSource source)
         {
+            var token = source.Token;
+            var restartRequested = false;
             // Reset the elapsed time since the last update
             _lastUpdate = DateTime.Now;
 
@@ -377,6 +373,8 @@ namespace BaseStationReader.TrackerHub
                     if (((TrackingRuntime)_controller).IsTracking &&
                         (_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
                     {
+                        restartRequested = true;
+                        source.Cancel();
                         throw new OperationCanceledException(token);
                     }
 
@@ -387,6 +385,7 @@ namespace BaseStationReader.TrackerHub
                     {
                         // This propagates completion/exception/cancellation
                         await controllerTask.ConfigureAwait(false);
+                        restartRequested = !token.IsCancellationRequested;
                         break;
                     }
                 }
@@ -399,9 +398,20 @@ namespace BaseStationReader.TrackerHub
             {
                 // Detach from the tracker controller
                 _controller.AircraftEvent -= OnAircraftEvent;
+
+                // Cancellation ends the display loop, but the controller still owns asynchronous TCP,
+                // density and writer shutdown. Do not let the host continue until all of it has completed.
+                try
+                {
+                    await controllerTask.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    // Expected when the host or session is cancelled.
+                }
             }
 
-            return !token.IsCancellationRequested && _settings.RestartOnTimeout;
+            return restartRequested;
         }
         
         /// <summary>

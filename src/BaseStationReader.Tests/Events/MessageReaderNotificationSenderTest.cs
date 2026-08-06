@@ -31,6 +31,20 @@ namespace BaseStationReader.Tests.Tracking
             Assert.AreEqual(Message, _received[0]);
         }
 
+        [TestMethod]
+        public void BurstNotificationsRemainOrderedTest()
+        {
+            var sender = new MessageReaderNotificationSender(_logger);
+            var expected = Enumerable.Range(0, 1000).Select(index => index.ToString()).ToArray();
+
+            foreach (var message in expected)
+            {
+                sender.SendMessageReadNotification(this, OnMessageReadNotification, message);
+            }
+
+            CollectionAssert.AreEqual(expected, _received);
+        }
+
         private void OnMessageReadNotification(object sender, MessageReadEventArgs e)
         {
             _received.Add(e.Message);

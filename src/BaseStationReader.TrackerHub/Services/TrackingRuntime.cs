@@ -68,7 +68,8 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     /// Starts a replaceable tracker controller for a new observation session.
     /// </summary>
     public async Task StartTrackingAsync(string receiverHost, int receiverPort, string sessionName, string? notes = null,
-        CancellationToken token = default)
+        CancellationToken token = default,
+        Func<TrackingOptions, CancellationToken, ValueTask>? beforeStart = null)
     {
         if (string.IsNullOrWhiteSpace(receiverHost))
         {
@@ -96,6 +97,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
                 {
                     _settings.Host = receiverHost.Trim();
                     _settings.Port = receiverPort;
+                }
+                if (beforeStart is not null)
+                {
+                    // Publish session-boundary state before the controller can emit its first aircraft update.
+                    await beforeStart(TrackingOptions, token);
                 }
                 StartController(sessionName.Trim(), notes);
             }
