@@ -32,6 +32,9 @@ public interface IPositionDensitySnapshotOrchestrator
     /// <param name="position"></param>
     void Record(AircraftPosition? position);
 
+    /// <summary>Refreshes in-memory density from observations received so far without persisting a snapshot.</summary>
+    PositionDensity? Refresh();
+
     /// <summary>
     /// Stops periodic snapshot updates and releases session input data.
     /// </summary>

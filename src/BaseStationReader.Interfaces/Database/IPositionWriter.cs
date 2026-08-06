@@ -7,6 +7,6 @@ namespace BaseStationReader.Interfaces.Database
     {
         Task<AircraftPosition> GetAsync(Expression<Func<AircraftPosition, bool>> predicate);
         Task<List<AircraftPosition>> ListAsync(Expression<Func<AircraftPosition, bool>> predicate);
-        Task<AircraftPosition> WriteAsync(AircraftPosition template);
+        Task<AircraftPosition> WriteAsync(AircraftPosition template, CancellationToken cancellationToken = default);
     }
 }

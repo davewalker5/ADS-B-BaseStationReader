@@ -3,6 +3,7 @@
 using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Hub;
+using BaseStationReader.Entities.Spool;
 using BaseStationReader.Interfaces.Tracking;
 
 namespace BaseStationReader.TrackerHub.Services;
@@ -21,9 +22,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private bool _started;
     private long _lastMessagesProcessed;
     private long _lastPositionRecordsWritten;
+    private long _lastPositionRecordsObserved;
     private long _lastDistinctAircraft;
     private long _lastDistinctCallsigns;
     private long _lastAircraftWithPositionRecords;
+    private long _lastAircraftWithPositionObservations;
 
     public TrackingRuntime(TrackerApplicationSettings settings,
         Func<TrackerApplicationSettings, string?, string?, ITrackerController> factory)
@@ -38,9 +41,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
     public long MessagesProcessed { get { lock (_stateLock) return _controller?.MessagesProcessed ?? _lastMessagesProcessed; } }
     public long PositionRecordsWritten { get { lock (_stateLock) return _controller?.PositionRecordsWritten ?? _lastPositionRecordsWritten; } }
+    public long PositionRecordsObserved { get { lock (_stateLock) return _controller?.PositionRecordsObserved ?? _lastPositionRecordsObserved; } }
     public long DistinctAircraft { get { lock (_stateLock) return _controller?.DistinctAircraft ?? _lastDistinctAircraft; } }
     public long DistinctCallsigns { get { lock (_stateLock) return _controller?.DistinctCallsigns ?? _lastDistinctCallsigns; } }
     public long AircraftWithPositionRecords { get { lock (_stateLock) return _controller?.AircraftWithPositionRecords ?? _lastAircraftWithPositionRecords; } }
+    public long AircraftWithPositionObservations { get { lock (_stateLock) return _controller?.AircraftWithPositionObservations ?? _lastAircraftWithPositionObservations; } }
     public bool IsTracking { get { lock (_stateLock) return _controller is not null; } }
     public (double? Latitude, double? Longitude) ReceiverPosition
     {
@@ -112,10 +117,20 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     /// <summary>
     /// Stops the active tracker controller, if present.
     /// </summary>
-    public async Task StopTrackingAsync(CancellationToken token = default)
+    public async Task StopTrackingAsync(bool? flushQueue = null, CancellationToken token = default,
+        IProgress<QueueFlushProgress>? progress = null)
     {
         await _gate.WaitAsync(token);
-        try { await StopControllerCoreAsync(); }
+        try
+        {
+            ITrackerController? controller;
+            lock (_stateLock) controller = _controller;
+            if (flushQueue.HasValue)
+            {
+                controller?.ConfigureStopFlush(flushQueue.Value, token, progress);
+            }
+            await StopControllerCoreAsync();
+        }
         finally { _gate.Release(); }
     }
 
@@ -155,13 +170,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     }
 
     /// <inheritdoc />
-    public async Task FlushQueueAsync()
+    public async Task FlushQueueAsync(CancellationToken cancellationToken = default,
+        IProgress<QueueFlushProgress>? progress = null)
     {
         ITrackerController? controller;
         lock (_stateLock) controller = _controller;
         if (controller is not null)
         {
-            await controller.FlushQueueAsync();
+            await controller.FlushQueueAsync(cancellationToken, progress);
         }
     }
 
@@ -183,9 +199,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         {
             _lastMessagesProcessed = 0;
             _lastPositionRecordsWritten = 0;
+            _lastPositionRecordsObserved = 0;
             _lastDistinctAircraft = 0;
             _lastDistinctCallsigns = 0;
             _lastAircraftWithPositionRecords = 0;
+            _lastAircraftWithPositionObservations = 0;
             _controller = controller;
             _controllerCancellation = cancellation;
             // A session can be started from a Blazor circuit. Run the long-lived controller outside
@@ -227,9 +245,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             // Preserve the completed session total after releasing its controller.
             _lastMessagesProcessed = controller.MessagesProcessed;
             _lastPositionRecordsWritten = controller.PositionRecordsWritten;
+            _lastPositionRecordsObserved = controller.PositionRecordsObserved;
             _lastDistinctAircraft = controller.DistinctAircraft;
             _lastDistinctCallsigns = controller.DistinctCallsigns;
             _lastAircraftWithPositionRecords = controller.AircraftWithPositionRecords;
+            _lastAircraftWithPositionObservations = controller.AircraftWithPositionObservations;
             _controller = null;
             _controllerCancellation = null;
             _controllerTask = null;

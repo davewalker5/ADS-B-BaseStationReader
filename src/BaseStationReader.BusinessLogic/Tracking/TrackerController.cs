@@ -19,6 +19,7 @@ using BaseStationReader.Interfaces.Events;
 using BaseStationReader.Interfaces.Spool;
 using BaseStationReader.Entities.Hub;
 using BaseStationReader.Entities.History;
+using BaseStationReader.Entities.Spool;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Tracking
@@ -39,10 +40,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private IAircraftTracker _tracker = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
+        private bool? _stopFlushOverride;
+        private CancellationToken _stopFlushCancellationToken;
+        private IProgress<QueueFlushProgress> _stopFlushProgress;
+        private int _remainingQueueSize;
+        private bool _writerStopped;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
         private readonly ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
+        private readonly ConcurrentDictionary<string, byte> _positionAircraftObserved = new(StringComparer.OrdinalIgnoreCase);
+        private long _positionRecordsObserved;
 
         public IEnumerable<TrackedAircraftDto> State
         {
@@ -62,6 +70,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
         public long PositionRecordsWritten => _writer?.PositionRecordsWritten ?? 0;
 
         /// <inheritdoc />
+        public long PositionRecordsObserved => Interlocked.Read(ref _positionRecordsObserved);
+
+        /// <inheritdoc />
         /// <inheritdoc />
         public long DistinctAircraft => _tracker?.DistinctAircraft ?? 0;
 
@@ -70,6 +81,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
 
         /// <inheritdoc />
         public long AircraftWithPositionRecords => _writer?.AircraftWithPositionRecords ?? 0;
+
+        /// <inheritdoc />
+        public long AircraftWithPositionObservations => _positionAircraftObserved.Count;
 
         /// <summary>
         /// Initialises a controller; asynchronous tracking dependencies are loaded when tracking starts.
@@ -123,7 +137,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _writer = new ContinuousWriter(
                     _factory,
                     spoolQueue,
-                    _settings.FlushOnStop);
+                    _settings.FlushOnStop,
+                    _settings.FlushWhileActive);
             }
 
             // Create the controller notification sender
@@ -200,8 +215,19 @@ namespace BaseStationReader.BusinessLogic.Tracking
                     // Always drain and dispose persistence even if snapshot generation itself failed.
                     if (_writer != null)
                     {
-                        await _writer.StopAsync();
-                        await _writer.DisposeAsync();
+                        try
+                        {
+                            await _writer.StopAsync(
+                                _stopFlushOverride,
+                                _stopFlushCancellationToken,
+                                _stopFlushProgress);
+                        }
+                        finally
+                        {
+                            _remainingQueueSize = _writer.QueueSize;
+                            _writerStopped = true;
+                            await _writer.DisposeAsync();
+                        }
                     }
 
                     // Detach the aircraft tracking event handlers
@@ -221,18 +247,28 @@ namespace BaseStationReader.BusinessLogic.Tracking
         /// <summary>
         /// Return the number of pending requests in the writer queue
         /// </summary>
-        public int QueueSize => _writer?.QueueSize ?? 0;
+        public int QueueSize => _writerStopped ? _remainingQueueSize : _writer?.QueueSize ?? 0;
 
         /// <summary>
         /// Process all pending entries in the queued writer queue
         /// </summary>
         /// <returns></returns>
-        public async Task FlushQueueAsync()
+        public async Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<QueueFlushProgress> progress = null)
         {
             if (_writer != null)
             {
-                await _writer.FlushQueueAsync();
+                await _writer.FlushQueueAsync(cancellationToken, progress);
             }
+        }
+
+        /// <inheritdoc />
+        public void ConfigureStopFlush(bool flushQueue, CancellationToken cancellationToken = default,
+            IProgress<QueueFlushProgress> progress = null)
+        {
+            _stopFlushOverride = flushQueue;
+            _stopFlushCancellationToken = cancellationToken;
+            _stopFlushProgress = progress;
         }
 
         /// <summary>
@@ -385,6 +421,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 // Positions are captured before this event reaches the session-aware controller, so add the
                 // in-memory routing value here before the position crosses the asynchronous writer boundary.
                 position.SessionId = sessionId;
+                Interlocked.Increment(ref _positionRecordsObserved);
+                _positionAircraftObserved.TryAdd(aircraft.Address, 0);
             }
 
             // The live table represents every detected aircraft; position criteria affect only the optional

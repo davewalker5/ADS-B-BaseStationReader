@@ -11,23 +11,41 @@ namespace BaseStationReader.Tests.Database;
 public sealed class ContinuousWriterPositionDensityTest
 {
     /// <summary>
+    /// Verifies active processing can be disabled without preventing enqueue or stop-time flushing.
+    /// </summary>
+    [TestMethod]
+    public async Task FlushWhileActiveDisabledDefersWritesUntilStopTestAsync()
+    {
+        await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+        var session = await CreateSessionAsync(context, "Deferred writer test");
+        IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
+        await using IContinuousWriter writer = new ContinuousWriter(
+            factory,
+            new TemporarySpoolQueue(),
+            flushOnStop: true,
+            flushWhileActive: false);
+        await writer.StartAsync(CancellationToken.None);
+
+        writer.Push(CreateSnapshot(session.Id));
+        await Task.Delay(25);
+
+        Assert.AreEqual(1, writer.QueueSize);
+        Assert.IsEmpty(context.PositionDensitySnapshots);
+
+        await writer.StopAsync();
+
+        Assert.AreEqual(0, writer.QueueSize);
+        Assert.HasCount(1, context.PositionDensitySnapshots);
+    }
+
+    /// <summary>
     /// Verifies shutdown drains a queued complete snapshot through the persistence manager.
     /// </summary>
     [TestMethod]
     public async Task StopFlushesQueuedSnapshotTestAsync()
     {
         await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
-        var session = new ObservationSession
-        {
-            Name = "Density writer test",
-            StartedAtUtc = DateTime.UtcNow,
-            ProfileName = "Density writer test",
-            Host = "receiver.local",
-            Port = 30003,
-            IncludedBehaviours = "Unknown"
-        };
-        context.ObservationSessions.Add(session);
-        await context.SaveChangesAsync();
+        var session = await CreateSessionAsync(context, "Density writer test");
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
         await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
@@ -38,6 +56,24 @@ public sealed class ContinuousWriterPositionDensityTest
         var saved = context.PositionDensitySnapshots.Single();
         Assert.AreEqual(session.Id, saved.SessionId);
         Assert.HasCount(1, context.PositionDensitySnapshotCells);
+    }
+
+    private static async Task<ObservationSession> CreateSessionAsync(
+        BaseStationReaderDbContext context,
+        string name)
+    {
+        var session = new ObservationSession
+        {
+            Name = name,
+            StartedAtUtc = DateTime.UtcNow,
+            ProfileName = name,
+            Host = "receiver.local",
+            Port = 30003,
+            IncludedBehaviours = "Unknown"
+        };
+        context.ObservationSessions.Add(session);
+        await context.SaveChangesAsync();
+        return session;
     }
 
     /// <summary>

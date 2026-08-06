@@ -91,6 +91,25 @@ public class TrackingRuntimeTest
     }
 
     [TestMethod]
+    public async Task StopPassesHubFlushOverrideToControllerTest()
+    {
+        FakeController controller = null;
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _, _) =>
+            controller = new FakeController(settings));
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Flush override session");
+        await WaitUntilAsync(() => controller?.Started == true);
+
+        await runtime.StopTrackingAsync(flushQueue: false);
+
+        Assert.IsNotNull(controller);
+        Assert.IsFalse(controller.FlushQueueOnStop.Value);
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
     public async Task SessionResetCompletesBeforeControllerCanStartTest()
     {
         var order = new List<string>();
@@ -141,6 +160,7 @@ public class TrackingRuntimeTest
         public int QueueSize => 0;
         public bool Started { get; private set; }
         public bool Stopped { get; private set; }
+        public bool? FlushQueueOnStop { get; private set; }
 
         public async Task StartAsync(CancellationToken token)
         {
@@ -150,7 +170,12 @@ public class TrackingRuntimeTest
             Stopped = true;
         }
 
-        public Task FlushQueueAsync() => Task.CompletedTask;
+        public Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null) => Task.CompletedTask;
+
+        public void ConfigureStopFlush(bool flushQueue, CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null)
+            => FlushQueueOnStop = flushQueue;
     }
 
     private sealed class OrderingController(
@@ -169,6 +194,7 @@ public class TrackingRuntimeTest
             catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         }
 
-        public Task FlushQueueAsync() => Task.CompletedTask;
+        public Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null) => Task.CompletedTask;
     }
 }

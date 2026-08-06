@@ -7,6 +7,7 @@
 @inject ILiveTrackerStatusService LiveStatus
 @inject ITrackerHubPageState PageState
 @inject IPositionDensitySnapshotStateManager PositionDensitySnapshots
+@inject IPositionDensitySnapshotOrchestrator PositionDensityOrchestrator
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -559,6 +560,51 @@
 }
 }
 
+@if (_showFlushChoice)
+{
+    <div class="modal-backdrop">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="flush-choice-title" tabindex="0">
+            <header><div><p class="eyebrow">Pending database writes</p><h2 id="flush-choice-title">Flush queued entries?</h2></div></header>
+            <p>There are @_pendingQueueCount.ToString("N0") entries waiting in the FIFO queue. Would you like to write them to the database now?</p>
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="StopWithoutFlushAsync">Later</button>
+                <button class="primary-button" type="button" @onclick="StopWithFlushAsync">Flush now</button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_showFlushProgress)
+{
+    <div class="modal-backdrop">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="flush-progress-title" tabindex="0">
+            <header><div><p class="eyebrow">Stopping session</p><h2 id="flush-progress-title">Flushing queued entries</h2></div></header>
+            <div class="queue-flush-progress" role="status" aria-live="polite">
+                <progress max="@Math.Max(1, _flushProgress?.InitialCount ?? _pendingQueueCount)" value="@(_flushProgress?.ProcessedCount ?? 0)"></progress>
+                <p>@FlushProgressLabel</p>
+            </div>
+            <div class="confirmation-actions">
+                <button class="danger-button" type="button" @onclick="CancelFlush" disabled="@(_flushCancellation?.IsCancellationRequested ?? true)">
+                    @((_flushCancellation?.IsCancellationRequested ?? false) ? "Cancelling…" : "Cancel flush")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_showReplayNotice)
+{
+    <div class="modal-backdrop">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="replay-notice-title" tabindex="0">
+            <header><div><p class="eyebrow">Pending database writes</p><h2 id="replay-notice-title">Queued entries retained</h2></div></header>
+            <p>@_replayQueueCount.ToString("N0") entries remain in the FIFO queue. Use the Spool Replayer to write them to the database later.</p>
+            <div class="confirmation-actions">
+                <button class="primary-button" type="button" autofocus @onclick="CloseReplayNotice">OK</button>
+            </div>
+        </section>
+    </div>
+}
+
 @code {
 #nullable enable
     private TrackedAircraftDto? _selected;
@@ -572,6 +618,13 @@
     private bool _profileError;
     private bool _applyingProfile;
     private bool _controlsBusy;
+    private bool _showFlushChoice;
+    private bool _showFlushProgress;
+    private bool _showReplayNotice;
+    private int _pendingQueueCount;
+    private int _replayQueueCount;
+    private BaseStationReader.Entities.Spool.QueueFlushProgress? _flushProgress;
+    private CancellationTokenSource? _flushCancellation;
     private string _sessionName = string.Empty;
     private string _sessionNotes = string.Empty;
     private string _receiverHost = string.Empty;
@@ -752,6 +805,8 @@
         LiveAircraft.StateChanged -= OnLiveStateChanged;
         _densityCancellation?.Cancel();
         _densityCancellation?.Dispose();
+        _flushCancellation?.Cancel();
+        _flushCancellation?.Dispose();
         return ValueTask.CompletedTask;
     }
 
@@ -807,54 +862,25 @@
         }
     }
 
-    private Task StartTrackingAsync() => SetTrackingAsync(start: true);
+    private Task StartTrackingAsync() => StartSessionAsync();
 
-    private Task StopTrackingAsync() => SetTrackingAsync(start: false);
-
-    /// <summary>
-    /// Starts or stops the observation session and moves the page to the appropriate workflow tab.
-    /// </summary>
-    /// <param name="start"><see langword="true"/> to start a new session; otherwise stops the current session.</param>
-    private async Task SetTrackingAsync(bool start)
+    private async Task StartSessionAsync()
     {
         _controlsBusy = true;
         _profileMessage = null;
         try
         {
-            int? previousSessionId = null;
-            if (start)
-            {
-                previousSessionId = await SessionQueries.GetLatestSessionIdAsync();
-                await TrackingControl.StartAsync(_receiverHost, _receiverPort, _sessionName, _sessionNotes);
-            }
-            else
-            {
-                // Snapshot before the stop workflow clears the authoritative live collection.
-                var selectedAddress = _selected?.Address;
-                _completedAircraft = LiveAircraft.Aircraft.Select(CloneAircraft).ToArray();
-                _selected = _completedAircraft.FirstOrDefault(aircraft => aircraft.Address == selectedAddress);
-                await TrackingControl.StopAsync();
-            }
+            var previousSessionId = await SessionQueries.GetLatestSessionIdAsync();
+            await TrackingControl.StartAsync(_receiverHost, _receiverPort, _sessionName, _sessionNotes);
             _profileError = false;
-            if (start)
-            {
-                _sessionStarted = true;
-                _sessionId = await WaitForNewSessionIdAsync(previousSessionId);
-                // Match the reliable page-reload path by replacing any startup-transition events with
-                // one authoritative snapshot after the new observation session becomes visible.
-                await LiveAircraft.RefreshAsync();
-                _summary = null;
-                _completedAircraft = [];
-                PageState.CompletedLiveTracker = null;
-                ClearPositionDensity();
-                _activeTab = SessionTab.Tracking;
-            }
-            else
-            {
-                _activeTab = SessionTab.Summary;
-                await LoadSummaryAsync();
-                SaveCompletedSessionState();
-            }
+            _sessionStarted = true;
+            _sessionId = await WaitForNewSessionIdAsync(previousSessionId);
+            await LiveAircraft.RefreshAsync();
+            _summary = null;
+            _completedAircraft = [];
+            PageState.CompletedLiveTracker = null;
+            ClearPositionDensity();
+            _activeTab = SessionTab.Tracking;
         }
         catch (Exception exception)
         {
@@ -864,6 +890,109 @@
         finally
         {
             _controlsBusy = false;
+        }
+    }
+
+    private async Task StopTrackingAsync()
+    {
+        if (_controlsBusy) return;
+        _controlsBusy = true;
+        _pendingQueueCount = TrackingControl.QueueSize;
+
+        if (_pendingQueueCount == 0)
+        {
+            await StopAndFinalizeAsync(flushQueue: false);
+            _controlsBusy = false;
+        }
+        else if (TrackingControl.FlushOnStop)
+        {
+            _showFlushChoice = true;
+        }
+        else
+        {
+            await StopAndFinalizeAsync(flushQueue: false);
+            ShowReplayNotice();
+            _controlsBusy = false;
+        }
+    }
+
+    private async Task StopWithoutFlushAsync()
+    {
+        _showFlushChoice = false;
+        await StopAndFinalizeAsync(flushQueue: false);
+        ShowReplayNotice();
+        _controlsBusy = false;
+    }
+
+    private async Task StopWithFlushAsync()
+    {
+        _showFlushChoice = false;
+        _showFlushProgress = true;
+        _flushProgress = null;
+        _flushCancellation = new CancellationTokenSource();
+        var progress = new Progress<BaseStationReader.Entities.Spool.QueueFlushProgress>(value =>
+        {
+            _flushProgress = value;
+            _ = InvokeAsync(StateHasChanged);
+        });
+
+        await StopAndFinalizeAsync(flushQueue: true, _flushCancellation.Token, progress);
+        var remaining = _flushProgress?.RemainingCount ?? TrackingControl.QueueSize;
+        var cancelled = _flushCancellation.IsCancellationRequested && remaining > 0;
+        _showFlushProgress = false;
+        _flushCancellation.Dispose();
+        _flushCancellation = null;
+        if (cancelled)
+        {
+            _replayQueueCount = remaining;
+            _showReplayNotice = true;
+        }
+        _controlsBusy = false;
+    }
+
+    private void CancelFlush() => _flushCancellation?.Cancel();
+
+    private void ShowReplayNotice()
+    {
+        _replayQueueCount = TrackingControl.QueueSize;
+        _showReplayNotice = _replayQueueCount > 0;
+    }
+
+    private void CloseReplayNotice() => _showReplayNotice = false;
+
+    private string FlushProgressLabel
+    {
+        get
+        {
+            var initial = _flushProgress?.InitialCount ?? _pendingQueueCount;
+            var remaining = _flushProgress?.RemainingCount ?? initial;
+            return $"{Math.Max(0, initial - remaining):N0} of {initial:N0} entries written; {remaining:N0} remaining.";
+        }
+    }
+
+    private async Task StopAndFinalizeAsync(bool flushQueue, CancellationToken cancellationToken = default,
+        IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress>? progress = null)
+    {
+        _profileMessage = null;
+        try
+        {
+            var selectedAddress = _selected?.Address;
+            _completedAircraft = LiveAircraft.Aircraft.Select(CloneAircraft).ToArray();
+            _selected = _completedAircraft.FirstOrDefault(aircraft => aircraft.Address == selectedAddress);
+            await TrackingControl.StopAsync(flushQueue, cancellationToken, progress);
+            _profileError = false;
+            _activeTab = SessionTab.Summary;
+            await LoadSummaryAsync();
+            SaveCompletedSessionState();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cancellation intentionally leaves the remaining records in the persistent spool.
+        }
+        catch (Exception exception)
+        {
+            _profileError = true;
+            _profileMessage = exception.Message;
         }
     }
 
@@ -957,8 +1086,14 @@
     /// </summary>
     private void OnLiveStateChanged(object? sender, EventArgs args)
     {
-        // Marshal the render onto Blazor's component dispatcher.
-        _ = InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(() =>
+        {
+            if (_activeTab == SessionTab.PositionDensity && TrackingControl.IsTracking)
+            {
+                PositionDensityOrchestrator.Refresh();
+            }
+            StateHasChanged();
+        });
     }
 
     /// <summary>
@@ -1011,6 +1146,10 @@
         _densityError = null;
         try
         {
+            if (TrackingControl.IsTracking)
+            {
+                PositionDensityOrchestrator.Refresh();
+            }
             var result = await SessionQueries.GetPositionDensityAsync(
                 requestedSessionId.Value,
                 cancellation.Token);

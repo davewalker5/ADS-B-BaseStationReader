@@ -88,6 +88,7 @@ public sealed class LiveAircraftServiceTest
         }
 
         public Task StartAsync(CancellationToken token) => Task.CompletedTask;
-        public Task FlushQueueAsync() => Task.CompletedTask;
+        public Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress>? progress = null) => Task.CompletedTask;
     }
 }
