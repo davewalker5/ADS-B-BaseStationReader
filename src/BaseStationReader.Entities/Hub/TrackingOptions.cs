@@ -15,6 +15,7 @@ namespace BaseStationReader.Entities.Hub
         public int? MinimumTrackedAltitude { get; set; }
         public int? MaximumTrackedAltitude { get; set; }
         public string TrackedBehaviours { get; set; }
+        public bool FlushOnStop { get; set; }
 
         public static TrackingOptions FromTrackerSettings(TrackerApplicationSettings settings)
             => new()
@@ -31,7 +32,8 @@ namespace BaseStationReader.Entities.Hub
                 MaximumTrackedDistance = settings.MaximumTrackedDistance,
                 MinimumTrackedAltitude = settings.MinimumTrackedAltitude,
                 MaximumTrackedAltitude = settings.MaximumTrackedAltitude,
-                TrackedBehaviours = string.Join(", ", settings.TrackedBehaviours.Select(x => x.ToString()))
+                TrackedBehaviours = string.Join(", ", settings.TrackedBehaviours.Select(x => x.ToString())),
+                FlushOnStop = settings.FlushOnStop
             };
     }
 }

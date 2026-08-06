@@ -31,9 +31,12 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> GetAsync(Expression<Func<TrackedAircraft, bool>> predicate)
+        public async Task<TrackedAircraft> GetAsync(Expression<Func<TrackedAircraft, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            var aircraft = await ListAsync(predicate);
+            var aircraft = await _context.TrackedAircraft
+                .Where(predicate)
+                .OrderByDescending(x => x.LastSeen)
+                .ToListAsync(cancellationToken);
             return aircraft.FirstOrDefault();
         }
 
@@ -53,18 +56,18 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="template"></param>
         /// <returns></returns>
-        public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template)
+        public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template, CancellationToken cancellationToken = default)
         {
             // Find an existing matching tracked aircraft record. If the ID isn't set, look for a match
             // by address for an aircraft that's still active. This logic is to prevent multiple
             // duplicate aircraft records being created if a flurry of messages come in when an aircraft
             // is first tracked
             var aircraft = template.Id > 0 ?
-                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id) :
+                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id, cancellationToken) :
                     await _context.TrackedAircraft.FirstOrDefaultAsync(x =>
                         (x.Address == template.Address) &&
                         (x.Status == TrackingStatus.Active) &&
-                        (x.SessionId == template.SessionId));
+                        (x.SessionId == template.SessionId), cancellationToken);
 
             if (aircraft != null)
             {
@@ -76,11 +79,11 @@ namespace BaseStationReader.BusinessLogic.Database
                 // Existing record not found, so add a new one
                 aircraft = new();
                 UpdateProperties(template, aircraft);
-                await _context.TrackedAircraft.AddAsync(aircraft);
+                await _context.TrackedAircraft.AddAsync(aircraft, cancellationToken);
             }
 
             // Save changes
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return aircraft;
         }
 

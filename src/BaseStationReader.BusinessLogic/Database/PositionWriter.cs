@@ -50,10 +50,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="template"></param>
         /// <returns></returns>
-        public async Task<AircraftPosition> WriteAsync(AircraftPosition template)
+        public async Task<AircraftPosition> WriteAsync(AircraftPosition template, CancellationToken cancellationToken = default)
         {
             // Find existing matching position records
-            var position = await _context.Positions.FirstOrDefaultAsync(x => x.Id == template.Id);
+            var position = await _context.Positions.FirstOrDefaultAsync(x => x.Id == template.Id, cancellationToken);
             if (position != null)
             {
                 // Record found, so update its properties
@@ -64,11 +64,11 @@ namespace BaseStationReader.BusinessLogic.Database
                 // Existing record not found, so add a new one
                 position = new();
                 UpdateProperties(template, position);
-                await _context.Positions.AddAsync(position);
+                await _context.Positions.AddAsync(position, cancellationToken);
             }
 
             // Save changes
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return position;
         }
 

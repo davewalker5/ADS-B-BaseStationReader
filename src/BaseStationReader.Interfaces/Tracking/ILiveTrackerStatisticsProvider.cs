@@ -6,8 +6,10 @@ namespace BaseStationReader.Interfaces.Tracking;
 public interface ILiveTrackerStatisticsProvider
 {
     long PositionRecordsWritten { get; }
+    long PositionRecordsObserved => PositionRecordsWritten;
     long MessagesProcessed { get; }
     long DistinctAircraft { get; }
     long DistinctCallsigns { get; }
     long AircraftWithPositionRecords { get; }
+    long AircraftWithPositionObservations => AircraftWithPositionRecords;
 }

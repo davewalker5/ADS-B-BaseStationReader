@@ -96,6 +96,35 @@ public sealed class PositionDensitySnapshotOrchestrator : IPositionDensitySnapsh
     }
 
     /// <inheritdoc />
+    public PositionDensity? Refresh()
+    {
+        int sessionId;
+        PositionDensityBounds bounds;
+        PositionDensityCoordinate[] coordinates;
+        lock (_sync)
+        {
+            if (_runTask is not { IsCompleted: false })
+            {
+                return null;
+            }
+            sessionId = _sessionId;
+            bounds = _bounds;
+            coordinates = _coordinates.ToArray();
+        }
+
+        var density = _aggregator.Aggregate(sessionId, coordinates, bounds);
+        lock (_sync)
+        {
+            // Do not restore state for a session that stopped while aggregation was in progress.
+            if (_runTask is not { IsCompleted: false } || _sessionId != sessionId)
+            {
+                return null;
+            }
+            return _stateManager.Merge(density);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task StopAsync()
     {
         Task? runTask;

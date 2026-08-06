@@ -9,6 +9,33 @@ namespace BaseStationReader.Tests.Tracking;
 public sealed class PositionDensitySnapshotOrchestratorTest
 {
     /// <summary>
+    /// Verifies the UI can refresh current density before the persistence interval elapses.
+    /// </summary>
+    [TestMethod]
+    public async Task RefreshUpdatesSnapshotWithoutWaitingForIntervalTestAsync()
+    {
+        var stateManager = new PositionDensitySnapshotStateManager(new PositionDensitySnapshotMerger());
+        IPositionDensitySnapshotOrchestrator orchestrator = new PositionDensitySnapshotOrchestrator(
+            new PositionDensityAggregator(),
+            stateManager);
+        using var cancellation = new CancellationTokenSource();
+        orchestrator.Start(
+            42,
+            new PositionDensityBounds(50d, 52d, -1d, 1d),
+            TimeSpan.FromHours(1),
+            (_, _) => { },
+            cancellation.Token);
+        orchestrator.Record(new AircraftPosition { Latitude = 51.1m, Longitude = -0.2m });
+
+        var snapshot = orchestrator.Refresh();
+        await orchestrator.StopAsync();
+
+        Assert.IsNotNull(snapshot);
+        Assert.AreEqual(1, snapshot.PositionCount);
+        Assert.HasCount(1, snapshot.Bins);
+    }
+
+    /// <summary>
     /// Verifies recorded positions produce a complete periodic in-memory snapshot.
     /// </summary>
     [TestMethod]

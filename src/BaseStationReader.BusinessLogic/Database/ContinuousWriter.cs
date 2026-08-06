@@ -14,6 +14,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly SemaphoreSlim _signal = new(0, 1);
         private readonly IDatabaseManagementFactory _factory;
         private readonly bool _flushOnStop;
+        private readonly bool _flushWhileActive;
         private readonly object _gate = new();
         private CancellationTokenSource _source;
         private Task _runTask = null;
@@ -35,14 +36,17 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="factory">Database management factory.</param>
         /// <param name="queue">Persistent writer queue.</param>
         /// <param name="flushOnStop">Whether stopping should attempt every pending write.</param>
+        /// <param name="flushWhileActive">Whether queued writes should be processed while tracking is active.</param>
         public ContinuousWriter(
             IDatabaseManagementFactory factory,
             ISpoolQueue queue,
-            bool flushOnStop = true)
+            bool flushOnStop = true,
+            bool flushWhileActive = true)
         {
             _factory = factory;
             _queue = queue;
             _flushOnStop = flushOnStop;
+            _flushWhileActive = flushWhileActive;
         }
 
         /// <summary>
@@ -83,8 +87,10 @@ namespace BaseStationReader.BusinessLogic.Database
                 _accepting = true;
 
                 // Keep a reference to the task that runs the continuous writer, so we can observe any faults
-                _runTask = RunAsync(_source.Token);
-                if (_queue.Count > 0)
+                _runTask = _flushWhileActive
+                    ? RunAsync(_source.Token)
+                    : Task.Delay(Timeout.InfiniteTimeSpan, _source.Token);
+                if (_flushWhileActive && _queue.Count > 0)
                 {
                     TryRelease();
                 }
@@ -97,7 +103,8 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Stop the continuous writer
         /// </summary>
         /// <returns></returns>
-        public async Task StopAsync()
+        public async Task StopAsync(bool? flushOnStop = null, CancellationToken cancellationToken = default,
+            IProgress<QueueFlushProgress> progress = null)
         {
             Task toAwait;
 
@@ -119,17 +126,20 @@ namespace BaseStationReader.BusinessLogic.Database
 
             try
             {
-                // Wait for the runner to wind down
-                await toAwait.ConfigureAwait(false);
-
-                if (_flushOnStop)
+                // Wait for the runner to wind down.
+                try
                 {
-                    await FlushQueueAsync().ConfigureAwait(false);
+                    await toAwait.ConfigureAwait(false);
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when the token is cancelled
+                catch (OperationCanceledException)
+                {
+                    // Expected when the writer's run token is cancelled.
+                }
+
+                if (flushOnStop ?? _flushOnStop)
+                {
+                    await FlushQueueAsync(cancellationToken, progress).ConfigureAwait(false);
+                }
             }
             finally
             {
@@ -147,13 +157,17 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Flush all pending requests from the queue
         /// </summary>
         /// <returns></returns>
-        public async Task FlushQueueAsync()
+        public async Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<QueueFlushProgress> progress = null)
         {
-            _factory.Logger.LogMessage(Severity.Info, $"Flushing {_queue.Count} queued entries");
+            var initialCount = _queue.Count;
+            _factory.Logger.LogMessage(Severity.Info, $"Flushing {initialCount} queued entries");
+            progress?.Report(new QueueFlushProgress(initialCount, initialCount));
 
             // Drain in original FIFO order so snapshots remain behind the positions they represent.
-            while (await ProcessNextAsync().ConfigureAwait(false))
+            while (await ProcessNextAsync(cancellationToken).ConfigureAwait(false))
             {
+                progress?.Report(new QueueFlushProgress(initialCount, _queue.Count));
             }
         }
 
@@ -203,7 +217,7 @@ namespace BaseStationReader.BusinessLogic.Database
                     await _signal.WaitAsync(token);
 
                     // Process one record at a time so cancellation can leave the remaining FIFO on disk.
-                    while (!token.IsCancellationRequested && await ProcessNextAsync().ConfigureAwait(false))
+                    while (!token.IsCancellationRequested && await ProcessNextAsync(token).ConfigureAwait(false))
                     {
                     }
                 }
@@ -231,26 +245,31 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="item"></param>
         /// <returns>Whether the database attempt succeeded.</returns>
-        private async Task<bool> ProcessAsync(object item)
+        private async Task<bool> ProcessAsync(object item, CancellationToken cancellationToken)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (item is TrackedAircraft aircraft)
                 {
-                    await WriteTrackedAircraftAsync(aircraft);
+                    await WriteTrackedAircraftAsync(aircraft, cancellationToken);
                 }
 
                 if (item is AircraftPosition position)
                 {
-                    await WriteAircraftPositionAsync(position);
+                    await WriteAircraftPositionAsync(position, cancellationToken);
                 }
 
                 if (item is PositionDensitySnapshotEntity snapshot)
                 {
-                    await WritePositionDensitySnapshotAsync(snapshot);
+                    await WritePositionDensitySnapshotAsync(snapshot, cancellationToken);
                 }
 
                 return true;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -265,8 +284,9 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Processes and acknowledges the next queued record.
         /// </summary>
         /// <returns>Whether a record was available.</returns>
-        private async Task<bool> ProcessNextAsync()
+        private async Task<bool> ProcessNextAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             ISpoolQueueItem queued;
             try
             {
@@ -288,7 +308,7 @@ namespace BaseStationReader.BusinessLogic.Database
             using (queued)
             {
                 var record = queued.Record;
-                var succeeded = await ProcessAsync(GetEntity(record)).ConfigureAwait(false);
+                var succeeded = await ProcessAsync(GetEntity(record), cancellationToken).ConfigureAwait(false);
 
                 // A completed database attempt is removed even when it failed; disposal without completion
                 // is reserved for interruption before the attempt reaches an outcome.
@@ -324,7 +344,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="aircraft"></param>
         /// <returns></returns>
-        private async Task<bool> WriteTrackedAircraftAsync(TrackedAircraft aircraft)
+        private async Task<bool> WriteTrackedAircraftAsync(TrackedAircraft aircraft, CancellationToken cancellationToken)
         {
             if (aircraft.SessionId is not > 0)
             {
@@ -336,7 +356,8 @@ namespace BaseStationReader.BusinessLogic.Database
             // ID so that record will be updated rather than a new one created
             var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
                 aircraft.Address,
-                aircraft.SessionId.Value);
+                aircraft.SessionId.Value,
+                cancellationToken);
             if (activeAircraft != null)
             {
                 aircraft.Id = activeAircraft.Id;
@@ -344,7 +365,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Write the tracked aircraft
             _factory.Logger.LogMessage(Severity.Verbose, $"Writing aircraft {aircraft.Address} with Id {aircraft.Id}");
-            await _factory.TrackedAircraftWriter.WriteAsync(aircraft);
+            await _factory.TrackedAircraftWriter.WriteAsync(aircraft, cancellationToken);
 
             return true;
         }
@@ -354,7 +375,7 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        private async Task<bool> WriteAircraftPositionAsync(AircraftPosition position)
+        private async Task<bool> WriteAircraftPositionAsync(AircraftPosition position, CancellationToken cancellationToken)
         {
             if (position.SessionId is not > 0)
             {
@@ -367,7 +388,8 @@ namespace BaseStationReader.BusinessLogic.Database
             // found, ignore the position record
             var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
                 position.Address,
-                position.SessionId.Value);
+                position.SessionId.Value,
+                cancellationToken);
             if (activeAircraft == null)
             {
                 return true;
@@ -375,7 +397,7 @@ namespace BaseStationReader.BusinessLogic.Database
 
             // Assign the aircraft ID, for the foreign key relationship, and write the position
             position.AircraftId = activeAircraft.Id;
-            await _factory.PositionWriter.WriteAsync(position);
+            await _factory.PositionWriter.WriteAsync(position, cancellationToken);
 
             // Increment only after persistence succeeds so the status value describes records actually written.
             Interlocked.Increment(ref _positionRecordsWritten);
@@ -389,10 +411,10 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="snapshot"></param>
         /// <returns></returns>
-        private async Task<bool> WritePositionDensitySnapshotAsync(PositionDensitySnapshotEntity snapshot)
+        private async Task<bool> WritePositionDensitySnapshotAsync(PositionDensitySnapshotEntity snapshot, CancellationToken cancellationToken)
         {
             // The snapshot manager owns the transaction spanning the header and every populated cell.
-            var snapshotId = await _factory.PositionDensitySnapshotManager.AddAsync(snapshot);
+            var snapshotId = await _factory.PositionDensitySnapshotManager.AddAsync(snapshot, cancellationToken);
             _factory.Logger.LogMessage(
                 Severity.Info,
                 $"Persisted position-density snapshot {snapshotId} for session {snapshot.SessionId} with {snapshot.Cells.Count} cells");
