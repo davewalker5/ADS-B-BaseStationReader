@@ -21,34 +21,49 @@ Core tracking does not depend on a commercial flight-tracking service. External 
 
 ## Features
 
-The project currently supports:
+The project currently supports the following groups of features.
 
-- **Session-based aircraft observation** from a BaseStation-compatible TCP message feed
-- **Observation-session preparation** with receiver host and port, tracking-profile selection and optional contextual notes
-- **Live aircraft tracking, receiver-centred radar and session position-density visualisation**, with optional persistence of density snapshots for later replay
-- **Read-only session summaries** covering tracking activity, identification coverage and session highlights
-- **Configurable tracking profiles** based on receiver location, altitude, distance and aircraft behaviour
-- **Local SQLite persistence** of observation sessions, aircraft records and optional position histories
-- **Integrated browser-based UI** organised around live observation, contextual aviation information and reference-data management
-- **Historical observation browsing** with dedicated session, session-editor and tracking-record views, filtering and record inspection
-- **Historical session management** with notes-only editing and confirmed deletion while no observation session is active
-- **Post-session analysis** available directly from the session browser
-- **Historical reporting suite** implemented using Jupyter notebooks for session, aircraft, flight, position-density, reference-data and temporal analysis
-- **Interactive live radar plus 2D and 3D flight-path visualisation**
-- **Tabbed contextual lookup workspace** for aircraft and flights, airport schedules, route visualisation and METAR/TAF weather
-- **Reference-data management and CSV import** for:
-  - Airlines
-  - Manufacturers
-  - Aircraft models
-  - Aircraft
-  - Airports
-  - Flight-number and callsign mappings
-- **First-class data provenance** for imported reference datasets
-- **Aircraft and callsign exclusion management**
-- **SignalR live updates** for the integrated UI and compatible external clients
-- **Console-based tracking** for lightweight and headless environments
-- **ADS-B simulation** for development and testing without live radio traffic
-- **Docker support** for containerised deployment
+### Observation and Live Tracking
+
+- Session-based observation from a BaseStation-compatible TCP message feed
+- Session preparation with a name, optional notes, receiver endpoint and tracking-profile selection
+- Configurable receiver location, altitude and distance limits, and aircraft-behaviour filters
+- Live aircraft telemetry, lifecycle state and identification coverage
+- Receiver-centred radar and accumulated position-density visualisation
+- Read-only live and completed-session summaries
+
+### Persistence, History and Analysis
+
+- Local SQLite storage of observation sessions, aircraft records and optional position histories
+- Optional persistence and later replay of position-density snapshots
+- Durable, file-backed serial writing with deferred flushing and a standalone Spool Replayer
+- Historical session and tracking-record browsing with filters and detailed record inspection
+- Post-session analysis, 2D and 3D flight-path visualisation, and session management
+- A read-only Jupyter reporting suite covering sessions, aircraft, flights, positions, density development, reference-data coverage and temporal activity
+
+### Lookup and Operational Context
+
+- Aircraft and flight lookup using local reference data first
+- Optional transient external lookups without persisting returned business data
+- Airport schedules, route visualisation, and METAR and TAF weather
+- Context-preserving links between live aircraft, historical records, schedules, routes and weather
+
+### Reference Data and Governance
+
+- Searchable and editable local records for aircraft, airlines, airports, flights, manufacturers and aircraft models
+- CSV import for each supported reference-data type
+- First-class provenance recording for imported and manually maintained reference data
+- Aircraft-address and callsign exclusion management
+- Licence-conscious separation of direct observations, derived values, persistent local reference data and transient external context
+
+### Applications, Integration and Deployment
+
+- Integrated browser-based Tracker Hub for observation, investigation and reference-data workflows
+- SignalR live updates for the integrated UI and compatible external clients
+- Console tracker for lightweight, headless and small-screen environments
+- ADS-B simulator for development and testing without live radio traffic
+- Command-line lookup and data-import tooling
+- Docker support for containerised deployment
 
 ## Local-First Observation
 
@@ -95,6 +110,11 @@ Additional reference information used to make an observation more recognisable, 
 
 Locally managed reference data is preferred wherever possible. External API responses are treated as transient and are not used to populate or update the local reference database.
 
+> [!IMPORTANT]
+> Only import or retain data that you are permitted to store and reuse.
+>
+> The availability of an import, lookup or storage feature does not imply that data from a particular source may legally be persisted, transformed, redistributed or reused. Check the applicable licence and terms of service before importing or retaining third-party data.
+
 ## Data Provenance
 
 Imported reference data is associated with a provenance record identifying its source, dataset, version and licence.
@@ -121,7 +141,7 @@ The interface is organised around the natural workflow of an aircraft observer:
 
 The Live Tracker brings the active observation workflow together in five tabs:
 
-> Session &rarr; Tracking &harr; Radar &rarr; Position Density &rarr; Summary
+> Session &rarr; Tracking &harr; Radar &harr; Position Density &rarr; Summary
 
 - **Session** — set the receiver host and port, select a tracking profile, review the effective receiver and tracking limits, add optional notes, and start the session
 - **Tracking** — monitor the live aircraft collection, inspect current telemetry, and move directly to Lookup or historical records
@@ -129,7 +149,7 @@ The Live Tracker brings the active observation workflow together in five tabs:
 - **Position Density** — view the accumulated geographical distribution of recorded aircraft positions during the current session, with denser areas highlighted spatially
 - **Summary** — review the persisted session context, tracking activity, identification coverage, and notable observations
 
-Each session records the receiver host and port, a snapshot of the effective tracking profile, and the aircraft records created during that run. Receiver details initially default to the values configured in `appsettings` and then retain the last-used values until Tracker Hub is restarted. Session parameters become fixed when tracking starts; after the session has stopped, its notes can be updated through the Database Session Editor. When tracking stops, outstanding observations are persisted before the completed summary is displayed.
+Each session records its name and notes, the receiver host and port, a snapshot of the effective tracking profile, and the aircraft records created during that run. Receiver details initially default to the values configured in `appsettings` and then retain the last-used values until Tracker Hub is restarted. Observing parameters become fixed when tracking starts; after the session has stopped, its name and notes can be updated through the Database Session Editor. When tracking stops, outstanding observations may be flushed immediately or retained in the durable spool for later replay before the completed summary is displayed.
 
 ### Observation and Investigation
 
@@ -145,7 +165,7 @@ These views focus on aircraft currently being observed or previously recorded, a
 
 The Database opens on the **Sessions** tab. Sessions can be filtered using the recent-session selector or an unrestricted start-date range. Each row exposes its recorded context, including receiver host and port, provides session notes in a popup, opens the same analysis shown by the Live Tracker Summary tab, and links directly to the associated tracking records—even when the session is older than the recent-session dropdown.
 
-When no observation session is active, session results provide **Edit** and **Delete** actions. Edit opens **Session Editor**, where notes can be updated and the session can also be deleted. Deletion requires confirmation and removes the session together with its tracked-aircraft records and position histories. The editor and both actions are unavailable during an active session. The **Tracking Records** tab retains aircraft, callsign, session and telemetry filtering, along with links to detailed historical records.
+When no observation session is active, each result also provides **Edit** and **Delete** actions. Edit opens the session in **Session Editor**, which shows the fixed receiver and tracking-profile context while allowing its name and notes to be updated and saved. A session can be deleted either from the results table or the editor after confirming the action; its tracked-aircraft records, position histories and position-density snapshots are deleted with it. The editor and both actions are unavailable during an active session. The **Tracking Records** tab retains aircraft, callsign, session and telemetry filtering, along with links to detailed historical records.
 
 ### Operational Context
 
@@ -156,7 +176,7 @@ The **Lookup** area groups supporting aviation information into a single tabbed 
 - Route
 - Weather
 
-Links between these tools preserve their context—for example, a schedule result can be opened as a route or weather lookup. These workflows help explain what is being observed while remaining conceptually separate from the tracking data itself.
+Links between these tools preserve their context—for example, a schedule result can be opened as a route or weather lookup. Links from Live Tracker and Radar continue to open Aircraft and Flights with the relevant aircraft details populated. These workflows help explain what is being observed while remaining conceptually separate from the tracking data itself.
 
 ### Reference Data Management
 
@@ -174,8 +194,6 @@ The **Reference Data** area provides tools for maintaining the locally curated i
 
 The data management tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
 
-The **Aircraft**, **Airlines**, **Airports** and **Flights** tabs allow search, editing, deletion and addition of reference data records. Each record remains linked to a provenance record describing its source. Reference data records remain searchable during live tracking, but cannot be added, changed or deleted until the session ends.
-
 This organisation reinforces the distinction between observed ADS-B data, transient contextual information and locally managed enrichment data.
 
 The same underlying tracking core can also be used through the console tracker or exposed headlessly through SignalR.
@@ -192,9 +210,9 @@ The reporting suite currently includes:
 - Aircraft Activity
 - Callsign & Flight Activity
 - Position & Flight Path Analysis
+- Position Density Replay
 - Reference Data Coverage
 - Temporal Activity
-- Position Density Replay
 
 Together these reports help answer questions such as:
 
@@ -204,17 +222,13 @@ Together these reports help answer questions such as:
 - Where are aircraft most commonly observed?
 - How complete is the local aviation reference database?
 - How have observation patterns changed over time?
-- How did the observed position-density pattern develop during a session?
+- How did position density develop during a particular session?
 
 Unlike the integrated UI, which focuses on operational awareness during an active observation session, the reporting suite is intended for historical analysis and exploration across many completed sessions.
 
 ## Deployment
 
-ADS-B Tracker supports several deployment styles:
-
-### Integrated UI
-
-The Tracker Hub hosts both the SignalR service and browser-based UI and is suitable for normal desktop or server-based operation.
+ADS-B BaseStation Reader supports several deployment styles:
 
 ### Docker
 
