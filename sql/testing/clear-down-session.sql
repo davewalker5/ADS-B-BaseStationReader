@@ -1,13 +1,24 @@
+DELETE FROM POSITION_DENSITY_SNAPSHOT_CELL
+WHERE PositionDensitySnapshotId IN (
+    SELECT  Id
+    FROM    POSITION_DENSITY_SNAPSHOT
+    WHERE   SessionId = 0
+    OR      SessionId IS NULL);
+
+DELETE FROM POSITION_DENSITY_SNAPSHOT
+WHERE       SessionId = 0
+OR          SessionId IS NULL
+
 DELETE FROM POSITION
 WHERE AircraftId IN (
     SELECT  Id
     FROM    TRACKED_AIRCRAFT
-    WHERE   SessionId < 20
+    WHERE   SessionId = 0
     OR      SessionId IS NULL);
 
 DELETE FROM TRACKED_AIRCRAFT
-WHERE       SessionId < 20
+WHERE       SessionId = 0
 OR          SessionId IS NULL
 
 DELETE FROM SESSION
-WHERE       Id < 20;
+WHERE       Id = 0;
