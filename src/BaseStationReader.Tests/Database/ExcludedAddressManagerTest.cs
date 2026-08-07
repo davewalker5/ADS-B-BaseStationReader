@@ -52,6 +52,31 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task SearchNormalisesPartialAddressAndOrdersResultsTestAsync()
+        {
+            await _manager.AddAsync("ABC999");
+            await _manager.AddAsync("ABC123");
+            await _manager.AddAsync("DEF123");
+
+            var exclusions = await _manager.SearchAsync(" abc ");
+
+            Assert.HasCount(2, exclusions);
+            Assert.AreEqual("ABC123", exclusions[0].Address);
+            Assert.AreEqual("ABC999", exclusions[1].Address);
+        }
+
+        [TestMethod]
+        public async Task SearchWithoutAddressReturnsAllTestAsync()
+        {
+            await _manager.AddAsync(Address);
+
+            var exclusions = await _manager.SearchAsync(null);
+
+            Assert.HasCount(1, exclusions);
+            Assert.AreEqual(Address, exclusions[0].Address);
+        }
+
+        [TestMethod]
         public async Task DeleteTestAsync()
         {
             await _manager.AddAsync(Address);

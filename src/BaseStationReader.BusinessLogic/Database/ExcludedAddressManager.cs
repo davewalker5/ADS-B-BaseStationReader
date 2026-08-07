@@ -1,4 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
+#nullable enable
+
 using System.Linq.Expressions;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Tracking;
@@ -7,14 +8,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    [ExcludeFromCodeCoverage]
-    internal class ExcludedAddressManager : IExcludedAddressManager
+    internal sealed class ExcludedAddressManager : IExcludedAddressManager
     {
         private readonly BaseStationReaderDbContext _context;
 
         public ExcludedAddressManager(BaseStationReaderDbContext context)
         {
             _context = context;
+        }
+
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<ExcludedAddress>> SearchAsync(
+            string? address,
+            CancellationToken cancellationToken = default)
+        {
+            var normalisedAddress = address?.Trim().ToUpperInvariant() ?? string.Empty;
+            IQueryable<ExcludedAddress> query = _context.ExcludedAddresses.AsNoTracking();
+            if (normalisedAddress.Length > 0)
+            {
+                query = query.Where(exclusion => exclusion.Address.Contains(normalisedAddress));
+            }
+
+            return await query
+                .OrderBy(exclusion => exclusion.Address)
+                .ToListAsync(cancellationToken);
         }
 
         /// <summary>
@@ -73,15 +90,16 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public async Task DeleteAsync(string address)
+        public async Task DeleteAsync(string address, CancellationToken cancellationToken = default)
         {
             // Find the exclusion record
-            var exclusion = await _context.ExcludedAddresses.FirstOrDefaultAsync(x => x.Address == address);
+            var exclusion = await _context.ExcludedAddresses
+                .FirstOrDefaultAsync(x => x.Address == address, cancellationToken);
             if (exclusion != null)
             {
                 // Found one, so remove it
                 _context.Remove(exclusion);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
         }
     }
