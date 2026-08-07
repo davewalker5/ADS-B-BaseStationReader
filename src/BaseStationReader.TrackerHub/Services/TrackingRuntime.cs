@@ -27,6 +27,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private long _lastDistinctCallsigns;
     private long _lastAircraftWithPositionRecords;
     private long _lastAircraftWithPositionObservations;
+    private long _lastActivityUtcTicks;
 
     public TrackingRuntime(TrackerApplicationSettings settings,
         Func<TrackerApplicationSettings, string?, string?, ITrackerController> factory)
@@ -47,6 +48,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public long DistinctCallsigns { get { lock (_stateLock) return _controller?.DistinctCallsigns ?? _lastDistinctCallsigns; } }
     public long AircraftWithPositionRecords { get { lock (_stateLock) return _controller?.AircraftWithPositionRecords ?? _lastAircraftWithPositionRecords; } }
     public long AircraftWithPositionObservations { get { lock (_stateLock) return _controller?.AircraftWithPositionObservations ?? _lastAircraftWithPositionObservations; } }
+    public DateTime? LastActivityUtc
+    {
+        get
+        {
+            var ticks = Interlocked.Read(ref _lastActivityUtcTicks);
+            return ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+        }
+    }
     public bool IsTracking { get { lock (_stateLock) return _controller is not null; } }
     public (double? Latitude, double? Longitude) ReceiverPosition
     {
@@ -199,6 +208,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)
         {
+            Interlocked.Exchange(ref _lastActivityUtcTicks, 0);
             _lastMessagesProcessed = 0;
             _lastPositionRecordsWritten = 0;
             _lastPositionRecordsObserved = 0;
@@ -284,5 +294,8 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         => AircraftEvent?.Invoke(this, args);
 
     private void ForwardMessageReceived(object? sender, MessageReadEventArgs args)
-        => MessageReceived?.Invoke(this, args);
+    {
+        Interlocked.Exchange(ref _lastActivityUtcTicks, DateTime.UtcNow.Ticks);
+        MessageReceived?.Invoke(this, args);
+    }
 }

@@ -6,6 +6,7 @@ namespace BaseStationReader.TrackerHub.Services;
 public sealed class TrackingControlService(TrackingRuntime runtime, IEventBridge bridge) : ITrackingControlService
 {
     public bool IsTracking => runtime.IsTracking;
+    public DateTime? LastActivityUtc => runtime.LastActivityUtc;
     public int QueueSize => runtime.QueueSize;
     public bool FlushOnStop => runtime.TrackingOptions.FlushOnStop;
 

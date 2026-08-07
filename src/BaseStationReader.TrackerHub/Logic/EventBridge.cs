@@ -1,9 +1,7 @@
 using System.Threading.Channels;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Entities.Hub;
-using BaseStationReader.Entities.Logging;
 using BaseStationReader.Interfaces.Hub;
-using BaseStationReader.Interfaces.Logging;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BaseStationReader.TrackerHub.Logic
@@ -19,12 +17,10 @@ namespace BaseStationReader.TrackerHub.Logic
             });
 
         private readonly IHubContext<AircraftHub> _hub;
-        private readonly ITrackerLogger _logger;
 
-        public EventBridge(IHubContext<AircraftHub> hub, ITrackerLogger logger)
+        public EventBridge(IHubContext<AircraftHub> hub)
         {
             _hub = hub;
-            _logger = logger;
         }
 
         /// <summary>
@@ -67,11 +63,9 @@ namespace BaseStationReader.TrackerHub.Logic
                             case AircraftNotificationType.Unknown:
                                 break;
                             case AircraftNotificationType.Removed:
-                                _logger.LogMessage(Severity.Info, $"Handling removal message for aircraft {aircraft.Address}");
                                 await _hub.Clients.All.SendAsync("aircraftRemoved", aircraft, token);
                                 break;
                             default:
-                                _logger.LogMessage(Severity.Verbose, $"Handling update message for aircraft {aircraft.Address}");
                                 await _hub.Clients.All.SendAsync("aircraftUpdate", aircraft, token);
                                 break;
                         }

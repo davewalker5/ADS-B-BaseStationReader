@@ -77,6 +77,7 @@ public sealed class LiveTrackerStatusService(
         {
             IsRunning = isRunning,
             StartedAtUtc = session.StartedAtUtc,
+            LastActivityUtc = statistics.LastActivityUtc,
             ProfileName = session.ProfileName,
             Notes = session.Notes,
             CurrentlyTracked = liveAircraft.Length,

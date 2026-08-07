@@ -5,6 +5,7 @@ using BaseStationReader.Entities.Spool;
 public interface ITrackingControlService
 {
     bool IsTracking { get; }
+    DateTime? LastActivityUtc => null;
     int QueueSize { get; }
     bool FlushOnStop { get; }
     /// <summary>Starts a tracking session using the supplied receiver endpoint.</summary>

@@ -9,6 +9,7 @@ public sealed record LiveTrackerStatus
 {
     public bool IsRunning { get; init; }
     public DateTime? StartedAtUtc { get; init; }
+    public DateTime? LastActivityUtc { get; init; }
     public string? ProfileName { get; init; }
     public string? Notes { get; init; }
     public int CurrentlyTracked { get; init; }

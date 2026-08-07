@@ -471,8 +471,8 @@ namespace BaseStationReader.TrackerHub
         /// <param name="e"></param>
         private static void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
-            // Log and signal the event
-            _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} event for aircraft {e.Aircraft.Address}");
+            // Forward the event to connected clients. Operational logging is owned by the shared
+            // tracking core so both hosts follow the same summary-based policy.
             _ = PublishAircraftEventAsync(e);
         }
 
