@@ -52,6 +52,31 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task SearchNormalisesPartialCallsignAndOrdersResultsTestAsync()
+        {
+            await _manager.AddAsync("BAW999");
+            await _manager.AddAsync("BAW123");
+            await _manager.AddAsync("EZY123");
+
+            var exclusions = await _manager.SearchAsync(" baw ");
+
+            Assert.HasCount(2, exclusions);
+            Assert.AreEqual("BAW123", exclusions[0].Callsign);
+            Assert.AreEqual("BAW999", exclusions[1].Callsign);
+        }
+
+        [TestMethod]
+        public async Task SearchWithoutCallsignReturnsAllTestAsync()
+        {
+            await _manager.AddAsync(Callsign);
+
+            var exclusions = await _manager.SearchAsync(null);
+
+            Assert.HasCount(1, exclusions);
+            Assert.AreEqual(Callsign, exclusions[0].Callsign);
+        }
+
+        [TestMethod]
         public async Task DeleteTestAsync()
         {
             await _manager.AddAsync(Callsign);

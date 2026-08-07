@@ -1,4 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
+#nullable enable
+
 using System.Linq.Expressions;
 using BaseStationReader.Data;
 using BaseStationReader.Entities.Api;
@@ -7,14 +8,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.BusinessLogic.Database
 {
-    [ExcludeFromCodeCoverage]
-    internal class ExcludedCallsignManager : IExcludedCallsignManager
+    internal sealed class ExcludedCallsignManager : IExcludedCallsignManager
     {
         private readonly BaseStationReaderDbContext _context;
 
         public ExcludedCallsignManager(BaseStationReaderDbContext context)
         {
             _context = context;
+        }
+
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<ExcludedCallsign>> SearchAsync(
+            string? callsign,
+            CancellationToken cancellationToken = default)
+        {
+            var normalisedCallsign = callsign?.Trim().ToUpperInvariant() ?? string.Empty;
+            IQueryable<ExcludedCallsign> query = _context.ExcludedCallsigns.AsNoTracking();
+            if (normalisedCallsign.Length > 0)
+            {
+                query = query.Where(exclusion => exclusion.Callsign.Contains(normalisedCallsign));
+            }
+
+            return await query
+                .OrderBy(exclusion => exclusion.Callsign)
+                .ToListAsync(cancellationToken);
         }
 
         /// <summary>
@@ -73,15 +90,16 @@ namespace BaseStationReader.BusinessLogic.Database
         /// </summary>
         /// <param name="callsign"></param>
         /// <returns></returns>
-        public async Task DeleteAsync(string callsign)
+        public async Task DeleteAsync(string callsign, CancellationToken cancellationToken = default)
         {
             // Find the exclusion record
-            var exclusion = await _context.ExcludedCallsigns.FirstOrDefaultAsync(x => x.Callsign == callsign);
+            var exclusion = await _context.ExcludedCallsigns
+                .FirstOrDefaultAsync(x => x.Callsign == callsign, cancellationToken);
             if (exclusion != null)
             {
                 // Found one, so remove it
                 _context.Remove(exclusion);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
         }
     }

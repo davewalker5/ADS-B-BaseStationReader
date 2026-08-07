@@ -1,53 +1,53 @@
-@page "/history/excluded-addresses"
-@inject IExcludedAddressService ExcludedAddressService
+@page "/history/excluded-callsigns"
+@inject IExcludedCallsignService ExcludedCallsignService
 
-<PageTitle>Excluded Addresses · Database · ADS-B Tracker</PageTitle>
+<PageTitle>Excluded Callsigns · Database · ADS-B Tracker</PageTitle>
 
 <DatabaseTabs />
 
 <section class="filter-panel">
     <div class="filter-heading">
-        <div><h2>Address filter</h2><p>Search by a full or partial ICAO aircraft address.</p></div>
+        <div><h2>Callsign filter</h2><p>Search by a full or partial flight callsign.</p></div>
         <button class="text-button" type="button" @onclick="ClearFilterAsync" disabled="@_loading">Clear filter</button>
     </div>
     <form @onsubmit="SearchAsync" @onsubmit:preventDefault>
         <div class="filter-grid exclusion-filter-grid">
-            <label><span>ICAO address</span><input @bind="_address" maxlength="6" placeholder="e.g. 406B90" autocomplete="off" /></label>
+            <label><span>Callsign</span><input @bind="_callsign" maxlength="12" placeholder="e.g. BAW123" autocomplete="off" /></label>
         </div>
         <div class="filter-actions">
-            <button class="primary-button" type="submit" disabled="@_loading">@(_loading ? "Searching…" : "Search addresses")</button>
+            <button class="primary-button" type="submit" disabled="@_loading">@(_loading ? "Searching…" : "Search callsigns")</button>
         </div>
     </form>
 </section>
 
 @if (_error is not null)
 {
-    <div class="alert" role="alert"><strong>Address query failed</strong><span>@_error</span></div>
+    <div class="alert" role="alert"><strong>Callsign query failed</strong><span>@_error</span></div>
 }
 
 <section class="tracker-panel history-panel" aria-busy="@_loading">
-    <div class="panel-heading"><div><h2>Excluded addresses</h2><p>@ResultDescription</p></div></div>
+    <div class="panel-heading"><div><h2>Excluded callsigns</h2><p>@ResultDescription</p></div></div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>ICAO address</th><th class="exclusion-delete-heading">Remove</th></tr></thead>
+            <thead><tr><th>Callsign</th><th class="exclusion-delete-heading">Remove</th></tr></thead>
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="2" class="table-empty">Loading excluded addresses…</td></tr>
+                    <tr><td colspan="2" class="table-empty">Loading excluded callsigns…</td></tr>
                 }
                 else if (_results.Count == 0)
                 {
-                    <tr><td colspan="2" class="table-empty">No excluded addresses match this filter.</td></tr>
+                    <tr><td colspan="2" class="table-empty">No excluded callsigns match this filter.</td></tr>
                 }
                 else
                 {
                     @foreach (var exclusion in _results)
                     {
                         <tr>
-                            <td class="mono">@exclusion.Address</td>
+                            <td class="mono">@exclusion.Callsign</td>
                             <td class="exclusion-delete-action">
-                                <button class="session-delete-button" type="button" title="Remove excluded address"
-                                        aria-label="Remove excluded address @exclusion.Address" disabled="@_deleting"
+                                <button class="session-delete-button" type="button" title="Remove excluded callsign"
+                                        aria-label="Remove excluded callsign @exclusion.Callsign" disabled="@_deleting"
                                         @onclick="() => ConfirmDelete(exclusion)"><span aria-hidden="true">🗑️</span></button>
                             </td>
                         </tr>
@@ -61,21 +61,21 @@
 @if (_deleteExclusion is not null)
 {
     <div class="modal-backdrop" @onclick="CloseDelete">
-        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-excluded-address-title"
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-excluded-callsign-title"
                  tabindex="0" @onclick:stopPropagation @onkeydown="HandleDeleteKeyDown">
             <header>
-                <div><p class="eyebrow">Remove exclusion</p><h2 id="delete-excluded-address-title">Remove excluded address?</h2></div>
+                <div><p class="eyebrow">Remove exclusion</p><h2 id="delete-excluded-callsign-title">Remove excluded callsign?</h2></div>
                 <button class="icon-button" type="button" aria-label="Close remove confirmation"
                         autofocus @onclick="CloseDelete" disabled="@_deleting">×</button>
             </header>
-            <p>Aircraft address <strong>@_deleteExclusion.Address</strong> will no longer be excluded from tracking.</p>
+            <p>Flight callsign <strong>@_deleteExclusion.Callsign</strong> will no longer be excluded from tracking.</p>
             @if (_deleteError is not null)
             {
-                <div class="alert" role="alert"><strong>Address removal failed</strong><span>@_deleteError</span></div>
+                <div class="alert" role="alert"><strong>Callsign removal failed</strong><span>@_deleteError</span></div>
             }
             <div class="confirmation-actions">
                 <button class="secondary-button" type="button" @onclick="CloseDelete" disabled="@_deleting">Cancel</button>
-                <button class="danger-button" type="button" @onclick="DeleteAsync" disabled="@_deleting">@(_deleting ? "Removing…" : "Remove address")</button>
+                <button class="danger-button" type="button" @onclick="DeleteAsync" disabled="@_deleting">@(_deleting ? "Removing…" : "Remove callsign")</button>
             </div>
         </section>
     </div>
@@ -83,36 +83,36 @@
 
 @code {
 #nullable enable
-    private IReadOnlyList<ExcludedAddress> _results = [];
-    private string _address = string.Empty;
+    private IReadOnlyList<ExcludedCallsign> _results = [];
+    private string _callsign = string.Empty;
     private string? _error;
     private string? _deleteError;
     private bool _loading;
     private bool _deleting;
-    private ExcludedAddress? _deleteExclusion;
-    private string ResultDescription => _results.Count == 1 ? "1 matching address" : $"{_results.Count:N0} matching addresses";
+    private ExcludedCallsign? _deleteExclusion;
+    private string ResultDescription => _results.Count == 1 ? "1 matching callsign" : $"{_results.Count:N0} matching callsigns";
 
     /// <summary>
-    /// Loads all excluded addresses when the component is initialised.
+    /// Loads all excluded callsigns when the component is initialised.
     /// </summary>
     protected override async Task OnInitializedAsync()
         => await LoadAsync();
 
     /// <summary>
-    /// Applies the current address filter.
+    /// Applies the current callsign filter.
     /// </summary>
     private async Task SearchAsync()
     {
-        _address = _address.Trim().ToUpperInvariant();
+        _callsign = _callsign.Trim().ToUpperInvariant();
         await LoadAsync();
     }
 
     /// <summary>
-    /// Clears the address filter and reloads all exclusions.
+    /// Clears the callsign filter and reloads all exclusions.
     /// </summary>
     private async Task ClearFilterAsync()
     {
-        _address = string.Empty;
+        _callsign = string.Empty;
         await LoadAsync();
     }
 
@@ -125,7 +125,7 @@
         _error = null;
         try
         {
-            _results = await ExcludedAddressService.SearchAsync(_address);
+            _results = await ExcludedCallsignService.SearchAsync(_callsign);
         }
         catch (Exception exception)
         {
@@ -138,10 +138,10 @@
     }
 
     /// <summary>
-    /// Opens the removal confirmation for an excluded address.
+    /// Opens the removal confirmation for an excluded callsign.
     /// </summary>
     /// <param name="exclusion">The exclusion selected for removal.</param>
-    private void ConfirmDelete(ExcludedAddress exclusion)
+    private void ConfirmDelete(ExcludedCallsign exclusion)
     {
         _deleteError = null;
         _deleteExclusion = exclusion;
@@ -160,7 +160,7 @@
     }
 
     /// <summary>
-    /// Removes the selected address and refreshes the table.
+    /// Removes the selected callsign and refreshes the table.
     /// </summary>
     private async Task DeleteAsync()
     {
@@ -173,7 +173,7 @@
         _deleteError = null;
         try
         {
-            await ExcludedAddressService.DeleteAsync(_deleteExclusion.Address);
+            await ExcludedCallsignService.DeleteAsync(_deleteExclusion.Callsign);
             _deleteExclusion = null;
             await LoadAsync();
         }
