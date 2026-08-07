@@ -19,7 +19,9 @@ namespace BaseStationReader.Interfaces.Database
 
         Task<bool> IsExcludedAsync(string address);
         Task<List<ExcludedAddress>> ListAsync(Expression<Func<ExcludedAddress, bool>> predicate);
-        Task<ExcludedAddress> AddAsync(string address);
+        Task<ExcludedAddress> AddAsync(
+            string address,
+            CancellationToken cancellationToken = default);
         Task DeleteAsync(string address, CancellationToken cancellationToken = default);
     }
 }

@@ -253,6 +253,8 @@ Full configuration details, deployment guidance and user documentation are avail
 
 For Docker deployment, see the documentation for the `davewalker5/adsbtracker` image on [Docker Hub](https://hub.docker.com/repository/docker/davewalker5/adsbtracker).
 
+For advice on recommended settings to use while observing, please see the [Observing with the Persistent Queue](https://github.com/davewalker5/ADS-B-BaseStationReader/wiki/Observing-with-the-Persistent-Queue) section of the Wiki.
+
 ## Authors
 
 - **Dave Walker** - *Initial work* -

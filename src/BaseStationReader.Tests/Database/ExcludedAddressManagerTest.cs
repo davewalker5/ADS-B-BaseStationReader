@@ -27,6 +27,18 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task AddNormalisesAddressAndDoesNotDuplicateTestAsync()
+        {
+            await _manager.AddAsync(" abc123 ");
+            await _manager.AddAsync("ABC123");
+
+            var exclusions = await _manager.SearchAsync(null);
+
+            Assert.HasCount(1, exclusions);
+            Assert.AreEqual("ABC123", exclusions[0].Address);
+        }
+
+        [TestMethod]
         public async Task IsNotExcludedTestAsync()
         {
             var excluded = await _manager.IsExcludedAsync(Address);

@@ -30,6 +30,14 @@ public sealed class ExcludedCallsignService : IExcludedCallsignService
     }
 
     /// <inheritdoc />
+    public async Task AddAsync(string callsign, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
+        await manager.AddAsync(callsign, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<ExcludedCallsign>> SearchAsync(
         string? callsign,
         CancellationToken cancellationToken = default)

@@ -111,6 +111,10 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .confirmation-modal h2 { margin: 0; font-size: 22px; }
 .confirmation-modal > p { margin: 20px 0; color: var(--muted); line-height: 1.55; }
 .confirmation-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.modal-field { display: block; margin-top: 20px; }
+.modal-field span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.modal-field input { width: 100%; min-height: 38px; padding: 8px 10px; color: var(--text); background: #081524; border: 1px solid var(--line); border-radius: 7px; outline: none; }
+.modal-field input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,212,208,.12); }
 .queue-flush-progress { margin-top: 20px; }
 .queue-flush-progress-bar { display: block; width: 100%; inline-size: 100%; max-width: none; height: 16px; accent-color: var(--cyan); }
 .queue-flush-progress p { margin: 10px 0 0; color: var(--muted); }

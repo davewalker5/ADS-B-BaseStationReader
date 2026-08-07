@@ -10,6 +10,13 @@ namespace BaseStationReader.TrackerHub.Services;
 public interface IExcludedAddressService
 {
     /// <summary>
+    /// Adds an aircraft address to the exclusion table.
+    /// </summary>
+    /// <param name="address">The address to exclude.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    Task AddAsync(string address, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Searches excluded aircraft addresses.
     /// </summary>
     /// <param name="address">An optional full or partial ICAO address.</param>

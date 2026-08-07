@@ -10,6 +10,13 @@ namespace BaseStationReader.TrackerHub.Services;
 public interface IExcludedCallsignService
 {
     /// <summary>
+    /// Adds a callsign to the exclusion table.
+    /// </summary>
+    /// <param name="callsign">The callsign to exclude.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    Task AddAsync(string callsign, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Searches excluded flight callsigns.
     /// </summary>
     /// <param name="callsign">An optional full or partial callsign.</param>

@@ -27,6 +27,18 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task AddNormalisesCallsignAndDoesNotDuplicateTestAsync()
+        {
+            await _manager.AddAsync(" baw123 ");
+            await _manager.AddAsync("BAW123");
+
+            var exclusions = await _manager.SearchAsync(null);
+
+            Assert.HasCount(1, exclusions);
+            Assert.AreEqual("BAW123", exclusions[0].Callsign);
+        }
+
+        [TestMethod]
         public async Task IsNotExcludedTestAsync()
         {
             var excluded = await _manager.IsExcludedAsync(Callsign);

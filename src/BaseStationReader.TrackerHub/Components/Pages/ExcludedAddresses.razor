@@ -26,7 +26,10 @@
 }
 
 <section class="tracker-panel history-panel" aria-busy="@_loading">
-    <div class="panel-heading"><div><h2>Excluded addresses</h2><p>@ResultDescription</p></div></div>
+    <div class="panel-heading">
+        <div><h2>Excluded addresses</h2><p>@ResultDescription</p></div>
+        <button class="primary-button" type="button" @onclick="ShowAdd" disabled="@(_loading || _adding)">Add</button>
+    </div>
     <div class="table-wrap">
         <table>
             <thead><tr><th>ICAO address</th><th class="exclusion-delete-heading">Remove</th></tr></thead>
@@ -57,6 +60,34 @@
         </table>
     </div>
 </section>
+
+@if (_showingAdd)
+{
+    <div class="modal-backdrop" @onclick="CloseAdd">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="add-excluded-address-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleAddKeyDown">
+            <header>
+                <div><p class="eyebrow">New exclusion</p><h2 id="add-excluded-address-title">Add excluded address</h2></div>
+                <button class="icon-button" type="button" aria-label="Close add address dialog"
+                        @onclick="CloseAdd" disabled="@_adding">×</button>
+            </header>
+            <form @onsubmit="SaveAddAsync" @onsubmit:preventDefault>
+                <label class="modal-field">
+                    <span>ICAO address</span>
+                    <input @bind="_newAddress" @bind:event="oninput" maxlength="6" placeholder="e.g. 406B90" autocomplete="off" autofocus />
+                </label>
+                @if (_addError is not null)
+                {
+                    <div class="alert" role="alert"><strong>Address save failed</strong><span>@_addError</span></div>
+                }
+                <div class="confirmation-actions">
+                    <button class="secondary-button" type="button" @onclick="CloseAdd" disabled="@_adding">Cancel</button>
+                    <button class="primary-button" type="submit" disabled="@(_adding || !CanSaveAddress)">@(_adding ? "Saving…" : "Save")</button>
+                </div>
+            </form>
+        </section>
+    </div>
+}
 
 @if (_deleteExclusion is not null)
 {
@@ -89,8 +120,13 @@
     private string? _deleteError;
     private bool _loading;
     private bool _deleting;
+    private bool _adding;
+    private bool _showingAdd;
+    private string _newAddress = string.Empty;
+    private string? _addError;
     private ExcludedAddress? _deleteExclusion;
     private string ResultDescription => _results.Count == 1 ? "1 matching address" : $"{_results.Count:N0} matching addresses";
+    private bool CanSaveAddress => _newAddress.Trim().Length == 6 && _newAddress.Trim().All(Uri.IsHexDigit);
 
     /// <summary>
     /// Loads all excluded addresses when the component is initialised.
@@ -134,6 +170,56 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Opens an empty add-address dialog.
+    /// </summary>
+    private void ShowAdd()
+    {
+        _newAddress = string.Empty;
+        _addError = null;
+        _showingAdd = true;
+    }
+
+    /// <summary>
+    /// Closes the add-address dialog when saving is not active.
+    /// </summary>
+    private void CloseAdd()
+    {
+        if (!_adding)
+        {
+            _showingAdd = false;
+            _addError = null;
+        }
+    }
+
+    /// <summary>
+    /// Persists the entered excluded address and refreshes the table.
+    /// </summary>
+    private async Task SaveAddAsync()
+    {
+        if (!CanSaveAddress)
+        {
+            return;
+        }
+
+        _adding = true;
+        _addError = null;
+        try
+        {
+            await ExcludedAddressService.AddAsync(_newAddress);
+            _showingAdd = false;
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            _addError = exception.Message;
+        }
+        finally
+        {
+            _adding = false;
         }
     }
 
@@ -196,6 +282,18 @@
         if (args.Key == "Escape")
         {
             CloseDelete();
+        }
+    }
+
+    /// <summary>
+    /// Closes the add-address dialog when Escape is pressed.
+    /// </summary>
+    /// <param name="args">The keyboard event details.</param>
+    private void HandleAddKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseAdd();
         }
     }
 }

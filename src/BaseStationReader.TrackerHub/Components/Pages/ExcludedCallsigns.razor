@@ -26,7 +26,10 @@
 }
 
 <section class="tracker-panel history-panel" aria-busy="@_loading">
-    <div class="panel-heading"><div><h2>Excluded callsigns</h2><p>@ResultDescription</p></div></div>
+    <div class="panel-heading">
+        <div><h2>Excluded callsigns</h2><p>@ResultDescription</p></div>
+        <button class="primary-button" type="button" @onclick="ShowAdd" disabled="@(_loading || _adding)">Add</button>
+    </div>
     <div class="table-wrap">
         <table>
             <thead><tr><th>Callsign</th><th class="exclusion-delete-heading">Remove</th></tr></thead>
@@ -57,6 +60,34 @@
         </table>
     </div>
 </section>
+
+@if (_showingAdd)
+{
+    <div class="modal-backdrop" @onclick="CloseAdd">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="add-excluded-callsign-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleAddKeyDown">
+            <header>
+                <div><p class="eyebrow">New exclusion</p><h2 id="add-excluded-callsign-title">Add excluded callsign</h2></div>
+                <button class="icon-button" type="button" aria-label="Close add callsign dialog"
+                        @onclick="CloseAdd" disabled="@_adding">×</button>
+            </header>
+            <form @onsubmit="SaveAddAsync" @onsubmit:preventDefault>
+                <label class="modal-field">
+                    <span>Callsign</span>
+                    <input @bind="_newCallsign" @bind:event="oninput" maxlength="12" placeholder="e.g. BAW123" autocomplete="off" autofocus />
+                </label>
+                @if (_addError is not null)
+                {
+                    <div class="alert" role="alert"><strong>Callsign save failed</strong><span>@_addError</span></div>
+                }
+                <div class="confirmation-actions">
+                    <button class="secondary-button" type="button" @onclick="CloseAdd" disabled="@_adding">Cancel</button>
+                    <button class="primary-button" type="submit" disabled="@(_adding || !CanSaveCallsign)">@(_adding ? "Saving…" : "Save")</button>
+                </div>
+            </form>
+        </section>
+    </div>
+}
 
 @if (_deleteExclusion is not null)
 {
@@ -89,8 +120,13 @@
     private string? _deleteError;
     private bool _loading;
     private bool _deleting;
+    private bool _adding;
+    private bool _showingAdd;
+    private string _newCallsign = string.Empty;
+    private string? _addError;
     private ExcludedCallsign? _deleteExclusion;
     private string ResultDescription => _results.Count == 1 ? "1 matching callsign" : $"{_results.Count:N0} matching callsigns";
+    private bool CanSaveCallsign => _newCallsign.Trim().Length is > 0 and <= 12;
 
     /// <summary>
     /// Loads all excluded callsigns when the component is initialised.
@@ -134,6 +170,56 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Opens an empty add-callsign dialog.
+    /// </summary>
+    private void ShowAdd()
+    {
+        _newCallsign = string.Empty;
+        _addError = null;
+        _showingAdd = true;
+    }
+
+    /// <summary>
+    /// Closes the add-callsign dialog when saving is not active.
+    /// </summary>
+    private void CloseAdd()
+    {
+        if (!_adding)
+        {
+            _showingAdd = false;
+            _addError = null;
+        }
+    }
+
+    /// <summary>
+    /// Persists the entered excluded callsign and refreshes the table.
+    /// </summary>
+    private async Task SaveAddAsync()
+    {
+        if (!CanSaveCallsign)
+        {
+            return;
+        }
+
+        _adding = true;
+        _addError = null;
+        try
+        {
+            await ExcludedCallsignService.AddAsync(_newCallsign);
+            _showingAdd = false;
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            _addError = exception.Message;
+        }
+        finally
+        {
+            _adding = false;
         }
     }
 
@@ -196,6 +282,18 @@
         if (args.Key == "Escape")
         {
             CloseDelete();
+        }
+    }
+
+    /// <summary>
+    /// Closes the add-callsign dialog when Escape is pressed.
+    /// </summary>
+    /// <param name="args">The keyboard event details.</param>
+    private void HandleAddKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseAdd();
         }
     }
 }

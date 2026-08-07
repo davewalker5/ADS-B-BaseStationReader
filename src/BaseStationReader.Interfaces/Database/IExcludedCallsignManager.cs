@@ -19,7 +19,9 @@ namespace BaseStationReader.Interfaces.Database
 
         Task<bool> IsExcludedAsync(string callsign);
         Task<List<ExcludedCallsign>> ListAsync(Expression<Func<ExcludedCallsign, bool>> predicate);
-        Task<ExcludedCallsign> AddAsync(string callsign);
+        Task<ExcludedCallsign> AddAsync(
+            string callsign,
+            CancellationToken cancellationToken = default);
         Task DeleteAsync(string callsign, CancellationToken cancellationToken = default);
     }
 }

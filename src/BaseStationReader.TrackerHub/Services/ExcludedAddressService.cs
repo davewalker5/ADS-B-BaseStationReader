@@ -30,6 +30,14 @@ public sealed class ExcludedAddressService : IExcludedAddressService
     }
 
     /// <inheritdoc />
+    public async Task AddAsync(string address, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
+        await manager.AddAsync(address, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<ExcludedAddress>> SearchAsync(
         string? address,
         CancellationToken cancellationToken = default)
