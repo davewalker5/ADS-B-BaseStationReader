@@ -253,6 +253,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .page-size { display: flex; align-items: center; gap: 8px; }
 .page-size span { margin: 0; }
 .page-size select { width: 74px; min-height: 32px; padding: 5px 7px; }
+.log-panel-actions { display: flex; align-items: center; gap: 14px; }
+.log-url { max-width: 420px; overflow-wrap: anywhere; white-space: normal; }
 .table-subtitle { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 400; }
 .row-link { color: var(--cyan); text-decoration: none; font-weight: 700; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 15px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }

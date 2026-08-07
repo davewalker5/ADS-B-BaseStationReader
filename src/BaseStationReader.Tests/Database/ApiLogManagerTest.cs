@@ -41,5 +41,67 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual("AircraftAddress", entries[0].Property);
             Assert.AreEqual(Address, entries[0].PropertyValue);
         }
+
+        [TestMethod]
+        public async Task SearchFiltersAndPagesNewestFirstTestAsync()
+        {
+            await AddEntryAsync(ApiServiceType.SkyLink, ApiEndpointType.Aircraft, "FIRST");
+            await AddEntryAsync(ApiServiceType.AeroDataBox, ApiEndpointType.Flights, "SECOND");
+            await AddEntryAsync(ApiServiceType.AeroDataBox, ApiEndpointType.Flights, "THIRD");
+
+            var result = await _manager.SearchAsync(new ApiLogFilter
+            {
+                Service = nameof(ApiServiceType.AeroDataBox),
+                Endpoint = nameof(ApiEndpointType.Flights),
+                FromDate = DateTime.Today,
+                ToDate = DateTime.Today,
+                Page = 1,
+                PageSize = 1
+            });
+
+            Assert.AreEqual(2, result.TotalCount);
+            Assert.AreEqual(2, result.TotalPages);
+            Assert.HasCount(1, result.Items);
+            Assert.AreEqual("THIRD", result.Items[0].PropertyValue);
+        }
+
+        [TestMethod]
+        public async Task SearchRejectsReversedDateRangeTestAsync()
+        {
+            var filter = new ApiLogFilter
+            {
+                FromDate = DateTime.Today,
+                ToDate = DateTime.Today.AddDays(-1)
+            };
+
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => _manager.SearchAsync(filter));
+        }
+
+        [TestMethod]
+        public async Task ClearDeletesAllEntriesTestAsync()
+        {
+            await AddEntryAsync(ApiServiceType.SkyLink, ApiEndpointType.METAR, "EGLL");
+            await AddEntryAsync(ApiServiceType.CheckWXApi, ApiEndpointType.METAR, "EGCC");
+
+            var deleted = await _manager.ClearAsync();
+            var entries = await _manager.ListAsync(entry => true);
+
+            Assert.AreEqual(2, deleted);
+            Assert.IsEmpty(entries);
+        }
+
+        /// <summary>
+        /// Adds a log entry with the supplied request dimensions.
+        /// </summary>
+        /// <param name="service">The external service.</param>
+        /// <param name="endpoint">The endpoint type.</param>
+        /// <param name="value">The logged property value.</param>
+        private async Task AddEntryAsync(
+            ApiServiceType service,
+            ApiEndpointType endpoint,
+            string value)
+        {
+            await _manager.AddAsync(service, endpoint, Url, ApiProperty.AircraftAddress, value);
+        }
     }
 }

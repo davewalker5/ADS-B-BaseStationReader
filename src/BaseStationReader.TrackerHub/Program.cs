@@ -186,6 +186,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<IAirportScheduleLookupService, AirportScheduleLookupService>();
                 builder.Services.AddScoped<IAirportRouteService, AirportRouteService>();
                 builder.Services.AddScoped<IReferenceLookupService, ReferenceLookupService>();
+                builder.Services.AddScoped<IApiLogService, ApiLogService>();
                 builder.Services.AddSingleton<IDataImportService, DataImportService>();
                 builder.Services.AddScoped<IProvenanceService, ProvenanceService>();
                 builder.Services.AddScoped<IAircraftReferenceService, AircraftReferenceService>();
