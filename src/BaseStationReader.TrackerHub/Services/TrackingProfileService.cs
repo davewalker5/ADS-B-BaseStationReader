@@ -156,6 +156,7 @@ public sealed class TrackingProfileService : ITrackingProfileService
         TimeToStale = source.TimeToStale, TimeToRemoval = source.TimeToRemoval, TimeToLock = source.TimeToLock,
         LogFile = source.LogFile, VerboseLogging = source.VerboseLogging, EnableSqlWriter = source.EnableSqlWriter,
         FlushWhileActive = source.FlushWhileActive, FlushOnStop = source.FlushOnStop,
+        StopTimeout = source.StopTimeout,
         MaximumRows = source.MaximumRows, ReceiverLatitude = source.ReceiverLatitude,
         ReceiverLongitude = source.ReceiverLongitude, ReceiverElevation = source.ReceiverElevation,
         MaximumTrackedDistance = source.MaximumTrackedDistance,

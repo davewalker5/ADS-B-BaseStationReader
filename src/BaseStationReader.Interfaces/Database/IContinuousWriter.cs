@@ -16,6 +16,12 @@ namespace BaseStationReader.Interfaces.Database
 
         void Push(object entity);
         Task StartAsync(CancellationToken token);
+
+        /// <summary>
+        /// Immediately rejects new records and cancels the active writer operation.
+        /// </summary>
+        void RequestStop();
+
         Task StopAsync(bool? flushOnStop = null, CancellationToken cancellationToken = default,
             IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null);
         Task FlushQueueAsync(CancellationToken cancellationToken = default,

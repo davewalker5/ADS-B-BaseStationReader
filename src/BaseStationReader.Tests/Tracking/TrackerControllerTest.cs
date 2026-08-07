@@ -51,6 +51,7 @@ namespace BaseStationReader.Tests.Tracking
         {
             // Define the test messages
             string[] messages = [
+                "SEL,,496,,,",
                 "MSG,8,1,1,3965A3,1,2023/08/23,12:07:27.929,2023/08/23,12:07:28.005,,,,,,,,,,,,0",
                 "MSG,6,1,1,3965A3,1,2023/08/23,12:07:27.932,2023/08/23,12:07:28.006,,,,,,,,6303,0,0,0,"
             ];
@@ -72,6 +73,8 @@ namespace BaseStationReader.Tests.Tracking
         {
             // Wire up the event handlers
             _controller.AircraftEvent += OnAircraftNotification;
+            var rawMessageCount = 0;
+            _controller.MessageReceived += (_, _) => Interlocked.Increment(ref rawMessageCount);
 
             try
             {
@@ -104,6 +107,8 @@ namespace BaseStationReader.Tests.Tracking
 
             // The actual notifications list should now be equal to the length of the expected list
             Assert.HasCount(expected.Count, _notifications);
+            Assert.AreEqual(3, rawMessageCount,
+                "The raw heartbeat must include records that do not produce an aircraft notification.");
 
             // Now confirm all the expected notifications are there
             foreach (var notificationType in expected)

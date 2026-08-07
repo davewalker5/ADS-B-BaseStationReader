@@ -114,13 +114,11 @@ namespace BaseStationReader.BusinessLogic.Database
                 return;
             }
 
+            RequestStop();
+
             lock (_gate)
             {
-                // Cancel the internal, linked token, release the semaphore and make a copy of the run task
-                // that can safely be awaited (otherwise, it's mutable and could be nulled mid-await)
-                _accepting = false;
-                _source.Cancel();
-                TryRelease();
+                // Keep a stable reference while the cancelled runner winds down.
                 toAwait = _runTask;
             }
 
@@ -150,6 +148,19 @@ namespace BaseStationReader.BusinessLogic.Database
                     _source.Dispose();
                     _source = null;
                 }
+            }
+        }
+
+        /// <inheritdoc />
+        public void RequestStop()
+        {
+            lock (_gate)
+            {
+                // This method is intentionally synchronous so the stop initiator can close the
+                // producer boundary before waiting for the receiver and other session components.
+                _accepting = false;
+                _source?.Cancel();
+                TryRelease();
             }
         }
 

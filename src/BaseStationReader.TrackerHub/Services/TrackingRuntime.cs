@@ -36,6 +36,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     }
 
     public event EventHandler<AircraftNotificationEventArgs>? AircraftEvent;
+    public event EventHandler<MessageReadEventArgs>? MessageReceived;
     public IEnumerable<TrackedAircraftDto> State { get { lock (_stateLock) return _controller?.State.ToArray() ?? []; } }
     public TrackingOptions TrackingOptions { get { lock (_stateLock) return TrackingOptions.FromTrackerSettings(_settings); } }
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
@@ -129,7 +130,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             {
                 controller?.ConfigureStopFlush(flushQueue.Value, token, progress);
             }
-            await StopControllerCoreAsync();
+            await StopControllerCoreAsync(flushQueue == false);
         }
         finally { _gate.Release(); }
     }
@@ -194,6 +195,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         }
         var controller = _factory(_settings, sessionName, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
+        controller.MessageReceived += ForwardMessageReceived;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)
         {
@@ -220,7 +222,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         finally { _gate.Release(); }
     }
 
-    private async Task StopControllerCoreAsync()
+    private async Task StopControllerCoreAsync(bool bounded = false)
     {
         ITrackerController? controller;
         CancellationTokenSource? cancellation;
@@ -235,10 +237,32 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         {
             return;
         }
+        controller.RequestStop();
         cancellation!.Cancel();
-        try { if (task is not null) await task; }
+        try
+        {
+            if (task is not null)
+            {
+                if (bounded)
+                {
+                    var timeout = TimeSpan.FromMilliseconds(Math.Max(1, _settings.StopTimeout));
+                    await task.WaitAsync(timeout);
+                }
+                else
+                {
+                    await task;
+                }
+            }
+        }
         catch (OperationCanceledException) { }
+        catch (TimeoutException)
+        {
+            throw new TimeoutException(
+                $"The tracking session did not release its resources within {_settings.StopTimeout:N0} ms. " +
+                "Shutdown cancellation remains active; check the application log before using the spool replayer.");
+        }
         controller.AircraftEvent -= ForwardAircraftEvent;
+        controller.MessageReceived -= ForwardMessageReceived;
         cancellation.Dispose();
         lock (_stateLock)
         {
@@ -258,4 +282,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
 
     private void ForwardAircraftEvent(object? sender, AircraftNotificationEventArgs args)
         => AircraftEvent?.Invoke(this, args);
+
+    private void ForwardMessageReceived(object? sender, MessageReadEventArgs args)
+        => MessageReceived?.Invoke(this, args);
 }

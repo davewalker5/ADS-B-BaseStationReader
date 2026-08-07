@@ -45,7 +45,9 @@ namespace BaseStationReader.BusinessLogic.Messages
         public async Task StartAsync(CancellationToken token)
         {
             // Connect to the server
+            _logger.LogMessage(Severity.Info, $"Connecting to BaseStation message feed at {_server}:{_port}");
             _client.Connect(_server, _port, _readTimeout);
+            _logger.LogMessage(Severity.Info, $"Connected to BaseStation message feed at {_server}:{_port}");
 
             // Enter the message reader loop
             while (!token.IsCancellationRequested && !_timedOut)
@@ -54,6 +56,13 @@ namespace BaseStationReader.BusinessLogic.Messages
                 {
                     // Read the next message
                     var message = await _client.ReadLineAsync(token).ConfigureAwait(false);
+                    if (message is null)
+                    {
+                        _logger.LogMessage(
+                            Severity.Warning,
+                            $"BaseStation message feed at {_server}:{_port} reached end-of-stream");
+                        break;
+                    }
                     if (!string.IsNullOrEmpty(message))
                     {
                         try
@@ -72,7 +81,9 @@ namespace BaseStationReader.BusinessLogic.Messages
                 {
                     // The read has timed out - set the flag that will break out of the read loop and cause the
                     // application to reconnect and try again
-                    _logger.LogMessage(Severity.Error, $"Message reading has timed out");
+                    _logger.LogMessage(
+                        Severity.Error,
+                        $"Reading from BaseStation message feed at {_server}:{_port} timed out after {_readTimeout:N0} ms");
                     _logger.LogMessage(Severity.Error, ex.Message);
                     _logger.LogException(ex);
                     _timedOut = true;

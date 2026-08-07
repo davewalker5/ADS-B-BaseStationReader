@@ -22,6 +22,7 @@ namespace BaseStationReader.Entities.Config
         public bool EnableSqlWriter { get; set; }
         public bool FlushWhileActive { get; set; } = true;
         public bool FlushOnStop { get; set; } = true;
+        public int StopTimeout { get; set; } = 10000;
         public string SpoolFolder { get; set; } = "spool";
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }

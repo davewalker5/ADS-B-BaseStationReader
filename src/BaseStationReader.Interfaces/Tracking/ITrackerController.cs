@@ -8,6 +8,9 @@ namespace BaseStationReader.Interfaces.Tracking
     {
         event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
 
+        /// <summary>Raised for every non-empty raw message received from the configured feed.</summary>
+        event EventHandler<MessageReadEventArgs> MessageReceived { add { } remove { } }
+
         IEnumerable<TrackedAircraftDto> State { get; }
         TrackingOptions TrackingOptions {get; }
 
@@ -39,6 +42,9 @@ namespace BaseStationReader.Interfaces.Tracking
         Task StartAsync(CancellationToken token);
         int QueueSize { get; }
         Task FlushQueueAsync(CancellationToken cancellationToken = default, IProgress<QueueFlushProgress> progress = null);
+
+        /// <summary>Immediately asks session-owned components to reject and cancel outstanding work.</summary>
+        void RequestStop() { }
 
         /// <summary>Overrides persistence behavior for the next controller stop.</summary>
         void ConfigureStopFlush(bool flushQueue, CancellationToken cancellationToken = default,

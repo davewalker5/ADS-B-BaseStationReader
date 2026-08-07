@@ -38,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
         private readonly IPositionDensitySnapshotMapper _densitySnapshotMapper;
         private IAircraftTracker _tracker = null;
+        private IMessageReader _reader = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
         private bool? _stopFlushOverride;
@@ -47,6 +48,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private bool _writerStopped;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
+        public event EventHandler<MessageReadEventArgs> MessageReceived;
 
         private readonly ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
         private readonly ConcurrentDictionary<string, byte> _positionAircraftObserved = new(StringComparer.OrdinalIgnoreCase);
@@ -159,6 +161,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
 
             _tracker ??= await CreateTrackerAsync(token);
+            _reader.MessageRead += OnRawMessageReceived;
 
             // Persist the session before tracking begins so every subsequent aircraft record can refer to it.
             if (_writer != null)
@@ -205,14 +208,9 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 try
                 {
-                    if (_densityOrchestrator is not null)
-                    {
-                        await _densityOrchestrator.StopAsync();
-                    }
-                }
-                finally
-                {
-                    // Always drain and dispose persistence even if snapshot generation itself failed.
+                    // Release persistence first. RequestStop has already closed the producer boundary,
+                    // so a density callback racing with shutdown cannot add another record. This keeps
+                    // unrelated density cleanup from retaining the exclusive spool lock.
                     if (_writer != null)
                     {
                         try
@@ -229,16 +227,30 @@ namespace BaseStationReader.BusinessLogic.Tracking
                             await _writer.DisposeAsync();
                         }
                     }
-
-                    // Detach the aircraft tracking event handlers
-                    _tracker.AircraftEvent -= OnAircraftEvent;
-
-                    // A stopped controller must not associate any later events with the completed tracking run.
-                    _activeSession = null;
-
-                    if (_ownsContext)
+                }
+                finally
+                {
+                    try
                     {
-                        await _context.DisposeAsync();
+                        // No periodic density work may outlive the completed tracking session.
+                        if (_densityOrchestrator is not null)
+                        {
+                            await _densityOrchestrator.StopAsync();
+                        }
+                    }
+                    finally
+                    {
+                        // Detach the aircraft tracking event handlers
+                        _tracker.AircraftEvent -= OnAircraftEvent;
+                        _reader.MessageRead -= OnRawMessageReceived;
+
+                        // A stopped controller must not associate any later events with the completed tracking run.
+                        _activeSession = null;
+
+                        if (_ownsContext)
+                        {
+                            await _context.DisposeAsync();
+                        }
                     }
                 }
             }
@@ -271,6 +283,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _stopFlushProgress = progress;
         }
 
+        /// <inheritdoc />
+        public void RequestStop()
+        {
+            // Stop accepting spool entries and cancel an in-flight database call before the
+            // receiver and density loops begin their asynchronous shutdown.
+            _writer?.RequestStop();
+        }
+
         /// <summary>
         /// Creates the aircraft tracker after asynchronously loading the current exclusion lists.
         /// </summary>
@@ -285,7 +305,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 .ToList();
 
             var readerSender = new MessageReaderNotificationSender(_logger);
-            var reader = new MessageReader(
+            _reader = new MessageReader(
                 _tcpClient,
                 _logger,
                 readerSender,
@@ -317,7 +337,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.MaximumTrackedAltitude);
 
             return new AircraftTracker(
-                reader,
+                _reader,
                 parsers,
                 propertyUpdater,
                 trackerSender,
@@ -327,6 +347,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
         }
+
+        /// <summary>Forwards an unfiltered feed heartbeat independently of aircraft notification criteria.</summary>
+        private void OnRawMessageReceived(object sender, MessageReadEventArgs args)
+            => MessageReceived?.Invoke(this, args);
 
         /// <summary>
         /// Create a historical snapshot of the effective tracking profile for the new run
