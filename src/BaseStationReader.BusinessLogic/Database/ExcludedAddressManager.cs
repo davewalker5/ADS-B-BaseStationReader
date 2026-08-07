@@ -57,29 +57,32 @@ namespace BaseStationReader.BusinessLogic.Database
                 .ToListAsync();
 
         /// <summary>
-        /// Add an aircraft, if the associated ICAO address doesn't already exist
+        /// Adds an aircraft address exclusion if it does not already exist.
         /// </summary>
-        /// <param name="address"></param>
-        /// <param name="registration"></param>
-        /// <param name="manufactured"></param>
-        /// <param name="age"></param>
-        /// <param name="modelId"></param>
-        /// <returns></returns>
-        public async Task<ExcludedAddress> AddAsync(string address)
+        /// <param name="address">The ICAO aircraft address to exclude.</param>
+        /// <param name="cancellationToken">A token used to cancel the database operation.</param>
+        /// <returns>The existing or newly created exclusion.</returns>
+        public async Task<ExcludedAddress> AddAsync(
+            string address,
+            CancellationToken cancellationToken = default)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(address);
+            var normalisedAddress = address.Trim().ToUpperInvariant();
+
             // Check there's not already an exclusion for this address
-            var exclusion = await _context.ExcludedAddresses.FirstOrDefaultAsync(x => x.Address == address);
+            var exclusion = await _context.ExcludedAddresses
+                .FirstOrDefaultAsync(x => x.Address == normalisedAddress, cancellationToken);
             if (exclusion == null)
             {
                 // Create a new exclusion
                 exclusion = new ExcludedAddress()
                 {
-                    Address = address
+                    Address = normalisedAddress
                 };
 
                 // Save the aircraft
-                await _context.ExcludedAddresses.AddAsync(exclusion);
-                await _context.SaveChangesAsync();
+                await _context.ExcludedAddresses.AddAsync(exclusion, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
             }
 
             return exclusion;

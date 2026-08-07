@@ -2,26 +2,26 @@
 
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Tracking;
+using BaseStationReader.Entities.Api;
 using BaseStationReader.Interfaces.Logging;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.TrackerHub.Services;
 
 /// <summary>
-/// Creates short-lived database managers for excluded-address UI operations.
+/// Creates short-lived database managers for excluded-callsign UI operations.
 /// </summary>
-public sealed class ExcludedAddressService : IExcludedAddressService
+public sealed class ExcludedCallsignService : IExcludedCallsignService
 {
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
 
     /// <summary>
-    /// Initialises a new excluded-address service.
+    /// Initialises a new excluded-callsign service.
     /// </summary>
     /// <param name="contextFactory">The database context factory.</param>
     /// <param name="logger">The application logger.</param>
-    public ExcludedAddressService(
+    public ExcludedCallsignService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
         ITrackerLogger logger)
     {
@@ -30,28 +30,28 @@ public sealed class ExcludedAddressService : IExcludedAddressService
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(string address, CancellationToken cancellationToken = default)
+    public async Task AddAsync(string callsign, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
-        await manager.AddAsync(address, cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
+        await manager.AddAsync(callsign, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ExcludedAddress>> SearchAsync(
-        string? address,
+    public async Task<IReadOnlyList<ExcludedCallsign>> SearchAsync(
+        string? callsign,
         CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
-        return await manager.SearchAsync(address, cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
+        return await manager.SearchAsync(callsign, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(string address, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(string callsign, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
-        await manager.DeleteAsync(address, cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
+        await manager.DeleteAsync(callsign, cancellationToken);
     }
 }
