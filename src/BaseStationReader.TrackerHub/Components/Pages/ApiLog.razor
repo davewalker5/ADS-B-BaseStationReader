@@ -1,0 +1,292 @@
+@page "/lookup/log"
+@inject IApiLogService ApiLogService
+
+<PageTitle>API Log · Lookup · ADS-B Tracker</PageTitle>
+
+<LookupTabs />
+
+<section class="lookup-tab-heading">
+    <p class="eyebrow">External service activity</p>
+    <h2>API Log</h2>
+    <p>Review requests made to configured aviation data services.</p>
+</section>
+
+<section class="filter-panel">
+    <div class="filter-heading">
+        <div>
+            <h2>Log filters</h2>
+            <p>Dates include the whole selected day.</p>
+        </div>
+        <button class="text-button" type="button" @onclick="ClearFiltersAsync" disabled="@_loading">Clear filters</button>
+    </div>
+    <div class="filter-grid">
+        <label>
+            <span>Service</span>
+            <select @bind="_filter.Service">
+                <option value="">All services</option>
+                @foreach (var service in _services)
+                {
+                    <option value="@service">@service</option>
+                }
+            </select>
+        </label>
+        <label>
+            <span>Endpoint type</span>
+            <select @bind="_filter.Endpoint">
+                <option value="">All endpoint types</option>
+                @foreach (var endpoint in _endpoints)
+                {
+                    <option value="@endpoint">@endpoint</option>
+                }
+            </select>
+        </label>
+        <label><span>From date</span><InputDate @bind-Value="_filter.FromDate" /></label>
+        <label><span>To date</span><InputDate @bind-Value="_filter.ToDate" /></label>
+    </div>
+    <div class="filter-actions">
+        <button class="primary-button" type="button" @onclick="SearchFromFirstPageAsync" disabled="@_loading">
+            @(_loading ? "Searching…" : "Search log")
+        </button>
+    </div>
+</section>
+
+@if (_error is not null)
+{
+    <div class="alert" role="alert"><strong>Log query failed</strong><span>@_error</span></div>
+}
+
+<section class="tracker-panel history-panel" aria-busy="@_loading">
+    <div class="panel-heading">
+        <div><h2>Log entries</h2><p>@ResultDescription</p></div>
+        <div class="log-panel-actions">
+            <label class="page-size">
+                <span>Rows per page</span>
+                <select @bind="_filter.PageSize" @bind:after="ChangePageSizeAsync">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </label>
+            <button class="danger-button" type="button" @onclick="ShowClearConfirmation"
+                    disabled="@(_loading || _clearing || _result.TotalCount == 0)">Clear log</button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Timestamp</th><th>Service</th><th>Endpoint</th><th>Property</th><th>Value</th><th>URL</th></tr>
+            </thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="6" class="table-empty">Loading log entries…</td></tr>
+                }
+                else if (_result.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="table-empty">No log entries match these filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var entry in _result.Items)
+                    {
+                        <tr>
+                            <td>@entry.Timestamp.ToString("dd MMM yyyy HH:mm:ss")</td>
+                            <td>@entry.Service</td>
+                            <td>@entry.Endpoint</td>
+                            <td>@entry.Property</td>
+                            <td class="mono">@entry.PropertyValue</td>
+                            <td class="mono log-url">@entry.Url</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination">
+        <button type="button" @onclick="PreviousPageAsync" disabled="@(_loading || _result.Page <= 1)">← Previous</button>
+        <span>Page <strong>@(_result.TotalPages == 0 ? 0 : _result.Page)</strong> of <strong>@_result.TotalPages</strong></span>
+        <button type="button" @onclick="NextPageAsync" disabled="@(_loading || _result.Page >= _result.TotalPages)">Next →</button>
+    </div>
+</section>
+
+@if (_confirmingClear)
+{
+    <div class="modal-backdrop" @onclick="CloseClearConfirmation">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="clear-log-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandleClearKeyDown">
+            <header>
+                <div>
+                    <p class="eyebrow">Permanent deletion</p>
+                    <h2 id="clear-log-title">Clear API log?</h2>
+                </div>
+                <button class="icon-button" type="button" aria-label="Close clear log confirmation"
+                        autofocus @onclick="CloseClearConfirmation" disabled="@_clearing">×</button>
+            </header>
+            <p>This will permanently delete <strong>all API log entries</strong>, including entries outside the current filters. This action cannot be undone.</p>
+            @if (_clearError is not null)
+            {
+                <div class="alert" role="alert"><strong>Log deletion failed</strong><span>@_clearError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="CloseClearConfirmation" disabled="@_clearing">Cancel</button>
+                <button class="danger-button" type="button" @onclick="ClearLogAsync" disabled="@_clearing">
+                    @(_clearing ? "Clearing…" : "Clear all entries")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+#nullable enable
+    private readonly IReadOnlyList<string> _services = Enum.GetValues<ApiServiceType>()
+        .Where(service => service != ApiServiceType.None)
+        .Select(service => service.ToString())
+        .ToList();
+    private readonly IReadOnlyList<string> _endpoints = Enum.GetValues<ApiEndpointType>()
+        .Where(endpoint => endpoint != ApiEndpointType.None)
+        .Select(endpoint => endpoint.ToString())
+        .ToList();
+    private ApiLogFilter _filter = new();
+    private PagedResult<ApiLogEntry> _result = new() { Page = 1, PageSize = 25 };
+    private string? _error;
+    private string? _clearError;
+    private bool _loading;
+    private bool _clearing;
+    private bool _confirmingClear;
+    private string ResultDescription => _result.TotalCount == 1
+        ? "1 matching entry"
+        : $"{_result.TotalCount:N0} matching entries";
+
+    /// <summary>
+    /// Loads the first API log page when the component is initialised.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+        => await SearchAsync();
+
+    /// <summary>
+    /// Applies the current filters from the first page.
+    /// </summary>
+    private async Task SearchFromFirstPageAsync()
+    {
+        _filter.Page = 1;
+        await SearchAsync();
+    }
+
+    /// <summary>
+    /// Clears all search criteria while retaining the selected page size.
+    /// </summary>
+    private async Task ClearFiltersAsync()
+    {
+        var pageSize = _filter.PageSize;
+        _filter = new ApiLogFilter { PageSize = pageSize };
+        await SearchAsync();
+    }
+
+    /// <summary>
+    /// Loads the preceding result page.
+    /// </summary>
+    private async Task PreviousPageAsync()
+    {
+        _filter.Page = Math.Max(1, _result.Page - 1);
+        await SearchAsync();
+    }
+
+    /// <summary>
+    /// Loads the following result page.
+    /// </summary>
+    private async Task NextPageAsync()
+    {
+        _filter.Page = Math.Min(_result.TotalPages, _result.Page + 1);
+        await SearchAsync();
+    }
+
+    /// <summary>
+    /// Applies a changed page size from the first page.
+    /// </summary>
+    private async Task ChangePageSizeAsync()
+    {
+        _filter.Page = 1;
+        await SearchAsync();
+    }
+
+    /// <summary>
+    /// Executes the current log query while exposing its state to the page.
+    /// </summary>
+    private async Task SearchAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _result = await ApiLogService.SearchAsync(_filter);
+            _filter.Page = _result.Page;
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Opens the clear-log confirmation dialog.
+    /// </summary>
+    private void ShowClearConfirmation()
+    {
+        _clearError = null;
+        _confirmingClear = true;
+    }
+
+    /// <summary>
+    /// Closes the clear-log confirmation dialog when deletion is not active.
+    /// </summary>
+    private void CloseClearConfirmation()
+    {
+        if (!_clearing)
+        {
+            _confirmingClear = false;
+            _clearError = null;
+        }
+    }
+
+    /// <summary>
+    /// Deletes all API log entries after confirmation and refreshes the result table.
+    /// </summary>
+    private async Task ClearLogAsync()
+    {
+        _clearing = true;
+        _clearError = null;
+        try
+        {
+            await ApiLogService.ClearAsync();
+            _confirmingClear = false;
+            _filter.Page = 1;
+            await SearchAsync();
+        }
+        catch (Exception exception)
+        {
+            _clearError = exception.Message;
+        }
+        finally
+        {
+            _clearing = false;
+        }
+    }
+
+    /// <summary>
+    /// Closes the confirmation dialog when Escape is pressed.
+    /// </summary>
+    /// <param name="args">The keyboard event details.</param>
+    private void HandleClearKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseClearConfirmation();
+        }
+    }
+}
