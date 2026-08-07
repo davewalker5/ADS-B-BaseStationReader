@@ -189,13 +189,19 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 }
                 else if (elapsed >= _staleMs)
                 {
-                    aircraft.Status = TrackingStatus.Stale;
-                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Stale, AircraftEvent);
+                    if (aircraft.Status != TrackingStatus.Stale)
+                    {
+                        aircraft.Status = TrackingStatus.Stale;
+                        _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Stale, AircraftEvent);
+                    }
                 }
                 else if (elapsed >= _recentMs)
                 {
-                    aircraft.Status = TrackingStatus.Inactive;
-                    _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Recent, AircraftEvent);
+                    if (aircraft.Status != TrackingStatus.Inactive)
+                    {
+                        aircraft.Status = TrackingStatus.Inactive;
+                        _sender.SendAircraftNotification(aircraft, null, this, AircraftNotificationType.Recent, AircraftEvent);
+                    }
                 }
             }
         }

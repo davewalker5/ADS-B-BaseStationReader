@@ -39,7 +39,7 @@ namespace BaseStationReader.Tests.Tracking
 
             // Construct the message reader
             var buffer = Encoding.UTF8.GetBytes(string.Join("\n", messages) + "\n");
-            var client = new MockTrackerTcpClient(buffer);
+            var client = new MockTrackerTcpClient(buffer, holdOpenAfterEnd: true);
             var readerSender = new MessageReaderNotificationSender(_logger);
             var reader = new MessageReader(client, _logger, readerSender, "", 0, 100);
 
@@ -75,6 +75,10 @@ namespace BaseStationReader.Tests.Tracking
             {
                 // Expected when the token is cancelled
             }
+
+            Assert.HasCount(1, _notifications.Where(x => x.NotificationType == AircraftNotificationType.Recent));
+            Assert.HasCount(1, _notifications.Where(x => x.NotificationType == AircraftNotificationType.Stale));
+            Assert.HasCount(1, _notifications.Where(x => x.NotificationType == AircraftNotificationType.Removed));
 
             // De-duplicate the notifications
             _notifications = _notifications.GroupBy(p => p.NotificationType).Select(g => g.First()).ToList();

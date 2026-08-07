@@ -216,17 +216,12 @@ namespace BaseStationReader.Terminal
             // If this is a removal event, remove the aircraft from the index
             if (e.NotificationType == AircraftNotificationType.Removed)
             {
-                var rowNumber = _tableManager.RemoveAircraft(e.Aircraft);
-                _logger.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
+                _tableManager.RemoveAircraft(e.Aircraft);
             }
             else
             {
                 // Not a removal, so update the aircraft entry in the table
-                var rowNumber = _tableManager.AddOrUpdateAircraft(e.Aircraft);
-                if (rowNumber != -1)
-                {
-                    _logger.LogMessage(Severity.Info, $"Handled event for aircraft {e.Aircraft.Address} at row {rowNumber}");
-                }
+                _tableManager.AddOrUpdateAircraft(e.Aircraft);
             }
         }
 

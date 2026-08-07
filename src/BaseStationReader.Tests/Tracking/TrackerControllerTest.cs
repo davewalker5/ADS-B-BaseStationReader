@@ -32,6 +32,7 @@ namespace BaseStationReader.Tests.Tracking
             ReceiverElevation = 120,
             DefaultProfileName = "Test Default Profile",
             EnableSqlWriter = true,
+            TrackingLogSummaryInterval = 100,
             TrackedBehaviours = [.. Enum.GetValues<AircraftBehaviour>()],
             TrackPosition = true,
             TimeToRecent = TrackerRecentMs,
@@ -39,7 +40,7 @@ namespace BaseStationReader.Tests.Tracking
             TimeToRemoval = TrackerRemovedMs
         };
 
-        private ITrackerLogger _logger = new MockFileLogger();
+        private MockFileLogger _logger = new();
         private ITrackerController _controller;
         private BaseStationReaderDbContext _context;
 
@@ -58,7 +59,7 @@ namespace BaseStationReader.Tests.Tracking
 
             // Construct the message reader
             var buffer = Encoding.UTF8.GetBytes(string.Join("\n", messages) + "\n");
-            var tcpClient = new MockTrackerTcpClient(buffer);
+            var tcpClient = new MockTrackerTcpClient(buffer, holdOpenAfterEnd: true);
 
             // Construct the tracker controller itself
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -133,6 +134,13 @@ namespace BaseStationReader.Tests.Tracking
             Assert.AreEqual(string.Join(",", _settings.TrackedBehaviours), session.IncludedBehaviours);
             Assert.AreEqual(DateTimeKind.Utc, session.StartedAtUtc.Kind);
             Assert.IsTrue(_context.TrackedAircraft.All(x => x.SessionId == session.Id));
+
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Tracking summary:")));
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Tracking final summary:")));
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Aircraft changes:")));
         }
 
         [TestMethod]

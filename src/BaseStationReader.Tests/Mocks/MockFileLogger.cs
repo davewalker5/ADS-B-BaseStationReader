@@ -8,12 +8,15 @@ namespace BaseStationReader.Tests.Mocks
 {
     public class MockFileLogger : ITrackerLogger
     {
+        public System.Collections.Concurrent.ConcurrentQueue<(Severity Severity, string Message)> Messages { get; } = new();
+
         public void Initialise(string logFile, Severity minimumSeverityToLog, bool verbose)
         {
         }
 
         public void LogMessage(Severity severity, string message, [CallerMemberName] string caller = "")
         {
+            Messages.Enqueue((severity, message));
             Debug.Print($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} [{severity.ToString()}] {caller} : {message}");
         }
 
