@@ -98,15 +98,16 @@ public sealed class ContinuousWriterPositionTest
         context.ObservationSessions.AddRange(firstSession, secondSession);
         await context.SaveChangesAsync();
 
-        var previousAircraft = CreateAircraft("406A3D", firstSession.Id, DateTime.Now);
+        var observedAt = DateTime.Now;
+        var previousAircraft = CreateAircraft("406A3D", firstSession.Id, observedAt);
         context.TrackedAircraft.Add(previousAircraft);
         await context.SaveChangesAsync();
 
         IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
         await using IContinuousWriter writer = new ContinuousWriter(factory, new TemporarySpoolQueue());
         await writer.StartAsync(CancellationToken.None);
-        writer.Push(CreateAircraft("406A3D", secondSession.Id, DateTime.Now));
-        writer.Push(CreateAircraft("406A3D", secondSession.Id, DateTime.Now.AddSeconds(1)));
+        writer.Push(CreateAircraft("406A3D", secondSession.Id, observedAt));
+        writer.Push(CreateAircraft("406A3D", secondSession.Id, observedAt.AddMilliseconds(1)));
         await writer.StopAsync();
 
         var records = context.TrackedAircraft.OrderBy(item => item.SessionId).ToArray();

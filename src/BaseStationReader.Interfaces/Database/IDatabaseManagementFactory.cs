@@ -17,7 +17,7 @@ namespace BaseStationReader.Interfaces.Database
         ISightingManager SightingManager { get; }
         ITrackedAircraftWriter TrackedAircraftWriter { get; }
         IPositionWriter PositionWriter { get; }
-        IAircraftLockManager AircraftLockManager { get; }
+        IAircraftLifetimeManager AircraftLifetimeManager { get; }
         IExcludedAddressManager ExcludedAddressManager { get; }
         IExcludedCallsignManager ExcludedCallsignManager { get; }
         IApiLogManager ApiLogManager { get; }

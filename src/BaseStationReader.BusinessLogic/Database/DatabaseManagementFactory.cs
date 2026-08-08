@@ -18,7 +18,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<ISightingManager> _sightingManager = null;
         private readonly Lazy<ITrackedAircraftWriter> _trackedAircraftWriter = null;
         private readonly Lazy<IPositionWriter> _positionWriter = null;
-        private readonly Lazy<IAircraftLockManager> _aircraftLockManager = null;
+        private readonly Lazy<IAircraftLifetimeManager> _aircraftLifetimeManager = null;
         private readonly Lazy<IExcludedAddressManager> _excludedAddressManager = null;
         private readonly Lazy<IExcludedCallsignManager> _excludedCallsignManager = null;
         private readonly Lazy<IApiLogManager> _apiLogManager = null;
@@ -37,7 +37,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public ISightingManager SightingManager { get { return _sightingManager.Value; } }
         public ITrackedAircraftWriter TrackedAircraftWriter { get { return _trackedAircraftWriter.Value; } }
         public IPositionWriter PositionWriter { get { return _positionWriter.Value; } }
-        public IAircraftLockManager AircraftLockManager { get { return _aircraftLockManager.Value; } }
+        public IAircraftLifetimeManager AircraftLifetimeManager { get { return _aircraftLifetimeManager.Value; } }
         public IExcludedAddressManager ExcludedAddressManager { get { return _excludedAddressManager.Value; } }
         public IExcludedCallsignManager ExcludedCallsignManager { get { return _excludedCallsignManager.Value; } }
         public IApiLogManager ApiLogManager { get { return _apiLogManager.Value; } }
@@ -63,7 +63,10 @@ namespace BaseStationReader.BusinessLogic.Database
             _sightingManager = new Lazy<ISightingManager>(() => new SightingManager(context));
             _trackedAircraftWriter = new Lazy<ITrackedAircraftWriter>(() => new TrackedAircraftWriter(context));
             _positionWriter = new Lazy<IPositionWriter>(() => new PositionWriter(context));
-            _aircraftLockManager = new Lazy<IAircraftLockManager>(() => new AircraftLockManager(_trackedAircraftWriter.Value, timeToLockMs));
+            _aircraftLifetimeManager = new Lazy<IAircraftLifetimeManager>(() => new AircraftLifetimeManager(
+                _trackedAircraftWriter.Value,
+                logger,
+                timeToLockMs));
             _excludedAddressManager = new Lazy<IExcludedAddressManager>(() => new ExcludedAddressManager(context));
             _excludedCallsignManager = new Lazy<IExcludedCallsignManager>(() => new ExcludedCallsignManager(context));
             _apiLogManager = new Lazy<IApiLogManager>(() => new ApiLogManager(context));

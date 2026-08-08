@@ -27,7 +27,7 @@ namespace BaseStationReader.BusinessLogic.Configuration
             Add(CommandLineOptionType.RestartOnTimeout, false, "--auto-restart", "-ar", "Automatically restart the tracker after a timeout", 1, 1);
             Add(CommandLineOptionType.SettingsFile, false, "--settings", "-s", "Specify an alternative application settings file", 1, 1);
             Add(CommandLineOptionType.SocketReadTimeout, false, "--read-timeout", "-t", "Timeout (ms) for socket read operations", 1, 1);
-            Add(CommandLineOptionType.TimeToLock, false, "--lock", "-k", "Time (ms) to locking of active database records", 1, 1);
+            Add(CommandLineOptionType.TimeToLock, false, "--lock", "-k", "Observation gap (ms) before starting a new tracking record", 1, 1);
             Add(CommandLineOptionType.TimeToRecent, false, "--recent", "-r", "Time (ms) to 'recent' staleness", 1, 1);
             Add(CommandLineOptionType.TimeToRemoval, false, "--remove", "-x", "Time (ms) to removal of stale records", 1, 1);
             Add(CommandLineOptionType.TimeToStale, false, "--stale", "-st", "Time (ms) to 'stale' staleness", 1, 1);
