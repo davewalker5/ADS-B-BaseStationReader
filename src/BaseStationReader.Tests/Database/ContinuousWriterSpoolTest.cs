@@ -11,6 +11,51 @@ namespace BaseStationReader.Tests.Database;
 public sealed class ContinuousWriterSpoolTest
 {
     /// <summary>
+    /// Verifies historical records recovered from the durable spool use observation-time continuity.
+    /// </summary>
+    [TestMethod]
+    public async Task ReplayedHistoricalRecordsReuseLifetimeTestAsync()
+    {
+        var folder = CreateFolder();
+
+        try
+        {
+            await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var session = new ObservationSession
+            {
+                Name = "Replay test",
+                StartedAtUtc = DateTime.UtcNow,
+                ProfileName = "Test",
+                Host = "receiver.local",
+                Port = 30003,
+                IncludedBehaviours = "Unknown"
+            };
+            context.ObservationSessions.Add(session);
+            await context.SaveChangesAsync();
+            var observedAt = DateTime.UtcNow.AddDays(-7);
+
+            using (var seed = new SpoolQueueManager(folder))
+            {
+                seed.Enqueue(CreateAircraft("406A3D", session.Id, observedAt));
+                seed.Enqueue(CreateAircraft("406A3D", session.Id, observedAt.AddMilliseconds(500)));
+            }
+
+            IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
+            await using var writer = new ContinuousWriter(
+                factory,
+                new SpoolQueueManager(folder),
+                flushOnStop: true);
+            await writer.FlushQueueAsync();
+
+            Assert.HasCount(1, context.TrackedAircraft);
+        }
+        finally
+        {
+            DeleteFolder(folder);
+        }
+    }
+
+    /// <summary>
     /// Verifies stopping without flushing leaves recovered work in the spool.
     /// </summary>
     [TestMethod]
@@ -167,6 +212,23 @@ public sealed class ContinuousWriterSpoolTest
             Address = address,
             FirstSeen = DateTime.UtcNow,
             LastSeen = DateTime.UtcNow,
+            Status = TrackingStatus.Active
+        };
+
+    /// <summary>
+    /// Creates a session-scoped aircraft record for successful replay.
+    /// </summary>
+    /// <param name="address">ICAO aircraft address.</param>
+    /// <param name="sessionId">Observation session identifier.</param>
+    /// <param name="observedAt">Observation timestamp.</param>
+    /// <returns>Aircraft record.</returns>
+    private static TrackedAircraft CreateAircraft(string address, int sessionId, DateTime observedAt)
+        => new()
+        {
+            Address = address,
+            SessionId = sessionId,
+            FirstSeen = observedAt,
+            LastSeen = observedAt,
             Status = TrackingStatus.Active
         };
 

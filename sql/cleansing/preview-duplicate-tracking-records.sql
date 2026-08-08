@@ -1,12 +1,14 @@
 SELECT      ta.Address,
             ta.Callsign,
             ta.Status,
-            strftime("%Y-%m-%d", ta.LastSeen) AS "Date",
             COUNT( ta.Id ) AS "Count"
 FROM        TRACKED_AIRCRAFT ta
+WHERE       ta.SessionId IN (
+    SELECT  MAX( Id )
+    FROM    SESSION
+)
 GROUP BY    ta.Address,
             ta.Callsign,
-            ta.Status,
-            ta.LastSeen
+            ta.Status
 HAVING      COUNT( ta.Id ) > 1
-ORDER BY    ta.Address ASC;
+ORDER BY    COUNT( ta.Id ) DESC;

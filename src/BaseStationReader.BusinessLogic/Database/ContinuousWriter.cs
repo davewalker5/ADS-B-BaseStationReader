@@ -363,15 +363,16 @@ namespace BaseStationReader.BusinessLogic.Database
                     $"Aircraft {aircraft.Address} cannot be persisted without an observation session.");
             }
 
-            // See if it corresponds to an existing tracked aircraft record and, if so, set the aircraft
-            // ID so that record will be updated rather than a new one created
-            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
+            // Resolve continuity from observation time so a delayed queue produces the same lifetime as a
+            // live write. A missing result means the observation starts a new persisted lifetime.
+            var lifetime = await _factory.AircraftLifetimeManager.ResolveAsync(
                 aircraft.Address,
                 aircraft.SessionId.Value,
+                aircraft.LastSeen,
                 cancellationToken);
-            if (activeAircraft != null)
+            if (lifetime != null)
             {
-                aircraft.Id = activeAircraft.Id;
+                aircraft.Id = lifetime.Id;
             }
 
             // Write the tracked aircraft
@@ -397,17 +398,17 @@ namespace BaseStationReader.BusinessLogic.Database
             // Find the associated tracked aircraft. Aircraft are queued before their associated positions
             // and as it's a FIFO queue this should always return a valid aircraft. If the aircraft isn't
             // found, ignore the position record
-            var activeAircraft = await _factory.AircraftLockManager.GetActiveAircraftAsync(
+            var lifetime = await _factory.AircraftLifetimeManager.GetCurrentAsync(
                 position.Address,
                 position.SessionId.Value,
                 cancellationToken);
-            if (activeAircraft == null)
+            if (lifetime == null)
             {
                 return true;
             }
 
             // Assign the aircraft ID, for the foreign key relationship, and write the position
-            position.AircraftId = activeAircraft.Id;
+            position.AircraftId = lifetime.Id;
             await _factory.PositionWriter.WriteAsync(position, cancellationToken);
 
             // Increment only after persistence succeeds so the status value describes records actually written.

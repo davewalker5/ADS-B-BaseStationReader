@@ -58,21 +58,16 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <returns></returns>
         public async Task<TrackedAircraft> WriteAsync(TrackedAircraft template, CancellationToken cancellationToken = default)
         {
-            // Find an existing matching tracked aircraft record. If the ID isn't set, look for a match
-            // by address for an aircraft that's still active. This logic is to prevent multiple
-            // duplicate aircraft records being created if a flurry of messages come in when an aircraft
-            // is first tracked
-            var aircraft = template.Id > 0 ?
-                    await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id, cancellationToken) :
-                    await _context.TrackedAircraft.FirstOrDefaultAsync(x =>
-                        (x.Address == template.Address) &&
-                        (x.Status == TrackingStatus.Active) &&
-                        (x.SessionId == template.SessionId), cancellationToken);
+            // Lifetime resolution is owned by AircraftLifetimeManager. An unset ID therefore always starts
+            // a new lifetime instead of introducing a second, status-based continuity rule here.
+            var aircraft = template.Id > 0
+                ? await _context.TrackedAircraft.FirstOrDefaultAsync(x => x.Id == template.Id, cancellationToken)
+                : null;
 
             if (aircraft != null)
             {
                 // Record found, so update its properties
-                UpdateProperties(template, aircraft);
+                MergeProperties(template, aircraft);
             }
             else
             {
@@ -99,6 +94,29 @@ namespace BaseStationReader.BusinessLogic.Database
                 var updated = positionProperty.GetValue(source);
                 positionProperty.SetValue(destination, updated);
             }
+        }
+
+        /// <summary>
+        /// Merges an observation into an existing lifetime without regressing its boundaries or message count.
+        /// </summary>
+        /// <param name="source">Queued aircraft observation.</param>
+        /// <param name="destination">Persisted aircraft lifetime.</param>
+        private void MergeProperties(TrackedAircraft source, TrackedAircraft destination)
+        {
+            var firstSeen = source.FirstSeen < destination.FirstSeen ? source.FirstSeen : destination.FirstSeen;
+            var lastSeen = source.LastSeen > destination.LastSeen ? source.LastSeen : destination.LastSeen;
+            var messages = Math.Max(source.Messages, destination.Messages);
+
+            // Equal timestamps can carry a later status transition. Older out-of-order snapshots must not
+            // replace the latest aircraft properties or move the persisted lifetime backwards.
+            if (source.LastSeen >= destination.LastSeen)
+            {
+                UpdateProperties(source, destination);
+            }
+
+            destination.FirstSeen = firstSeen;
+            destination.LastSeen = lastSeen;
+            destination.Messages = messages;
         }
 
     }
