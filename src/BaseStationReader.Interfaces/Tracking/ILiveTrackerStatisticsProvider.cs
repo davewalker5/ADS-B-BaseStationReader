@@ -5,6 +5,9 @@ namespace BaseStationReader.Interfaces.Tracking;
 /// </summary>
 public interface ILiveTrackerStatisticsProvider
 {
+    /// <summary>Gets the UTC timestamp of the latest accepted receiver message in this session.</summary>
+    DateTime? LastActivityUtc => null;
+
     long PositionRecordsWritten { get; }
     long PositionRecordsObserved => PositionRecordsWritten;
     long MessagesProcessed { get; }

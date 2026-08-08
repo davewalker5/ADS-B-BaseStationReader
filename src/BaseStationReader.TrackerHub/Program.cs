@@ -27,11 +27,10 @@ namespace BaseStationReader.TrackerHub
     {
         private static TrackerCommandLineParser _parser = new(new HelpTabulator());
         private static ITrackerLogger _logger = null;
-        private static ITrackerIndexManager _trackerIndexManager = null;
         private static ITrackerController _controller = null;
         private static IEventBridge _bridge = null;
         private static TrackerApplicationSettings _settings = null;
-        private static DateTime _lastUpdate = DateTime.Now;
+        private static long _lastMessageUtcTicks = DateTime.UtcNow.Ticks;
 
         /// <summary>
         /// Starts the tracker, SignalR hub, and unified browser interface.
@@ -332,6 +331,12 @@ namespace BaseStationReader.TrackerHub
                             && _settings.RestartOnTimeout
                             && !token.IsCancellationRequested;
                 }
+                if (restart)
+                {
+                    _logger.LogMessage(
+                        Severity.Warning,
+                        "Application timeout requested a tracker-loop restart and message-feed reconnect");
+                }
             }
             while (restart);
 
@@ -355,11 +360,13 @@ namespace BaseStationReader.TrackerHub
         {
             var token = source.Token;
             var restartRequested = false;
+            var wasTracking = false;
             // Reset the elapsed time since the last update
-            _lastUpdate = DateTime.Now;
+            Interlocked.Exchange(ref _lastMessageUtcTicks, DateTime.UtcNow.Ticks);
 
             // Wire up the aircraft notificarion event handlers
             _controller.AircraftEvent += OnAircraftEvent;
+            _controller.MessageReceived += OnMessageReceived;
 
             // Create a cancellation token and start the controller task
             var controllerTask = _controller.StartAsync(token);
@@ -371,11 +378,28 @@ namespace BaseStationReader.TrackerHub
             {
                 while (!token.IsCancellationRequested)
                 {
+                    var isTracking = ((TrackingRuntime)_controller).IsTracking;
+                    if (isTracking && !wasTracking)
+                    {
+                        // A session can begin long after the Hub process starts. Its timeout window
+                        // begins at the session boundary, not at application startup.
+                        Interlocked.Exchange(ref _lastMessageUtcTicks, DateTime.UtcNow.Ticks);
+                    }
+                    wasTracking = isTracking;
+
                     // If we've exceeded the application timeout since the last update, break out to the caller
-                    var elapsed = (DateTime.Now - _lastUpdate).TotalMilliseconds;
-                    if (((TrackingRuntime)_controller).IsTracking &&
+                    var lastMessageUtc = new DateTime(
+                        Interlocked.Read(ref _lastMessageUtcTicks),
+                        DateTimeKind.Utc);
+                    var elapsed = (DateTime.UtcNow - lastMessageUtc).TotalMilliseconds;
+                    if (isTracking &&
                         (_settings.ApplicationTimeout > 0) && (elapsed > _settings.ApplicationTimeout))
                     {
+                        _logger.LogMessage(
+                            Severity.Warning,
+                            $"Application timeout fired: last raw message received at " +
+                            $"{lastMessageUtc:O}; elapsed {elapsed:N0} ms; configured timeout " +
+                            $"{_settings.ApplicationTimeout:N0} ms");
                         restartRequested = true;
                         source.Cancel();
                         throw new OperationCanceledException(token);
@@ -401,6 +425,7 @@ namespace BaseStationReader.TrackerHub
             {
                 // Detach from the tracker controller
                 _controller.AircraftEvent -= OnAircraftEvent;
+                _controller.MessageReceived -= OnMessageReceived;
 
                 // Cancellation ends the display loop, but the controller still owns asynchronous TCP,
                 // density and writer shutdown. Do not let the host continue until all of it has completed.
@@ -446,19 +471,14 @@ namespace BaseStationReader.TrackerHub
         /// <param name="e"></param>
         private static void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
-            // Update the timestamp used to implement the application timeout
-            _lastUpdate = DateTime.Now;
-
-            // Log and signal the event
-            _logger.LogMessage(Severity.Info, $"Received {e.NotificationType} event for aircraft {e.Aircraft.Address}");
+            // Forward the event to connected clients. Operational logging is owned by the shared
+            // tracking core so both hosts follow the same summary-based policy.
             _ = PublishAircraftEventAsync(e);
-
-            if (e.NotificationType == AircraftNotificationType.Removed)
-            {
-                // Remove the aircraft details from the cache
-                _ = _trackerIndexManager.RemoveAircraft(e.Aircraft.Address);
-            }
         }
+
+        /// <summary>Updates feed liveness for every raw message, including filtered or unsupported records.</summary>
+        private static void OnMessageReceived(object sender, MessageReadEventArgs e)
+            => Interlocked.Exchange(ref _lastMessageUtcTicks, DateTime.UtcNow.Ticks);
 
         /// <summary>
         /// Publishes an aircraft event without blocking the synchronous event source.

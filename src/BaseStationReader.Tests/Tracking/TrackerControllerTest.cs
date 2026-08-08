@@ -32,6 +32,7 @@ namespace BaseStationReader.Tests.Tracking
             ReceiverElevation = 120,
             DefaultProfileName = "Test Default Profile",
             EnableSqlWriter = true,
+            TrackingLogSummaryInterval = 100,
             TrackedBehaviours = [.. Enum.GetValues<AircraftBehaviour>()],
             TrackPosition = true,
             TimeToRecent = TrackerRecentMs,
@@ -39,7 +40,7 @@ namespace BaseStationReader.Tests.Tracking
             TimeToRemoval = TrackerRemovedMs
         };
 
-        private ITrackerLogger _logger = new MockFileLogger();
+        private MockFileLogger _logger = new();
         private ITrackerController _controller;
         private BaseStationReaderDbContext _context;
 
@@ -51,13 +52,14 @@ namespace BaseStationReader.Tests.Tracking
         {
             // Define the test messages
             string[] messages = [
+                "SEL,,496,,,",
                 "MSG,8,1,1,3965A3,1,2023/08/23,12:07:27.929,2023/08/23,12:07:28.005,,,,,,,,,,,,0",
                 "MSG,6,1,1,3965A3,1,2023/08/23,12:07:27.932,2023/08/23,12:07:28.006,,,,,,,,6303,0,0,0,"
             ];
 
             // Construct the message reader
             var buffer = Encoding.UTF8.GetBytes(string.Join("\n", messages) + "\n");
-            var tcpClient = new MockTrackerTcpClient(buffer);
+            var tcpClient = new MockTrackerTcpClient(buffer, holdOpenAfterEnd: true);
 
             // Construct the tracker controller itself
             _context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
@@ -72,6 +74,8 @@ namespace BaseStationReader.Tests.Tracking
         {
             // Wire up the event handlers
             _controller.AircraftEvent += OnAircraftNotification;
+            var rawMessageCount = 0;
+            _controller.MessageReceived += (_, _) => Interlocked.Increment(ref rawMessageCount);
 
             try
             {
@@ -104,6 +108,8 @@ namespace BaseStationReader.Tests.Tracking
 
             // The actual notifications list should now be equal to the length of the expected list
             Assert.HasCount(expected.Count, _notifications);
+            Assert.AreEqual(3, rawMessageCount,
+                "The raw heartbeat must include records that do not produce an aircraft notification.");
 
             // Now confirm all the expected notifications are there
             foreach (var notificationType in expected)
@@ -128,6 +134,13 @@ namespace BaseStationReader.Tests.Tracking
             Assert.AreEqual(string.Join(",", _settings.TrackedBehaviours), session.IncludedBehaviours);
             Assert.AreEqual(DateTimeKind.Utc, session.StartedAtUtc.Kind);
             Assert.IsTrue(_context.TrackedAircraft.All(x => x.SessionId == session.Id));
+
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Tracking summary:")));
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Tracking final summary:")));
+            Assert.IsTrue(_logger.Messages.Any(x =>
+                x.Severity == Severity.Info && x.Message.StartsWith("Aircraft changes:")));
         }
 
         [TestMethod]

@@ -84,6 +84,13 @@ namespace BaseStationReader.BusinessLogic.Logging
                 return;
             }
 
+            // Verbose messages map to Debug, but are controlled separately. Avoid the relatively expensive
+            // stack walk when verbose diagnostics are disabled.
+            if (severity == Severity.Verbose && !_verbose)
+            {
+                return;
+            }
+
             // Add the caller to the message
             caller = GetCallerDetails();
             var traceableMessage = !string.IsNullOrEmpty(caller) ? $"{caller} : {message}" : message;

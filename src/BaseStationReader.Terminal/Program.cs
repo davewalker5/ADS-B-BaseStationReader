@@ -93,11 +93,11 @@ namespace BaseStationReader.Terminal
                 }
                 while (_settings.RestartOnTimeout && !cancelled);
 
-                // Process all pending requests in the queued writer queue
-                if (_settings.EnableSqlWriter)
+                // The controller has already applied the configured stop-flush policy. Report any
+                // durable entries left for later replay without overriding FlushOnStop here.
+                if (_settings.EnableSqlWriter && _controller.QueueSize > 0)
                 {
-                    Console.WriteLine($"Processing {_controller.QueueSize} pending database updates ...");
-                    await _controller.FlushQueueAsync();
+                    Console.WriteLine($"Retaining {_controller.QueueSize} pending database updates for later replay.");
                 }
             }
         }
@@ -155,6 +155,20 @@ namespace BaseStationReader.Terminal
             }
             finally
             {
+                // Close the producer boundary before cancellation, then wait until all session-owned
+                // components have stopped and the configured FlushOnStop policy has been applied.
+                _controller.RequestStop();
+                source.Cancel();
+
+                try
+                {
+                    await controllerTask.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (source.IsCancellationRequested)
+                {
+                    // Expected when tracking is stopped by Escape or the inactivity timeout.
+                }
+
                 // Detach from the tracker controller
                 _controller.AircraftEvent -= OnAircraftEvent;
             }
@@ -202,17 +216,12 @@ namespace BaseStationReader.Terminal
             // If this is a removal event, remove the aircraft from the index
             if (e.NotificationType == AircraftNotificationType.Removed)
             {
-                var rowNumber = _tableManager.RemoveAircraft(e.Aircraft);
-                _logger.LogMessage(Severity.Info, $"Removed aircraft {e.Aircraft.Address} at row {rowNumber}");
+                _tableManager.RemoveAircraft(e.Aircraft);
             }
             else
             {
                 // Not a removal, so update the aircraft entry in the table
-                var rowNumber = _tableManager.AddOrUpdateAircraft(e.Aircraft);
-                if (rowNumber != -1)
-                {
-                    _logger.LogMessage(Severity.Info, $"Handled event for aircraft {e.Aircraft.Address} at row {rowNumber}");
-                }
+                _tableManager.AddOrUpdateAircraft(e.Aircraft);
             }
         }
 

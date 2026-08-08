@@ -27,6 +27,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     private long _lastDistinctCallsigns;
     private long _lastAircraftWithPositionRecords;
     private long _lastAircraftWithPositionObservations;
+    private long _lastActivityUtcTicks;
 
     public TrackingRuntime(TrackerApplicationSettings settings,
         Func<TrackerApplicationSettings, string?, string?, ITrackerController> factory)
@@ -36,6 +37,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     }
 
     public event EventHandler<AircraftNotificationEventArgs>? AircraftEvent;
+    public event EventHandler<MessageReadEventArgs>? MessageReceived;
     public IEnumerable<TrackedAircraftDto> State { get { lock (_stateLock) return _controller?.State.ToArray() ?? []; } }
     public TrackingOptions TrackingOptions { get { lock (_stateLock) return TrackingOptions.FromTrackerSettings(_settings); } }
     public int QueueSize { get { lock (_stateLock) return _controller?.QueueSize ?? 0; } }
@@ -46,6 +48,14 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
     public long DistinctCallsigns { get { lock (_stateLock) return _controller?.DistinctCallsigns ?? _lastDistinctCallsigns; } }
     public long AircraftWithPositionRecords { get { lock (_stateLock) return _controller?.AircraftWithPositionRecords ?? _lastAircraftWithPositionRecords; } }
     public long AircraftWithPositionObservations { get { lock (_stateLock) return _controller?.AircraftWithPositionObservations ?? _lastAircraftWithPositionObservations; } }
+    public DateTime? LastActivityUtc
+    {
+        get
+        {
+            var ticks = Interlocked.Read(ref _lastActivityUtcTicks);
+            return ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+        }
+    }
     public bool IsTracking { get { lock (_stateLock) return _controller is not null; } }
     public (double? Latitude, double? Longitude) ReceiverPosition
     {
@@ -129,7 +139,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             {
                 controller?.ConfigureStopFlush(flushQueue.Value, token, progress);
             }
-            await StopControllerCoreAsync();
+            await StopControllerCoreAsync(flushQueue == false);
         }
         finally { _gate.Release(); }
     }
@@ -194,9 +204,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         }
         var controller = _factory(_settings, sessionName, notes);
         controller.AircraftEvent += ForwardAircraftEvent;
+        controller.MessageReceived += ForwardMessageReceived;
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
         lock (_stateLock)
         {
+            Interlocked.Exchange(ref _lastActivityUtcTicks, 0);
             _lastMessagesProcessed = 0;
             _lastPositionRecordsWritten = 0;
             _lastPositionRecordsObserved = 0;
@@ -220,7 +232,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         finally { _gate.Release(); }
     }
 
-    private async Task StopControllerCoreAsync()
+    private async Task StopControllerCoreAsync(bool bounded = false)
     {
         ITrackerController? controller;
         CancellationTokenSource? cancellation;
@@ -235,10 +247,32 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         {
             return;
         }
+        controller.RequestStop();
         cancellation!.Cancel();
-        try { if (task is not null) await task; }
+        try
+        {
+            if (task is not null)
+            {
+                if (bounded)
+                {
+                    var timeout = TimeSpan.FromMilliseconds(Math.Max(1, _settings.StopTimeout));
+                    await task.WaitAsync(timeout);
+                }
+                else
+                {
+                    await task;
+                }
+            }
+        }
         catch (OperationCanceledException) { }
+        catch (TimeoutException)
+        {
+            throw new TimeoutException(
+                $"The tracking session did not release its resources within {_settings.StopTimeout:N0} ms. " +
+                "Shutdown cancellation remains active; check the application log before using the spool replayer.");
+        }
         controller.AircraftEvent -= ForwardAircraftEvent;
+        controller.MessageReceived -= ForwardMessageReceived;
         cancellation.Dispose();
         lock (_stateLock)
         {
@@ -258,4 +292,10 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
 
     private void ForwardAircraftEvent(object? sender, AircraftNotificationEventArgs args)
         => AircraftEvent?.Invoke(this, args);
+
+    private void ForwardMessageReceived(object? sender, MessageReadEventArgs args)
+    {
+        Interlocked.Exchange(ref _lastActivityUtcTicks, DateTime.UtcNow.Ticks);
+        MessageReceived?.Invoke(this, args);
+    }
 }

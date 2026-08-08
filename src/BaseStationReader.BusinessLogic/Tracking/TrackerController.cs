@@ -38,6 +38,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private readonly IPositionDensitySnapshotOrchestrator _densityOrchestrator;
         private readonly IPositionDensitySnapshotMapper _densitySnapshotMapper;
         private IAircraftTracker _tracker = null;
+        private IMessageReader _reader = null;
         private IContinuousWriter _writer = null;
         private ObservationSession _activeSession = null;
         private bool? _stopFlushOverride;
@@ -45,8 +46,18 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private IProgress<QueueFlushProgress> _stopFlushProgress;
         private int _remainingQueueSize;
         private bool _writerStopped;
+        private readonly ConcurrentDictionary<string, string> _addedSinceSummary = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, string> _removedSinceSummary = new(StringComparer.OrdinalIgnoreCase);
+        private CancellationTokenSource _summarySource;
+        private Task _summaryTask;
+        private long _lastSummaryMessages;
+        private long _lastSummaryPositionsObserved;
+        private long _lastSummaryPositionsWritten;
+
+        private const int MaximumAircraftListedInSummary = 20;
 
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent;
+        public event EventHandler<MessageReadEventArgs> MessageReceived;
 
         private readonly ConcurrentDictionary<string, TrackedAircraft> _trackedAircraft = new();
         private readonly ConcurrentDictionary<string, byte> _positionAircraftObserved = new(StringComparer.OrdinalIgnoreCase);
@@ -159,6 +170,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
             }
 
             _tracker ??= await CreateTrackerAsync(token);
+            _reader.MessageRead += OnRawMessageReceived;
 
             // Persist the session before tracking begins so every subsequent aircraft record can refer to it.
             if (_writer != null)
@@ -175,6 +187,8 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 await _writer.StartAsync(token);
             }
+
+            StartTrackingSummary(token);
 
             if (_activeSession is not null && _settings.TrackPosition && _settings.TrackPositionDensity)
             {
@@ -205,14 +219,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
             {
                 try
                 {
-                    if (_densityOrchestrator is not null)
-                    {
-                        await _densityOrchestrator.StopAsync();
-                    }
-                }
-                finally
-                {
-                    // Always drain and dispose persistence even if snapshot generation itself failed.
+                    await StopTrackingSummaryAsync();
+
+                    // Release persistence first. RequestStop has already closed the producer boundary,
+                    // so a density callback racing with shutdown cannot add another record. This keeps
+                    // unrelated density cleanup from retaining the exclusive spool lock.
                     if (_writer != null)
                     {
                         try
@@ -230,15 +241,31 @@ namespace BaseStationReader.BusinessLogic.Tracking
                         }
                     }
 
-                    // Detach the aircraft tracking event handlers
-                    _tracker.AircraftEvent -= OnAircraftEvent;
-
-                    // A stopped controller must not associate any later events with the completed tracking run.
-                    _activeSession = null;
-
-                    if (_ownsContext)
+                    LogTrackingSummary(final: true);
+                }
+                finally
+                {
+                    try
                     {
-                        await _context.DisposeAsync();
+                        // No periodic density work may outlive the completed tracking session.
+                        if (_densityOrchestrator is not null)
+                        {
+                            await _densityOrchestrator.StopAsync();
+                        }
+                    }
+                    finally
+                    {
+                        // Detach the aircraft tracking event handlers
+                        _tracker.AircraftEvent -= OnAircraftEvent;
+                        _reader.MessageRead -= OnRawMessageReceived;
+
+                        // A stopped controller must not associate any later events with the completed tracking run.
+                        _activeSession = null;
+
+                        if (_ownsContext)
+                        {
+                            await _context.DisposeAsync();
+                        }
                     }
                 }
             }
@@ -271,6 +298,14 @@ namespace BaseStationReader.BusinessLogic.Tracking
             _stopFlushProgress = progress;
         }
 
+        /// <inheritdoc />
+        public void RequestStop()
+        {
+            // Stop accepting spool entries and cancel an in-flight database call before the
+            // receiver and density loops begin their asynchronous shutdown.
+            _writer?.RequestStop();
+        }
+
         /// <summary>
         /// Creates the aircraft tracker after asynchronously loading the current exclusion lists.
         /// </summary>
@@ -285,7 +320,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 .ToList();
 
             var readerSender = new MessageReaderNotificationSender(_logger);
-            var reader = new MessageReader(
+            _reader = new MessageReader(
                 _tcpClient,
                 _logger,
                 readerSender,
@@ -317,7 +352,7 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.MaximumTrackedAltitude);
 
             return new AircraftTracker(
-                reader,
+                _reader,
                 parsers,
                 propertyUpdater,
                 trackerSender,
@@ -327,6 +362,10 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 _settings.TimeToStale,
                 _settings.TimeToRemoval);
         }
+
+        /// <summary>Forwards an unfiltered feed heartbeat independently of aircraft notification criteria.</summary>
+        private void OnRawMessageReceived(object sender, MessageReadEventArgs args)
+            => MessageReceived?.Invoke(this, args);
 
         /// <summary>
         /// Create a historical snapshot of the effective tracking profile for the new run
@@ -366,6 +405,21 @@ namespace BaseStationReader.BusinessLogic.Tracking
         private void OnAircraftEvent(object sender, AircraftNotificationEventArgs e)
         {
             var isRemoval = e.NotificationType == AircraftNotificationType.Removed;
+
+            if (e.NotificationType == AircraftNotificationType.Added)
+            {
+                _addedSinceSummary[e.Aircraft.Address] = e.Aircraft.Callsign ?? "";
+                _logger.LogMessage(Severity.Debug, FormatAircraftLifecycle("Detected", e.Aircraft));
+            }
+            else if (isRemoval)
+            {
+                _removedSinceSummary[e.Aircraft.Address] = e.Aircraft.Callsign ?? "";
+                _logger.LogMessage(Severity.Debug, FormatAircraftLifecycle("Removed", e.Aircraft));
+            }
+            else if (e.NotificationType is AircraftNotificationType.Recent or AircraftNotificationType.Stale)
+            {
+                _logger.LogMessage(Severity.Debug, FormatAircraftLifecycle($"Status changed to {e.Aircraft.Status}", e.Aircraft));
+            }
 
             if (ShouldNotify(e.Aircraft))
             {
@@ -471,5 +525,129 @@ namespace BaseStationReader.BusinessLogic.Tracking
             // Mapping creates an independent immutable request before it crosses the asynchronous queue boundary.
             _writer.Push(_densitySnapshotMapper.Map(snapshot, capturedAtUtc));
         }
+
+        /// <summary>Starts the shared operational summary loop for this tracking session.</summary>
+        private void StartTrackingSummary(CancellationToken token)
+        {
+            _lastSummaryMessages = MessagesProcessed;
+            _lastSummaryPositionsObserved = PositionRecordsObserved;
+            _lastSummaryPositionsWritten = PositionRecordsWritten;
+            _logger.LogMessage(
+                Severity.Info,
+                $"Tracking session started: profile={TrackingOptions.TrackingProfileName}, " +
+                $"feed={_settings.Host}:{_settings.Port}, sqlWriter={_settings.EnableSqlWriter}, " +
+                $"flushWhileActive={_settings.FlushWhileActive}, flushOnStop={_settings.FlushOnStop}");
+
+            if (_settings.TrackingLogSummaryInterval <= 0)
+            {
+                return;
+            }
+
+            _summarySource = CancellationTokenSource.CreateLinkedTokenSource(token);
+            _summaryTask = RunTrackingSummaryAsync(
+                TimeSpan.FromMilliseconds(_settings.TrackingLogSummaryInterval),
+                _summarySource.Token);
+        }
+
+        /// <summary>Writes operational summaries until the tracking session ends.</summary>
+        private async Task RunTrackingSummaryAsync(TimeSpan interval, CancellationToken token)
+        {
+            using var timer = new PeriodicTimer(interval);
+            try
+            {
+                while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+                {
+                    LogTrackingSummary(final: false);
+                }
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // Expected when the session ends.
+            }
+        }
+
+        /// <summary>Stops the periodic summary loop before the final snapshot is written.</summary>
+        private async Task StopTrackingSummaryAsync()
+        {
+            if (_summaryTask is null)
+            {
+                return;
+            }
+
+            _summarySource.Cancel();
+            await _summaryTask.ConfigureAwait(false);
+            _summarySource.Dispose();
+            _summarySource = null;
+            _summaryTask = null;
+        }
+
+        /// <summary>Writes one interval or final tracker-health snapshot.</summary>
+        private void LogTrackingSummary(bool final)
+        {
+            var messages = MessagesProcessed;
+            var positionsObserved = PositionRecordsObserved;
+            var positionsWritten = PositionRecordsWritten;
+            var intervalMessages = messages - Interlocked.Exchange(ref _lastSummaryMessages, messages);
+            var intervalPositionsObserved = positionsObserved - Interlocked.Exchange(ref _lastSummaryPositionsObserved, positionsObserved);
+            var intervalPositionsWritten = positionsWritten - Interlocked.Exchange(ref _lastSummaryPositionsWritten, positionsWritten);
+            var state = _trackedAircraft.Values.ToList();
+            var added = DrainSummaryAircraft(_addedSinceSummary);
+            var removed = DrainSummaryAircraft(_removedSinceSummary);
+
+            _logger.LogMessage(
+                Severity.Info,
+                $"Tracking {(final ? "final summary" : "summary")}: " +
+                $"live={state.Count} (active={state.Count(x => x.Status == TrackingStatus.Active)}, " +
+                $"inactive={state.Count(x => x.Status == TrackingStatus.Inactive)}, " +
+                $"stale={state.Count(x => x.Status == TrackingStatus.Stale)}); " +
+                $"interval messages={intervalMessages:N0}, positions observed={intervalPositionsObserved:N0}, " +
+                $"positions written={intervalPositionsWritten:N0}, added={added.Count:N0}, removed={removed.Count:N0}; " +
+                $"session messages={messages:N0}, distinct aircraft={DistinctAircraft:N0}, " +
+                $"distinct callsigns={DistinctCallsigns:N0}, positions observed={positionsObserved:N0}, " +
+                $"positions written={positionsWritten:N0}, queue={QueueSize:N0}");
+
+            if (added.Count > 0 || removed.Count > 0)
+            {
+                _logger.LogMessage(
+                    Severity.Info,
+                    $"Aircraft changes: added={FormatSummaryAircraft(added)}; removed={FormatSummaryAircraft(removed)}");
+            }
+        }
+
+        /// <summary>Atomically claims accumulated lifecycle changes for one summary.</summary>
+        private static List<KeyValuePair<string, string>> DrainSummaryAircraft(
+            ConcurrentDictionary<string, string> aircraft)
+        {
+            var drained = new List<KeyValuePair<string, string>>();
+            foreach (var entry in aircraft)
+            {
+                if (aircraft.TryRemove(entry.Key, out var callsign))
+                {
+                    drained.Add(new KeyValuePair<string, string>(entry.Key, callsign));
+                }
+            }
+
+            return drained.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>Formats a bounded lifecycle list while retaining its accurate total.</summary>
+        private static string FormatSummaryAircraft(IReadOnlyCollection<KeyValuePair<string, string>> aircraft)
+        {
+            if (aircraft.Count == 0)
+            {
+                return "0 []";
+            }
+
+            var displayed = aircraft.Take(MaximumAircraftListedInSummary)
+                .Select(x => string.IsNullOrWhiteSpace(x.Value) ? x.Key : $"{x.Key}/{x.Value.Trim()}");
+            var omitted = aircraft.Count - MaximumAircraftListedInSummary;
+            var suffix = omitted > 0 ? $", +{omitted:N0} more" : "";
+            return $"{aircraft.Count:N0} [{string.Join(", ", displayed)}{suffix}]";
+        }
+
+        private static string FormatAircraftLifecycle(string action, TrackedAircraft aircraft)
+            => string.IsNullOrWhiteSpace(aircraft.Callsign)
+                ? $"Aircraft {action.ToLowerInvariant()}: {aircraft.Address}"
+                : $"Aircraft {action.ToLowerInvariant()}: {aircraft.Address}/{aircraft.Callsign.Trim()}";
     }
 }

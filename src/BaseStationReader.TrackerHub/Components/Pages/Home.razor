@@ -299,8 +299,8 @@
                 <h3>Session</h3>
                 <dl class="summary-details">
                     <div><dt>Started</dt><dd>@FormatUtcTimestamp(_summary.StartedAtUtc)</dd></div>
-                    <div><dt>Last activity</dt><dd>@FormatLocalTimestamp(_summary.LastActivity)</dd></div>
-                    <div><dt>Observed duration</dt><dd>@FormatDuration(_summary.ObservedDuration)</dd></div>
+                    <div><dt>Last activity</dt><dd>@FormatLocalTimestamp(EffectiveLastActivity(_summary))</dd></div>
+                    <div><dt>Observed duration</dt><dd>@FormatDuration(EffectiveObservedDuration(_summary))</dd></div>
                     <div><dt>Tracking profile</dt><dd>@Display(_summary.ProfileName)</dd></div>
                     <div><dt>Receiver location</dt><dd>@FormatLocation(_summary)</dd></div>
                     <div><dt>Tracking limits</dt><dd>@FormatLimits(_summary)</dd></div>
@@ -1330,6 +1330,25 @@
 
     private static string FormatLocalTimestamp(DateTime? value)
         => value?.ToString("dd MMM yyyy · HH:mm:ss") ?? "No activity recorded";
+
+    /// <summary>Uses live feed activity while a session is running, then falls back to persisted history.</summary>
+    private DateTime? EffectiveLastActivity(ObservationSessionSummary summary)
+        => TrackingControl.IsTracking && TrackingControl.LastActivityUtc.HasValue
+            ? DateTime.SpecifyKind(TrackingControl.LastActivityUtc.Value, DateTimeKind.Utc).ToLocalTime()
+            : summary.LastActivity;
+
+    /// <summary>Derives the active duration from live message activity without changing completed summaries.</summary>
+    private TimeSpan EffectiveObservedDuration(ObservationSessionSummary summary)
+    {
+        if (!TrackingControl.IsTracking || !TrackingControl.LastActivityUtc.HasValue)
+        {
+            return summary.ObservedDuration;
+        }
+
+        var startedAtUtc = DateTime.SpecifyKind(summary.StartedAtUtc, DateTimeKind.Utc);
+        var duration = TrackingControl.LastActivityUtc.Value - startedAtUtc;
+        return duration < TimeSpan.Zero ? TimeSpan.Zero : duration;
+    }
 
     private static string FormatDuration(TimeSpan duration)
         => duration.TotalHours >= 1

@@ -91,6 +91,38 @@ public class TrackingRuntimeTest
     }
 
     [TestMethod]
+    public async Task RawMessageUpdatesAndResetsSessionActivityTest()
+    {
+        var controllers = new List<FakeController>();
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (settings, _, _) =>
+        {
+            var controller = new FakeController(settings);
+            controllers.Add(controller);
+            return controller;
+        });
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+
+        await runtime.StartTrackingAsync("receiver.local", 30003, "First session");
+        await WaitUntilAsync(() => controllers.Count == 1 && controllers[0].Started);
+        Assert.IsNull(runtime.LastActivityUtc);
+
+        var beforeMessage = DateTime.UtcNow;
+        controllers[0].EmitMessage();
+        Assert.IsNotNull(runtime.LastActivityUtc);
+        Assert.IsGreaterThanOrEqualTo(beforeMessage, runtime.LastActivityUtc.Value);
+
+        await runtime.StopTrackingAsync();
+        Assert.IsNotNull(runtime.LastActivityUtc);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Second session");
+        await WaitUntilAsync(() => controllers.Count == 2 && controllers[1].Started);
+        Assert.IsNull(runtime.LastActivityUtc);
+
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
     public async Task StopPassesHubFlushOverrideToControllerTest()
     {
         FakeController controller = null;
@@ -105,6 +137,32 @@ public class TrackingRuntimeTest
 
         Assert.IsNotNull(controller);
         Assert.IsFalse(controller.FlushQueueOnStop.Value);
+        Assert.IsTrue(controller.StopRequested);
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
+    public async Task RetainedQueueStopHasBoundedWaitTest()
+    {
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var settings = Settings("Initial.json");
+        settings.StopTimeout = 50;
+        var controller = new BlockingController(settings, release.Task);
+        var runtime = new TrackingRuntime(settings, (_, _, _) => controller);
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Bounded stop session");
+        await WaitUntilAsync(() => controller.Started);
+
+        var exception = await Assert.ThrowsExactlyAsync<TimeoutException>(
+            () => runtime.StopTrackingAsync(flushQueue: false));
+
+        Assert.IsTrue(controller.StopRequested);
+        StringAssert.Contains(exception.Message, "50 ms");
+
+        release.SetResult();
+        await runtime.StopTrackingAsync(flushQueue: false).WaitAsync(TimeSpan.FromSeconds(2));
         cancellation.Cancel();
         await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
     }
@@ -155,12 +213,14 @@ public class TrackingRuntimeTest
     private sealed class FakeController(TrackerApplicationSettings settings) : ITrackerController
     {
         public event EventHandler<AircraftNotificationEventArgs> AircraftEvent { add { } remove { } }
+        public event EventHandler<MessageReadEventArgs> MessageReceived;
         public IEnumerable<TrackedAircraftDto> State => [];
         public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(settings);
         public int QueueSize => 0;
         public bool Started { get; private set; }
         public bool Stopped { get; private set; }
         public bool? FlushQueueOnStop { get; private set; }
+        public bool StopRequested { get; private set; }
 
         public async Task StartAsync(CancellationToken token)
         {
@@ -176,6 +236,34 @@ public class TrackingRuntimeTest
         public void ConfigureStopFlush(bool flushQueue, CancellationToken cancellationToken = default,
             IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null)
             => FlushQueueOnStop = flushQueue;
+
+        public void RequestStop() => StopRequested = true;
+
+        public void EmitMessage()
+            => MessageReceived?.Invoke(this, new MessageReadEventArgs { Message = "MSG" });
+    }
+
+    private sealed class BlockingController(
+        TrackerApplicationSettings settings,
+        Task release) : ITrackerController
+    {
+        public event EventHandler<AircraftNotificationEventArgs> AircraftEvent { add { } remove { } }
+        public IEnumerable<TrackedAircraftDto> State => [];
+        public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(settings);
+        public int QueueSize => 1;
+        public bool Started { get; private set; }
+        public bool StopRequested { get; private set; }
+
+        public async Task StartAsync(CancellationToken token)
+        {
+            Started = true;
+            await release;
+        }
+
+        public void RequestStop() => StopRequested = true;
+
+        public Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null) => Task.CompletedTask;
     }
 
     private sealed class OrderingController(

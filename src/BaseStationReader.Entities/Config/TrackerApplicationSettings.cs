@@ -19,9 +19,11 @@ namespace BaseStationReader.Entities.Config
         public int TimeToLock { get; set; }
         public string LogFile { get; set; } = "";
         public bool VerboseLogging { get; set; }
+        public int TrackingLogSummaryInterval { get; set; } = 300000;
         public bool EnableSqlWriter { get; set; }
         public bool FlushWhileActive { get; set; } = true;
         public bool FlushOnStop { get; set; } = true;
+        public int StopTimeout { get; set; } = 10000;
         public string SpoolFolder { get; set; } = "spool";
         public int MaximumRows { get; set; }
         public double? ReceiverLatitude { get; set; }
