@@ -78,6 +78,7 @@ declare -a exclusions=(
     "export.ipynb"
     "pathutils.ipynb"
     "report-header.ipynb"
+    "session-report-utils.ipynb"
 )
 
 is_excluded() {
