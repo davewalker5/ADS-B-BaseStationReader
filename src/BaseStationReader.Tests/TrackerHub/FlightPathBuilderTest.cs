@@ -82,4 +82,89 @@ public class FlightPathBuilderTest
         Assert.IsNull(path.North);
         Assert.AreEqual(0, path.SegmentCount);
     }
+
+    /// <summary>
+    /// Verifies every plotting field named by the UI contract is required before a row reaches either renderer.
+    /// </summary>
+    [TestMethod]
+    public void BuildRejectsRowsWithInvalidRequiredPlottingFields()
+    {
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 10, 10, 40, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            new() { Timestamp = default, Latitude = 51, Longitude = -1, Altitude = 5000, Distance = 10 },
+            new() { Timestamp = timestamp, Latitude = null, Longitude = -1, Altitude = 5000, Distance = 10 },
+            new() { Timestamp = timestamp, Latitude = 51, Longitude = null, Altitude = 5000, Distance = 10 },
+            new() { Timestamp = timestamp, Latitude = 51, Longitude = -1, Altitude = null, Distance = 10 },
+            new() { Timestamp = timestamp, Latitude = 51, Longitude = 181, Altitude = 5000, Distance = 10 },
+            new() { Timestamp = timestamp, Latitude = 51, Longitude = -1, Altitude = 5000, Distance = 10 }
+        ];
+
+        var path = builder.Build(6, "ABC126", "TEST6", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, points);
+
+        Assert.HasCount(1, path.Points);
+        Assert.AreEqual(timestamp, path.Points[0].Timestamp);
+        Assert.AreEqual(51d, path.Points[0].Latitude);
+        Assert.AreEqual(-1d, path.Points[0].Longitude);
+        Assert.AreEqual(5000d, path.Points[0].AltitudeFeet);
+    }
+
+    /// <summary>
+    /// Verifies an isolated impossible geographic excursion is removed without losing the surrounding path.
+    /// </summary>
+    [TestMethod]
+    public void BuildRejectsIsolatedPositionSpike()
+    {
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 10, 10, 40, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            new() { Timestamp = timestamp, Latitude = 51.66540m, Longitude = -0.82954m, Altitude = 20775, Distance = 16 },
+            new() { Timestamp = timestamp.AddSeconds(1), Latitude = -46.01083m, Longitude = 98.18703m, Altitude = 20775, Distance = 7771 },
+            new() { Timestamp = timestamp.AddSeconds(2), Latitude = 51.66165m, Longitude = -0.83296m, Altitude = 20800, Distance = 16 }
+        ];
+
+        var path = builder.Build(4, "407E82", "RUK9NE", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, points);
+
+        Assert.HasCount(2, path.Points);
+        Assert.IsFalse(path.Points.Any(point => Math.Abs(point.Latitude - -46.01083) < 0.000001));
+        Assert.IsLessThan(1000d, Math.Abs(path.Points[1].LocalXMetres));
+        Assert.IsLessThan(1000d, Math.Abs(path.Points[1].LocalYMetres));
+    }
+
+    /// <summary>
+    /// Verifies a one-record altitude excursion is removed while a sustained altitude step is retained.
+    /// </summary>
+    [TestMethod]
+    public void BuildRejectsIsolatedAltitudeSpikeButRetainsSustainedStep()
+    {
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 10, 10, 40, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            Point(timestamp, 0, 4325),
+            Point(timestamp, 1, 114500),
+            Point(timestamp, 2, 4325),
+            Point(timestamp, 3, 6500),
+            Point(timestamp, 4, 6500),
+            Point(timestamp, 5, 6500)
+        ];
+
+        var path = builder.Build(5, "ABED10", "FDX5184", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, points);
+
+        Assert.HasCount(5, path.Points);
+        Assert.IsFalse(path.Points.Any(point => Math.Abs(point.AltitudeFeet - 114500) < 0.001));
+        Assert.AreEqual(3, path.Points.Count(point => Math.Abs(point.AltitudeFeet - 6500) < 0.001));
+    }
+
+    /// <summary>Creates a nearby complete observation for spike-filter tests.</summary>
+    private static FlightProfilePoint Point(DateTime timestamp, int seconds, decimal altitude) => new()
+    {
+        Timestamp = timestamp.AddSeconds(seconds),
+        Latitude = 51m - seconds * 0.0001m,
+        Longitude = -1m - seconds * 0.0001m,
+        Altitude = altitude,
+        Distance = 10
+    };
 }

@@ -81,8 +81,8 @@
     {
         // Filter incomplete values at the rendering boundary while retaining chronological DTO order.
         var validPoints = Profile.Points
-            .Where(point => point.Altitude.HasValue &&
-                (Mode == FlightProfileChartMode.Time || point.Distance.HasValue))
+            .Where(point => point.Timestamp != default && point.Altitude.HasValue &&
+                (Mode == FlightProfileChartMode.Time || point.Distance is double distance && double.IsFinite(distance)))
             .ToArray();
 
         if (validPoints.Length == 0)

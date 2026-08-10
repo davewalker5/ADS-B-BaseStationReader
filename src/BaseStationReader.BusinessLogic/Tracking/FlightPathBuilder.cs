@@ -11,6 +11,8 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
 {
     private const double FeetToMetres = 0.3048;
     private const double BoundingBoxPaddingRatio = 0.06;
+    private const double MaximumPlausibleGroundSpeedMetresPerSecond = 500;
+    private const double MaximumPlausibleVerticalSpeedMetresPerSecond = 100;
     private static readonly TimeSpan MaximumSegmentGap = TimeSpan.FromSeconds(90);
     private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
     private readonly IGeographicCalculator _geographicCalculator;
@@ -75,6 +77,11 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
             })
             .Select(group => group.First())
             .ToArray();
+
+        // Remove only isolated telemetry spikes. Sustained receiver catch-up changes remain valid because they do not
+        // immediately return to the preceding trajectory or altitude.
+        validPoints = DiscardImplausiblePositionSpikes(validPoints);
+        validPoints = DiscardImplausibleAltitudeSpikes(validPoints);
 
         if (validPoints.Length == 0)
         {
@@ -165,6 +172,86 @@ public sealed class FlightPathBuilder : IFlightPathBuilder
                point.Altitude.HasValue &&
                point.Distance.HasValue;
     }
+
+    /// <summary>Discards an isolated coordinate that requires an impossible jump away from and back to the path.</summary>
+    private FlightProfilePoint[] DiscardImplausiblePositionSpikes(IReadOnlyList<FlightProfilePoint> points)
+    {
+        if (points.Count < 3)
+        {
+            return points.ToArray();
+        }
+
+        var rejected = new HashSet<int>();
+        for (var index = 1; index < points.Count - 1; index++)
+        {
+            var previous = points[index - 1];
+            var current = points[index];
+            var following = points[index + 1];
+            var secondsBefore = (current.Timestamp - previous.Timestamp).TotalSeconds;
+            var secondsAfter = (following.Timestamp - current.Timestamp).TotalSeconds;
+            var secondsAcross = (following.Timestamp - previous.Timestamp).TotalSeconds;
+            if (Math.Min(secondsBefore, Math.Min(secondsAfter, secondsAcross)) <= 0)
+            {
+                continue;
+            }
+
+            var speedOut = DistanceMetres(previous, current) / secondsBefore;
+            var speedBack = DistanceMetres(current, following) / secondsAfter;
+            var speedAcross = DistanceMetres(previous, following) / secondsAcross;
+            if (speedOut > MaximumPlausibleGroundSpeedMetresPerSecond &&
+                speedBack > MaximumPlausibleGroundSpeedMetresPerSecond &&
+                speedAcross <= MaximumPlausibleGroundSpeedMetresPerSecond)
+            {
+                rejected.Add(index);
+            }
+        }
+
+        return points.Where((_, index) => !rejected.Contains(index)).ToArray();
+    }
+
+    /// <summary>Discards an isolated altitude that requires an impossible vertical jump away and back.</summary>
+    private static FlightProfilePoint[] DiscardImplausibleAltitudeSpikes(IReadOnlyList<FlightProfilePoint> points)
+    {
+        if (points.Count < 3)
+        {
+            return points.ToArray();
+        }
+
+        var rejected = new HashSet<int>();
+        for (var index = 1; index < points.Count - 1; index++)
+        {
+            var previous = points[index - 1];
+            var current = points[index];
+            var following = points[index + 1];
+            var secondsBefore = (current.Timestamp - previous.Timestamp).TotalSeconds;
+            var secondsAfter = (following.Timestamp - current.Timestamp).TotalSeconds;
+            var secondsAcross = (following.Timestamp - previous.Timestamp).TotalSeconds;
+            if (Math.Min(secondsBefore, Math.Min(secondsAfter, secondsAcross)) <= 0)
+            {
+                continue;
+            }
+
+            var speedOut = Math.Abs((double)(current.Altitude!.Value - previous.Altitude!.Value)) * FeetToMetres / secondsBefore;
+            var speedBack = Math.Abs((double)(following.Altitude!.Value - current.Altitude!.Value)) * FeetToMetres / secondsAfter;
+            var speedAcross = Math.Abs((double)(following.Altitude!.Value - previous.Altitude!.Value)) * FeetToMetres / secondsAcross;
+            if (speedOut > MaximumPlausibleVerticalSpeedMetresPerSecond &&
+                speedBack > MaximumPlausibleVerticalSpeedMetresPerSecond &&
+                speedAcross <= MaximumPlausibleVerticalSpeedMetresPerSecond)
+            {
+                rejected.Add(index);
+            }
+        }
+
+        return points.Where((_, index) => !rejected.Contains(index)).ToArray();
+    }
+
+    /// <summary>Calculates great-circle distance between two already validated raw points.</summary>
+    private double DistanceMetres(FlightProfilePoint first, FlightProfilePoint second) =>
+        _geographicCalculator.CalculateDistanceMetres(
+            (double)first.Latitude!.Value,
+            (double)first.Longitude!.Value,
+            (double)second.Latitude!.Value,
+            (double)second.Longitude!.Value);
 
     /// <summary>
     /// Creates a metadata-preserving result when no positions can be plotted.
