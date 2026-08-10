@@ -35,15 +35,15 @@ export async function renderFlightPath(mapId, sceneId, sceneLoadingId, path, col
     const sceneTraces=[];
     for (const segment of segments) {
         if(segment.length<2) continue;
-        const ribbon=curtainMesh(segment,colours);
-        sceneTraces.push({type:"mesh3d",...ribbon,colorscale:plasma,opacity:0.85,flatshading:true,name:`Ribbon ${segment[0].segment}`,
+        const ribbon=curtainSurface(segment,colours,path.minimumAltitudeMetres);
+        sceneTraces.push({type:"surface",...ribbon,colorscale:plasma,opacity:0.85,name:`Ribbon ${segment[0].segment}`,
             showscale:sceneTraces.length===0,colorbar:{title:colourTitle,x:1.05},lighting:{ambient:0.6,diffuse:0.8,specular:0.3,roughness:0.5,fresnel:0.2},
             lightposition:{x:2000,y:0,z:8000},hoverinfo:"skip"});
         sceneTraces.push({type:"scatter3d",mode:"lines",x:segment.map(p=>p.localXMetres),y:segment.map(p=>p.localYMetres),
             z:segment.map(p=>p.altitudeMetres),line:{color:"#fff",width:4},name:`Flight path ${segment[0].segment}`,
             customdata:segment.map(hoverData),hovertemplate:hoverTemplate()});
         sceneTraces.push({type:"scatter3d",mode:"lines",x:segment.map(p=>p.localXMetres),y:segment.map(p=>p.localYMetres),
-            z:segment.map(()=>0),line:{color:"#8fa6be",width:2,dash:"dash"},name:`Ground trace ${segment[0].segment}`,hoverinfo:"skip"});
+            z:segment.map(()=>path.minimumAltitudeMetres),line:{color:"#8fa6be",width:2,dash:"dash"},name:`Ground trace ${segment[0].segment}`,hoverinfo:"skip"});
     }
     addEndpointTraces(sceneTraces,points,true);
     if(groundUrl){const ground=await createGroundMesh(groundUrl,points,Math.max(0,path.minimumAltitudeMetres));if(ground)sceneTraces.push(ground);}
@@ -96,13 +96,13 @@ function hoverTemplate(){
     return "Point %{customdata[0]}<br>%{customdata[1]}<br>Altitude %{customdata[2]:.0f} ft (%{customdata[3]:.0f} m)<br>Distance %{customdata[4]:.1f} nm<br>Bearing %{customdata[5]:.0f}°<br>%{customdata[6]:.5f}, %{customdata[7]:.5f}<extra></extra>";
 }
 
-/** Build the notebook-style vertical curtain triangles for one path segment. */
-function curtainMesh(segment,colours){
-    const x=[],y=[],z=[],intensity=[],i=[],j=[],k=[];
-    // Each position contributes an aircraft vertex and a matching ground vertex.
-    segment.forEach(p=>{x.push(p.localXMetres,p.localXMetres);y.push(p.localYMetres,p.localYMetres);z.push(p.altitudeMetres,0);const c=colours[p.sequence-1];intensity.push(c,c);});
-    for(let n=0;n<segment.length-1;n++){const t0=2*n,b0=t0+1,t1=t0+2,b1=t0+3;i.push(t0,t0);j.push(b0,b1);k.push(b1,t1);}
-    return{x,y,z,intensity,i,j,k};
+/** Build a two-row Plotly surface from the aircraft path down to the visible chart floor. */
+function curtainSurface(segment,colours,zFloor){
+    const pathX=segment.map(p=>p.localXMetres),pathY=segment.map(p=>p.localYMetres);
+    const pathZ=segment.map(p=>p.altitudeMetres),floorZ=segment.map(()=>zFloor);
+    const pathColours=segment.map(p=>colours[p.sequence-1]);
+    return{x:[pathX,pathX],y:[pathY,pathY],z:[pathZ,floorZ],surfacecolor:[pathColours,pathColours],
+        cmin:Math.min(...colours),cmax:Math.max(...colours)};
 }
 
 /** Add explicit start and end markers to either plot dimension. */
