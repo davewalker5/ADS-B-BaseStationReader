@@ -410,4 +410,5 @@ Published/
 appsettings.Development.json
 data/reference/
 data/reports/
+data/session/
 .active-profile

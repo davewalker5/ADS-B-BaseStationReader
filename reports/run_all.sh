@@ -136,7 +136,7 @@ run_notebooks() {
 
 if [[ -n "$aircraft_address" ]]; then
     run_notebooks "aircraft" \
-        "$PROJECT_ROOT/data/reports/aircraft/$aircraft_address_upper/$session_id" \
+        "$PROJECT_ROOT/data/reports/aircraft" \
         --parameters session_id "$session_id" \
         --parameters_raw aircraft_address "$aircraft_address_upper"
 elif [[ -n "$session_id" ]]; then
