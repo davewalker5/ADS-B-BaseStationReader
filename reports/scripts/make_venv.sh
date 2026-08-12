@@ -1,6 +1,6 @@
 #!/bin/bash -f
 
-REPORTS_ROOT=$( cd "$( dirname "$0" )" && pwd )
+REPORTS_ROOT=$( cd "$( dirname "$0" )/.." && pwd )
 cd "$REPORTS_ROOT"
 
 # Deactivate and remove the old virtual environment, if present

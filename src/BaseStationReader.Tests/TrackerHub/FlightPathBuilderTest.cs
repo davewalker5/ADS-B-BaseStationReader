@@ -158,6 +158,50 @@ public class FlightPathBuilderTest
         Assert.AreEqual(3, path.Points.Count(point => Math.Abs(point.AltitudeFeet - 6500) < 0.001));
     }
 
+    /// <summary>Verifies both path renderers receive no repeated, out-of-bounds, or terminal altitude spikes.</summary>
+    [TestMethod]
+    public void BuildRejectsAltitudeRunBoundsAndTerminalSpike()
+    {
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 12, 10, 0, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            Point(timestamp, 0, 37000),
+            Point(timestamp, 1, 60000),
+            Point(timestamp, 10, 60000),
+            Point(timestamp, 50, 60000),
+            Point(timestamp, 51, 37000),
+            Point(timestamp, 60, 70000),
+            Point(timestamp, 61, 37000),
+            Point(timestamp, 103, 48000)
+        ];
+
+        var path = builder.Build(7, "ABC127", "TEST7", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, points);
+
+        Assert.HasCount(3, path.Points);
+        Assert.IsTrue(path.Points.All(point => Math.Abs(point.AltitudeFeet - 37000) < 0.001));
+    }
+
+    /// <summary>Verifies elapsed time permits a genuine path altitude change after missing receiver messages.</summary>
+    [TestMethod]
+    public void BuildRetainsPlausibleAltitudeChangeAfterLongGap()
+    {
+        var builder = new FlightPathBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 12, 10, 0, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            Point(timestamp, 0, 3300),
+            Point(timestamp, 120, 14750),
+            Point(timestamp, 121, 14750)
+        ];
+
+        var path = builder.Build(8, "ABC128", "TEST8", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, points);
+
+        Assert.HasCount(3, path.Points);
+        Assert.AreEqual(2, path.SegmentCount);
+        Assert.AreEqual(14750d, path.Points[^1].AltitudeFeet, 0.001);
+    }
+
     /// <summary>Creates a nearby complete observation for spike-filter tests.</summary>
     private static FlightProfilePoint Point(DateTime timestamp, int seconds, decimal altitude) => new()
     {

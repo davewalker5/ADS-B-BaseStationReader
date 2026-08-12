@@ -34,7 +34,7 @@ if [[ ! -f "$input_csv" ]]; then
 fi
 
 # Resolve all report paths relative to this script, so it can be run anywhere.
-reports_root=$(cd "$(dirname "$0")" && pwd)
+reports_root=$( cd "$( dirname "$0" )/.." && pwd )
 project_root=$(cd "$reports_root/.." && pwd)
 notebook_dir="$reports_root/notebooks/aircraft"
 notebook_name="plot-flight-path.ipynb"
