@@ -9,9 +9,7 @@ namespace BaseStationReader.BusinessLogic.Tracking;
 /// </summary>
 public sealed class FlightProfileBuilder : IFlightProfileBuilder
 {
-    private const double FeetToMetres = 0.3048;
     private const double MaximumPlausibleGroundSpeedMetresPerSecond = 500;
-    private const double MaximumPlausibleVerticalSpeedMetresPerSecond = 100;
     private readonly Func<(double? Latitude, double? Longitude)> _receiverPosition;
     private readonly IGeographicCalculator _geographicCalculator;
 
@@ -67,9 +65,9 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
             .Select(item => item.Point)
             .ToArray();
 
-        // Apply the same isolated-spike protections as the flight-path page before calculating chart summaries.
+        // Apply the same geographic and altitude protections as the flight-path page before calculating summaries.
         ordered = DiscardImplausiblePositionSpikes(ordered);
-        ordered = DiscardImplausibleAltitudeSpikes(ordered);
+        ordered = FlightAltitudeFilter.DiscardImplausibleAltitudes(ordered);
 
         var prepared = ordered
             .Select((point, sequence) => new FlightProfilePoint
@@ -139,42 +137,6 @@ public sealed class FlightProfileBuilder : IFlightProfileBuilder
             if (speedOut > MaximumPlausibleGroundSpeedMetresPerSecond &&
                 speedBack > MaximumPlausibleGroundSpeedMetresPerSecond &&
                 speedAcross <= MaximumPlausibleGroundSpeedMetresPerSecond)
-            {
-                rejected.Add(index);
-            }
-        }
-
-        return points.Where((_, index) => !rejected.Contains(index)).ToArray();
-    }
-
-    /// <summary>Discards an isolated altitude that requires an impossible vertical jump away and back.</summary>
-    private static FlightProfilePoint[] DiscardImplausibleAltitudeSpikes(IReadOnlyList<FlightProfilePoint> points)
-    {
-        if (points.Count < 3)
-        {
-            return points.ToArray();
-        }
-
-        var rejected = new HashSet<int>();
-        for (var index = 1; index < points.Count - 1; index++)
-        {
-            var previous = points[index - 1];
-            var current = points[index];
-            var following = points[index + 1];
-            var secondsBefore = (current.Timestamp - previous.Timestamp).TotalSeconds;
-            var secondsAfter = (following.Timestamp - current.Timestamp).TotalSeconds;
-            var secondsAcross = (following.Timestamp - previous.Timestamp).TotalSeconds;
-            if (Math.Min(secondsBefore, Math.Min(secondsAfter, secondsAcross)) <= 0)
-            {
-                continue;
-            }
-
-            var speedOut = Math.Abs((double)(current.Altitude!.Value - previous.Altitude!.Value)) * FeetToMetres / secondsBefore;
-            var speedBack = Math.Abs((double)(following.Altitude!.Value - current.Altitude!.Value)) * FeetToMetres / secondsAfter;
-            var speedAcross = Math.Abs((double)(following.Altitude!.Value - previous.Altitude!.Value)) * FeetToMetres / secondsAcross;
-            if (speedOut > MaximumPlausibleVerticalSpeedMetresPerSecond &&
-                speedBack > MaximumPlausibleVerticalSpeedMetresPerSecond &&
-                speedAcross <= MaximumPlausibleVerticalSpeedMetresPerSecond)
             {
                 rejected.Add(index);
             }

@@ -142,6 +142,50 @@ public class FlightProfileBuilderTest
         Assert.AreEqual(3, profile.Points.Count(point => point.Altitude == 6500));
     }
 
+    /// <summary>Verifies repeated excursions, physical bounds, and a bad final reading are all removed.</summary>
+    [TestMethod]
+    public void BuildRejectsAltitudeRunBoundsAndTerminalSpike()
+    {
+        var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 12, 10, 0, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            Point(timestamp, 0, 37000),
+            Point(timestamp, 1, 60000),
+            Point(timestamp, 10, 60000),
+            Point(timestamp, 50, 60000),
+            Point(timestamp, 51, 37000),
+            Point(timestamp, 60, 70000),
+            Point(timestamp, 61, 37000),
+            Point(timestamp, 103, 48000)
+        ];
+
+        var profile = builder.Build(12, "ABC012", "TEST12", points);
+
+        Assert.HasCount(3, profile.Points);
+        Assert.IsTrue(profile.Points.All(point => point.Altitude == 37000));
+        Assert.AreEqual(37000m, profile.FinalAltitude);
+    }
+
+    /// <summary>Verifies elapsed time permits a genuine altitude change after missing receiver messages.</summary>
+    [TestMethod]
+    public void BuildRetainsPlausibleAltitudeChangeAfterLongGap()
+    {
+        var builder = new FlightProfileBuilder(null, null, new GeographicCalculator());
+        var timestamp = new DateTime(2026, 8, 12, 10, 0, 0, DateTimeKind.Utc);
+        FlightProfilePoint[] points =
+        [
+            Point(timestamp, 0, 3300),
+            Point(timestamp, 120, 14750),
+            Point(timestamp, 121, 14750)
+        ];
+
+        var profile = builder.Build(13, "ABC013", "TEST13", points);
+
+        Assert.HasCount(3, profile.Points);
+        Assert.AreEqual(14750m, profile.FinalAltitude);
+    }
+
     /// <summary>Creates a nearby complete profile observation for spike-filter tests.</summary>
     private static FlightProfilePoint Point(DateTime timestamp, int seconds, decimal altitude) => new()
     {
