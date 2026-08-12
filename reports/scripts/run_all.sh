@@ -64,7 +64,7 @@ aircraft_address_upper=$(printf '%s' "$aircraft_address" | tr '[:lower:]' '[:upp
 
 # Resolve paths relative to this script so it can be launched from anywhere.
 export REPORTS_ROOT
-REPORTS_ROOT=$(cd "$(dirname "$0")" && pwd)
+REPORTS_ROOT=$( cd "$( dirname "$0" )/.." && pwd )
 export PROJECT_ROOT
 PROJECT_ROOT=$(cd "$REPORTS_ROOT/.." && pwd)
 . "$REPORTS_ROOT/venv/bin/activate"
