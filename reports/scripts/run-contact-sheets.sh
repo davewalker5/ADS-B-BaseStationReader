@@ -4,7 +4,7 @@ set -u
 
 usage() {
     # Keep wrapper help focused on environment setup; Python owns the option details.
-    echo "Usage: $(basename "$0") <input.csv> [--orientation portrait|landscape] [--rows N] [--columns N] [--mapbox-token TOKEN]" >&2
+    echo "Usage: $(basename "$0") --input <input.csv> [--orientation portrait|landscape] [--rows N] [--columns N] [--mapbox-token TOKEN]" >&2
 }
 
 if [[ $# -eq 0 ]]; then

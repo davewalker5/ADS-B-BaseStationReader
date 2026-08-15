@@ -16,23 +16,11 @@ DEFAULT_REPORTS_DIR = Path(__file__).resolve().parent.parent.parent / "data/repo
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Move <address>-<callsign>-<session> report folders to "
-            "<session>/<address>-<callsign>."
-        )
-    )
-    parser.add_argument(
-        "--reports-dir",
-        type=Path,
-        default=DEFAULT_REPORTS_DIR,
-        help=f"aircraft reports folder (default: {DEFAULT_REPORTS_DIR})",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="show the moves without changing any files",
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-rd", "--reports-dir", type=Path, default=DEFAULT_REPORTS_DIR,
+                        help=f"aircraft reports folder (default: {DEFAULT_REPORTS_DIR})")
+    parser.add_argument("-dr", "--dry-run", action="store_true",
+                        help="show the moves without changing any files")
     return parser.parse_args()
 
 
