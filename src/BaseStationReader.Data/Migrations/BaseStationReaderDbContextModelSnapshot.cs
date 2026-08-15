@@ -17,7 +17,7 @@ namespace BaseStationReader.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
-            modelBuilder.Entity("BaseStationReader.Entities.Database.Equipment", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Equipment.Equipment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -39,7 +39,7 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("EQUIPMENT", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Database.EquipmentType", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Equipment.EquipmentType", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -380,9 +380,9 @@ namespace BaseStationReader.Data.Migrations
                     b.ToTable("PROVENANCE", (string)null);
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Database.Equipment", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Equipment.Equipment", b =>
                 {
-                    b.HasOne("BaseStationReader.Entities.Database.EquipmentType", "EquipmentType")
+                    b.HasOne("BaseStationReader.Entities.Equipment.EquipmentType", "EquipmentType")
                         .WithMany("Equipment")
                         .HasForeignKey("EquipmentTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -897,7 +897,7 @@ namespace BaseStationReader.Data.Migrations
                     b.Navigation("Cells");
                 });
 
-            modelBuilder.Entity("BaseStationReader.Entities.Database.EquipmentType", b =>
+            modelBuilder.Entity("BaseStationReader.Entities.Equipment.EquipmentType", b =>
                 {
                     b.Navigation("Equipment");
                 });

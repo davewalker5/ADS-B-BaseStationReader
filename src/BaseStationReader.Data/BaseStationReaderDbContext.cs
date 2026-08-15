@@ -1,7 +1,7 @@
 ﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Entities.History;
-using BaseStationReader.Entities.Database;
+using BaseStationReader.Entities.Equipment;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 

@@ -2,7 +2,7 @@
 
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Database;
+using BaseStationReader.Entities.Equipment;
 using BaseStationReader.Interfaces.Logging;
 using Microsoft.EntityFrameworkCore;
 

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BaseStationReader.Entities.Database
+namespace BaseStationReader.Entities.Equipment
 {
     /// <summary>
     /// Describes an item of equipment used by the receiver station.

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace BaseStationReader.Entities.Database
+namespace BaseStationReader.Entities.Equipment
 {
     /// <summary>
     /// Describes a category of receiver equipment.

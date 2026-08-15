@@ -1,6 +1,6 @@
 #nullable enable
 
-using BaseStationReader.Entities.Database;
+using BaseStationReader.Entities.Equipment;
 
 namespace BaseStationReader.Interfaces.Database
 {

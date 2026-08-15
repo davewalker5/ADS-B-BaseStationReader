@@ -1,7 +1,7 @@
 #nullable enable
 
 using BaseStationReader.Data;
-using BaseStationReader.Entities.Database;
+using BaseStationReader.Entities.Equipment;
 using BaseStationReader.Interfaces.Database;
 using Microsoft.EntityFrameworkCore;
 
