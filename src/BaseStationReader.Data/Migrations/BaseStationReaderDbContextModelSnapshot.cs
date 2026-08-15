@@ -17,6 +17,45 @@ namespace BaseStationReader.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
+            modelBuilder.Entity("BaseStationReader.Entities.Database.Equipment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<int>("EquipmentTypeId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("EquipmentTypeId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Name");
+
+                    b.HasKey("Id");
+                    b.HasIndex("EquipmentTypeId");
+                    b.HasIndex("Name").IsUnique();
+                    b.ToTable("EQUIPMENT", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Database.EquipmentType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Name");
+
+                    b.HasKey("Id");
+                    b.HasIndex("Name").IsUnique();
+                    b.ToTable("EQUIPMENT_TYPE", (string)null);
+                });
+
             modelBuilder.Entity("BaseStationReader.Entities.Api.Aircraft", b =>
                 {
                     b.Property<int>("Id")
@@ -339,6 +378,17 @@ namespace BaseStationReader.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("PROVENANCE", (string)null);
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Database.Equipment", b =>
+                {
+                    b.HasOne("BaseStationReader.Entities.Database.EquipmentType", "EquipmentType")
+                        .WithMany("Equipment")
+                        .HasForeignKey("EquipmentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EquipmentType");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Api.Sighting", b =>
@@ -845,6 +895,11 @@ namespace BaseStationReader.Data.Migrations
             modelBuilder.Entity("BaseStationReader.Entities.History.PositionDensitySnapshotEntity", b =>
                 {
                     b.Navigation("Cells");
+                });
+
+            modelBuilder.Entity("BaseStationReader.Entities.Database.EquipmentType", b =>
+                {
+                    b.Navigation("Equipment");
                 });
 
             modelBuilder.Entity("BaseStationReader.Entities.Tracking.ObservationSession", b =>

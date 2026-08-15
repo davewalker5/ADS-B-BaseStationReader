@@ -1,6 +1,7 @@
 ﻿using BaseStationReader.Entities.Api;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Entities.History;
+using BaseStationReader.Entities.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 
@@ -25,6 +26,8 @@ namespace BaseStationReader.Data
         public virtual DbSet<ExcludedCallsign> ExcludedCallsigns { get; set; }
         public virtual DbSet<ApiLogEntry> ApiLogEntries { get; set; }
         public virtual DbSet<Provenance> Provenance { get; set; }
+        public virtual DbSet<EquipmentType> EquipmentTypes { get; set; }
+        public virtual DbSet<Equipment> Equipment { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -36,6 +39,27 @@ namespace BaseStationReader.Data
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<EquipmentType>(entity =>
+            {
+                entity.ToTable("EQUIPMENT_TYPE");
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+                entity.HasIndex(e => e.Name).IsUnique();
+            });
+
+            modelBuilder.Entity<Equipment>(entity =>
+            {
+                entity.ToTable("EQUIPMENT");
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.EquipmentTypeId).IsRequired().HasColumnName("EquipmentTypeId");
+                entity.Property(e => e.Name).IsRequired().HasColumnName("Name");
+                entity.HasIndex(e => e.Name).IsUnique();
+                entity.HasOne(e => e.EquipmentType)
+                    .WithMany(e => e.Equipment)
+                    .HasForeignKey(e => e.EquipmentTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             modelBuilder.Entity<TrackedAircraft>(entity =>
             {
                 entity.ToTable("TRACKED_AIRCRAFT");

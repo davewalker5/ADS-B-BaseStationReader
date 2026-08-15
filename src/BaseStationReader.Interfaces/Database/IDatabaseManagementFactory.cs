@@ -24,5 +24,7 @@ namespace BaseStationReader.Interfaces.Database
         IProvenanceManager ProvenanceManager { get; }
         IObservationSessionManager ObservationSessionManager { get; }
         IPositionDensitySnapshotManager PositionDensitySnapshotManager { get; }
+        IEquipmentTypeManager EquipmentTypeManager { get; }
+        IEquipmentManager EquipmentManager { get; }
     }
 }
