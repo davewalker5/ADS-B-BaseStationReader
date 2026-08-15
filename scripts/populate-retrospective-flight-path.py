@@ -1,15 +1,14 @@
-"""
-Populate missing SQLite flight-path values from a CSV track
-"""
+"""Populate missing SQLite flight-path values from a KML track."""
 
 from __future__ import annotations
 
 import argparse
-import csv
 import math
 import os
+import re
 import sqlite3
 import sys
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,7 +17,8 @@ from typing import Sequence
 
 EARTH_RADIUS_METRES = 6_371_000.0
 METRES_PER_NAUTICAL_MILE = 1_852.0
-REQUIRED_COLUMNS = {"Timestamp", "UTC", "Callsign", "Position", "Altitude"}
+METRES_PER_FOOT = 0.3048
+ALTITUDE_PATTERN = re.compile(r"Altitude:</b></span>\s*<span>([\d,]+(?:\.\d+)?)\s*ft", re.I)
 
 
 class PopulationError(Exception):
@@ -26,15 +26,15 @@ class PopulationError(Exception):
 
 
 @dataclass(frozen=True)
-class CsvPosition:
-    """Represent one validated position read from the source CSV file."""
+class KmlPosition:
+    """Represent one validated position read from the source KML file."""
 
     timestamp: datetime
     callsign: str
     latitude: float
     longitude: float
     altitude: float
-    row_number: int
+    placemark_number: int
 
 
 @dataclass(frozen=True)
@@ -55,10 +55,12 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
     :param arguments: Optional argument sequence; defaults to process arguments.
     :return: Parsed command-line options.
     """
-    # Keep the session and CSV positional because both are required for every run.
+    # Keep the existing named options while changing the source format to KML.
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--session", type=int, help="SESSION.Id to update")
-    parser.add_argument("-c", "--csv", type=Path, help="CSV file containing the flight path")
+    parser.add_argument("-s", "--session", type=int, required=True, help="SESSION.Id to update")
+    parser.add_argument(
+        "-k", "--kml", type=Path, required=True, help="KML file containing the flight path"
+    )
     parser.add_argument("-a", "--address", help="ICAO address, required when callsign lookup is inconclusive")
     parser.add_argument("-db", "--database",type=Path,help="SQLite database path")
     parser.add_argument("-dr", "--dry-run",action="store_true",
@@ -91,95 +93,141 @@ def resolve_database_path(argument_path: Path | None) -> Path:
     return database_path
 
 
-def parse_csv_timestamp(row: dict[str, str], row_number: int) -> datetime:
-    """Parse a CSV timestamp as a naive UTC clock value.
+def parse_kml_timestamp(value: str, placemark_number: int) -> datetime:
+    """Parse a KML timestamp as a naive UTC clock value.
 
-    :param row: CSV row keyed by column name.
-    :param row_number: One-based file row number used in errors.
+    :param value: KML TimeStamp/when value.
+    :param placemark_number: One-based Placemark number used in errors.
     :return: Naive UTC datetime ready for database time-basis alignment.
-    :raises PopulationError: If neither timestamp representation is valid.
+    :raises PopulationError: If the timestamp is missing, invalid or lacks a time zone.
     """
-    # Prefer the readable UTC value, retaining the Unix timestamp as a supported fallback.
-    utc_text = (row.get("UTC") or "").strip()
+    # KML timestamps must carry an offset so matching never assumes a source time zone.
     try:
-        if utc_text:
-            parsed = datetime.fromisoformat(utc_text.replace("Z", "+00:00"))
-            if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-        else:
-            parsed = datetime.fromtimestamp(float(row["Timestamp"]), timezone.utc)
-    except (KeyError, TypeError, ValueError) as error:
-        raise PopulationError(f"CSV row {row_number} has an invalid timestamp.") from error
-
-    # Retain the CSV's UTC clock value until the database range reveals its stored time basis.
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except (AttributeError, ValueError) as error:
+        raise PopulationError(
+            f"KML Placemark {placemark_number} has an invalid timestamp."
+        ) from error
+    if parsed.tzinfo is None:
+        raise PopulationError(
+            f"KML Placemark {placemark_number} timestamp has no UTC offset."
+        )
     return parsed.astimezone(timezone.utc).replace(tzinfo=None)
 
 
-def parse_position(value: str, row_number: int) -> tuple[float, float]:
-    """Parse and validate a latitude/longitude CSV field.
+def parse_kml_coordinates(value: str, placemark_number: int) -> tuple[float, float, float | None]:
+    """Parse and validate a KML Point coordinate.
 
-    :param value: Comma-separated latitude and longitude text.
-    :param row_number: One-based file row number used in errors.
-    :return: Latitude and longitude as floating-point values.
+    :param value: Comma-separated longitude, latitude and optional altitude text.
+    :param placemark_number: One-based Placemark number used in errors.
+    :return: Latitude, longitude and optional altitude in metres.
     :raises PopulationError: If the coordinate is malformed or outside Earth bounds.
     """
-    # Split only once so malformed extra components fail during numeric conversion.
+    # KML stores coordinate components in longitude, latitude, altitude order.
     try:
-        parts = [part.strip() for part in value.split(",")]
-        if len(parts) != 2:
+        parts = [part.strip() for part in value.strip().split(",")]
+        if len(parts) not in (2, 3):
             raise ValueError
-        latitude, longitude = (float(part) for part in parts)
+        longitude = float(parts[0])
+        latitude = float(parts[1])
+        altitude_metres = float(parts[2]) if len(parts) == 3 else None
     except (AttributeError, ValueError) as error:
-        raise PopulationError(f"CSV row {row_number} has an invalid Position value.") from error
+        raise PopulationError(
+            f"KML Placemark {placemark_number} has invalid Point coordinates."
+        ) from error
     if not (-90.0 <= latitude <= 90.0 and -180.0 <= longitude <= 180.0):
-        raise PopulationError(f"CSV row {row_number} has coordinates outside valid bounds.")
-    return latitude, longitude
+        raise PopulationError(
+            f"KML Placemark {placemark_number} has coordinates outside valid bounds."
+        )
+    return latitude, longitude, altitude_metres
 
 
-def read_csv_positions(csv_path: Path) -> list[CsvPosition]:
-    """Read and validate retrospective positions from a CSV file.
+def parse_kml_callsign(document_name: str) -> str:
+    """Extract the callsign from a KML document name.
 
-    :param csv_path: Source CSV path.
+    :param document_name: Text from the KML Document/name element.
+    :return: Normalized callsign.
+    :raises PopulationError: If the document name contains no callsign.
+    """
+    # FlightRadar24 names documents as flight/callsign, with '-' for an absent flight number.
+    callsign = document_name.rsplit("/", 1)[-1].strip().upper()
+    if not callsign:
+        raise PopulationError("KML Document/name does not contain a callsign.")
+    return callsign
+
+
+def parse_kml_altitude(
+    description: str, altitude_metres: float | None, placemark_number: int
+) -> float:
+    """Read altitude in feet from a KML Placemark.
+
+    :param description: Placemark description markup.
+    :param altitude_metres: Optional altitude from Point coordinates.
+    :param placemark_number: One-based Placemark number used in errors.
+    :return: Altitude in feet.
+    :raises PopulationError: If no altitude is available.
+    """
+    # Prefer the displayed feet value and fall back to KML's standard metres coordinate.
+    match = ALTITUDE_PATTERN.search(description or "")
+    if match:
+        return float(match.group(1).replace(",", ""))
+    if altitude_metres is not None:
+        return altitude_metres / METRES_PER_FOOT
+    raise PopulationError(f"KML Placemark {placemark_number} has no altitude.")
+
+
+def read_kml_positions(kml_path: Path) -> list[KmlPosition]:
+    """Read and validate retrospective positions from a KML file.
+
+    :param kml_path: Source KML path.
     :return: Validated positions in file order.
     :raises PopulationError: If the file or any required value is invalid.
     """
-    # Validate the path before opening it to provide a concise diagnostic.
-    if not csv_path.is_file():
-        raise PopulationError(f"CSV file does not exist: {csv_path}")
+    # Validate the path before parsing it to provide a concise diagnostic.
+    if not kml_path.is_file():
+        raise PopulationError(f"KML file does not exist: {kml_path}")
     try:
-        with csv_path.open("r", encoding="utf-8-sig", newline="") as source:
-            reader = csv.DictReader(source)
-            missing = REQUIRED_COLUMNS.difference(reader.fieldnames or [])
-            if missing:
-                raise PopulationError(f"CSV is missing required column(s): {', '.join(sorted(missing))}")
-
-            positions: list[CsvPosition] = []
-            for row_number, row in enumerate(reader, start=2):
-                # Reject partial source rows rather than writing ambiguous data.
-                callsign = (row.get("Callsign") or "").strip().upper()
-                if not callsign:
-                    raise PopulationError(f"CSV row {row_number} has no callsign.")
-                latitude, longitude = parse_position(row.get("Position") or "", row_number)
-                try:
-                    altitude = float(row["Altitude"])
-                except (KeyError, TypeError, ValueError) as error:
-                    raise PopulationError(f"CSV row {row_number} has an invalid altitude.") from error
-                positions.append(
-                    CsvPosition(
-                        parse_csv_timestamp(row, row_number),
-                        callsign,
-                        latitude,
-                        longitude,
-                        altitude,
-                        row_number,
-                    )
-                )
+        tree = ET.parse(kml_path)
+    except ET.ParseError as error:
+        raise PopulationError(f"KML is not valid XML: {error}") from error
     except OSError as error:
-        raise PopulationError(f"Unable to read CSV file: {error}") from error
+        raise PopulationError(f"Unable to read KML file: {error}") from error
 
-    # Aircraft inference is based on the first data row, as specified by the brief.
+    # Read the aircraft callsign once from the document-level metadata.
+    document_name = tree.find(".//{*}Document/{*}name")
+    if document_name is None or not document_name.text:
+        raise PopulationError("KML has no Document/name callsign.")
+    callsign = parse_kml_callsign(document_name.text)
+
+    positions: list[KmlPosition] = []
+    for placemark_number, placemark in enumerate(tree.findall(".//{*}Placemark"), start=1):
+        # Only timestamped Point placemarks represent individual flight observations.
+        when = placemark.find("./{*}TimeStamp/{*}when")
+        coordinates = placemark.find("./{*}Point/{*}coordinates")
+        if when is None or coordinates is None:
+            continue
+        latitude, longitude, altitude_metres = parse_kml_coordinates(
+            coordinates.text or "", placemark_number
+        )
+        description = placemark.find("./{*}description")
+        positions.append(
+            KmlPosition(
+                parse_kml_timestamp(when.text or "", placemark_number),
+                callsign,
+                latitude,
+                longitude,
+                parse_kml_altitude(
+                    description.text if description is not None and description.text else "",
+                    altitude_metres,
+                    placemark_number,
+                ),
+                placemark_number,
+            )
+        )
+
+    # Aircraft inference uses the document callsign and requires at least one usable point.
     if not positions:
-        raise PopulationError("CSV contains no position records.")
+        raise PopulationError("KML contains no timestamped Point position records.")
     return positions
 
 
@@ -210,7 +258,7 @@ def identify_address(
 
     :param connection: Open SQLite connection.
     :param session_id: Target observation session identifier.
-    :param callsign: Callsign from the first CSV record.
+    :param callsign: Callsign from the KML document name.
     :param supplied_address: Optional command-line ICAO address.
     :return: Normalized address present in the session.
     :raises PopulationError: If the session or aircraft cannot be identified safely.
@@ -302,41 +350,41 @@ def load_database_positions(
 
 
 def map_positions(
-    csv_positions: Sequence[CsvPosition], database_positions: Sequence[DatabasePosition]
-) -> dict[int, CsvPosition]:
-    """Map CSV rows to nearest database positions, resolving collisions by proximity.
+    kml_positions: Sequence[KmlPosition], database_positions: Sequence[DatabasePosition]
+) -> dict[int, KmlPosition]:
+    """Map KML points to nearest database positions, resolving collisions by proximity.
 
-    :param csv_positions: Validated source positions.
+    :param kml_positions: Validated source positions.
     :param database_positions: Candidate POSITION records.
-    :return: Mapping from POSITION identifier to its closest CSV row.
+    :return: Mapping from POSITION identifier to its closest KML point.
     """
-    # Retain only the closest CSV row when several source rows select one POSITION record.
-    mappings: dict[int, CsvPosition] = {}
+    # Retain only the closest KML point when several source points select one POSITION record.
+    mappings: dict[int, KmlPosition] = {}
     differences: dict[int, float] = {}
-    for csv_position in csv_positions:
+    for kml_position in kml_positions:
         closest = min(
             database_positions,
             key=lambda position: (
-                abs((position.timestamp - csv_position.timestamp).total_seconds()),
+                abs((position.timestamp - kml_position.timestamp).total_seconds()),
                 position.identifier,
             ),
         )
-        difference = abs((closest.timestamp - csv_position.timestamp).total_seconds())
+        difference = abs((closest.timestamp - kml_position.timestamp).total_seconds())
         if closest.identifier not in differences or difference < differences[closest.identifier]:
-            mappings[closest.identifier] = csv_position
+            mappings[closest.identifier] = kml_position
             differences[closest.identifier] = difference
     return mappings
 
 
-def restrict_csv_positions_to_database_range(
-    csv_positions: Sequence[CsvPosition],
+def restrict_kml_positions_to_database_range(
+    kml_positions: Sequence[KmlPosition],
     database_positions: Sequence[DatabasePosition],
-) -> list[CsvPosition]:
-    """Align and keep CSV records within the database position timestamp range.
+) -> list[KmlPosition]:
+    """Align and keep KML points within the database position timestamp range.
 
-    :param csv_positions: Validated source positions.
+    :param kml_positions: Validated source positions.
     :param database_positions: Candidate POSITION records ordered by timestamp.
-    :return: CSV positions whose timestamps lie within the inclusive database range.
+    :return: KML positions whose timestamps lie within the inclusive database range.
     """
     # SQLite does not retain DateTime.Kind, and tracker hosts may store either local or UTC clocks.
     first_timestamp = database_positions[0].timestamp
@@ -348,17 +396,17 @@ def restrict_csv_positions_to_database_range(
                 tzinfo=None
             ),
         )
-        for position in csv_positions
+        for position in kml_positions
     ]
 
     # Select the interpretation with the greatest inclusive overlap; prefer UTC on a tie.
     utc_overlap = sum(
-        first_timestamp <= position.timestamp <= last_timestamp for position in csv_positions
+        first_timestamp <= position.timestamp <= last_timestamp for position in kml_positions
     )
     local_overlap = sum(
         first_timestamp <= position.timestamp <= last_timestamp for position in local_positions
     )
-    aligned_positions = local_positions if local_overlap > utc_overlap else csv_positions
+    aligned_positions = local_positions if local_overlap > utc_overlap else kml_positions
     return [
         position
         for position in aligned_positions
@@ -397,19 +445,19 @@ def run(options: argparse.Namespace) -> tuple[str, int, int, int]:
     """
     # Validate external inputs before taking a write lock on the database.
     database_path = resolve_database_path(options.database)
-    csv_positions = read_csv_positions(options.csv)
+    kml_positions = read_kml_positions(options.kml)
     connection = sqlite3.connect(database_path)
     try:
         validate_schema(connection)
         connection.execute("BEGIN IMMEDIATE")
         address = identify_address(
-            connection, options.session, csv_positions[0].callsign, options.address
+            connection, options.session, kml_positions[0].callsign, options.address
         )
         database_positions = load_database_positions(connection, options.session, address)
-        eligible_csv_positions = restrict_csv_positions_to_database_range(
-            csv_positions, database_positions
+        eligible_kml_positions = restrict_kml_positions_to_database_range(
+            kml_positions, database_positions
         )
-        mappings = map_positions(eligible_csv_positions, database_positions)
+        mappings = map_positions(eligible_kml_positions, database_positions)
 
         # Snapshot original nullable values before applying updates for accurate reporting.
         originals = {
