@@ -52,8 +52,6 @@ else
         <section class="info-card"><h2>Position boundaries</h2><div class="position-pair"><div><h3>First recorded</h3>@PositionContent(_record.FirstPosition)</div><div><h3>Final recorded</h3>@PositionContent(_record.FinalPosition)</div></div></section>
     </div>
 
-    <section class="future-actions"><h2>Analysis</h2><p>Inspect this session's altitude profile or interactive geographic flight path.</p><a class="analysis-link" href="history/@_record.Id/profile">Flight profile →</a><a class="analysis-link secondary" href="history/@_record.Id/path">Flight path →</a></section>
-
     <section class="tracker-panel history-panel aircraft-notes-panel">
         <div class="panel-heading">
             <div><h2>Aircraft notes</h2><p>Notes follow ICAO address <span class="mono">@_record.Address</span> across tracking sessions.</p></div>
@@ -95,6 +93,8 @@ else
             </table>
         </div>
     </section>
+
+    <section class="future-actions"><h2>Analysis</h2><p>Inspect this session's altitude profile or interactive geographic flight path.</p><a class="analysis-link" href="history/@_record.Id/profile">Flight profile →</a><a class="analysis-link secondary" href="history/@_record.Id/path">Flight path →</a></section>
 }
 
 @if (_viewNote is not null)
