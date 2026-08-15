@@ -76,6 +76,10 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             var equipment = await _context.Equipment.FindAsync([id], cancellationToken)
                 ?? throw new InvalidOperationException($"Equipment record {id} does not exist.");
+            if (await _context.SessionEquipment.AnyAsync(x => x.EquipmentId == id, cancellationToken))
+            {
+                throw new InvalidOperationException("The equipment cannot be deleted while it is associated with a session.");
+            }
             _context.Equipment.Remove(equipment);
             await _context.SaveChangesAsync(cancellationToken);
         }

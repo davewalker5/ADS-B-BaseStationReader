@@ -28,6 +28,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<Provenance> Provenance { get; set; }
         public virtual DbSet<EquipmentType> EquipmentTypes { get; set; }
         public virtual DbSet<Equipment> Equipment { get; set; }
+        public virtual DbSet<SessionEquipment> SessionEquipment { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -58,6 +59,23 @@ namespace BaseStationReader.Data
                     .WithMany(e => e.Equipment)
                     .HasForeignKey(e => e.EquipmentTypeId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<SessionEquipment>(entity =>
+            {
+                entity.ToTable("SESSION_EQUIPMENT");
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.EquipmentId).IsRequired().HasColumnName("EquipmentId");
+                entity.Property(e => e.SessionId).IsRequired().HasColumnName("SessionId");
+                entity.HasIndex(e => new { e.SessionId, e.EquipmentId }).IsUnique();
+                entity.HasOne(e => e.Equipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Session)
+                    .WithMany(e => e.SessionEquipment)
+                    .HasForeignKey(e => e.SessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<TrackedAircraft>(entity =>

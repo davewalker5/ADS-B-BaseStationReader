@@ -22,4 +22,5 @@ public sealed class ObservationSessionDto
     public int? MaximumAltitude { get; set; }
     public int? MaximumDistance { get; set; }
     public string IncludedBehaviours { get; set; } = string.Empty;
+    public bool HasEquipment { get; set; }
 }

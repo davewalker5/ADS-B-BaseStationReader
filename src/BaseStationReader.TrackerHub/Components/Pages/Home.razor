@@ -8,6 +8,7 @@
 @inject ITrackerHubPageState PageState
 @inject IPositionDensitySnapshotStateManager PositionDensitySnapshots
 @inject IPositionDensitySnapshotOrchestrator PositionDensityOrchestrator
+@inject IEquipmentRegisterService EquipmentRegister
 @inject Microsoft.Extensions.Options.IOptions<RadarOptions> RadarConfiguration
 
 <PageTitle>Live Tracker · ADS-B Tracker</PageTitle>
@@ -228,6 +229,42 @@
                 </dl>
             </div>
 
+            <section class="session-equipment" aria-label="Session equipment">
+                <div class="panel-heading">
+                    <div><h3>Equipment</h3><p>Equipment used during this session.</p></div>
+                    <button class="primary-button" type="button" @onclick="ShowEquipmentDialog"
+                            disabled="@(_sessionStarted || _equipmentTypes.Count == 0)">Add</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Type</th><th>Equipment</th><th>Remove</th></tr></thead>
+                        <tbody>
+                            @if (_selectedEquipment.Count == 0)
+                            {
+                                <tr><td colspan="3" class="table-empty">No equipment associated with this session.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var equipment in _selectedEquipment)
+                                {
+                                    <tr>
+                                        <td>@equipment.EquipmentType.Name</td>
+                                        <td><strong>@equipment.Name</strong></td>
+                                        <td class="session-delete-action">
+                                            <button class="session-delete-button" type="button"
+                                                    title="Remove equipment" aria-label="Remove @equipment.Name"
+                                                    disabled="@_sessionStarted" @onclick="() => RemoveEquipmentAsync(equipment)">
+                                                <span aria-hidden="true">🗑️</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <label class="session-field" for="session-notes">
                 <span>Session notes <small>Optional</small></span>
                 <textarea id="session-notes" @bind="_sessionNotes" maxlength="4000" rows="5"
@@ -247,6 +284,50 @@
             </div>
         </div>
     </section>
+}
+
+@if (_showEquipmentDialog)
+{
+    <div class="modal-backdrop" @onclick="CloseEquipmentDialog">
+        <section class="confirmation-modal session-equipment-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="add-session-equipment-title" tabindex="0" @onclick:stopPropagation
+                 @onkeydown="HandleEquipmentDialogKeyDown">
+            <header>
+                <div><p class="eyebrow">Session equipment</p><h2 id="add-session-equipment-title">Add equipment</h2></div>
+                <button class="icon-button" type="button" aria-label="Close equipment dialog" @onclick="CloseEquipmentDialog">×</button>
+            </header>
+            <label class="modal-field">
+                <span>Equipment type</span>
+                <select value="@_selectedEquipmentTypeId" @onchange="EquipmentTypeChangedAsync">
+                    @foreach (var type in _equipmentTypes)
+                    {
+                        <option value="@type.Id">@type.Name</option>
+                    }
+                </select>
+            </label>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Available equipment</th></tr></thead>
+                    <tbody>
+                        @if (_availableEquipment.Count == 0)
+                        {
+                            <tr><td class="table-empty">No unassociated equipment of this type is available.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var equipment in _availableEquipment)
+                            {
+                                <tr tabindex="0" @onclick="() => SelectEquipmentAsync(equipment)"
+                                    @onkeydown="args => SelectEquipmentFromKeyboardAsync(args, equipment)">
+                                    <td><strong>@equipment.Name</strong></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 }
 
 @if (_startError is not null)
@@ -641,6 +722,11 @@
     private CancellationTokenSource? _densityCancellation;
     private double _maximumRadarRange;
     private IReadOnlyList<TrackedAircraftDto> _completedAircraft = [];
+    private IReadOnlyList<EquipmentType> _equipmentTypes = [];
+    private IReadOnlyList<Equipment> _availableEquipment = [];
+    private List<Equipment> _selectedEquipment = [];
+    private bool _showEquipmentDialog;
+    private int _selectedEquipmentTypeId;
 
     private PositionDensity? CurrentPositionDensity
         => _sessionId.HasValue ? PositionDensitySnapshots.GetSnapshot(_sessionId.Value) : null;
@@ -754,6 +840,8 @@
         LiveAircraft.StateChanged += OnLiveStateChanged;
         _maximumRadarRange = RadarConfiguration.Value.MaximumRange;
         _profiles = TrackingProfiles.List();
+        _equipmentTypes = await EquipmentRegister.SearchTypesAsync(null);
+        _selectedEquipmentTypeId = _equipmentTypes.FirstOrDefault()?.Id ?? 0;
         await StartAsync();
         _receiverHost = LiveAircraft.TrackingOptions?.ReceiverHost ?? string.Empty;
         _receiverPort = LiveAircraft.TrackingOptions?.ReceiverPort ?? 0;
@@ -775,6 +863,7 @@
         {
             _sessionStarted = true;
             _sessionId = await SessionQueries.GetLatestSessionIdAsync();
+            await LoadSessionEquipmentAsync();
             _activeTab = RequestedTab?.Equals("radar", StringComparison.OrdinalIgnoreCase) == true
                 ? SessionTab.Radar
                 : SessionTab.Tracking;
@@ -784,6 +873,7 @@
             // Restore only circuit-local completed-session state; a fresh UI session retains the original clean start.
             _sessionStarted = true;
             _sessionId = completedSession.SessionId;
+            await LoadSessionEquipmentAsync();
             _completedAircraft = completedSession.Aircraft.Select(CloneAircraft).ToArray();
             if (completedSession.MaximumRadarRange > 0)
             {
@@ -874,6 +964,13 @@
             _profileError = false;
             _sessionStarted = true;
             _sessionId = await WaitForNewSessionIdAsync(previousSessionId);
+            if (_sessionId.HasValue)
+            {
+                foreach (var equipment in _selectedEquipment)
+                {
+                    await EquipmentRegister.AddSessionEquipmentAsync(_sessionId.Value, equipment.Id);
+                }
+            }
             await LiveAircraft.RefreshAsync();
             _summary = null;
             _completedAircraft = [];
@@ -889,6 +986,100 @@
         finally
         {
             _controlsBusy = false;
+        }
+    }
+
+    /// <summary>Loads equipment persisted for the current session.</summary>
+    private async Task LoadSessionEquipmentAsync()
+    {
+        if (!_sessionId.HasValue)
+        {
+            return;
+        }
+
+        _selectedEquipment = (await EquipmentRegister.ListSessionEquipmentAsync(_sessionId.Value))
+            .Select(x => x.Equipment)
+            .ToList();
+    }
+
+    /// <summary>Opens the equipment picker with the first equipment type selected.</summary>
+    private async Task ShowEquipmentDialog()
+    {
+        if (_sessionStarted || _equipmentTypes.Count == 0)
+        {
+            return;
+        }
+
+        _selectedEquipmentTypeId = _equipmentTypes.First().Id;
+        await LoadAvailableEquipmentAsync();
+        _showEquipmentDialog = true;
+    }
+
+    /// <summary>Closes the equipment picker.</summary>
+    private void CloseEquipmentDialog() => _showEquipmentDialog = false;
+
+    /// <summary>Refreshes available equipment when the selected type changes.</summary>
+    private async Task EquipmentTypeChangedAsync(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var equipmentTypeId))
+        {
+            _selectedEquipmentTypeId = equipmentTypeId;
+            await LoadAvailableEquipmentAsync();
+        }
+    }
+
+    /// <summary>Loads unassociated equipment for the selected type.</summary>
+    private async Task LoadAvailableEquipmentAsync()
+    {
+        var equipment = await EquipmentRegister.SearchEquipmentAsync(null, _selectedEquipmentTypeId);
+        var selectedIds = _selectedEquipment.Select(x => x.Id).ToHashSet();
+        _availableEquipment = equipment.Where(x => !selectedIds.Contains(x.Id)).ToList();
+    }
+
+    /// <summary>Adds an equipment item to the pending session selection.</summary>
+    private async Task SelectEquipmentAsync(Equipment equipment)
+    {
+        if (_sessionStarted)
+        {
+            return;
+        }
+
+        _selectedEquipment.Add(equipment);
+        _selectedEquipment = _selectedEquipment
+            .OrderBy(x => x.EquipmentType.Name)
+            .ThenBy(x => x.Name)
+            .ToList();
+        _showEquipmentDialog = false;
+        await Task.CompletedTask;
+    }
+
+    /// <summary>Adds the focused equipment item when activated from the keyboard.</summary>
+    private async Task SelectEquipmentFromKeyboardAsync(KeyboardEventArgs args, Equipment equipment)
+    {
+        if (args.Key is "Enter" or " ")
+        {
+            await SelectEquipmentAsync(equipment);
+        }
+    }
+
+    /// <summary>Removes an equipment item from the pending session selection.</summary>
+    private async Task RemoveEquipmentAsync(Equipment equipment)
+    {
+        if (_sessionStarted)
+        {
+            return;
+        }
+
+        _selectedEquipment.RemoveAll(x => x.Id == equipment.Id);
+        await Task.CompletedTask;
+    }
+
+    /// <summary>Closes the equipment picker when Escape is pressed.</summary>
+    private void HandleEquipmentDialogKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseEquipmentDialog();
         }
     }
 
@@ -1246,6 +1437,7 @@
         _summaryError = null;
         _status = null;
         _completedAircraft = [];
+        _selectedEquipment = [];
         PageState.CompletedLiveTracker = null;
         _sessionName = string.Empty;
         _sessionNotes = string.Empty;

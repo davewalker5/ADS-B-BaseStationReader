@@ -26,5 +26,6 @@ namespace BaseStationReader.Interfaces.Database
         IPositionDensitySnapshotManager PositionDensitySnapshotManager { get; }
         IEquipmentTypeManager EquipmentTypeManager { get; }
         IEquipmentManager EquipmentManager { get; }
+        ISessionEquipmentManager SessionEquipmentManager { get; }
     }
 }

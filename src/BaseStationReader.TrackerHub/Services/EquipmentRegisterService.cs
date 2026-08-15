@@ -73,4 +73,36 @@ public sealed class EquipmentRegisterService(
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         await new DatabaseManagementFactory(logger, context, 0).EquipmentManager.DeleteAsync(id, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SessionEquipment>> ListSessionEquipmentAsync(
+        int sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        return await new DatabaseManagementFactory(logger, context, 0).SessionEquipmentManager
+            .ListAsync(sessionId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task AddSessionEquipmentAsync(
+        int sessionId,
+        int equipmentId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        await new DatabaseManagementFactory(logger, context, 0).SessionEquipmentManager
+            .AddAsync(sessionId, equipmentId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteSessionEquipmentAsync(
+        int sessionId,
+        int equipmentId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        await new DatabaseManagementFactory(logger, context, 0).SessionEquipmentManager
+            .DeleteAsync(sessionId, equipmentId, cancellationToken);
+    }
 }

@@ -83,11 +83,16 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .session-filter-actions { justify-content: flex-end; }
 .session-results table { min-width: 1520px; }
-.session-notes-heading, .session-notes-action, .session-analysis-heading, .session-analysis-action, .session-edit-heading, .session-edit-action, .session-delete-heading, .session-delete-action { width: 64px; text-align: center; }
+.session-notes-heading, .session-notes-action, .session-equipment-heading, .session-equipment-action, .session-analysis-heading, .session-analysis-action, .session-edit-heading, .session-edit-action, .session-delete-heading, .session-delete-action { width: 64px; text-align: center; }
 .session-records-heading, .session-records-action { width: 112px; text-align: center; }
 .notes-button { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; color: var(--cyan); background: rgba(53,212,208,.08); border: 1px solid rgba(53,212,208,.3); border-radius: 7px; cursor: pointer; font-size: 17px; }
 .notes-button:hover:not(:disabled) { background: rgba(53,212,208,.16); border-color: var(--cyan); }
 .notes-button:disabled { filter: grayscale(1); opacity: .28; cursor: default; }
+.equipment-button { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; color: var(--cyan); background: rgba(53,212,208,.08); border: 1px solid rgba(53,212,208,.3); border-radius: 7px; cursor: pointer; font-size: 17px; }
+.equipment-button:hover:not(:disabled) { background: rgba(53,212,208,.16); border-color: var(--cyan); }
+.equipment-button:disabled { filter: grayscale(1); opacity: .28; cursor: default; }
+.session-equipment-list-modal { width: min(620px, 100%); }
+.session-equipment-list-modal .table-wrap { margin-top: 18px; max-height: 420px; }
 .analysis-button { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; color: var(--amber); background: rgba(248,189,89,.08); border: 1px solid rgba(248,189,89,.3); border-radius: 7px; cursor: pointer; font-size: 17px; }
 .analysis-button:hover:not(:disabled) { background: rgba(248,189,89,.16); border-color: var(--amber); }
 .analysis-button:disabled { opacity: .45; cursor: wait; }
@@ -136,6 +141,13 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .session-form-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .session-form-heading h2 { margin: 0; font-size: 20px; }
 .session-form-heading p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.session-equipment { margin: 22px 0; }
+.session-equipment .panel-heading { margin-bottom: 10px; }
+.session-equipment .table-wrap { max-height: 260px; border: 1px solid var(--line); border-radius: 9px; }
+.session-equipment-modal { width: min(620px, 100%); }
+.session-equipment-modal .modal-field { display: grid; gap: 7px; margin: 18px 0; }
+.session-equipment-modal tbody tr { cursor: pointer; }
+.session-equipment-modal tbody tr:hover, .session-equipment-modal tbody tr:focus { background: rgba(53,212,208,.08); outline: none; }
 .session-field { display: block; margin-top: 20px; }
 .session-field > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .session-field > span small { margin-left: 6px; color: #667f98; font-size: 9px; }

@@ -346,7 +346,8 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
                 MinimumAltitude = session.MinimumAltitude,
                 MaximumAltitude = session.MaximumAltitude,
                 MaximumDistance = session.MaximumDistance,
-                IncludedBehaviours = session.IncludedBehaviours
+                IncludedBehaviours = session.IncludedBehaviours,
+                HasEquipment = session.SessionEquipment.Any()
             })
             .ToListAsync(cancellationToken);
 
