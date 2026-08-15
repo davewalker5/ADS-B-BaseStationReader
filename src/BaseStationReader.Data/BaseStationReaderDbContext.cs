@@ -29,6 +29,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<EquipmentType> EquipmentTypes { get; set; }
         public virtual DbSet<Equipment> Equipment { get; set; }
         public virtual DbSet<SessionEquipment> SessionEquipment { get; set; }
+        public virtual DbSet<AircraftNote> AircraftNotes { get; set; }
 
         public BaseStationReaderDbContext(DbContextOptions<BaseStationReaderDbContext> options) : base(options)
         {
@@ -40,6 +41,16 @@ namespace BaseStationReader.Data
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<AircraftNote>(entity =>
+            {
+                entity.ToTable("AIRCRAFT_NOTE");
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Address).IsRequired().HasMaxLength(6).HasColumnName("Address");
+                entity.Property(e => e.NoteText).IsRequired().HasColumnName("NoteText");
+                entity.Property(e => e.Date).IsRequired().HasColumnType("DATETIME").HasColumnName("Date");
+                entity.HasIndex(e => new { e.Address, e.Date });
+            });
+
             modelBuilder.Entity<EquipmentType>(entity =>
             {
                 entity.ToTable("EQUIPMENT_TYPE");

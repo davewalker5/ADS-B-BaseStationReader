@@ -27,5 +27,6 @@ namespace BaseStationReader.Interfaces.Database
         IEquipmentTypeManager EquipmentTypeManager { get; }
         IEquipmentManager EquipmentManager { get; }
         ISessionEquipmentManager SessionEquipmentManager { get; }
+        IAircraftNoteManager AircraftNoteManager { get; }
     }
 }

@@ -1,5 +1,7 @@
 @page "/history/{Id:int}"
 @inject ITrackingSessionQueryService QueryService
+@inject IAircraftNoteService AircraftNoteService
+@inject ITrackingControlService TrackingControl
 
 <PageTitle>Tracking record #@Id · ADS-B Tracker</PageTitle>
 
@@ -51,6 +53,63 @@ else
     </div>
 
     <section class="future-actions"><h2>Analysis</h2><p>Inspect this session's altitude profile or interactive geographic flight path.</p><a class="analysis-link" href="history/@_record.Id/profile">Flight profile →</a><a class="analysis-link secondary" href="history/@_record.Id/path">Flight path →</a></section>
+
+    <section class="tracker-panel history-panel aircraft-notes-panel">
+        <div class="panel-heading">
+            <div><h2>Aircraft notes</h2><p>Notes follow ICAO address <span class="mono">@_record.Address</span> across tracking sessions.</p></div>
+            <button class="primary-button" type="button" @onclick="ShowAddNote"
+                    disabled="@(_notesLoading || TrackingControl.IsTracking)"
+                    title="@(TrackingControl.IsTracking ? "Notes cannot be added while a tracking session is in progress." : "Add an aircraft note")">Add</button>
+        </div>
+        @if (_notesError is not null)
+        {
+            <div class="alert" role="alert"><strong>Notes operation failed</strong><span>@_notesError</span></div>
+        }
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Date</th><th>Note</th><th class="exclusion-delete-heading">Remove</th></tr></thead>
+                <tbody>
+                    @if (_notesLoading)
+                    {
+                        <tr><td colspan="3" class="table-empty">Loading aircraft notes…</td></tr>
+                    }
+                    else if (_notes.Count == 0)
+                    {
+                        <tr><td colspan="3" class="table-empty">No notes have been added for this aircraft.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var note in _notes)
+                        {
+                            <tr>
+                                <td>@FormatDateTime(note.Date)</td>
+                                <td><button class="note-preview" type="button" @onclick="() => _viewNote = note">@Preview(note.NoteText)</button></td>
+                                <td class="exclusion-delete-action"><button class="session-delete-button" type="button"
+                                    title="@(TrackingControl.IsTracking ? "Notes cannot be deleted while a tracking session is in progress." : "Delete note")"
+                                    aria-label="Delete aircraft note" disabled="@TrackingControl.IsTracking"
+                                    @onclick="() => ConfirmDeleteNote(note)"><span aria-hidden="true">🗑️</span></button></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@if (_viewNote is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseViewNote"><section class="notes-modal" role="dialog" aria-modal="true" aria-labelledby="aircraft-note-title" @onclick:stopPropagation><header><div><p class="eyebrow">@FormatDateTime(_viewNote.Date)</p><h2 id="aircraft-note-title">Aircraft note</h2></div><button class="icon-button" type="button" aria-label="Close note" @onclick="CloseViewNote">×</button></header><div class="notes-modal-content">@_viewNote.NoteText</div></section></div>
+}
+
+@if (_showAddNote)
+{
+    <div class="modal-backdrop" @onclick="CloseAddNote"><section class="confirmation-modal aircraft-note-editor" role="dialog" aria-modal="true" aria-labelledby="add-aircraft-note-title" @onclick:stopPropagation><header><div><p class="eyebrow">New note</p><h2 id="add-aircraft-note-title">Add aircraft note</h2></div><button class="icon-button" type="button" aria-label="Close add note" @onclick="CloseAddNote" disabled="@_savingNote">×</button></header><form @onsubmit="SaveNoteAsync" @onsubmit:preventDefault><label class="modal-field"><span>Note</span><textarea @bind="_newNoteText" @bind:event="oninput" autofocus></textarea></label>@if (_noteDialogError is not null){<div class="alert" role="alert"><strong>Note save failed</strong><span>@_noteDialogError</span></div>}<div class="confirmation-actions"><button class="secondary-button" type="button" @onclick="CloseAddNote" disabled="@_savingNote">Cancel</button><button class="primary-button" type="submit" disabled="@(_savingNote || string.IsNullOrWhiteSpace(_newNoteText))">@(_savingNote ? "Saving…" : "Save")</button></div></form></section></div>
+}
+
+@if (_deleteNote is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseDeleteNote"><section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="delete-aircraft-note-title" @onclick:stopPropagation><header><div><p class="eyebrow">Delete note</p><h2 id="delete-aircraft-note-title">Delete aircraft note?</h2></div><button class="icon-button" type="button" aria-label="Close delete confirmation" @onclick="CloseDeleteNote" disabled="@_deletingNote">×</button></header><p>This note will be permanently removed from aircraft <strong class="mono">@_record?.Address</strong>.</p>@if (_noteDialogError is not null){<div class="alert" role="alert"><strong>Note deletion failed</strong><span>@_noteDialogError</span></div>}<div class="confirmation-actions"><button class="secondary-button" type="button" @onclick="CloseDeleteNote" disabled="@_deletingNote">Cancel</button><button class="danger-button" type="button" @onclick="DeleteNoteAsync" disabled="@_deletingNote">@(_deletingNote ? "Deleting…" : "Delete note")</button></div></section></div>
 }
 
 @code {
@@ -59,6 +118,16 @@ else
     private TrackingSessionDetail? _record;
     private bool _loading = true;
     private string? _error;
+    private IReadOnlyList<AircraftNote> _notes = [];
+    private AircraftNote? _viewNote;
+    private AircraftNote? _deleteNote;
+    private bool _notesLoading;
+    private bool _showAddNote;
+    private bool _savingNote;
+    private bool _deletingNote;
+    private string _newNoteText = string.Empty;
+    private string? _notesError;
+    private string? _noteDialogError;
 
     /// <summary>
     /// Reloads the detail whenever the route record identifier changes.
@@ -71,6 +140,10 @@ else
         {
             // Fetch one projected detail DTO; no persistence entity reaches the component.
             _record = await QueryService.GetAsync(Id);
+            if (_record is not null)
+            {
+                await LoadNotesAsync();
+            }
         }
         catch (Exception exception)
         {
@@ -81,6 +154,58 @@ else
             _loading = false;
         }
     }
+
+    private async Task LoadNotesAsync()
+    {
+        _notesLoading = true;
+        _notesError = null;
+        try { _notes = await AircraftNoteService.ListAsync(_record!.Address); }
+        catch (Exception exception) { _notesError = exception.Message; }
+        finally { _notesLoading = false; }
+    }
+
+    private void ShowAddNote()
+    {
+        if (TrackingControl.IsTracking)
+        {
+            return;
+        }
+
+        _newNoteText = string.Empty;
+        _noteDialogError = null;
+        _showAddNote = true;
+    }
+    private void CloseAddNote() { if (!_savingNote) { _showAddNote = false; _noteDialogError = null; } }
+    private void CloseViewNote() => _viewNote = null;
+    private void ConfirmDeleteNote(AircraftNote note)
+    {
+        if (!TrackingControl.IsTracking)
+        {
+            _deleteNote = note;
+        }
+    }
+
+    private void CloseDeleteNote() { if (!_deletingNote) { _deleteNote = null; _noteDialogError = null; } }
+
+    private async Task SaveNoteAsync()
+    {
+        if (_record is null || string.IsNullOrWhiteSpace(_newNoteText) || TrackingControl.IsTracking) return;
+        _savingNote = true; _noteDialogError = null;
+        try { await AircraftNoteService.AddAsync(_record.Address, _newNoteText); _showAddNote = false; await LoadNotesAsync(); }
+        catch (Exception exception) { _noteDialogError = exception.Message; }
+        finally { _savingNote = false; }
+    }
+
+    private async Task DeleteNoteAsync()
+    {
+        if (_record is null || _deleteNote is null || TrackingControl.IsTracking) return;
+        _deletingNote = true; _noteDialogError = null;
+        try { await AircraftNoteService.DeleteAsync(_deleteNote.Id, _record.Address); _deleteNote = null; await LoadNotesAsync(); }
+        catch (Exception exception) { _noteDialogError = exception.Message; }
+        finally { _deletingNote = false; }
+    }
+
+    private static string Preview(string text) => text.Length <= 120 ? text : $"{text[..120]}…";
 
     /// <summary>
     /// Renders a compact read-only position summary.
