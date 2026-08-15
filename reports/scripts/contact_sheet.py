@@ -81,35 +81,18 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
     """
     # Keep project-specific defaults here so they are visible in --help output.
     project_root = Path(__file__).resolve().parent.parent.parent
-    parser = argparse.ArgumentParser(
-        description="Generate flight-path contact sheets grouped by observation session."
-    )
-    parser.add_argument("input_csv", type=Path, help="CSV file with Address,Session ID columns")
-    parser.add_argument(
-        "--orientation",
-        choices=("portrait", "landscape"),
-        default="portrait",
-        help="sheet orientation",
-    )
-    parser.add_argument("--rows", type=positive_integer, default=5, help="rows per sheet")
-    parser.add_argument("--columns", type=positive_integer, default=4, help="columns per sheet")
-    parser.add_argument(
-        "--database",
-        type=Path,
-        default=None,
-        help="SQLite tracker database",
-    )
-    parser.add_argument(
-        "--output-directory",
-        type=Path,
-        default=project_root / "data" / "reports" / "contact-sheets",
-        help="PNG destination directory",
-    )
-    parser.add_argument(
-        "--mapbox-token",
-        default=None,
-        help="Mapbox token",
-    )
+    default_output = project_root / "data" / "reports" / "contact-sheets"
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", type=Path, help="CSV file with Address,Session ID columns")
+    parser.add_argument("-o", "--orientation", choices=("portrait", "landscape"), default="portrait",
+                        help="sheet orientation")
+    parser.add_argument("-r", "--rows", type=positive_integer, default=5, help="rows per sheet")
+    parser.add_argument("-c", "--columns", type=positive_integer, default=4, help="columns per sheet")
+    parser.add_argument("-d", "--database", type=Path, default=None, help="SQLite tracker database")
+    parser.add_argument("-od", "--output-directory", type=Path, default=default_output,
+                        help="PNG destination directory")
+    parser.add_argument("-t", "--token", default=None, help="Mapbox token")
     return parser.parse_args(arguments)
 
 
@@ -535,7 +518,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
     # Convert expected input problems into a short command-line error without hiding programming faults.
     parsed = parse_arguments(arguments)
     try:
-        requests = read_requests(parsed.input_csv)
+        requests = read_requests(parsed.input)
         database_path = resolve_database_path(parsed.database)
         paths = generate_contact_sheets(
             requests,
@@ -544,7 +527,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             parsed.orientation,
             parsed.rows,
             parsed.columns,
-            parsed.mapbox_token or os.environ.get("MAPBOX_API_KEY"),
+            parsed.token or os.environ.get("MAPBOX_API_KEY"),
         )
     except (OSError, ValueError, sqlite3.Error) as error:
         raise SystemExit(f"Error: {error}") from error

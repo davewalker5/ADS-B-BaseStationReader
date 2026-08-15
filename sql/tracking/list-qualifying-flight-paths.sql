@@ -1,22 +1,93 @@
+WITH parameters AS (
+    SELECT  200 AS MinimumPoints,
+            5000 AS MinimumAltitudeChange,
+            1.10 AS MinimumCurvatureRatio,
+            1.0 AS MinimumExcessDistance
+),
+ordered_positions AS (
+    SELECT  p.Id,
+            p.AircraftId,
+            p.Altitude,
+            p.Latitude,
+            p.Longitude,
+            LAG( p.Latitude ) OVER (
+                PARTITION BY p.AircraftId
+                ORDER BY p.Timestamp, p.Id
+            ) AS PreviousLatitude,
+            LAG( p.Longitude ) OVER (
+                PARTITION BY p.AircraftId
+                ORDER BY p.Timestamp, p.Id
+            ) AS PreviousLongitude,
+            ROW_NUMBER() OVER (
+                PARTITION BY p.AircraftId
+                ORDER BY p.Timestamp, p.Id
+            ) AS PositionNumber,
+            ROW_NUMBER() OVER (
+                PARTITION BY p.AircraftId
+                ORDER BY p.Timestamp DESC, p.Id DESC
+            ) AS ReversePositionNumber
+    FROM    POSITION p
+    WHERE   p.Latitude IS NOT NULL
+    AND     p.Longitude IS NOT NULL
+    AND     p.Altitude IS NOT NULL
+),
+flight_path_metrics AS (
+    SELECT  op.AircraftId,
+            MIN( op.Altitude ) AS MinimumAltitude,
+            MAX( op.Altitude ) AS MaximumAltitude,
+            MAX( op.Altitude ) - MIN( op.Altitude ) AS AltitudeChange,
+            COUNT( op.Id ) AS PointCount,
+            SUM(
+                CASE
+                    WHEN op.PreviousLatitude IS NULL THEN 0
+                    ELSE SQRT(
+                        ( op.Latitude - op.PreviousLatitude )
+                            * ( op.Latitude - op.PreviousLatitude )
+                        + ( op.Longitude - op.PreviousLongitude )
+                            * ( op.Longitude - op.PreviousLongitude )
+                            * COS( op.Latitude * 3.141592653589793 / 180.0 )
+                            * COS( op.Latitude * 3.141592653589793 / 180.0 )
+                    ) * 60.0
+                END
+            ) AS TravelledDistance,
+            SQRT(
+                ( MAX( CASE WHEN op.ReversePositionNumber = 1 THEN op.Latitude END )
+                    - MAX( CASE WHEN op.PositionNumber = 1 THEN op.Latitude END ) )
+                    * ( MAX( CASE WHEN op.ReversePositionNumber = 1 THEN op.Latitude END )
+                        - MAX( CASE WHEN op.PositionNumber = 1 THEN op.Latitude END ) )
+                + ( MAX( CASE WHEN op.ReversePositionNumber = 1 THEN op.Longitude END )
+                    - MAX( CASE WHEN op.PositionNumber = 1 THEN op.Longitude END ) )
+                    * ( MAX( CASE WHEN op.ReversePositionNumber = 1 THEN op.Longitude END )
+                        - MAX( CASE WHEN op.PositionNumber = 1 THEN op.Longitude END ) )
+                    * COS( AVG( op.Latitude ) * 3.141592653589793 / 180.0 )
+                    * COS( AVG( op.Latitude ) * 3.141592653589793 / 180.0 )
+            ) * 60.0 AS EndpointDistance
+    FROM    ordered_positions op
+    GROUP BY op.AircraftId
+)
 SELECT      s.Id,
             s.Name,
             s.StartedAtUtc,
             ta.Address,
             ta.Callsign,
-            MIN( p.Altitude ) AS "Minumum_Altitude",
-            MAX( p.Altitude ) AS "Maxumum_Altitude",
-            MAX( p.Altitude ) - MIN( p.Altitude ) AS "Altitude_Change",
-            COUNT( p.Id ) AS "Points"
+            fpm.MinimumAltitude AS "Minumum_Altitude",
+            fpm.MaximumAltitude AS "Maxumum_Altitude",
+            fpm.AltitudeChange AS "Altitude_Change",
+            fpm.PointCount AS "Points"
 FROM        SESSION s
 INNER JOIN  TRACKED_AIRCRAFT ta ON ta.SessionId = s.Id
-INNER JOIN  POSITION p on p.AircraftId = ta.Id
+INNER JOIN  flight_path_metrics fpm ON fpm.AircraftId = ta.Id
+CROSS JOIN  parameters criteria
 WHERE       s.Id = 28
-AND         p.Latitude IS NOT NULL
-AND         p.Longitude IS NOT NULL
-AND         p.Altitude IS NOT NULL
-GROUP BY    ta.Address,
-            s.Id
-HAVING      MAX( p.Altitude ) - MIN( p.Altitude ) > 1000
-AND         COUNT( p.Id ) >= 200
-ORDER BY    COUNT( p.Id ) DESC,
-            MAX( p.Altitude ) - MIN( p.Altitude ) DESC;
+AND         fpm.PointCount >= criteria.MinimumPoints
+AND         (
+                fpm.AltitudeChange > criteria.MinimumAltitudeChange
+                OR (
+                    fpm.TravelledDistance - fpm.EndpointDistance
+                        >= criteria.MinimumExcessDistance
+                    AND fpm.TravelledDistance
+                        >= fpm.EndpointDistance * criteria.MinimumCurvatureRatio
+                )
+            )
+ORDER BY    fpm.PointCount DESC,
+            fpm.AltitudeChange DESC;

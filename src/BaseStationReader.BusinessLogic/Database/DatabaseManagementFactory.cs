@@ -28,6 +28,7 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly Lazy<IEquipmentTypeManager> _equipmentTypeManager = null;
         private readonly Lazy<IEquipmentManager> _equipmentManager = null;
         private readonly Lazy<ISessionEquipmentManager> _sessionEquipmentManager = null;
+        private readonly Lazy<IAircraftNoteManager> _aircraftNoteManager = null;
 
         public ITrackerLogger Logger { get; private set; }
         public IDataCleaner DataCleaner { get { return _cleaner.Value; }}
@@ -50,6 +51,7 @@ namespace BaseStationReader.BusinessLogic.Database
         public IEquipmentTypeManager EquipmentTypeManager { get { return _equipmentTypeManager.Value; } }
         public IEquipmentManager EquipmentManager { get { return _equipmentManager.Value; } }
         public ISessionEquipmentManager SessionEquipmentManager { get { return _sessionEquipmentManager.Value; } }
+        public IAircraftNoteManager AircraftNoteManager { get { return _aircraftNoteManager.Value; } }
 
         public DatabaseManagementFactory(
             ITrackerLogger logger,
@@ -82,6 +84,7 @@ namespace BaseStationReader.BusinessLogic.Database
             _equipmentTypeManager = new Lazy<IEquipmentTypeManager>(() => new EquipmentTypeManager(context));
             _equipmentManager = new Lazy<IEquipmentManager>(() => new EquipmentManager(context));
             _sessionEquipmentManager = new Lazy<ISessionEquipmentManager>(() => new SessionEquipmentManager(context));
+            _aircraftNoteManager = new Lazy<IAircraftNoteManager>(() => new AircraftNoteManager(context));
         }
 
         /// <summary>
