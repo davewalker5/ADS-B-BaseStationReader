@@ -64,6 +64,30 @@ public sealed class ObservationSessionEditorService(
     }
 
     /// <inheritdoc />
+    public Task AddEquipmentAsync(
+        int sessionId,
+        int equipmentId,
+        CancellationToken cancellationToken = default)
+        => runtime.ExecuteWhileIdleAsync(async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var manager = new DatabaseManagementFactory(logger, context, 0).SessionEquipmentManager;
+            await manager.AddAsync(sessionId, equipmentId, cancellationToken);
+        }, cancellationToken);
+
+    /// <inheritdoc />
+    public Task DeleteEquipmentAsync(
+        int sessionId,
+        int equipmentId,
+        CancellationToken cancellationToken = default)
+        => runtime.ExecuteWhileIdleAsync(async () =>
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            var manager = new DatabaseManagementFactory(logger, context, 0).SessionEquipmentManager;
+            await manager.DeleteAsync(sessionId, equipmentId, cancellationToken);
+        }, cancellationToken);
+
+    /// <inheritdoc />
     public Task DeleteAsync(int sessionId, CancellationToken cancellationToken = default)
         => runtime.ExecuteWhileIdleAsync(async () =>
         {

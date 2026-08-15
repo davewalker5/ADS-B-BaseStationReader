@@ -1,0 +1,55 @@
+@page "/history/equipment-types"
+@inject IEquipmentRegisterService EquipmentService
+
+<PageTitle>Equipment Types · Database · ADS-B Tracker</PageTitle>
+<DatabaseTabs />
+
+<section class="filter-panel">
+    <div class="filter-heading"><div><h2>Equipment type filter</h2><p>Search by a full or partial name.</p></div></div>
+    <form @onsubmit="LoadAsync" @onsubmit:preventDefault>
+        <div class="filter-grid exclusion-filter-grid"><label><span>Name</span><input @bind="_filter" autocomplete="off" /></label></div>
+        <div class="filter-actions"><button class="primary-button" type="submit" disabled="@_busy">Search</button><button class="secondary-button" type="button" @onclick="ClearFilterAsync" disabled="@_busy">Clear</button></div>
+    </form>
+</section>
+
+@if (_error is not null) { <div class="alert" role="alert"><strong>Operation failed</strong><span>@_error</span></div> }
+
+<section class="tracker-panel history-panel" aria-busy="@_busy">
+    <div class="panel-heading"><div><h2>Equipment types</h2><p>@_results.Count matching types</p></div><button class="primary-button" @onclick="Add">Add</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>
+        @if (_results.Count == 0) { <tr><td colspan="2" class="table-empty">No equipment types match this filter.</td></tr> }
+        @foreach (var item in _results)
+        {
+            <tr><td><strong>@item.Name</strong></td><td><button class="edit-button" type="button" title="Edit equipment type" aria-label="Edit equipment type @item.Name" @onclick="() => Edit(item)"><span aria-hidden="true">✏️</span></button> <button class="session-delete-button" aria-label="Delete @item.Name" @onclick="() => DeleteAsync(item)">🗑️</button></td></tr>
+        }
+    </tbody></table></div>
+</section>
+
+@if (_editing is not null)
+{
+    <section class="provenance-editor">
+        <div><h2>@(_editing.Id == 0 ? "Add equipment type" : "Edit equipment type")</h2></div>
+        <EditForm Model="_editing" OnValidSubmit="SaveAsync" FormName="equipment-type-editor"><DataAnnotationsValidator />
+            <div class="provenance-fields"><label><span>Name</span><InputText @bind-Value="_editing.Name" /></label></div>
+            <ValidationSummary /><div class="provenance-editor-actions"><button class="primary-button" type="submit" disabled="@_busy">Save</button><button class="secondary-button" type="button" @onclick="Cancel">Cancel</button></div>
+        </EditForm>
+    </section>
+}
+
+@code {
+#nullable enable
+    private IReadOnlyList<EquipmentType> _results = [];
+    private EquipmentType? _editing;
+    private string _filter = "";
+    private string? _error;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private async Task LoadAsync() { _busy = true; _error = null; try { _results = await EquipmentService.SearchTypesAsync(_filter); } catch (Exception exception) { _error = exception.Message; } finally { _busy = false; } }
+    private async Task ClearFilterAsync() { _filter = ""; await LoadAsync(); }
+    private void Add() => _editing = new();
+    private void Edit(EquipmentType item) => _editing = new() { Id = item.Id, Name = item.Name };
+    private void Cancel() => _editing = null;
+    private async Task SaveAsync() { if (_editing is null) return; _busy = true; try { await EquipmentService.SaveTypeAsync(_editing); _editing = null; await LoadAsync(); } catch (Exception exception) { _error = exception.Message; } finally { _busy = false; } }
+    private async Task DeleteAsync(EquipmentType item) { _busy = true; try { await EquipmentService.DeleteTypeAsync(item.Id); if (_editing?.Id == item.Id) _editing = null; await LoadAsync(); } catch (Exception exception) { _error = exception.Message; } finally { _busy = false; } }
+}

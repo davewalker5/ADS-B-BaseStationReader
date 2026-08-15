@@ -49,5 +49,17 @@ namespace BaseStationReader.Tests.Database
             Assert.HasCount(1, exclusions);
             Assert.AreEqual(Callsign, exclusions[0].Callsign);
         }
+
+        /// <summary>
+        /// Verifies the equipment managers are exposed by the factory.
+        /// </summary>
+        [TestMethod]
+        public async Task EquipmentManagersTestAsync()
+        {
+            var type = await _factory.EquipmentTypeManager.AddAsync("Receiver");
+            await _factory.EquipmentManager.AddAsync("Airspy", type.Id);
+
+            Assert.HasCount(1, await _factory.EquipmentManager.SearchAsync(null));
+        }
     }
 }

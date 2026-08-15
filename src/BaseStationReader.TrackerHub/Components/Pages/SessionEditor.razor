@@ -1,6 +1,7 @@
 @page "/history/session-editor"
 @inject IObservationSessionEditorService Editor
 @inject ITrackingControlService TrackingControl
+@inject IEquipmentRegisterService EquipmentRegister
 @inject NavigationManager Navigation
 
 <PageTitle>Session Editor · Tracking Database · ADS-B Tracker</PageTitle>
@@ -36,7 +37,7 @@ else
             <div class="session-form-heading">
                 <div>
                     <h2>Edit session</h2>
-                    <p>Update the name and notes recorded with this tracking run. Other session parameters are fixed.</p>
+                    <p>Update the name, notes, and equipment recorded with this tracking run. Other session parameters are fixed.</p>
                 </div>
                 <span class="read-only-badge"><span>●</span> Session parameters fixed</span>
             </div>
@@ -78,6 +79,47 @@ else
                 </dl>
             </div>
 
+            <section class="session-equipment" aria-label="Session equipment">
+                <div class="panel-heading">
+                    <div><h3>Equipment</h3><p>Equipment used during this session.</p></div>
+                    <button class="primary-button" type="button" @onclick="ShowEquipmentDialogAsync"
+                            disabled="@(_equipmentBusy || TrackingControl.IsTracking || _equipmentTypes.Count == 0)">Add</button>
+                </div>
+                @if (_equipmentError is not null)
+                {
+                    <div class="alert" role="alert"><strong>Equipment update failed</strong><span>@_equipmentError</span></div>
+                }
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Type</th><th>Equipment</th><th>Remove</th></tr></thead>
+                        <tbody>
+                            @if (_sessionEquipment.Count == 0)
+                            {
+                                <tr><td colspan="3" class="table-empty">No equipment associated with this session.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var association in _sessionEquipment)
+                                {
+                                    <tr>
+                                        <td>@association.Equipment.EquipmentType.Name</td>
+                                        <td><strong>@association.Equipment.Name</strong></td>
+                                        <td class="session-delete-action">
+                                            <button class="session-delete-button" type="button" title="Remove equipment"
+                                                    aria-label="Remove @association.Equipment.Name"
+                                                    disabled="@(_equipmentBusy || TrackingControl.IsTracking)"
+                                                    @onclick="() => RemoveEquipmentAsync(association)">
+                                                <span aria-hidden="true">🗑️</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <label class="session-field" for="editor-session-notes">
                 <span>Session notes <small>Optional</small></span>
                 <textarea id="editor-session-notes" @bind="_notes" maxlength="4000" rows="5"
@@ -101,6 +143,51 @@ else
             </div>
         </div>
     </section>
+}
+
+@if (_showEquipmentDialog)
+{
+    <div class="modal-backdrop" @onclick="CloseEquipmentDialog">
+        <section class="confirmation-modal session-equipment-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="editor-add-session-equipment-title" tabindex="0" @onclick:stopPropagation
+                 @onkeydown="HandleEquipmentDialogKeyDown">
+            <header>
+                <div><p class="eyebrow">Session equipment</p><h2 id="editor-add-session-equipment-title">Add equipment</h2></div>
+                <button class="icon-button" type="button" aria-label="Close equipment dialog"
+                        @onclick="CloseEquipmentDialog" disabled="@_equipmentBusy">×</button>
+            </header>
+            <label class="modal-field">
+                <span>Equipment type</span>
+                <select value="@_selectedEquipmentTypeId" @onchange="EquipmentTypeChangedAsync" disabled="@_equipmentBusy">
+                    @foreach (var type in _equipmentTypes)
+                    {
+                        <option value="@type.Id">@type.Name</option>
+                    }
+                </select>
+            </label>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Available equipment</th></tr></thead>
+                    <tbody>
+                        @if (_availableEquipment.Count == 0)
+                        {
+                            <tr><td class="table-empty">No unassociated equipment of this type is available.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var equipment in _availableEquipment)
+                            {
+                                <tr tabindex="0" @onclick="() => AddEquipmentAsync(equipment)"
+                                    @onkeydown="args => AddEquipmentFromKeyboardAsync(args, equipment)">
+                                    <td><strong>@equipment.Name</strong></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 }
 
 @if (_showDeleteConfirmation && _session is not null)
@@ -149,6 +236,13 @@ else
     private bool _showDeleteConfirmation;
     private bool _deleting;
     private string? _deleteError;
+    private IReadOnlyList<EquipmentType> _equipmentTypes = [];
+    private IReadOnlyList<SessionEquipment> _sessionEquipment = [];
+    private IReadOnlyList<Equipment> _availableEquipment = [];
+    private int _selectedEquipmentTypeId;
+    private bool _showEquipmentDialog;
+    private bool _equipmentBusy;
+    private string? _equipmentError;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -166,10 +260,138 @@ else
                 : null;
             _name = _session?.Name ?? string.Empty;
             _notes = _session?.Notes ?? string.Empty;
+            if (_session is not null)
+            {
+                _equipmentTypes = await EquipmentRegister.SearchTypesAsync(null);
+                _selectedEquipmentTypeId = _equipmentTypes.FirstOrDefault()?.Id ?? 0;
+                await LoadSessionEquipmentAsync();
+            }
         }
         finally
         {
             _loading = false;
+        }
+    }
+
+    /// <summary>Loads equipment associated with the session being edited.</summary>
+    private async Task LoadSessionEquipmentAsync()
+    {
+        if (_session is null)
+        {
+            _sessionEquipment = [];
+            return;
+        }
+
+        _sessionEquipment = await EquipmentRegister.ListSessionEquipmentAsync(_session.SessionId);
+    }
+
+    /// <summary>Opens the equipment picker and loads unassociated items.</summary>
+    private async Task ShowEquipmentDialogAsync()
+    {
+        if (_session is null || TrackingControl.IsTracking || _equipmentTypes.Count == 0)
+        {
+            return;
+        }
+
+        _equipmentError = null;
+        _selectedEquipmentTypeId = _equipmentTypes.First().Id;
+        await LoadAvailableEquipmentAsync();
+        _showEquipmentDialog = true;
+    }
+
+    /// <summary>Closes the equipment picker when no update is active.</summary>
+    private void CloseEquipmentDialog()
+    {
+        if (!_equipmentBusy)
+        {
+            _showEquipmentDialog = false;
+        }
+    }
+
+    /// <summary>Reloads available equipment when its type changes.</summary>
+    private async Task EquipmentTypeChangedAsync(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var equipmentTypeId))
+        {
+            _selectedEquipmentTypeId = equipmentTypeId;
+            await LoadAvailableEquipmentAsync();
+        }
+    }
+
+    /// <summary>Loads equipment of the selected type that is not already associated.</summary>
+    private async Task LoadAvailableEquipmentAsync()
+    {
+        var equipment = await EquipmentRegister.SearchEquipmentAsync(null, _selectedEquipmentTypeId);
+        var associatedIds = _sessionEquipment.Select(x => x.EquipmentId).ToHashSet();
+        _availableEquipment = equipment.Where(x => !associatedIds.Contains(x.Id)).ToList();
+    }
+
+    /// <summary>Persists a new equipment association and closes the picker.</summary>
+    private async Task AddEquipmentAsync(Equipment equipment)
+    {
+        if (_session is null || _equipmentBusy || TrackingControl.IsTracking)
+        {
+            return;
+        }
+
+        _equipmentBusy = true;
+        _equipmentError = null;
+        try
+        {
+            await Editor.AddEquipmentAsync(_session.SessionId, equipment.Id);
+            await LoadSessionEquipmentAsync();
+            _showEquipmentDialog = false;
+        }
+        catch (Exception exception)
+        {
+            _equipmentError = exception.Message;
+        }
+        finally
+        {
+            _equipmentBusy = false;
+        }
+    }
+
+    /// <summary>Adds the focused equipment item when activated from the keyboard.</summary>
+    private async Task AddEquipmentFromKeyboardAsync(KeyboardEventArgs args, Equipment equipment)
+    {
+        if (args.Key is "Enter" or " ")
+        {
+            await AddEquipmentAsync(equipment);
+        }
+    }
+
+    /// <summary>Removes a persisted equipment association from the session.</summary>
+    private async Task RemoveEquipmentAsync(SessionEquipment association)
+    {
+        if (_session is null || _equipmentBusy || TrackingControl.IsTracking)
+        {
+            return;
+        }
+
+        _equipmentBusy = true;
+        _equipmentError = null;
+        try
+        {
+            await Editor.DeleteEquipmentAsync(_session.SessionId, association.EquipmentId);
+            await LoadSessionEquipmentAsync();
+        }
+        catch (Exception exception)
+        {
+            _equipmentError = exception.Message;
+        }
+        finally
+        {
+            _equipmentBusy = false;
+        }
+    }
+
+    /// <summary>Closes the equipment picker when Escape is pressed.</summary>
+    private void HandleEquipmentDialogKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseEquipmentDialog();
         }
     }
 

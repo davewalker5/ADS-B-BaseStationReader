@@ -120,9 +120,14 @@ namespace BaseStationReader.BusinessLogic.Database
                     .Where(item => trackedAircraftIds.Contains(item.AircraftId))
                     .ToListAsync(cancellationToken);
 
+                var sessionEquipment = await _context.SessionEquipment
+                    .Where(item => item.SessionId == sessionId)
+                    .ToListAsync(cancellationToken);
+
                 // Remove the data
                 _context.Positions.RemoveRange(positions);
                 _context.TrackedAircraft.RemoveRange(trackedAircraft);
+                _context.SessionEquipment.RemoveRange(sessionEquipment);
                 _context.ObservationSessions.Remove(session);
                 await _context.SaveChangesAsync(cancellationToken);
 
