@@ -7,7 +7,7 @@ WHERE PositionDensitySnapshotId IN (
 
 DELETE FROM POSITION_DENSITY_SNAPSHOT
 WHERE       SessionId = 0
-OR          SessionId IS NULL
+OR          SessionId IS NULL;
 
 DELETE FROM POSITION
 WHERE AircraftId IN (
@@ -18,7 +18,7 @@ WHERE AircraftId IN (
 
 DELETE FROM TRACKED_AIRCRAFT
 WHERE       SessionId = 0
-OR          SessionId IS NULL
+OR          SessionId IS NULL;
 
 DELETE FROM SESSION
 WHERE       Id = 0;
