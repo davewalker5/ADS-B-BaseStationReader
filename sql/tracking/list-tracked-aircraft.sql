@@ -1,4 +1,5 @@
-SELECT DISTINCT s.Name AS "Session",
+SELECT DISTINCT s.Id AS "SessionId",
+                s.Name AS "Session",
                 a.Address,
                 a.Registration,
                 m.Name AS "Model",
