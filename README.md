@@ -213,6 +213,12 @@ The reporting suite currently includes:
 - Position Density Replay
 - Reference Data Coverage
 - Temporal Activity
+- Aircraft Age Overview
+- Aircraft Age by Type and Model
+- Manufacturer and Era Analysis
+- Observation Session Population Comparison
+- Interesting Aircraft Explorer
+- Aircraft Age Versus Observation Frequency
 
 Together these reports help answer questions such as:
 
@@ -223,6 +229,8 @@ Together these reports help answer questions such as:
 - How complete is the local aviation reference database?
 - How have observation patterns changed over time?
 - How did position density develop during a particular session?
+- How old are the observed aircraft, and which types and manufacturers contain the oldest examples?
+- Which unusual or infrequently observed aircraft merit further investigation?
 
 Unlike the integrated UI, which focuses on operational awareness during an active observation session, the reporting suite is intended for historical analysis and exploration across many completed sessions.
 

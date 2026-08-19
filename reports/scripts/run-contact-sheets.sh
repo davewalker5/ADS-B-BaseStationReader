@@ -18,9 +18,9 @@ python="$reports_root/venv/bin/python"
 export MPLCONFIGDIR="${TMPDIR:-/tmp}/ads-b-contact-sheet-matplotlib"
 
 if [[ ! -x "$python" ]]; then
-    echo "Error: reporting environment not found; run reports/make_venv.sh first." >&2
+    echo "Error: reporting environment not found; run reports/make-venv.sh first." >&2
     exit 1
 fi
 
 # Pass every contact-sheet option through unchanged to the Python command.
-exec "$python" "$reports_root/scripts/contact_sheet.py" "$@"
+exec "$python" "$reports_root/scripts/contact-sheet.py" "$@"
