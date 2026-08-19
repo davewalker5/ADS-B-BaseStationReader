@@ -108,7 +108,8 @@ while IFS=, read -r address session_id extra || [[ -n "${address}${session_id}${
         "$papermill" \
             --parameters session_id "$session_id" \
             --parameters_raw aircraft_address "$address" \
-            "$notebook_name" /dev/null
+            "$notebook_name" /dev/null \
+            2> >(sed '/Kernel is running over TCP without encryption/d' >&2)
     ); then
         echo "Error: notebook failed for aircraft $address, session $session_id" >&2
         exit 1

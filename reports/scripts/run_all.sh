@@ -126,7 +126,8 @@ run_notebooks() {
         # Run from the notebook's folder so its relative paths resolve there.
         if ! (
             cd "$notebook_dir" || exit 1
-            papermill "$@" "$filename" /dev/null
+            papermill "$@" "$filename" /dev/null \
+                2> >(sed '/Kernel is running over TCP without encryption/d' >&2)
         ); then
             echo "Error: notebook failed: $file" >&2
             return 1
