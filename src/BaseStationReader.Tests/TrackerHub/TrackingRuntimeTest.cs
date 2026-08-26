@@ -168,6 +168,25 @@ public class TrackingRuntimeTest
     }
 
     [TestMethod]
+    public async Task FaultedControllerIsReleasedWhenStopSurfacesFailureTest()
+    {
+        var controller = new FaultingController(Settings("Initial.json"));
+        var runtime = new TrackingRuntime(Settings("Initial.json"), (_, _, _) => controller);
+        using var cancellation = new CancellationTokenSource();
+        var runtimeTask = runtime.StartAsync(cancellation.Token);
+        await runtime.StartTrackingAsync("receiver.local", 30003, "Faulted stop session");
+        await WaitUntilAsync(() => controller.Started);
+
+        var exception = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => runtime.StopTrackingAsync(flushQueue: true));
+
+        Assert.AreEqual("Flush failed", exception.Message);
+        Assert.IsFalse(runtime.IsTracking);
+        cancellation.Cancel();
+        await runtimeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
     public async Task SessionResetCompletesBeforeControllerCanStartTest()
     {
         var order = new List<string>();
@@ -281,6 +300,29 @@ public class TrackingRuntimeTest
             try { await Task.Delay(Timeout.InfiniteTimeSpan, token); }
             catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         }
+
+        public Task FlushQueueAsync(CancellationToken cancellationToken = default,
+            IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null) => Task.CompletedTask;
+    }
+
+    private sealed class FaultingController(TrackerApplicationSettings settings) : ITrackerController
+    {
+        private readonly TaskCompletionSource _stopping = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public event EventHandler<AircraftNotificationEventArgs> AircraftEvent { add { } remove { } }
+        public IEnumerable<TrackedAircraftDto> State => [];
+        public TrackingOptions TrackingOptions => TrackingOptions.FromTrackerSettings(settings);
+        public int QueueSize => 1;
+        public bool Started { get; private set; }
+
+        public async Task StartAsync(CancellationToken token)
+        {
+            Started = true;
+            await _stopping.Task;
+            throw new InvalidOperationException("Flush failed");
+        }
+
+        public void RequestStop() => _stopping.TrySetResult();
 
         public Task FlushQueueAsync(CancellationToken cancellationToken = default,
             IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress> progress = null) => Task.CompletedTask;

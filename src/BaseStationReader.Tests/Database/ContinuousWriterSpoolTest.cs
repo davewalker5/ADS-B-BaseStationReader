@@ -1,8 +1,10 @@
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.BusinessLogic.Spool;
 using BaseStationReader.Data;
+using BaseStationReader.Entities.Spool;
 using BaseStationReader.Entities.Tracking;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Interfaces.Spool;
 using BaseStationReader.Tests.Mocks;
 
 namespace BaseStationReader.Tests.Database;
@@ -10,6 +12,75 @@ namespace BaseStationReader.Tests.Database;
 [TestClass]
 public sealed class ContinuousWriterSpoolTest
 {
+    [TestMethod]
+    public async Task FlushProgressAdvancesForEveryCompletedRecordTestAsync()
+    {
+        var folder = CreateFolder();
+
+        try
+        {
+            using (var seed = new SpoolQueueManager(folder))
+            {
+                seed.EnqueueRange([CreateAircraft("FIRST"), CreateAircraft("SECOND")]);
+            }
+
+            await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
+            await using var writer = new ContinuousWriter(
+                factory,
+                new SpoolQueueManager(folder),
+                flushOnStop: false);
+            var progress = new RecordingProgress();
+
+            await writer.FlushQueueAsync(progress: progress);
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    new QueueFlushProgress(2, 2),
+                    new QueueFlushProgress(2, 1),
+                    new QueueFlushProgress(2, 0)
+                },
+                progress.Reports);
+        }
+        finally
+        {
+            DeleteFolder(folder);
+        }
+    }
+
+    [TestMethod]
+    public async Task EmptyDequeueOverridesStaleEstimatedCountTestAsync()
+    {
+        await using var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+        IDatabaseManagementFactory factory = new DatabaseManagementFactory(new MockFileLogger(), context, 1000);
+        await using var writer = new ContinuousWriter(factory, new EmptyQueueWithStaleCount());
+        var progress = new RecordingProgress();
+
+        await writer.FlushQueueAsync(progress: progress);
+
+        CollectionAssert.AreEqual(
+            new[] { new QueueFlushProgress(5, 5), new QueueFlushProgress(5, 0) },
+            progress.Reports);
+        Assert.AreEqual(0, writer.QueueSize);
+    }
+
+    private sealed class RecordingProgress : IProgress<QueueFlushProgress>
+    {
+        public List<QueueFlushProgress> Reports { get; } = [];
+
+        public void Report(QueueFlushProgress value) => Reports.Add(value);
+    }
+
+    private sealed class EmptyQueueWithStaleCount : ISpoolQueue
+    {
+        public int Count => 5;
+        public void Enqueue(object entity) { }
+        public void EnqueueRange(IEnumerable<object> entities) { }
+        public ISpoolQueueItem TryDequeue() => null;
+        public void Dispose() { }
+    }
+
     /// <summary>
     /// Verifies historical records recovered from the durable spool use observation-time continuity.
     /// </summary>

@@ -658,9 +658,17 @@
         <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="flush-progress-title" tabindex="0">
             <header><div><p class="eyebrow">Stopping session</p><h2 id="flush-progress-title">Flushing queued entries</h2></div></header>
             <div class="queue-flush-progress" role="status" aria-live="polite">
-                <progress class="queue-flush-progress-bar"
-                          max="@Math.Max(1, _flushProgress?.InitialCount ?? _pendingQueueCount)"
-                          value="@(_flushProgress?.ProcessedCount ?? 0)"></progress>
+                <svg class="queue-flush-progress-track"
+                     viewBox="0 0 100 16"
+                     preserveAspectRatio="none"
+                     role="progressbar"
+                     aria-label="Database flush progress"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="@FlushProgressWidth">
+                    <rect class="queue-flush-progress-background" x="0" y="0" width="100" height="16" rx="8" />
+                    <rect class="queue-flush-progress-fill" x="0" y="0" width="@FlushProgressWidth" height="16" rx="8" />
+                </svg>
                 <p>@FlushProgressLabel</p>
             </div>
             <div class="confirmation-actions">
@@ -705,6 +713,7 @@
     private int _replayQueueCount;
     private BaseStationReader.Entities.Spool.QueueFlushProgress? _flushProgress;
     private CancellationTokenSource? _flushCancellation;
+    private Task _flushWorkflow = Task.CompletedTask;
     private string _sessionName = string.Empty;
     private string _sessionNotes = string.Empty;
     private string _receiverHost = string.Empty;
@@ -1114,30 +1123,119 @@
         _controlsBusy = false;
     }
 
-    private async Task StopWithFlushAsync()
+    private Task StopWithFlushAsync()
     {
         _showFlushChoice = false;
         _showFlushProgress = true;
-        _flushProgress = null;
+        _flushProgress = new BaseStationReader.Entities.Spool.QueueFlushProgress(
+            _pendingQueueCount,
+            _pendingQueueCount);
         _flushCancellation = new CancellationTokenSource();
-        var progress = new Progress<BaseStationReader.Entities.Spool.QueueFlushProgress>(value =>
-        {
-            _flushProgress = value;
-            _ = InvokeAsync(StateHasChanged);
-        });
+        var progress = new FlushProgressReporter();
+        var selectedAddress = _selected?.Address;
+        _completedAircraft = LiveAircraft.Aircraft.Select(CloneAircraft).ToArray();
+        _selected = _completedAircraft.FirstOrDefault(aircraft => aircraft.Address == selectedAddress);
 
-        await StopAndFinalizeAsync(flushQueue: true, _flushCancellation.Token, progress);
-        var remaining = _flushProgress?.RemainingCount ?? TrackingControl.QueueSize;
-        var cancelled = _flushCancellation.IsCancellationRequested && remaining > 0;
-        _showFlushProgress = false;
-        _flushCancellation.Dispose();
-        _flushCancellation = null;
-        if (cancelled)
+        // Return the click event immediately so Blazor can commit the dialog. The observed workflow
+        // then posts each progress value as an independent renderer operation.
+        _flushWorkflow = RunFlushWorkflowAsync(progress, _flushCancellation);
+        return Task.CompletedTask;
+    }
+
+    private async Task RunFlushWorkflowAsync(
+        FlushProgressReporter progress,
+        CancellationTokenSource flushCancellation)
+    {
+        await Task.Yield();
+        // Keep the potentially synchronous SQLite flush completely off the Blazor dispatcher.
+        // Otherwise StopAsync can finish all database work before returning an incomplete Task,
+        // leaving the renderer no opportunity to display intermediate progress.
+        var stopTask = Task.Run(
+            () => TrackingControl.StopAsync(
+                flushQueue: true,
+                flushCancellation.Token,
+                progress),
+            CancellationToken.None);
+
+        // Coalesce potentially thousands of per-record reports into a bounded UI cadence. This
+        // prevents renderer-queue flooding while still showing meaningful intermediate progress.
+        while (!stopTask.IsCompleted)
         {
-            _replayQueueCount = remaining;
-            _showReplayNotice = true;
+            await Task.Delay(100).ConfigureAwait(false);
+            var snapshot = progress.Latest;
+            if (snapshot is not null)
+            {
+                await InvokeAsync(() =>
+                {
+                    _flushProgress = snapshot;
+                    StateHasChanged();
+                });
+            }
         }
-        _controlsBusy = false;
+
+        var stoppedSuccessfully = false;
+        try
+        {
+            await stopTask.ConfigureAwait(false);
+            stoppedSuccessfully = true;
+            await InvokeAsync(async () =>
+            {
+                _profileError = false;
+                _profileMessage = null;
+                _activeTab = SessionTab.Summary;
+                await LoadSummaryAsync();
+                SaveCompletedSessionState();
+            });
+        }
+        catch (OperationCanceledException) when (flushCancellation.IsCancellationRequested)
+        {
+            // Cancellation intentionally leaves the remaining records in the persistent spool.
+        }
+        catch (Exception exception)
+        {
+            await InvokeAsync(() =>
+            {
+                _profileError = true;
+                _profileMessage = exception.Message;
+            });
+        }
+
+        var finalProgress = progress.Latest;
+        if (stoppedSuccessfully)
+        {
+            var initial = finalProgress?.InitialCount ?? _pendingQueueCount;
+            finalProgress = new BaseStationReader.Entities.Spool.QueueFlushProgress(initial, 0);
+        }
+        if (finalProgress is not null)
+        {
+            await InvokeAsync(() => _flushProgress = finalProgress);
+        }
+        var remaining = finalProgress?.RemainingCount ?? TrackingControl.QueueSize;
+        var cancelled = flushCancellation.IsCancellationRequested && remaining > 0;
+        if (stoppedSuccessfully && !cancelled && remaining == 0)
+        {
+            // A fast flush can start and finish inside one Blazor render window. Paint the completed
+            // state before dismissing the dialog so users receive visible confirmation.
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(500);
+        }
+
+        await InvokeAsync(() =>
+        {
+            _showFlushProgress = false;
+            flushCancellation.Dispose();
+            if (ReferenceEquals(_flushCancellation, flushCancellation))
+            {
+                _flushCancellation = null;
+            }
+            if (cancelled)
+            {
+                _replayQueueCount = remaining;
+                _showReplayNotice = true;
+            }
+            _controlsBusy = false;
+            StateHasChanged();
+        });
     }
 
     private void CancelFlush() => _flushCancellation?.Cancel();
@@ -1156,11 +1254,31 @@
         {
             var initial = _flushProgress?.InitialCount ?? _pendingQueueCount;
             var remaining = _flushProgress?.RemainingCount ?? initial;
+            if (initial > 0 && remaining == 0)
+            {
+                return $"Flush complete — {initial:N0} entries written.";
+            }
             return $"{Math.Max(0, initial - remaining):N0} of {initial:N0} entries written; {remaining:N0} remaining.";
         }
     }
 
-    private async Task StopAndFinalizeAsync(bool flushQueue, CancellationToken cancellationToken = default,
+    private string FlushProgressWidth
+    {
+        get
+        {
+            var initial = _flushProgress?.InitialCount ?? _pendingQueueCount;
+            if (initial <= 0)
+            {
+                return "100";
+            }
+
+            var processed = _flushProgress?.ProcessedCount ?? 0;
+            var percentage = Math.Clamp(processed * 100d / initial, 0, 100);
+            return percentage.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private async Task<bool> StopAndFinalizeAsync(bool flushQueue, CancellationToken cancellationToken = default,
         IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress>? progress = null)
     {
         _profileMessage = null;
@@ -1174,15 +1292,18 @@
             _activeTab = SessionTab.Summary;
             await LoadSummaryAsync();
             SaveCompletedSessionState();
+            return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // Cancellation intentionally leaves the remaining records in the persistent spool.
+            return false;
         }
         catch (Exception exception)
         {
             _profileError = true;
             _profileMessage = exception.Message;
+            return false;
         }
     }
 
@@ -1696,5 +1817,20 @@
         Radar,
         PositionDensity,
         Summary
+    }
+
+    /// <summary>
+    /// Retains the latest writer progress for the bounded UI render loop.
+    /// </summary>
+    private sealed class FlushProgressReporter :
+        IProgress<BaseStationReader.Entities.Spool.QueueFlushProgress>
+    {
+        private BaseStationReader.Entities.Spool.QueueFlushProgress? _latest;
+
+        public BaseStationReader.Entities.Spool.QueueFlushProgress? Latest
+            => Volatile.Read(ref _latest);
+
+        public void Report(BaseStationReader.Entities.Spool.QueueFlushProgress value)
+            => Volatile.Write(ref _latest, value);
     }
 }

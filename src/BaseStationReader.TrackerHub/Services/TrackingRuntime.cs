@@ -249,6 +249,7 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
         }
         controller.RequestStop();
         cancellation!.Cancel();
+        Exception? stopException = null;
         try
         {
             if (task is not null)
@@ -271,6 +272,13 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
                 $"The tracking session did not release its resources within {_settings.StopTimeout:N0} ms. " +
                 "Shutdown cancellation remains active; check the application log before using the spool replayer.");
         }
+        catch (Exception exception)
+        {
+            // The controller task has completed, albeit unsuccessfully. Release its runtime state
+            // before surfacing the failure so the UI cannot remain stuck in an active session.
+            stopException = exception;
+        }
+
         controller.AircraftEvent -= ForwardAircraftEvent;
         controller.MessageReceived -= ForwardMessageReceived;
         cancellation.Dispose();
@@ -287,6 +295,11 @@ public sealed class TrackingRuntime : ITrackerController, IReceiverPositionProvi
             _controller = null;
             _controllerCancellation = null;
             _controllerTask = null;
+        }
+
+        if (stopException is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(stopException).Throw();
         }
     }
 

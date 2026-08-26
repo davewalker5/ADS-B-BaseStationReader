@@ -17,10 +17,13 @@ namespace BaseStationReader.TrackerHub.Logic
             });
 
         private readonly IHubContext<AircraftHub> _hub;
+        private readonly TimeSpan _refreshInterval;
 
-        public EventBridge(IHubContext<AircraftHub> hub)
+        public EventBridge(IHubContext<AircraftHub> hub, IConfiguration configuration)
         {
             _hub = hub;
+            var refreshInterval = configuration.GetValue<int?>("ApplicationSettings:RefreshInterval") ?? 1000;
+            _refreshInterval = TimeSpan.FromMilliseconds(Math.Max(100, refreshInterval));
         }
 
         /// <summary>
@@ -46,29 +49,44 @@ namespace BaseStationReader.TrackerHub.Logic
             var reader = _channel.Reader;
             while (await reader.WaitToReadAsync(token))
             {
+                // Open one collection window, then publish only the final state received for each
+                // aircraft. This prevents a slow client from replaying obsolete intermediate states.
+                await Task.Delay(_refreshInterval, token);
+                var pendingAircraft = new Dictionary<string, AircraftNotificationEventArgs>(
+                    StringComparer.OrdinalIgnoreCase);
+                TrackingOptions pendingReset = null;
+
                 while (reader.TryRead(out var message))
                 {
                     if (message is TrackingOptions options)
                     {
-                        await _hub.Clients.All.SendAsync("trackingReset", options, token);
+                        pendingReset = options;
+                        pendingAircraft.Clear();
                         continue;
                     }
 
                     var e = (AircraftNotificationEventArgs)message;
                     if (e.Aircraft != null)
                     {
-                        var aircraft = TrackedAircraftDto.FromTrackedAircraft(e.Aircraft);
-                        switch (e.NotificationType)
-                        {
-                            case AircraftNotificationType.Unknown:
-                                break;
-                            case AircraftNotificationType.Removed:
-                                await _hub.Clients.All.SendAsync("aircraftRemoved", aircraft, token);
-                                break;
-                            default:
-                                await _hub.Clients.All.SendAsync("aircraftUpdate", aircraft, token);
-                                break;
-                        }
+                        pendingAircraft[e.Aircraft.Address] = e;
+                    }
+                }
+
+                if (pendingReset is not null)
+                {
+                    await _hub.Clients.All.SendAsync("trackingReset", pendingReset, token);
+                }
+
+                foreach (var e in pendingAircraft.Values)
+                {
+                    var aircraft = TrackedAircraftDto.FromTrackedAircraft(e.Aircraft);
+                    if (e.NotificationType == AircraftNotificationType.Removed)
+                    {
+                        await _hub.Clients.All.SendAsync("aircraftRemoved", aircraft, token);
+                    }
+                    else if (e.NotificationType != AircraftNotificationType.Unknown)
+                    {
+                        await _hub.Clients.All.SendAsync("aircraftUpdate", aircraft, token);
                     }
                 }
             }

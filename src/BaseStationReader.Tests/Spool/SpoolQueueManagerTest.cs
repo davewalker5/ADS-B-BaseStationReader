@@ -50,6 +50,36 @@ public sealed class SpoolQueueManagerTest
     }
 
     /// <summary>
+    /// Verifies a batch is committed durably and retains its input order.
+    /// </summary>
+    [TestMethod]
+    public void BatchRecordsSurviveRestartInFifoOrderTest()
+    {
+        var folder = CreateFolder();
+
+        try
+        {
+            using (var queue = new SpoolQueueManager(folder))
+            {
+                queue.EnqueueRange([CreateAircraft("FIRST"), CreateAircraft("SECOND")]);
+            }
+
+            using var reopened = new SpoolQueueManager(folder);
+            Assert.AreEqual(2, reopened.Count);
+            using var first = reopened.TryDequeue();
+            Assert.AreEqual("FIRST", first?.Record.TrackedAircraft?.Address);
+            first?.Complete();
+            using var second = reopened.TryDequeue();
+            Assert.AreEqual("SECOND", second?.Record.TrackedAircraft?.Address);
+            second?.Complete();
+        }
+        finally
+        {
+            DeleteFolder(folder);
+        }
+    }
+
+    /// <summary>
     /// Verifies disposing an incomplete lease restores the record to the head of the queue.
     /// </summary>
     [TestMethod]
