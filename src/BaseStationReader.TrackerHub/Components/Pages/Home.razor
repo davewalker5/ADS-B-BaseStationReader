@@ -658,17 +658,14 @@
         <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="flush-progress-title" tabindex="0">
             <header><div><p class="eyebrow">Stopping session</p><h2 id="flush-progress-title">Flushing queued entries</h2></div></header>
             <div class="queue-flush-progress" role="status" aria-live="polite">
-                <svg class="queue-flush-progress-track"
-                     viewBox="0 0 100 16"
-                     preserveAspectRatio="none"
+                <div class="queue-flush-progress-track"
                      role="progressbar"
                      aria-label="Database flush progress"
                      aria-valuemin="0"
                      aria-valuemax="100"
                      aria-valuenow="@FlushProgressWidth">
-                    <rect class="queue-flush-progress-background" x="0" y="0" width="100" height="16" rx="8" />
-                    <rect class="queue-flush-progress-fill" x="0" y="0" width="@FlushProgressWidth" height="16" rx="8" />
-                </svg>
+                    <div class="queue-flush-progress-fill" style="width: @(FlushProgressWidth)%"></div>
+                </div>
                 <p>@FlushProgressLabel</p>
             </div>
             <div class="confirmation-actions">
@@ -1263,18 +1260,20 @@
     }
 
     private string FlushProgressWidth
+        => FlushProgressValue.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+    private double FlushProgressValue
     {
         get
         {
             var initial = _flushProgress?.InitialCount ?? _pendingQueueCount;
             if (initial <= 0)
             {
-                return "100";
+                return 100;
             }
 
             var processed = _flushProgress?.ProcessedCount ?? 0;
-            var percentage = Math.Clamp(processed * 100d / initial, 0, 100);
-            return percentage.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+            return Math.Clamp(processed * 100d / initial, 0, 100);
         }
     }
 
