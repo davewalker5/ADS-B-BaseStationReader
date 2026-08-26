@@ -126,7 +126,8 @@ h1:focus, h1:focus-visible { outline: none !important; box-shadow: none; }
 .note-preview { padding: 0; color: var(--cyan); background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
 .note-preview:hover { text-decoration: underline; }
 .queue-flush-progress { margin-top: 20px; }
-.queue-flush-progress-bar { display: block; width: 100%; inline-size: 100%; max-width: none; height: 16px; accent-color: var(--cyan); }
+.queue-flush-progress-track { display: block; width: 100%; height: 16px; padding: 2px; overflow: hidden; background: #172530; border: 1px solid #526676; border-radius: 999px; box-sizing: border-box; }
+.queue-flush-progress-fill { height: 100%; min-width: 0; background: var(--cyan); border-radius: 999px; transition: width .1s linear; }
 .queue-flush-progress p { margin: 10px 0 0; color: var(--muted); }
 .danger-button { padding: 10px 16px; color: #fff; background: #b83d47; border: 1px solid #df626c; border-radius: 7px; cursor: pointer; font-weight: 700; }
 .danger-button:hover:not(:disabled) { background: #ca4651; }

@@ -16,13 +16,15 @@ namespace BaseStationReader.BusinessLogic.Database
         private readonly bool _flushOnStop;
         private readonly bool _flushWhileActive;
         private readonly object _gate = new();
+        private readonly ConcurrentQueue<object> _pending = new();
         private CancellationTokenSource _source;
         private Task _runTask = null;
         private volatile bool _accepting;
         private long _positionRecordsWritten;
+        private volatile bool _queueDrained;
         private readonly ConcurrentDictionary<string, byte> _positionAircraft = new(StringComparer.OrdinalIgnoreCase);
 
-        public int QueueSize => _queue.Count;
+        public int QueueSize => (_queueDrained ? 0 : _queue.Count) + _pending.Count;
 
         /// <inheritdoc />
         public long PositionRecordsWritten => Interlocked.Read(ref _positionRecordsWritten);
@@ -55,9 +57,24 @@ namespace BaseStationReader.BusinessLogic.Database
         /// <param name="entity"></param>
         public void Push(object entity)
         {
-            if (_accepting && entity is TrackedAircraft or AircraftPosition or PositionDensitySnapshotEntity)
+            var queued = false;
+            lock (_gate)
             {
-                _queue.Enqueue(entity);
+                if (_accepting && entity is TrackedAircraft or AircraftPosition or PositionDensitySnapshotEntity)
+                {
+                    // DiskQueue commits synchronously. Keep that I/O off the receiver callback so a
+                    // busy feed cannot accumulate unread socket data while each record is flushed.
+                    // TrackedAircraft is mutable, so capture the state accepted at this boundary.
+                    _pending.Enqueue(entity is TrackedAircraft aircraft
+                        ? (TrackedAircraft)aircraft.Clone()
+                        : entity);
+                    _queueDrained = false;
+                    queued = true;
+                }
+            }
+
+            if (queued)
+            {
                 TryRelease();
             }
         }
@@ -134,6 +151,10 @@ namespace BaseStationReader.BusinessLogic.Database
                     // Expected when the writer's run token is cancelled.
                 }
 
+                // Anything accepted before RequestStop closed the producer boundary must reach
+                // the durable spool even when database flushing is disabled.
+                PersistPendingToSpool();
+
                 if (flushOnStop ?? _flushOnStop)
                 {
                     await FlushQueueAsync(cancellationToken, progress).ConfigureAwait(false);
@@ -171,14 +192,30 @@ namespace BaseStationReader.BusinessLogic.Database
         public async Task FlushQueueAsync(CancellationToken cancellationToken = default,
             IProgress<QueueFlushProgress> progress = null)
         {
+            PersistPendingToSpool();
             var initialCount = _queue.Count;
             _factory.Logger.LogMessage(Severity.Info, $"Flushing {initialCount} queued entries");
             progress?.Report(new QueueFlushProgress(initialCount, initialCount));
 
             // Drain in original FIFO order so snapshots remain behind the positions they represent.
+            var processedCount = 0;
             while (await ProcessNextAsync(cancellationToken).ConfigureAwait(false))
             {
-                progress?.Report(new QueueFlushProgress(initialCount, _queue.Count));
+                // DiskQueue's estimated count is transaction-oriented and may remain unchanged
+                // between completed leases. Track completions explicitly so UI progress advances
+                // once for every attempted record rather than jumping from zero to complete.
+                processedCount++;
+                progress?.Report(new QueueFlushProgress(
+                    initialCount,
+                    Math.Max(0, initialCount - processedCount)));
+            }
+
+            // A failed estimate must not keep presenting a phantom backlog after the authoritative
+            // dequeue operation has established that no record remains available.
+            _queueDrained = true;
+            if (processedCount < initialCount)
+            {
+                progress?.Report(new QueueFlushProgress(initialCount, 0));
             }
         }
 
@@ -227,9 +264,12 @@ namespace BaseStationReader.BusinessLogic.Database
                     // Sleep until at least one item is added to the queue
                     await _signal.WaitAsync(token);
 
+                    PersistPendingToSpool();
+
                     // Process one record at a time so cancellation can leave the remaining FIFO on disk.
                     while (!token.IsCancellationRequested && await ProcessNextAsync(token).ConfigureAwait(false))
                     {
+                        PersistPendingToSpool();
                     }
                 }
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -248,6 +288,24 @@ namespace BaseStationReader.BusinessLogic.Database
                     _factory.Logger.LogMessage(Severity.Error, ex.Message);
                     _factory.Logger.LogException(ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Transfers accepted in-memory work to the durable FIFO on the writer thread.
+        /// </summary>
+        private void PersistPendingToSpool()
+        {
+            var batch = new List<object>();
+            while (_pending.TryDequeue(out var entity))
+            {
+                batch.Add(entity);
+            }
+
+            if (batch.Count > 0)
+            {
+                _queueDrained = false;
+                _queue.EnqueueRange(batch);
             }
         }
 

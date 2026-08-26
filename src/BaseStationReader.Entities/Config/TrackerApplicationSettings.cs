@@ -36,6 +36,7 @@ namespace BaseStationReader.Entities.Config
         public bool TrackPositionDensity { get; set; }
         public int PositionDensityInterval { get; set; }
         public int AircraftNotificationInterval { get; set; }
+        public int RefreshInterval { get; set; } = 1000;
         public string TrackingProfile { get; set; }
         public string TrackingProfileName { get; set; }
         public string DefaultProfileName { get; set; } = "Default Location - All Traffic";

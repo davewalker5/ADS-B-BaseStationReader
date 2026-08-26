@@ -225,6 +225,9 @@ namespace BaseStationReader.TrackerHub
                 {
                     ContentTypeProvider = provider
                 });
+                // Expose fingerprinted framework-managed asset URLs so a deployment cannot combine
+                // freshly rendered components with a browser-cached stylesheet from an older build.
+                app.MapStaticAssets();
                 
                 app.UseHttpsRedirection();
                 app.UseAntiforgery();

@@ -36,12 +36,18 @@ public sealed class SpoolQueueManager : ISpoolQueue
 
     /// <inheritdoc />
     public void Enqueue(object entity)
-    {
-        var record = CreateRecord(entity);
-        var data = JsonSerializer.SerializeToUtf8Bytes(record, _serializerOptions);
+        => EnqueueRange([entity]);
 
+    /// <inheritdoc />
+    public void EnqueueRange(IEnumerable<object> entities)
+    {
         using var session = _queue.OpenSession();
-        session.Enqueue(data);
+        foreach (var entity in entities)
+        {
+            var record = CreateRecord(entity);
+            var data = JsonSerializer.SerializeToUtf8Bytes(record, _serializerOptions);
+            session.Enqueue(data);
+        }
         session.Flush();
     }
 

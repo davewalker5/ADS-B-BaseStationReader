@@ -21,6 +21,12 @@ public interface ISpoolQueue : IDisposable
     void Enqueue(object entity);
 
     /// <summary>
+    /// Persists a batch of records at the end of the queue in one durable commit.
+    /// </summary>
+    /// <param name="entities">Entities to persist in FIFO order.</param>
+    void EnqueueRange(IEnumerable<object> entities);
+
+    /// <summary>
     /// Attempts to lease the record at the head of the queue.
     /// </summary>
     /// <returns>The leased record, or <see langword="null"/> when the queue is empty.</returns>

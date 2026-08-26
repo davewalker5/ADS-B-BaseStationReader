@@ -29,6 +29,10 @@ internal sealed class TemporarySpoolQueue : ISpoolQueue
         => _queue.Enqueue(entity);
 
     /// <inheritdoc />
+    public void EnqueueRange(IEnumerable<object> entities)
+        => _queue.EnqueueRange(entities);
+
+    /// <inheritdoc />
     public ISpoolQueueItem? TryDequeue()
         => _queue.TryDequeue();
 

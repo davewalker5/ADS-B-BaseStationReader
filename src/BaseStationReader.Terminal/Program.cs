@@ -14,6 +14,7 @@ using System.Reflection;
 using BaseStationReader.Data;
 using BaseStationReader.Interfaces.Logging;
 using BaseStationReader.BusinessLogic.Messages;
+using System.Collections.Concurrent;
 
 namespace BaseStationReader.Terminal
 {
@@ -25,6 +26,8 @@ namespace BaseStationReader.Terminal
         private static ITrackerController _controller = null;
         private static TrackerApplicationSettings _settings = null;
         private static DateTime _lastUpdate = DateTime.Now;
+        private static readonly ConcurrentDictionary<string, AircraftNotificationEventArgs> _pendingAircraftEvents =
+            new(StringComparer.OrdinalIgnoreCase);
 
         public static async Task Main(string[] args)
         {
@@ -113,6 +116,7 @@ namespace BaseStationReader.Terminal
 
             // Reset the elapsed time since the last update
             _lastUpdate = DateTime.Now;
+            _pendingAircraftEvents.Clear();
 
             // Wire up the aircraft notificarion event handlers
             _controller.AircraftEvent += OnAircraftEvent;
@@ -122,7 +126,7 @@ namespace BaseStationReader.Terminal
             var controllerTask = _controller.StartAsync(source.Token);
 
             // Define the interval at which the display will refresh
-            var interval = TimeSpan.FromMilliseconds(100);
+            var interval = TimeSpan.FromMilliseconds(Math.Max(100, _settings.RefreshInterval));
 
             try
             {
@@ -197,6 +201,25 @@ namespace BaseStationReader.Terminal
                 }
             }
 
+            // Apply only the newest pending state for each aircraft before rendering. This bounds
+            // display work without allowing the terminal to fall behind the message feed.
+            foreach (var entry in _pendingAircraftEvents.ToArray())
+            {
+                if (!_pendingAircraftEvents.TryRemove(entry.Key, out var aircraftEvent))
+                {
+                    continue;
+                }
+
+                if (aircraftEvent.NotificationType == AircraftNotificationType.Removed)
+                {
+                    _tableManager.RemoveAircraft(aircraftEvent.Aircraft);
+                }
+                else
+                {
+                    _tableManager.AddOrUpdateAircraft(aircraftEvent.Aircraft);
+                }
+            }
+
             // Refresh
             ctx.Refresh();
 
@@ -213,16 +236,9 @@ namespace BaseStationReader.Terminal
             // Update the timestamp used to implement the application timeout
             _lastUpdate = DateTime.Now;
 
-            // If this is a removal event, remove the aircraft from the index
-            if (e.NotificationType == AircraftNotificationType.Removed)
-            {
-                _tableManager.RemoveAircraft(e.Aircraft);
-            }
-            else
-            {
-                // Not a removal, so update the aircraft entry in the table
-                _tableManager.AddOrUpdateAircraft(e.Aircraft);
-            }
+            // Coalesce a burst to the latest state for this aircraft. The display loop drains this
+            // collection at its own refresh interval.
+            _pendingAircraftEvents[e.Aircraft.Address] = e;
         }
 
     }

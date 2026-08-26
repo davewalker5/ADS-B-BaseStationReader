@@ -406,6 +406,17 @@ namespace BaseStationReader.BusinessLogic.Tracking
         {
             var isRemoval = e.NotificationType == AircraftNotificationType.Removed;
 
+            // Keep the live snapshot current for every accepted message. Persistence retains its
+            // independent notification interval, but display consumers must never see an old state.
+            if (isRemoval)
+            {
+                _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
+            }
+            else
+            {
+                _trackedAircraft[e.Aircraft.Address] = (TrackedAircraft)e.Aircraft.Clone();
+            }
+
             if (e.NotificationType == AircraftNotificationType.Added)
             {
                 _addedSinceSummary[e.Aircraft.Address] = e.Aircraft.Callsign ?? "";
@@ -427,15 +438,11 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 var position = e.MeetsTrackingCriteria ? e.Position : null;
                 HandleAircraftEvent(e.Aircraft, position);
 
-                // HandleAircraftEvent persists the final state, but removed aircraft must not remain
-                // in the authoritative live snapshot exposed by the Tracker Hub.
-                if (isRemoval)
-                {
-                    _trackedAircraft.Remove(e.Aircraft.Address, out TrackedAircraft _);
-                }
-
-                _sender.SendAircraftNotification(e.Aircraft, position, this, e.NotificationType, AircraftEvent);
             }
+
+            // Display consumers coalesce these events at their own refresh intervals.
+            _sender.SendAircraftNotification(e.Aircraft, e.MeetsTrackingCriteria ? e.Position : null,
+                this, e.NotificationType, AircraftEvent);
         }
 
         /// <summary>
@@ -477,18 +484,6 @@ namespace BaseStationReader.BusinessLogic.Tracking
                 position.SessionId = sessionId;
                 Interlocked.Increment(ref _positionRecordsObserved);
                 _positionAircraftObserved.TryAdd(aircraft.Address, 0);
-            }
-
-            // The live table represents every detected aircraft; position criteria affect only the optional
-            // position queued alongside it.
-            var existingAircraft = _trackedAircraft.ContainsKey(aircraft.Address);
-            if (!existingAircraft)
-            {
-                _trackedAircraft[aircraft.Address] = (TrackedAircraft)aircraft.Clone();
-            }
-            else
-            {
-                _trackedAircraft[aircraft.Address] = aircraft;
             }
 
             // Push the aircraft and its position to the SQL writer, if enabled
