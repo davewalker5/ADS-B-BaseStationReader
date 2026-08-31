@@ -105,5 +105,35 @@ namespace BaseStationReader.BusinessLogic.Database
                 await _context.SaveChangesAsync(cancellationToken);
             }
         }
+
+        /// <summary>
+        /// Deletes tracked aircraft whose callsigns are excluded, together with their positions.
+        /// The exclusion records themselves are retained.
+        /// </summary>
+        /// <param name="cancellationToken">A token used to cancel the database operation.</param>
+        /// <returns>The number of tracked-aircraft records deleted.</returns>
+        public async Task<int> PurgeTrackingDataAsync(CancellationToken cancellationToken = default)
+        {
+            var excludedCallsigns = _context.ExcludedCallsigns.Select(exclusion => exclusion.Callsign);
+            var aircraft = await _context.TrackedAircraft
+                .Where(trackedAircraft => trackedAircraft.Callsign != null &&
+                    excludedCallsigns.Contains(trackedAircraft.Callsign))
+                .ToListAsync(cancellationToken);
+
+            if (aircraft.Count == 0)
+            {
+                return 0;
+            }
+
+            var aircraftIds = aircraft.Select(trackedAircraft => trackedAircraft.Id).ToList();
+            var positions = await _context.Positions
+                .Where(position => aircraftIds.Contains(position.AircraftId))
+                .ToListAsync(cancellationToken);
+
+            _context.Positions.RemoveRange(positions);
+            _context.TrackedAircraft.RemoveRange(aircraft);
+            await _context.SaveChangesAsync(cancellationToken);
+            return aircraft.Count;
+        }
     }
 }

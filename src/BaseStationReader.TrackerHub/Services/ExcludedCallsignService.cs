@@ -54,4 +54,12 @@ public sealed class ExcludedCallsignService : IExcludedCallsignService
         var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
         await manager.DeleteAsync(callsign, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<int> PurgeTrackingDataAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedCallsignManager;
+        return await manager.PurgeTrackingDataAsync(cancellationToken);
+    }
 }
