@@ -5,7 +5,7 @@
 
 <DatabaseTabs />
 
-<section class="filter-panel">
+<section class="filter-panel @(_loading ? "database-search-busy" : null)" aria-busy="@_loading">
     <div class="filter-heading">
         <div><h2>Search filters</h2><p>Refine results using one or more fields.</p></div>
         <button class="text-button" type="button" @onclick="ClearFiltersAsync">Clear filters</button>
@@ -36,7 +36,7 @@
         <label><span>Minimum altitude</span><InputNumber @bind-Value="_filter.MinimumAltitude" placeholder="feet" /></label>
         <label><span>Maximum altitude</span><InputNumber @bind-Value="_filter.MaximumAltitude" placeholder="feet" /></label>
         <label><span>Maximum distance</span><InputNumber @bind-Value="_filter.MaximumDistance" placeholder="nautical miles" /></label>
-        <label><span>Position history</span><InputSelect @bind-Value="_filter.HasPositions"><option value="">Any</option><option value="true">With positions</option><option value="false">Without positions</option></InputSelect></label>
+        <label><span>Position history</span><InputSelect @bind-Value="PositionHistoryFilter"><option value="any">Any</option><option value="true">With positions</option><option value="false">Without positions</option></InputSelect></label>
     </div>
     <div class="filter-actions">
         <label class="checkbox"><InputCheckbox @bind-Value="_filter.CompletedOnly" /><span>Locked/completed records only</span></label>
@@ -49,7 +49,7 @@
     <div class="alert" role="alert"><strong>Database query failed</strong><span>@_error</span></div>
 }
 
-<section class="tracker-panel history-panel" aria-busy="@_loading">
+<section class="tracker-panel history-panel @(_loading ? "database-search-busy" : null)" aria-busy="@_loading">
     <div class="panel-heading">
         <div><h2>Tracking records</h2><p>@ResultDescription</p></div>
         <label class="page-size"><span>Rows per page</span><select @bind="_filter.PageSize" @bind:after="ChangePageSizeAsync"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
@@ -117,6 +117,21 @@
     private string _handledAddress = string.Empty;
     private string _handledCallsign = string.Empty;
     private int? _handledSessionId;
+    private string PositionHistoryFilter
+    {
+        get => _filter.HasPositions switch
+        {
+            true => "true",
+            false => "false",
+            null => "any"
+        };
+        set => _filter.HasPositions = value switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => null
+        };
+    }
     private string ResultDescription => _result.TotalCount == 1 ? "1 matching record" : $"{_result.TotalCount:N0} matching records";
 
     /// <summary>
@@ -209,8 +224,24 @@
     /// </summary>
     private async Task LoadAsync()
     {
+        if (_loading)
+        {
+            return;
+        }
+
         _loading = true;
         _error = null;
+        // Discard the previous query immediately so a zero-result or failed search cannot leave stale rows behind.
+        _result = new PagedResult<TrackingSessionSummary>
+        {
+            Page = _filter.Page,
+            PageSize = _filter.PageSize
+        };
+
+        // Flush the busy state before beginning a database call that may take a noticeable amount of time.
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
+
         try
         {
             // The service validates page bounds and returns DTOs rather than persistence entities.

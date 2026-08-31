@@ -229,6 +229,8 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.IATA).HasColumnName("IATA");
                 entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
+                entity.HasIndex(e => e.ICAO);
+
                 entity.HasOne(e => e.Provenance)
                     .WithMany()
                     .HasForeignKey(e => e.ProvenanceId)
@@ -266,6 +268,8 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.DestinationAirportId).IsRequired().HasColumnName("DestinationAirportId");
                 entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
+                entity.HasIndex(e => e.Callsign);
+
                 entity.HasOne(e => e.Airline)
                     .WithMany()
                     .HasForeignKey(e => e.AirlineId)
@@ -297,6 +301,8 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.Manufactured).HasColumnName("Manufactured");
                 entity.Property(e => e.Age).HasColumnName("Age");
                 entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
+
+                entity.HasIndex(e => e.Address);
 
                 entity.HasOne(e => e.Model)
                     .WithMany()
@@ -388,6 +394,7 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Address).IsRequired().HasColumnName("Address");
+                entity.HasIndex(e => e.Address);
             });
 
             modelBuilder.Entity<ExcludedCallsign>(entity =>
@@ -396,6 +403,7 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(e => e.Callsign).IsRequired().HasColumnName("Callsign");
+                entity.HasIndex(e => e.Callsign);
             });
 
             modelBuilder.Entity<ApiLogEntry>(entity =>
