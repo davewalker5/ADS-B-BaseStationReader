@@ -5,7 +5,7 @@
 
 <DatabaseTabs />
 
-<section class="filter-panel">
+<section class="filter-panel @(_loading ? "database-search-busy" : null)" aria-busy="@_loading">
     <div class="filter-heading">
         <div><h2>Search filters</h2><p>Refine results using one or more fields.</p></div>
         <button class="text-button" type="button" @onclick="ClearFiltersAsync">Clear filters</button>
@@ -49,7 +49,7 @@
     <div class="alert" role="alert"><strong>Database query failed</strong><span>@_error</span></div>
 }
 
-<section class="tracker-panel history-panel" aria-busy="@_loading">
+<section class="tracker-panel history-panel @(_loading ? "database-search-busy" : null)" aria-busy="@_loading">
     <div class="panel-heading">
         <div><h2>Tracking records</h2><p>@ResultDescription</p></div>
         <label class="page-size"><span>Rows per page</span><select @bind="_filter.PageSize" @bind:after="ChangePageSizeAsync"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
@@ -224,6 +224,11 @@
     /// </summary>
     private async Task LoadAsync()
     {
+        if (_loading)
+        {
+            return;
+        }
+
         _loading = true;
         _error = null;
         // Discard the previous query immediately so a zero-result or failed search cannot leave stale rows behind.
@@ -232,6 +237,11 @@
             Page = _filter.Page,
             PageSize = _filter.PageSize
         };
+
+        // Flush the busy state before beginning a database call that may take a noticeable amount of time.
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
+
         try
         {
             // The service validates page bounds and returns DTOs rather than persistence entities.
