@@ -351,7 +351,11 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("AircraftId");
 
-                    b.Property<int>("FlightId")
+                    b.Property<int>("AirlineId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("AirlineId");
+
+                    b.Property<int?>("FlightId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("FlightId");
 
@@ -362,6 +366,8 @@ namespace BaseStationReader.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AircraftId");
+
+                    b.HasIndex("AirlineId");
 
                     b.HasIndex("FlightId");
 
@@ -888,13 +894,19 @@ namespace BaseStationReader.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BaseStationReader.Entities.Api.Flight", "Flight")
+                    b.HasOne("BaseStationReader.Entities.Api.Airline", "Airline")
                         .WithMany()
-                        .HasForeignKey("FlightId")
+                        .HasForeignKey("AirlineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BaseStationReader.Entities.Api.Flight", "Flight")
+                        .WithMany()
+                        .HasForeignKey("FlightId");
+
                     b.Navigation("Aircraft");
+
+                    b.Navigation("Airline");
 
                     b.Navigation("Flight");
                 });

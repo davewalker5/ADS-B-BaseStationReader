@@ -13,8 +13,9 @@ SELECT COALESCE(NULLIF(TRIM(ta.Callsign), ''), 'No callsign') AS "Callsign",
        COUNT(DISTINCT ta.Address) AS "Aircraft",
        CASE WHEN f.Id IS NULL THEN 0 ELSE 1 END AS "Resolved"
 FROM TRACKED_AIRCRAFT ta
-LEFT JOIN FLIGHT f ON f.Callsign = TRIM(ta.Callsign)
-LEFT JOIN AIRLINE al ON al.Id = f.AirlineId
+LEFT JOIN SIGHTING s ON s.Id = ta.Id
+LEFT JOIN FLIGHT f ON f.Id = s.FlightId
+LEFT JOIN AIRLINE al ON al.Id = s.AirlineId
 LEFT JOIN AIRPORT origin ON origin.Id = f.OriginAirportId
 LEFT JOIN AIRPORT destination ON destination.Id = f.DestinationAirportId
 GROUP BY COALESCE(NULLIF(TRIM(ta.Callsign), ''), 'No callsign'),

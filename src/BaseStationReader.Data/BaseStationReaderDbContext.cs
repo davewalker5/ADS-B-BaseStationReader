@@ -365,7 +365,8 @@ namespace BaseStationReader.Data
 
                 entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedNever();
                 entity.Property(e => e.AircraftId).IsRequired().HasColumnName("AircraftId");
-                entity.Property(e => e.FlightId).IsRequired().HasColumnName("FlightId");
+                entity.Property(e => e.FlightId).HasColumnName("FlightId");
+                entity.Property(e => e.AirlineId).IsRequired().HasColumnName("AirlineId");
                 entity.Property(e => e.Timestamp).IsRequired().HasColumnName("Timestamp").HasColumnType("DATETIME");
 
                 entity.HasOne(e => e.Aircraft)
@@ -375,6 +376,10 @@ namespace BaseStationReader.Data
                 entity.HasOne(e => e.Flight)
                     .WithMany()
                     .HasForeignKey(e => e.FlightId);
+
+                entity.HasOne(e => e.Airline)
+                    .WithMany()
+                    .HasForeignKey(e => e.AirlineId);
             });
 
             modelBuilder.Entity<ExcludedAddress>(entity =>

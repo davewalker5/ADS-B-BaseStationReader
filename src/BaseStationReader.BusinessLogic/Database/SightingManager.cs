@@ -40,6 +40,7 @@ namespace BaseStationReader.BusinessLogic.Database
                         .ThenInclude(x => x.Manufacturer)
                 .Include(x => x.Flight)
                     .ThenInclude(x => x.Airline)
+                .Include(x => x.Airline)
                 .ToListAsync();
 
     }
