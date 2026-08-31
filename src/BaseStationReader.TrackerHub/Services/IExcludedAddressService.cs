@@ -32,4 +32,11 @@ public interface IExcludedAddressService
     /// <param name="address">The address to remove.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     Task DeleteAsync(string address, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes tracking data for every aircraft address in the exclusion table.
+    /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>The number of tracked-aircraft records deleted.</returns>
+    Task<int> PurgeTrackingDataAsync(CancellationToken cancellationToken = default);
 }

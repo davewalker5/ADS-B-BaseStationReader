@@ -16,6 +16,7 @@
         </div>
         <div class="filter-actions">
             <button class="primary-button" type="submit" disabled="@_loading">@(_loading ? "Searching…" : "Search addresses")</button>
+            <button class="danger-button" type="button" @onclick="ShowPurge" disabled="@(_loading || _purging)">Purge</button>
         </div>
     </form>
 </section>
@@ -23,6 +24,11 @@
 @if (_error is not null)
 {
     <div class="alert" role="alert"><strong>Address query failed</strong><span>@_error</span></div>
+}
+
+@if (_purgeMessage is not null)
+{
+    <div class="alert success" role="status"><strong>Purge complete</strong><span>@_purgeMessage</span></div>
 }
 
 <section class="tracker-panel history-panel" aria-busy="@_loading">
@@ -112,6 +118,30 @@
     </div>
 }
 
+
+@if (_showingPurge)
+{
+    <div class="modal-backdrop" @onclick="ClosePurge">
+        <section class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="purge-excluded-addresses-title"
+                 tabindex="0" @onclick:stopPropagation @onkeydown="HandlePurgeKeyDown">
+            <header>
+                <div><p class="eyebrow">Purge tracking data</p><h2 id="purge-excluded-addresses-title">Delete excluded-aircraft tracking data?</h2></div>
+                <button class="icon-button" type="button" aria-label="Close purge confirmation"
+                        autofocus @onclick="ClosePurge" disabled="@_purging">×</button>
+            </header>
+            <p>This will permanently delete all tracking records and associated position records for every aircraft address in the excluded-address table. The excluded addresses will be retained.</p>
+            @if (_purgeError is not null)
+            {
+                <div class="alert" role="alert"><strong>Purge failed</strong><span>@_purgeError</span></div>
+            }
+            <div class="confirmation-actions">
+                <button class="secondary-button" type="button" @onclick="ClosePurge" disabled="@_purging">Cancel</button>
+                <button class="danger-button" type="button" @onclick="PurgeAsync" disabled="@_purging">@(_purging ? "Purging…" : "Purge tracking data")</button>
+            </div>
+        </section>
+    </div>
+}
+
 @code {
 #nullable enable
     private IReadOnlyList<ExcludedAddress> _results = [];
@@ -122,6 +152,10 @@
     private bool _deleting;
     private bool _adding;
     private bool _showingAdd;
+    private bool _showingPurge;
+    private bool _purging;
+    private string? _purgeError;
+    private string? _purgeMessage;
     private string _newAddress = string.Empty;
     private string? _addError;
     private ExcludedAddress? _deleteExclusion;
@@ -234,6 +268,53 @@
     }
 
     /// <summary>
+    /// Opens the tracking-data purge confirmation.
+    /// </summary>
+    private void ShowPurge()
+    {
+        _purgeError = null;
+        _purgeMessage = null;
+        _showingPurge = true;
+    }
+
+    /// <summary>
+    /// Closes the purge confirmation when a purge is not active.
+    /// </summary>
+    private void ClosePurge()
+    {
+        if (!_purging)
+        {
+            _showingPurge = false;
+            _purgeError = null;
+        }
+    }
+
+    /// <summary>
+    /// Purges tracking data belonging to excluded aircraft addresses.
+    /// </summary>
+    private async Task PurgeAsync()
+    {
+        _purging = true;
+        _purgeError = null;
+        try
+        {
+            var deletedAircraft = await ExcludedAddressService.PurgeTrackingDataAsync();
+            _showingPurge = false;
+            _purgeMessage = deletedAircraft == 1
+                ? "1 tracking record and its associated positions were deleted."
+                : $"{deletedAircraft:N0} tracking records and their associated positions were deleted.";
+        }
+        catch (Exception exception)
+        {
+            _purgeError = exception.Message;
+        }
+        finally
+        {
+            _purging = false;
+        }
+    }
+
+    /// <summary>
     /// Closes the removal confirmation when deletion is not active.
     /// </summary>
     private void CloseDelete()
@@ -294,6 +375,17 @@
         if (args.Key == "Escape")
         {
             CloseAdd();
+        }
+    }
+
+    /// <summary>
+    /// Closes the purge confirmation when Escape is pressed.
+    /// </summary>
+    private void HandlePurgeKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            ClosePurge();
         }
     }
 }
