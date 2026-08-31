@@ -51,6 +51,8 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Address");
+
                     b.HasIndex("ModelId");
 
                     b.HasIndex("ProvenanceId");
@@ -83,6 +85,8 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnName("ProvenanceId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ICAO");
 
                     b.HasIndex("ProvenanceId");
 
@@ -184,6 +188,8 @@ namespace BaseStationReader.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Callsign");
+
                     b.ToTable("EXCLUDED_CALLSIGN", (string)null);
                 });
 
@@ -225,6 +231,8 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnName("ProvenanceId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Callsign");
 
                     b.HasIndex("AirlineId");
 
@@ -620,6 +628,8 @@ namespace BaseStationReader.Data.Migrations
                         .HasColumnName("Address");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Address");
 
                     b.ToTable("EXCLUDED_ADDRESS", (string)null);
                 });
