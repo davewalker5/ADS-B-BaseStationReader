@@ -1,6 +1,8 @@
 using BaseStationReader.Data;
 using BaseStationReader.BusinessLogic.Database;
 using BaseStationReader.Interfaces.Database;
+using BaseStationReader.Entities.Tracking;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseStationReader.Tests.Database
 {
@@ -99,5 +101,50 @@ namespace BaseStationReader.Tests.Database
             excluded = await _manager.IsExcludedAsync(Callsign);
             Assert.IsFalse(excluded);
         }
+
+        [TestMethod]
+        public async Task PurgeTrackingDataDeletesExcludedCallsignAircraftAndPositionsOnlyTestAsync()
+        {
+            var context = BaseStationReaderDbContextFactory.CreateInMemoryDbContext();
+            var manager = new ExcludedCallsignManager(context);
+            await manager.AddAsync(Callsign);
+
+            var excludedAircraft = CreateTrackedAircraft("ABC001", Callsign);
+            var retainedAircraft = CreateTrackedAircraft("DEF456", "BAW456");
+            context.TrackedAircraft.AddRange(excludedAircraft, retainedAircraft);
+            await context.SaveChangesAsync();
+            context.Positions.AddRange(
+                CreatePosition(excludedAircraft),
+                CreatePosition(retainedAircraft));
+            await context.SaveChangesAsync();
+
+            var deleted = await manager.PurgeTrackingDataAsync();
+
+            Assert.AreEqual(1, deleted);
+            Assert.HasCount(1, await context.TrackedAircraft.ToListAsync());
+            Assert.AreEqual("BAW456", (await context.TrackedAircraft.SingleAsync()).Callsign);
+            Assert.HasCount(1, await context.Positions.ToListAsync());
+            Assert.AreEqual(retainedAircraft.Id, (await context.Positions.SingleAsync()).AircraftId);
+            Assert.HasCount(1, await context.ExcludedCallsigns.ToListAsync());
+        }
+
+        private static TrackedAircraft CreateTrackedAircraft(string address, string callsign)
+            => new()
+            {
+                Address = address,
+                Callsign = callsign,
+                FirstSeen = DateTime.UtcNow,
+                LastSeen = DateTime.UtcNow,
+                Status = TrackingStatus.Active
+            };
+
+        private static AircraftPosition CreatePosition(TrackedAircraft aircraft)
+            => new()
+            {
+                Address = aircraft.Address,
+                AircraftId = aircraft.Id,
+                Aircraft = aircraft,
+                Timestamp = DateTime.UtcNow
+            };
     }
 }

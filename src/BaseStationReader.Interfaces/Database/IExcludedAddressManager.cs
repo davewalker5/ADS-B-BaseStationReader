@@ -23,5 +23,6 @@ namespace BaseStationReader.Interfaces.Database
             string address,
             CancellationToken cancellationToken = default);
         Task DeleteAsync(string address, CancellationToken cancellationToken = default);
+        Task<int> PurgeTrackingDataAsync(CancellationToken cancellationToken = default);
     }
 }

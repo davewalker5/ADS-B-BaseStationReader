@@ -248,6 +248,8 @@ tbody tr.stale { background: rgba(255,113,134,.045); }
 .detail-grid dd { margin: 7px 0 0; font-size: 13px; }
 .alert { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 13px 16px; color: #ffd7dd; background: rgba(255,113,134,.09); border: 1px solid rgba(255,113,134,.3); border-radius: 9px; }
 .alert span { flex: 1; color: #d9aeb5; font-size: 12px; }
+.alert.success { color: #c9f7e2; background: rgba(79,218,161,.09); border-color: rgba(79,218,161,.3); }
+.alert.success span { color: #a9d9c4; }
 .alert button, .button { padding: 7px 11px; color: var(--text); background: transparent; border: 1px solid currentColor; border-radius: 6px; cursor: pointer; text-decoration: none; }
 .empty-state { padding: 15vh 0; text-align: center; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

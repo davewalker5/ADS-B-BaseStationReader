@@ -54,4 +54,12 @@ public sealed class ExcludedAddressService : IExcludedAddressService
         var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
         await manager.DeleteAsync(address, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<int> PurgeTrackingDataAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var manager = new DatabaseManagementFactory(_logger, context, 0).ExcludedAddressManager;
+        return await manager.PurgeTrackingDataAsync(cancellationToken);
+    }
 }
