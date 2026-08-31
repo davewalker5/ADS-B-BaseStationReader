@@ -28,6 +28,7 @@ namespace BaseStationReader.Tests.Database
 
         private ISightingManager _manager = null;
         private Aircraft _aircraft;
+        private Airline _airline;
         private Flight _flight;
         private BaseStationReaderDbContext _context;
         private SqliteConnection _connection;
@@ -52,18 +53,18 @@ namespace BaseStationReader.Tests.Database
             _aircraft = await new AircraftManager(_context).AddAsync(Address, Registration, Manufactured, age, model.Id);
 
             // Set up an airline and a flight
-            var airline = await new AirlineManager(_context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
+            _airline = await new AirlineManager(_context).AddAsync(AirlineIATA, AirlineICAO, AirlineName);
             var airportManager = new AirportManager(_context);
             var origin = await airportManager.AddAsync(new Airport
             {
-                IATA = Embarkation, ICAO = "EGLL", Name = "London Heathrow", ProvenanceId = airline.ProvenanceId
+                IATA = Embarkation, ICAO = "EGLL", Name = "London Heathrow", ProvenanceId = _airline.ProvenanceId
             });
             var destination = await airportManager.AddAsync(new Airport
             {
-                IATA = Destination, ICAO = "KEWR", Name = "Newark", ProvenanceId = airline.ProvenanceId
+                IATA = Destination, ICAO = "KEWR", Name = "Newark", ProvenanceId = _airline.ProvenanceId
             });
             _flight = await new FlightManager(_context).AddAsync(
-                FlightIATA, FlightICAO, FlightICAO, airline.Id, origin.Id, destination.Id);
+                FlightIATA, FlightICAO, FlightICAO, _airline.Id, origin.Id, destination.Id);
 
             await _context.TrackedAircraft.AddAsync(new TrackedAircraft
             {
@@ -82,6 +83,7 @@ namespace BaseStationReader.Tests.Database
             var retrieved = await _manager.GetAsync(x => x.AircraftId == _aircraft.Id);
             Assert.AreEqual(_aircraft.Id, retrieved.AircraftId);
             Assert.AreEqual(_flight.Id, retrieved.FlightId);
+            Assert.AreEqual(_airline.Id, retrieved.AirlineId);
             Assert.AreEqual(DateTime.Today, retrieved.Timestamp);
         }
 
@@ -92,7 +94,31 @@ namespace BaseStationReader.Tests.Database
             Assert.HasCount(1, sightings);
             Assert.AreEqual(_aircraft.Id, sightings[0].AircraftId);
             Assert.AreEqual(_flight.Id, sightings[0].FlightId);
+            Assert.AreEqual(_airline.Id, sightings[0].AirlineId);
             Assert.AreEqual(DateTime.Today, sightings[0].Timestamp);
+        }
+
+        [TestMethod]
+        public async Task UnknownFlightResolvesAirlineFromCallsignTestAsync()
+        {
+            var tracked = new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = "BAW999X",
+                FirstSeen = DateTime.Today.AddHours(1),
+                LastSeen = DateTime.Today.AddHours(2),
+                Status = TrackingStatus.Locked
+            };
+            await _context.TrackedAircraft.AddAsync(tracked);
+            await _context.SaveChangesAsync();
+
+            var retrieved = await _manager.GetAsync(x => x.Id == tracked.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.IsNull(retrieved.FlightId);
+            Assert.IsNull(retrieved.Flight);
+            Assert.AreEqual(_airline.Id, retrieved.AirlineId);
+            Assert.AreEqual(AirlineName, retrieved.Airline.Name);
         }
 
         [TestCleanup]

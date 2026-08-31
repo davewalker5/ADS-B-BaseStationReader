@@ -117,6 +117,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         var sessionStartLocal = DateTime.SpecifyKind(session.StartedAtUtc, DateTimeKind.Utc).ToLocalTime();
         var sightingManager = new SightingManager(context);
         var resolvedCallsigns = (await sightingManager.ListAsync(sighting =>
+                sighting.Flight != null &&
                 addresses.Contains(sighting.Aircraft.Address) &&
                 sighting.Timestamp >= sessionStartLocal &&
                 (!sessionEnd.HasValue || sighting.Timestamp <= sessionEnd.Value)))
@@ -124,7 +125,7 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
             {
                 sighting.Aircraft.Address,
                 sighting.Timestamp,
-                Callsign = sighting.Flight.Callsign
+                Callsign = sighting.Flight!.Callsign
             })
             .ToList();
 
@@ -454,10 +455,10 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         if (!string.IsNullOrWhiteSpace(airline))
         {
             var matchingIds = (await new SightingManager(context).ListAsync(sighting =>
-                sighting.Flight.Airline != null &&
-                (sighting.Flight.Airline.Name.Contains(airline) ||
-                 sighting.Flight.Airline.IATA.Contains(airline) ||
-                 sighting.Flight.Airline.ICAO.Contains(airline))))
+                sighting.Airline != null &&
+                (sighting.Airline.Name.Contains(airline) ||
+                 sighting.Airline.IATA.Contains(airline) ||
+                 sighting.Airline.ICAO.Contains(airline))))
                 .Select(sighting => sighting.Id)
                 .ToArray();
             query = query.Where(record => matchingIds.Contains(record.Id));
@@ -466,7 +467,8 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         if (!string.IsNullOrWhiteSpace(flightNumber))
         {
             var matchingIds = (await new SightingManager(context).ListAsync(sighting =>
-                    sighting.Flight.IATA.Contains(flightNumber) || sighting.Flight.ICAO.Contains(flightNumber)))
+                    sighting.Flight != null &&
+                    (sighting.Flight.IATA.Contains(flightNumber) || sighting.Flight.ICAO.Contains(flightNumber))))
                 .Select(sighting => sighting.Id)
                 .ToArray();
             query = query.Where(record => matchingIds.Contains(record.Id));
@@ -622,11 +624,11 @@ public sealed class TrackingSessionQueryManager : ITrackingSessionQueryManager
         var sighting = await new SightingManager(context).GetAsync(item => item.Id == trackingRecordId);
         var flightInfo = sighting == null ? null : new
         {
-            FlightIata = sighting.Flight.IATA,
-            FlightIcao = sighting.Flight.ICAO,
-            sighting.Flight.Embarkation,
-            sighting.Flight.Destination,
-            AirlineName = sighting.Flight.Airline == null ? string.Empty : sighting.Flight.Airline.Name
+            FlightIata = sighting.Flight?.IATA ?? string.Empty,
+            FlightIcao = sighting.Flight?.ICAO ?? string.Empty,
+            Embarkation = sighting.Flight?.Embarkation ?? string.Empty,
+            Destination = sighting.Flight?.Destination ?? string.Empty,
+            AirlineName = sighting.Airline?.Name ?? string.Empty
         };
 
         return new TrackingSessionDetail

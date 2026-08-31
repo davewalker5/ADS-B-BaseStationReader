@@ -12,7 +12,7 @@ FROM TRACKED_AIRCRAFT ta
 LEFT JOIN AIRCRAFT a ON a.Address = ta.Address
 LEFT JOIN MODEL m ON m.Id = a.ModelId
 LEFT JOIN MANUFACTURER ma ON ma.Id = m.ManufacturerId
-LEFT JOIN FLIGHT f ON f.Callsign = ta.Callsign
-LEFT JOIN AIRLINE al ON al.Id = f.AirlineId
+LEFT JOIN SIGHTING s ON s.Id = ta.Id
+LEFT JOIN AIRLINE al ON al.Id = s.AirlineId
 GROUP BY ta.Address, a.Registration, m.Name, m.ICAO, ma.Name, al.Name
 ORDER BY "Observations" DESC, ta.Address;

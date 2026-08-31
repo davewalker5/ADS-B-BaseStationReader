@@ -14,14 +14,18 @@ namespace BaseStationReader.Entities.Api
         [ForeignKey(nameof(Api.Aircraft))]
         public int AircraftId { get; set; }
 
-        [Required]
         [ForeignKey(nameof(Api.Flight))]
-        public int FlightId { get; set; }
+        public int? FlightId { get; set; }
+
+        [Required]
+        [ForeignKey(nameof(Api.Airline))]
+        public int AirlineId { get; set; }
 
         [Required]
         public DateTime Timestamp { get; set; }
 
         public Aircraft Aircraft { get; set; }
         public Flight Flight { get; set; }
+        public Airline Airline { get; set; }
     }
 }

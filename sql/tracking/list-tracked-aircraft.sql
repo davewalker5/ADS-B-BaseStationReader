@@ -12,4 +12,5 @@ INNER JOIN      TRACKED_AIRCRAFT ta ON ta.SessionId = s.Id
 INNER JOIN      AIRCRAFT a ON a.Address = ta.Address
 INNER JOIN      MODEL m ON m.Id = a.ModelId
 INNER JOIN      MANUFACTURER ma ON ma.Id = m.ManufacturerId
-WHERE           ( CAST(strftime('%Y', 'now') AS INTEGER) - a.Manufactured ) > 60;
+WHERE           ( CAST(strftime('%Y', 'now') AS INTEGER) - a.Manufactured ) > 60
+ORDER BY        s.Id, a.Registration;
