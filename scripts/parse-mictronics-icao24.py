@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Convert a Mictronics ICAO24 mapping file to an aircraft import CSV."""
 
 from __future__ import annotations
