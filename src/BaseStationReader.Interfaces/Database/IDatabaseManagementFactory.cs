@@ -10,6 +10,7 @@ namespace BaseStationReader.Interfaces.Database
         IDataCleaner DataCleaner { get; }
         IAircraftManager AircraftManager { get; }
         IAirlineManager AirlineManager { get; }
+        IAirlineCallsignPrefixManager AirlineCallsignPrefixManager { get; }
         IAirportManager AirportManager { get; }
         IFlightManager FlightManager { get; }
         IManufacturerManager ManufacturerManager { get; }

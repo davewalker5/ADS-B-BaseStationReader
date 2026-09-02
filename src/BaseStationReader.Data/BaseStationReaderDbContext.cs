@@ -17,6 +17,7 @@ namespace BaseStationReader.Data
         public virtual DbSet<AircraftPosition> Positions { get; set; }
         public virtual DbSet<Flight> Flights { get; set; }
         public virtual DbSet<Airline> Airlines { get; set; }
+        public virtual DbSet<AirlineCallsignPrefix> AirlineCallsignPrefixes { get; set; }
         public virtual DbSet<Airport> Airports { get; set; }
         public virtual DbSet<Aircraft> Aircraft { get; set; }
         public virtual DbSet<Model> Models { get; set; }
@@ -230,6 +231,28 @@ namespace BaseStationReader.Data
                 entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
 
                 entity.HasIndex(e => e.ICAO);
+
+                entity.HasOne(e => e.Provenance)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProvenanceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<AirlineCallsignPrefix>(entity =>
+            {
+                entity.ToTable("AIRLINE_CALLSIGN_PREFIX");
+
+                entity.Property(e => e.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(e => e.Prefix).IsRequired().HasMaxLength(8).HasColumnName("Prefix");
+                entity.Property(e => e.AirlineId).IsRequired().HasColumnName("AirlineId");
+                entity.Property(e => e.ProvenanceId).IsRequired().HasColumnName("ProvenanceId");
+
+                entity.HasIndex(e => e.Prefix).IsUnique();
+
+                entity.HasOne(e => e.Airline)
+                    .WithMany()
+                    .HasForeignKey(e => e.AirlineId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.Provenance)
                     .WithMany()

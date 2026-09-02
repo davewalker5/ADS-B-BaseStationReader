@@ -23,6 +23,12 @@ namespace BaseStationReader.BusinessLogic.Database
             => Clean(icao).ToUpper();
 
         /// <summary>
+        /// Return a cleaned-up version of a callsign prefix.
+        /// </summary>
+        public static string CleanCallsignPrefix(string prefix)
+            => Clean(prefix).ToUpperInvariant();
+
+        /// <summary>
         /// Ensure a string is converted to a consistent case for storage in the database and
         /// subsequent searching
         /// </summary>
