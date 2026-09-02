@@ -194,6 +194,7 @@ namespace BaseStationReader.TrackerHub
                 builder.Services.AddScoped<IProvenanceService, ProvenanceService>();
                 builder.Services.AddScoped<IAircraftReferenceService, AircraftReferenceService>();
                 builder.Services.AddScoped<IAirlineReferenceService, AirlineReferenceService>();
+                builder.Services.AddScoped<IAirlineCallsignPrefixReferenceService, AirlineCallsignPrefixReferenceService>();
                 builder.Services.AddScoped<IAirportReferenceService, AirportReferenceService>();
                 builder.Services.AddScoped<IFlightReferenceService, FlightReferenceService>();
                 builder.Services.AddScoped<IManufacturerReferenceService, ManufacturerReferenceService>();

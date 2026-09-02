@@ -121,6 +121,116 @@ namespace BaseStationReader.Tests.Database
             Assert.AreEqual(AirlineName, retrieved.Airline.Name);
         }
 
+        [TestMethod]
+        public async Task UnknownFlightResolvesAirlineFromPrefixMappingTestAsync()
+        {
+            var mappedAirline = await new AirlineManager(_context).AddAsync(
+                "EA", "EXA", "Example Airways", _airline.ProvenanceId);
+            await new AirlineCallsignPrefixManager(_context).AddAsync(
+                "WOW", mappedAirline.Id, _airline.ProvenanceId);
+            var tracked = new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = "WOW42X",
+                FirstSeen = DateTime.Today.AddHours(3),
+                LastSeen = DateTime.Today.AddHours(4),
+                Status = TrackingStatus.Locked
+            };
+            await _context.TrackedAircraft.AddAsync(tracked);
+            await _context.SaveChangesAsync();
+
+            var retrieved = await _manager.GetAsync(x => x.Id == tracked.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.IsNull(retrieved.FlightId);
+            Assert.AreEqual(mappedAirline.Id, retrieved.AirlineId);
+            Assert.AreEqual("Example Airways", retrieved.Airline.Name);
+        }
+
+        [TestMethod]
+        public async Task ExactCallsignResolvesAirlineFromPrefixMappingTestAsync()
+        {
+            var mappedAirline = await new AirlineManager(_context).AddAsync(
+                "PR", "N/A", "Private", _airline.ProvenanceId);
+            await new AirlineCallsignPrefixManager(_context).AddAsync(
+                "GPTFE", mappedAirline.Id, _airline.ProvenanceId);
+            var tracked = new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = "GPTFE",
+                FirstSeen = DateTime.Today.AddHours(7),
+                LastSeen = DateTime.Today.AddHours(8),
+                Status = TrackingStatus.Locked
+            };
+            await _context.TrackedAircraft.AddAsync(tracked);
+            await _context.SaveChangesAsync();
+
+            var retrieved = await _manager.GetAsync(x => x.Id == tracked.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.IsNull(retrieved.FlightId);
+            Assert.AreEqual(mappedAirline.Id, retrieved.AirlineId);
+            Assert.AreEqual("Private", retrieved.Airline.Name);
+        }
+
+        [TestMethod]
+        public async Task PrefixMappingUsesLongestMatchingPrefixTestAsync()
+        {
+            var shortPrefixAirline = await new AirlineManager(_context).AddAsync(
+                "SP", "SPA", "Short Prefix Airways", _airline.ProvenanceId);
+            var longPrefixAirline = await new AirlineManager(_context).AddAsync(
+                "LP", "LPA", "Long Prefix Airways", _airline.ProvenanceId);
+            var prefixManager = new AirlineCallsignPrefixManager(_context);
+            await prefixManager.AddAsync("ZX", shortPrefixAirline.Id, _airline.ProvenanceId);
+            await prefixManager.AddAsync("ZXQ", longPrefixAirline.Id, _airline.ProvenanceId);
+            var tracked = new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = "ZXQ123",
+                FirstSeen = DateTime.Today.AddHours(5),
+                LastSeen = DateTime.Today.AddHours(6),
+                Status = TrackingStatus.Locked
+            };
+            await _context.TrackedAircraft.AddAsync(tracked);
+            await _context.SaveChangesAsync();
+
+            var retrieved = await _manager.GetAsync(x => x.Id == tracked.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.AreEqual(longPrefixAirline.Id, retrieved.AirlineId);
+        }
+
+        [TestMethod]
+        public async Task FlightAirlineTakesPrecedenceOverPrefixMappingTestAsync()
+        {
+            var mappedAirline = await new AirlineManager(_context).AddAsync(
+                "EA", "EXA", "Example Airways", _airline.ProvenanceId);
+            await new AirlineCallsignPrefixManager(_context).AddAsync(
+                "BAW", mappedAirline.Id, _airline.ProvenanceId);
+
+            var retrieved = await _manager.GetAsync(x => x.FlightId == _flight.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.AreEqual(_airline.Id, retrieved.AirlineId);
+            Assert.AreNotEqual(mappedAirline.Id, retrieved.AirlineId);
+        }
+
+        [TestMethod]
+        public async Task PrefixLookupHasUniqueIndexTestAsync()
+        {
+            await using var command = _connection.CreateCommand();
+            command.CommandText = "PRAGMA index_list('AIRLINE_CALLSIGN_PREFIX');";
+            await using var reader = await command.ExecuteReaderAsync();
+            var indexes = new List<(string Name, bool Unique)>();
+            while (await reader.ReadAsync())
+            {
+                indexes.Add((reader.GetString(1), reader.GetBoolean(2)));
+            }
+
+            Assert.IsTrue(indexes.Any(index =>
+                index.Name == "IX_AIRLINE_CALLSIGN_PREFIX_Prefix" && index.Unique));
+        }
+
         [TestCleanup]
         public async Task CleanupAsync()
         {

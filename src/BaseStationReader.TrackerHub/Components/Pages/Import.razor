@@ -25,6 +25,8 @@
             class="@(_activeTab == ReferenceTab.Aircraft ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Aircraft)">Aircraft</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Airlines)"
             class="@(_activeTab == ReferenceTab.Airlines ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Airlines)">Airlines</button>
+    <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.AirlinePrefixes)"
+            class="@(_activeTab == ReferenceTab.AirlinePrefixes ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.AirlinePrefixes)">Airline prefixes</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Airports)"
             class="@(_activeTab == ReferenceTab.Airports ? "active" : null)" @onclick="() => SelectTabAsync(ReferenceTab.Airports)">Airports</button>
     <button type="button" role="tab" aria-selected="@(_activeTab == ReferenceTab.Flights)"
@@ -52,7 +54,8 @@
             {
                 <label class="import-type-card @(option.Type == _importType ? "selected" : null)">
                     <input type="radio" name="import-type" value="@option.Type"
-                           checked="@(option.Type == _importType)" @onchange="() => SelectType(option.Type)" />
+                           checked="@(option.Type == _importType)" disabled="@(_importing || TrackingControl.IsTracking)"
+                           @onchange="() => SelectType(option.Type)" />
                     <span><strong>@option.Name</strong><small>@option.Description</small></span>
                 </label>
             }
@@ -61,7 +64,8 @@
         <div class="import-upload">
             <label for="csv-file">
                 <span>CSV file</span>
-                <InputFile id="csv-file" OnChange="SelectFile" accept=".csv,text/csv" disabled="@_importing" />
+                <InputFile id="csv-file" OnChange="SelectFile" accept=".csv,text/csv"
+                           disabled="@(_importing || TrackingControl.IsTracking)" />
             </label>
             <div class="import-file-summary">
                 @if (_file is null) { <span>No file selected</span> }
@@ -71,6 +75,10 @@
                 @(_importing ? "Importing…" : $"Import {SelectedOption.Name.ToLowerInvariant()}")
             </button>
         </div>
+        @if (TrackingControl.IsTracking)
+        {
+            <p class="editor-read-only">Reference data cannot be imported while a live tracking session is active.</p>
+        }
         <p class="import-note">Imports add or update records using the lookup tool's existing rules. The maximum upload size is 50 MB.</p>
     </section>
 }
@@ -243,6 +251,10 @@ else if (_activeTab == ReferenceTab.Airlines)
 {
     <AirlineEditor />
 }
+else if (_activeTab == ReferenceTab.AirlinePrefixes)
+{
+    <AirlineCallsignPrefixEditor />
+}
 else if (_activeTab == ReferenceTab.Airports)
 {
     <AirportEditor />
@@ -300,6 +312,7 @@ else
     [
         new(DataImportType.Aircraft, "Aircraft", "Aircraft definitions, registrations and model codes"),
         new(DataImportType.Airlines, "Airlines", "Airline names with IATA and ICAO codes"),
+        new(DataImportType.AirlineCallsignPrefixes, "Airline callsign prefixes", "Map callsign prefixes to existing airlines"),
         new(DataImportType.Airports, "Airports", "Airport names, locations, distances and IATA/ICAO codes"),
         new(DataImportType.Flights, "Flights", "Callsigns with optional routes and airlines"),
         new(DataImportType.Manufacturers, "Manufacturers", "Aircraft manufacturer definitions"),
@@ -336,7 +349,7 @@ else
     private IEnumerable<Model> FilteredModels => _selectedManufacturerId == 0
         ? []
         : _models.Where(x => x.ManufacturerId == _selectedManufacturerId).OrderBy(x => x.Name);
-    private bool CanImport => !_importing && _file is not null && _file.Size <= MaximumFileSize &&
+    private bool CanImport => !_importing && !TrackingControl.IsTracking && _file is not null && _file.Size <= MaximumFileSize &&
         string.Equals(Path.GetExtension(_file.Name), ".csv", StringComparison.OrdinalIgnoreCase);
     private ImportOption SelectedOption => ImportOptions.First(option => option.Type == _importType);
 
@@ -584,5 +597,5 @@ else
         string.IsNullOrWhiteSpace(model.ICAO) ? model.Name : $"{model.ICAO} - {model.Name}";
     private static string FormatSize(long bytes) => bytes < 1024 * 1024 ? $"{Math.Max(1, bytes / 1024d):0.#} KB" : $"{bytes / 1024d / 1024d:0.#} MB";
     private sealed record ImportOption(DataImportType Type, string Name, string Description);
-    private enum ReferenceTab { Import, Provenance, Aircraft, Airlines, Airports, Flights, Manufacturers, Models }
+    private enum ReferenceTab { Import, Provenance, Aircraft, Airlines, AirlinePrefixes, Airports, Flights, Manufacturers, Models }
 }
