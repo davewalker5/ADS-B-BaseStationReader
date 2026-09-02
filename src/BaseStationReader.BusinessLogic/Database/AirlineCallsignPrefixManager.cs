@@ -36,7 +36,7 @@ namespace BaseStationReader.BusinessLogic.Database
             int airlineId,
             int provenanceId = 0)
         {
-            var cleanPrefix = ValidatePrefix(prefix);
+            var cleanPrefix = StringCleaner.CleanCallsignPrefix(prefix);
             await ValidateAirlineAsync(airlineId);
             provenanceId = await ResolveProvenanceIdAsync(provenanceId);
 
@@ -72,7 +72,7 @@ namespace BaseStationReader.BusinessLogic.Database
         {
             var mapping = await _context.AirlineCallsignPrefixes.FindAsync(id)
                 ?? throw new InvalidOperationException($"Airline callsign prefix record {id} does not exist.");
-            var cleanPrefix = ValidatePrefix(prefix);
+            var cleanPrefix = StringCleaner.CleanCallsignPrefix(prefix);
             await ValidateAirlineAsync(airlineId);
             await ValidateProvenanceAsync(provenanceId);
 
@@ -142,17 +142,5 @@ namespace BaseStationReader.BusinessLogic.Database
             return manual.Id;
         }
 
-        private static string ValidatePrefix(string prefix)
-        {
-            var cleanPrefix = StringCleaner.CleanCallsignPrefix(prefix);
-            if (cleanPrefix.Length is < 1 or > 8 || cleanPrefix.Any(c => c is not (>= 'A' and <= 'Z') and not (>= '0' and <= '9')))
-            {
-                throw new ArgumentException(
-                    "Callsign prefix must contain between one and eight letters or digits.",
-                    nameof(prefix));
-            }
-
-            return cleanPrefix;
-        }
     }
 }

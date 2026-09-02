@@ -35,6 +35,8 @@
     <None Remove="empty_aircraft.csv" />
     <None Remove="flights.csv" />
     <None Remove="empty_flights.csv" />
+    <None Remove="airline-callsign-prefixes.csv" />
+    <None Remove="empty_airline-callsign-prefixes.csv" />
   </ItemGroup>
 
   <ItemGroup>
@@ -93,6 +95,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="empty_flights.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="airline-callsign-prefixes.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="empty_airline-callsign-prefixes.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

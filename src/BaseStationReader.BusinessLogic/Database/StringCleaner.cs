@@ -26,7 +26,18 @@ namespace BaseStationReader.BusinessLogic.Database
         /// Return a cleaned-up version of a callsign prefix.
         /// </summary>
         public static string CleanCallsignPrefix(string prefix)
-            => Clean(prefix).ToUpperInvariant();
+        {
+            var cleanPrefix = (Clean(prefix) ?? "").ToUpperInvariant();
+            if (cleanPrefix.Length is < 1 or > 8 ||
+                cleanPrefix.Any(c => c is not (>= 'A' and <= 'Z') and not (>= '0' and <= '9')))
+            {
+                throw new ArgumentException(
+                    "Callsign prefix must contain between one and eight letters or digits.",
+                    nameof(prefix));
+            }
+
+            return cleanPrefix;
+        }
 
         /// <summary>
         /// Ensure a string is converted to a consistent case for storage in the database and
