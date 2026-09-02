@@ -13,14 +13,17 @@ public sealed class DataImportService : IDataImportService
 {
     private readonly IDbContextFactory<BaseStationReaderDbContext> _contextFactory;
     private readonly ITrackerLogger _logger;
+    private readonly TrackingRuntime _runtime;
     private readonly SemaphoreSlim _importLock = new(1, 1);
 
     public DataImportService(
         IDbContextFactory<BaseStationReaderDbContext> contextFactory,
-        ITrackerLogger logger)
+        ITrackerLogger logger,
+        TrackingRuntime runtime)
     {
         _contextFactory = contextFactory;
         _logger = logger;
+        _runtime = runtime;
     }
 
     /// <inheritdoc />
@@ -53,32 +56,38 @@ public sealed class DataImportService : IDataImportService
             await _importLock.WaitAsync(cancellationToken);
             try
             {
-                await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-                var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
-
-                switch (importType)
+                await _runtime.ExecuteWhileIdleAsync(async () =>
                 {
-                    case DataImportType.Aircraft:
-                        await new AircraftImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    case DataImportType.Airlines:
-                        await new AirlineImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    case DataImportType.Airports:
-                        await new AirportImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    case DataImportType.Flights:
-                        await new FlightImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    case DataImportType.Manufacturers:
-                        await new ManufacturerImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    case DataImportType.Models:
-                        await new ModelImporter(databaseFactory).ImportAsync(temporaryPath);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(importType));
-                }
+                    await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+                    var databaseFactory = new DatabaseManagementFactory(_logger, context, 0);
+
+                    switch (importType)
+                    {
+                        case DataImportType.Aircraft:
+                            await new AircraftImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.Airlines:
+                            await new AirlineImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.AirlineCallsignPrefixes:
+                            await new AirlineCallsignPrefixImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.Airports:
+                            await new AirportImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.Flights:
+                            await new FlightImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.Manufacturers:
+                            await new ManufacturerImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        case DataImportType.Models:
+                            await new ModelImporter(databaseFactory).ImportAsync(temporaryPath);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(importType));
+                    }
+                }, cancellationToken);
             }
             finally
             {

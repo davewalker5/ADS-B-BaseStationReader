@@ -7,6 +7,7 @@ public enum DataImportType
 {
     Aircraft,
     Airlines,
+    AirlineCallsignPrefixes,
     Airports,
     Flights,
     Manufacturers,
