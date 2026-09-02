@@ -148,6 +148,32 @@ namespace BaseStationReader.Tests.Database
         }
 
         [TestMethod]
+        public async Task ExactCallsignResolvesAirlineFromPrefixMappingTestAsync()
+        {
+            var mappedAirline = await new AirlineManager(_context).AddAsync(
+                "PR", "N/A", "Private", _airline.ProvenanceId);
+            await new AirlineCallsignPrefixManager(_context).AddAsync(
+                "GPTFE", mappedAirline.Id, _airline.ProvenanceId);
+            var tracked = new TrackedAircraft
+            {
+                Address = Address,
+                Callsign = "GPTFE",
+                FirstSeen = DateTime.Today.AddHours(7),
+                LastSeen = DateTime.Today.AddHours(8),
+                Status = TrackingStatus.Locked
+            };
+            await _context.TrackedAircraft.AddAsync(tracked);
+            await _context.SaveChangesAsync();
+
+            var retrieved = await _manager.GetAsync(x => x.Id == tracked.Id);
+
+            Assert.IsNotNull(retrieved);
+            Assert.IsNull(retrieved.FlightId);
+            Assert.AreEqual(mappedAirline.Id, retrieved.AirlineId);
+            Assert.AreEqual("Private", retrieved.Airline.Name);
+        }
+
+        [TestMethod]
         public async Task PrefixMappingUsesLongestMatchingPrefixTestAsync()
         {
             var shortPrefixAirline = await new AirlineManager(_context).AddAsync(

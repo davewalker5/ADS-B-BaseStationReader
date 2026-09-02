@@ -56,9 +56,7 @@ CREATE VIEW SIGHTING AS
            tracked.Callsign IS NOT NULL AND
            tracked.Callsign <> '' AND
            (flight.Id IS NOT NULL OR
-            (prefix_mapping.Id IS NOT NULL AND
-             LENGTH(tracked.Callsign) > LENGTH(prefix_mapping.Prefix) AND
-             SUBSTR(tracked.Callsign, LENGTH(prefix_mapping.Prefix) + 1) GLOB '*[0-9]*') OR
+            prefix_mapping.Id IS NOT NULL OR
             (fallback_airline.Id IS NOT NULL AND
              LENGTH(tracked.Callsign) > 3 AND
              SUBSTR(tracked.Callsign, 4) GLOB '*[0-9]*')) AND
