@@ -25,8 +25,14 @@ services:
       WebUI__TrackingProfilesPath: /var/opt/adsbtrackingprofiles/
       # In-container path to the tracking database
       ConnectionStrings__BaseStationReaderDB: "Data Source=/var/opt/adsbtracker/aircrafttracker.db;Default Timeout=5;Pooling=True"
+    # volumes:
+    #   # Map the host folder where the database is stored
+    #   - /path/to/adsb/tracking/database/folder:/var/opt/adsbtracker/
+    #   # Map the host folder where tracking profiles are stored into the container
+    #   - /path/to/tracking/profiles/folder:/var/opt/adsbtrackingprofiles/
     volumes:
-      # Map the host folder where the database is stored
-      - /path/to/adsb/tracking/database/folder:/var/opt/adsbtracker/
-      # Map the host folder where tracking profiles are stored into the container
-      - /path/to/tracking/profiles/folder:/var/opt/adsbtrackingprofiles/
+      - adsb-database:/var/opt/adsbtracker/
+      - adsb-profiles:/var/opt/adsbtrackingprofiles/
+volumes:
+  adsb-database:
+  adsb-profiles:
