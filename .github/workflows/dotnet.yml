@@ -1,22 +1,17 @@
-name: .NET Core CI Build
+name: CI
 
-on: [push]
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v1
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 9.0.304
-    - name: Run unit tests and generate code coverage
-      run: >
-        dotnet test src/BaseStationReader.sln
-        --settings src/BaseStationReader.Tests/mstest.runsettings
-        /p:CollectCoverage=true
-        /p:CoverletOutput=coverage/
-        /p:CoverletOutputFormat=lcov
+  ci:
+    uses: Trak-R/devops/.github/workflows/adsbtracker.yml@main
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
