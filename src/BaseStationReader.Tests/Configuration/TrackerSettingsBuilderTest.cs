@@ -53,24 +53,51 @@ namespace BaseStationReader.Tests.Configuration
         {
             const string hostVariable = "ApplicationSettings__Host";
             const string portVariable = "ApplicationSettings__Port";
+            const string logVariable = "ApplicationSettings__LogFile";
             var originalHost = Environment.GetEnvironmentVariable(hostVariable);
             var originalPort = Environment.GetEnvironmentVariable(portVariable);
+            var originalLogFile = Environment.GetEnvironmentVariable(logVariable);
 
             try
             {
                 Environment.SetEnvironmentVariable(hostVariable, "host.docker.internal");
                 Environment.SetEnvironmentVariable(portVariable, "30004");
+                Environment.SetEnvironmentVariable(logVariable, "/var/opt/adsbtracker/TrackerHub.log");
                 _parser.Parse(Array.Empty<string>());
 
                 var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
 
                 Assert.AreEqual("host.docker.internal", settings.Host);
                 Assert.AreEqual(30004, settings.Port);
+                Assert.AreEqual("/var/opt/adsbtracker/TrackerHub.log", settings.LogFile);
             }
             finally
             {
                 Environment.SetEnvironmentVariable(hostVariable, originalHost);
                 Environment.SetEnvironmentVariable(portVariable, originalPort);
+                Environment.SetEnvironmentVariable(logVariable, originalLogFile);
+            }
+        }
+
+        [TestMethod]
+        [DoNotParallelize]
+        public void CommandLineLogFileOverridesEnvironmentTest()
+        {
+            const string logVariable = "ApplicationSettings__LogFile";
+            var originalLogFile = Environment.GetEnvironmentVariable(logVariable);
+
+            try
+            {
+                Environment.SetEnvironmentVariable(logVariable, "/var/opt/adsbtracker/TrackerHub.log");
+                _parser.Parse(["--log-file", "MyLog.log"]);
+
+                var settings = _builder.BuildSettings(_parser, _reader, "trackersettings.json");
+
+                Assert.AreEqual("MyLog.log", settings.LogFile);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(logVariable, originalLogFile);
             }
         }
 

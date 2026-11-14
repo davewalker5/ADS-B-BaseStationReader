@@ -41,6 +41,12 @@ namespace BaseStationReader.BusinessLogic.Configuration
                 settings.Port = port;
             }
 
+            var environmentLogFile = Environment.GetEnvironmentVariable("ApplicationSettings__LogFile");
+            if (!string.IsNullOrWhiteSpace(environmentLogFile))
+            {
+                settings.LogFile = environmentLogFile;
+            }
+
             // Apply the command line values over the defaults
             values = parser.GetValues(CommandLineOptionType.Host);
             if (values != null)

@@ -1,4 +1,5 @@
-﻿using BaseStationReader.Entities.Config;
+﻿using System.Net;
+using BaseStationReader.Entities.Config;
 using BaseStationReader.Entities.Events;
 using BaseStationReader.Interfaces.Tracking;
 using BaseStationReader.Entities.Logging;
@@ -135,10 +136,51 @@ namespace BaseStationReader.TrackerHub
                     densitySnapshotMapper: new PositionDensitySnapshotMapper()));
                 _controller = runtime;
 
-                // Bind Kestrel options from the applicatiokn settings file
+                // HTTPS stays on for local runs. Containers set WebUi__UseHttpsRedirection=false so
+                // Kestrel listens on HTTP only and an ingress can terminate TLS.
+                var configuredHttpsRedirection = builder.Configuration["WebUi:UseHttpsRedirection"];
+                var useHttpsRedirection = !bool.TryParse(configuredHttpsRedirection, out var parsedHttpsRedirection)
+                    || parsedHttpsRedirection;
                 builder.WebHost.ConfigureKestrel(options =>
                 {
-                    builder.Configuration.GetSection("Kestrel").Bind(options);
+                    if (useHttpsRedirection)
+                    {
+                        builder.Configuration.GetSection("Kestrel").Bind(options);
+                        return;
+                    }
+
+                    var httpUrl = builder.Configuration["Kestrel:Endpoints:Http:Url"];
+                    if (string.IsNullOrWhiteSpace(httpUrl))
+                    {
+                        throw new InvalidOperationException("Kestrel HTTP endpoint URL is not configured.");
+                    }
+
+                    if (!Uri.TryCreate(httpUrl, UriKind.Absolute, out var uri) || uri.Port <= 0)
+                    {
+                        throw new InvalidOperationException($"Kestrel HTTP endpoint URL '{httpUrl}' is not a valid absolute URL.");
+                    }
+
+                    switch (uri.Host)
+                    {
+                        case "0.0.0.0":
+                        case "*":
+                        case "+":
+                        case "::":
+                            options.ListenAnyIP(uri.Port);
+                            break;
+                        case "localhost":
+                            options.ListenLocalhost(uri.Port);
+                            break;
+                        default:
+                            if (!IPAddress.TryParse(uri.IdnHost, out var address))
+                            {
+                                throw new InvalidOperationException(
+                                    $"Kestrel HTTP endpoint host '{uri.Host}' must be an IP address when HTTPS is disabled.");
+                            }
+
+                            options.Listen(address, uri.Port);
+                            break;
+                    }
                 });
 
                 // Register SignalR
@@ -229,8 +271,26 @@ namespace BaseStationReader.TrackerHub
                 // Expose fingerprinted framework-managed asset URLs so a deployment cannot combine
                 // freshly rendered components with a browser-cached stylesheet from an older build.
                 app.MapStaticAssets();
-                
-                app.UseHttpsRedirection();
+
+                // Answer probes before HTTPS redirection so HTTP health checks stay on this port.
+                app.Use(async (context, next) =>
+                {
+                    if (HttpMethods.IsGet(context.Request.Method) &&
+                        context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.ContentType = "text/plain";
+                        await context.Response.WriteAsync("ok");
+                        return;
+                    }
+
+                    await next(context);
+                });
+
+                if (useHttpsRedirection)
+                {
+                    app.UseHttpsRedirection();
+                }
+
                 app.UseAntiforgery();
 
                 // Map the existing external hub and the new interactive server UI.

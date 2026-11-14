@@ -26,12 +26,6 @@ namespace BaseStationReader.BusinessLogic.Logging
         /// <param name="verbose"></param>
         public void Initialise(string logFile, Severity minimumSeverityToLog, bool verbose)
         {
-            // If the log file's empty, return now without configuring a logger
-            if (string.IsNullOrEmpty(logFile))
-            {
-                return;
-            }
-
             // Set the minimum log level
             var levelSwitch = new LoggingLevelSwitch();
             switch (minimumSeverityToLog)
@@ -52,17 +46,22 @@ namespace BaseStationReader.BusinessLogic.Logging
                     break;
             }
 
-            // Configure the logger
+            // Console output is always enabled so container logs are visible. The rolling file is
+            // optional and is added only when a path is configured.
 #pragma warning disable CS8602, S4792
-            Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.ControlledBy(levelSwitch)
-            .WriteTo
-            .File(
+            var loggerConfiguration = new LoggerConfiguration()
+                .MinimumLevel.ControlledBy(levelSwitch)
+                .WriteTo.Console();
+            if (!string.IsNullOrEmpty(logFile))
+            {
+                loggerConfiguration = loggerConfiguration.WriteTo.File(
                     logFile,
                     rollingInterval: RollingInterval.Day,
                     rollOnFileSizeLimit: true,
-                    buffered: false)
-                .CreateLogger();
+                    buffered: false);
+            }
+
+            Log.Logger = loggerConfiguration.CreateLogger();
 #pragma warning restore CS8602, S4792
 
             // Set the "configured" flag and store the verbose logging level flag

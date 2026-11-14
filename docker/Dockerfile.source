@@ -1,0 +1,23 @@
+# Build from the repository root:
+#   docker build -f docker/Dockerfile.source -t registry.example/adsbtracker:2.39.0 .
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY src/BaseStationReader.Entities/ BaseStationReader.Entities/
+COPY src/BaseStationReader.Interfaces/ BaseStationReader.Interfaces/
+COPY src/BaseStationReader.Data/ BaseStationReader.Data/
+COPY src/BaseStationReader.BusinessLogic/ BaseStationReader.BusinessLogic/
+COPY src/BaseStationReader.Api/ BaseStationReader.Api/
+COPY src/BaseStationReader.TrackerHub/ BaseStationReader.TrackerHub/
+RUN dotnet publish BaseStationReader.TrackerHub/BaseStationReader.TrackerHub.csproj \
+    -c Release \
+    -o /app/publish \
+    --nologo
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /opt/adsbtracker
+COPY --from=build /app/publish .
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 5000
+# The aspnet runtime image defines APP_UID as 1654.
+USER $APP_UID
+ENTRYPOINT ["./BaseStationReader.TrackerHub"]
